@@ -5,16 +5,16 @@
 
 int main()
 {
-	const int LEN = 50;
+	const int LEN = 20;
 
 	GDF2 gdf("..\\test_data\\sample.gdf");
 
 	double* data = new double[gdf.getChannelCount()*LEN];
-	gdf.readData(data, 180, 180 + LEN - 1);
+	gdf.readData(data, 190, 190 + LEN - 1);
 
 	for (int i = 0; i < LEN; ++i)
 	{
-		for (int c = 0; c < gdf.getChannelCount()*0 + 1; ++c)
+		for (unsigned int c = 0; c < gdf.getChannelCount()*1 + 0; ++c)
 		{
 			if (c != 0)
 			{

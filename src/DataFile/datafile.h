@@ -8,7 +8,7 @@ class DataFile
 public:
 	virtual ~DataFile() {}
 
-	virtual double getFS() = 0;
+	virtual double getSamplingFrequency() = 0;
 	virtual unsigned int getChannelCount() = 0;
 	virtual uint64_t getSamplesRecorded() = 0;
 	virtual void readData(double* data, unsigned int firstSample, unsigned int lastSample) = 0;
@@ -21,19 +21,20 @@ protected:
 		return *bytes != 0;
 	}
 
-	template<typename T>
-	void changeEndianness(T* val)
+	void changeEndianness(char* bytes, int n)
 	{
-		char* bytes = reinterpret_cast<char*>(val);
-		int n = sizeof(T);
-		int nHalf = n/2;
-
-		for (int i = 0; i < nHalf; ++i)
+		for (int i = 0, nHalf = n/2; i < nHalf; ++i)
 		{
 			char tmp = bytes[i];
 			bytes[i] = bytes[n - i - 1];
 			bytes[n - i - 1] = tmp;
 		}
+	}
+
+	template<typename T>
+	void changeEndianness(T* val)
+	{
+		changeEndianness(reinterpret_cast<char*>(val), sizeof(T));
 	}
 };
 
