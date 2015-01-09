@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <cassert>
+#include <type_traits>
 
 using namespace std;
 
@@ -18,118 +19,133 @@ GDF2::GDF2(const char* filePath)
 	// Load fixed header.
 	seekFile(0, true);
 
-	readFile(fixedHeader.versionID, 8);
-	fixedHeader.versionID[8] = 0;
+	readFile(fh.versionID, 8);
+	fh.versionID[8] = 0;
+	int major, minor;
+	sscanf(fh.versionID + 4, "%d.%d", &major, &minor);
+	version = minor + 100*major;
 
-	readFile(fixedHeader.patientID, 66);
-	fixedHeader.patientID[66] = 0;
+	readFile(fh.patientID, 66);
+	fh.patientID[66] = 0;
 
 	seekFile(10);
 
-	readFile(&fixedHeader.drugs);
+	readFile(&fh.drugs);
 
-	readFile(&fixedHeader.weight);
+	readFile(&fh.weight);
 
-	readFile(&fixedHeader.height);
+	readFile(&fh.height);
 
-	readFile(&fixedHeader.patientDetails);
+	readFile(&fh.patientDetails);
 
-	readFile(fixedHeader.recordingID, 64);
-	fixedHeader.recordingID[64] = 0;
+	readFile(fh.recordingID, 64);
+	fh.recordingID[64] = 0;
 
-	readFile(fixedHeader.recordingLocation, 4);
+	readFile(fh.recordingLocation, 4);
 
-	readFile(fixedHeader.startDate, 2);
+	readFile(fh.startDate, 2);
 
-	readFile(fixedHeader.birthday, 2);
+	readFile(fh.birthday, 2);
 
-	readFile(&fixedHeader.headerLength);
+	readFile(&fh.headerLength);
 
-	readFile(fixedHeader.ICD, 6);
+	readFile(fh.ICD, 6);
 
-	readFile(&fixedHeader.equipmentProviderID);
+	readFile(&fh.equipmentProviderID);
 
 	seekFile(6);
 
-	readFile(fixedHeader.headsize, 3);
+	readFile(fh.headsize, 3);
 
-	readFile(fixedHeader.positionRE, 3);
+	readFile(fh.positionRE, 3);
 
-	readFile(fixedHeader.positionGE, 3);
+	readFile(fh.positionGE, 3);
 
-	readFile(&fixedHeader.numberOfDataRecords);
+	readFile(&fh.numberOfDataRecords);
 
-	readFile(fixedHeader.durationOfDataRecord, 2);
+	double duration;
+	if (version > 220)
+	{
+		double* ptr = reinterpret_cast<double*>(fh.durationOfDataRecord);
+		readFile(ptr, 1);
+		duration = *ptr;
+	}
+	else
+	{
+		uint32_t* ptr = reinterpret_cast<uint32_t*>(fh.durationOfDataRecord);
+		readFile(ptr, 2);
+		duration = static_cast<double>(ptr[0])/static_cast<double>(ptr[1]);
+	}
 
-	readFile(&fixedHeader.numberOfChannels);
+	readFile(&fh.numberOfChannels);
 
 	// Load variable header.
 	seekFile(2);
 	assert(ftell(file) == 256);
 
-	variableHeader.label = new char[getChannelCount()][16 + 1];
+	vh.label = new char[getChannelCount()][16 + 1];
 	for (unsigned int i = 0; i < getChannelCount(); ++i)
 	{
-		readFile(variableHeader.label[i], 16);
-		variableHeader.label[i][16] = 0;
+		readFile(vh.label[i], 16);
+		vh.label[i][16] = 0;
 	}
 
-	variableHeader.typeOfSensor = new char[getChannelCount()][80 + 1];
+	vh.typeOfSensor = new char[getChannelCount()][80 + 1];
 	for (unsigned int i = 0; i < getChannelCount(); ++i)
 	{
-		readFile(variableHeader.typeOfSensor[i], 80);
-		variableHeader.typeOfSensor[i][80] = 0;
+		readFile(vh.typeOfSensor[i], 80);
+		vh.typeOfSensor[i][80] = 0;
 	}
 
 	seekFile(6*getChannelCount());
 
-	variableHeader.physicalDimensionCode = new uint16_t[getChannelCount()];
-	readFile(variableHeader.physicalDimensionCode, getChannelCount());
+	vh.physicalDimensionCode = new uint16_t[getChannelCount()];
+	readFile(vh.physicalDimensionCode, getChannelCount());
 
-	variableHeader.physicalMinimum = new double[getChannelCount()];
-	readFile(variableHeader.physicalMinimum, getChannelCount());
+	vh.physicalMinimum = new double[getChannelCount()];
+	readFile(vh.physicalMinimum, getChannelCount());
 
-	variableHeader.physicalMaximum = new double[getChannelCount()];
-	readFile(variableHeader.physicalMaximum, getChannelCount());
+	vh.physicalMaximum = new double[getChannelCount()];
+	readFile(vh.physicalMaximum, getChannelCount());
 
-	variableHeader.digitalMinimum = new double[getChannelCount()];
-	readFile(variableHeader.digitalMinimum, getChannelCount());
+	vh.digitalMinimum = new double[getChannelCount()];
+	readFile(vh.digitalMinimum, getChannelCount());
 
-	variableHeader.digitalMaximum = new double[getChannelCount()];
-	readFile(variableHeader.digitalMaximum, getChannelCount());
+	vh.digitalMaximum = new double[getChannelCount()];
+	readFile(vh.digitalMaximum, getChannelCount());
 
 	seekFile(64*getChannelCount());
 
-	variableHeader.timeOffset = new float[getChannelCount()];
-	readFile(variableHeader.timeOffset, getChannelCount());
+	vh.timeOffset = new float[getChannelCount()];
+	readFile(vh.timeOffset, getChannelCount());
 
-	variableHeader.lowpass = new float[getChannelCount()];
-	readFile(variableHeader.lowpass, getChannelCount());
+	vh.lowpass = new float[getChannelCount()];
+	readFile(vh.lowpass, getChannelCount());
 
-	variableHeader.highpass = new float[getChannelCount()];
-	readFile(variableHeader.highpass, getChannelCount());
+	vh.highpass = new float[getChannelCount()];
+	readFile(vh.highpass, getChannelCount());
 
-	variableHeader.notch = new float[getChannelCount()];
-	readFile(variableHeader.notch, getChannelCount());
+	vh.notch = new float[getChannelCount()];
+	readFile(vh.notch, getChannelCount());
 
-	variableHeader.samplesPerRecord = new uint32_t[getChannelCount()];
-	readFile(variableHeader.samplesPerRecord, getChannelCount());
+	vh.samplesPerRecord = new uint32_t[getChannelCount()];
+	readFile(vh.samplesPerRecord, getChannelCount());
 
-	variableHeader.typeOfData = new uint32_t[getChannelCount()];
-	readFile(variableHeader.typeOfData, getChannelCount());
+	vh.typeOfData = new uint32_t[getChannelCount()];
+	readFile(vh.typeOfData, getChannelCount());
 
-	variableHeader.sensorPosition = new float[getChannelCount()][3];
-	readFile(*variableHeader.sensorPosition, 3*getChannelCount());
+	vh.sensorPosition = new float[getChannelCount()][3];
+	readFile(*vh.sensorPosition, 3*getChannelCount());
 
-	variableHeader.sensorInfo = new char[getChannelCount()][20];
-	readFile(*variableHeader.sensorInfo, 20*getChannelCount());
+	vh.sensorInfo = new char[getChannelCount()][20];
+	readFile(*vh.sensorInfo, 20*getChannelCount());
 
 	assert(ftell(file) == 256 + 256*getChannelCount());
 
 	// Initialize other members.
-	samplesRecorded = getChannelCount()*variableHeader.samplesPerRecord[0]*fixedHeader.numberOfDataRecords;
+	samplesRecorded = getChannelCount()*vh.samplesPerRecord[0]*fh.numberOfDataRecords;
 
-	startOfData = 256*fixedHeader.headerLength;
+	startOfData = 256*fh.headerLength;
 
 #define CASE(a_, b_)\
 case a_:\
@@ -139,9 +155,14 @@ case a_:\
 		b_ tmp = *reinterpret_cast<b_*>(sample);\
 		return static_cast<double>(tmp);\
 	};\
+	convertSampleToFloat = [] (void* sample) -> float\
+	{\
+		b_ tmp = *reinterpret_cast<b_*>(sample);\
+		return static_cast<float>(tmp);\
+	};\
 	break;
 
-	switch (variableHeader.typeOfData[0])
+	switch (vh.typeOfData[0])
 	{
 		CASE(1, int8_t);
 		CASE(2, uint8_t);
@@ -161,11 +182,11 @@ case a_:\
 	scale = new double[getChannelCount()];
 	for (unsigned int i = 0; i < getChannelCount(); ++i)
 	{
-		scale[i] = (variableHeader.digitalMaximum[i] - variableHeader.digitalMinimum[i])/
-				   (variableHeader.physicalMaximum[i] - variableHeader.physicalMinimum[i]);
+		scale[i] = (vh.digitalMaximum[i] - vh.digitalMinimum[i])/
+				   (vh.physicalMaximum[i] - vh.physicalMinimum[i]);
 	}
 
-	//samplingFrequency
+	samplingFrequency = vh.samplesPerRecord[0]/duration;
 }
 
 GDF2::~GDF2()
@@ -174,40 +195,41 @@ GDF2::~GDF2()
 	delete[] scale;
 
 	// Delete variable header.
-	delete[] variableHeader.label;
-	delete[] variableHeader.typeOfSensor;
-	delete[] variableHeader.physicalDimensionCode;
-	delete[] variableHeader.physicalMinimum;
-	delete[] variableHeader.physicalMaximum;
-	delete[] variableHeader.digitalMinimum;
-	delete[] variableHeader.digitalMaximum;
-	delete[] variableHeader.timeOffset;
-	delete[] variableHeader.lowpass;
-	delete[] variableHeader.highpass;
-	delete[] variableHeader.notch;
-	delete[] variableHeader.samplesPerRecord;
-	delete[] variableHeader.typeOfData;
-	delete[] variableHeader.sensorPosition;
-	delete[] variableHeader.sensorInfo;
+	delete[] vh.label;
+	delete[] vh.typeOfSensor;
+	delete[] vh.physicalDimensionCode;
+	delete[] vh.physicalMinimum;
+	delete[] vh.physicalMaximum;
+	delete[] vh.digitalMinimum;
+	delete[] vh.digitalMaximum;
+	delete[] vh.timeOffset;
+	delete[] vh.lowpass;
+	delete[] vh.highpass;
+	delete[] vh.notch;
+	delete[] vh.samplesPerRecord;
+	delete[] vh.typeOfData;
+	delete[] vh.sensorPosition;
+	delete[] vh.sensorInfo;
 }
 
-void GDF2::readData(double* data, unsigned int firstSample, unsigned int lastSample)
+template<typename T>
+void GDF2::readDataLocal(T* data, uint64_t firstSample, uint64_t lastSample)
 {
 	// test firstSample <= lastSample
 	// test lastSample < samplesRecorded
 
-	int samplesPerRecord = variableHeader.samplesPerRecord[0],
-		n = lastSample - firstSample + 1,
-		dataIndex = 0,
-		recordI = firstSample/samplesPerRecord,
-		lastRecordI = lastSample/samplesPerRecord;
+	int samplesPerRecord = vh.samplesPerRecord[0];
+	uint64_t	n = lastSample - firstSample + 1,
+				dataIndex = 0,
+				recordI = firstSample/samplesPerRecord,
+				lastRecordI = lastSample/samplesPerRecord;
 
 	seekFile(startOfData + recordI*samplesPerRecord*getChannelCount()*dataTypeSize, true);
 
 	for (; recordI <= lastRecordI; ++recordI)
 	{
-		int recordOffset = (firstSample + dataIndex)%samplesPerRecord;
-		int samplesToRead = min(samplesPerRecord - recordOffset, n - dataIndex);
+		int recordOffset = static_cast<int>((firstSample + dataIndex)%samplesPerRecord);
+		int samplesToRead = static_cast<int>(min(static_cast<uint64_t>(samplesPerRecord - recordOffset), n - dataIndex));
 
 		for (unsigned int channelI = 0; channelI < getChannelCount(); ++channelI)
 		{
@@ -224,18 +246,32 @@ void GDF2::readData(double* data, unsigned int firstSample, unsigned int lastSam
 
 			for (int i = 0; i < samplesToRead; ++i)
 			{
-				double tmp;
+				T tmp;
 				char rawTmp[8];
 
 				fread(rawTmp, dataTypeSize, 1, file);
-				changeEndianness(rawTmp, 2);
-				changeEndianness(rawTmp, 2);
-				tmp = convertSampleToDouble(rawTmp);
+
+				if (isLittleEndian == false)
+				{
+					changeEndianness(rawTmp, 2);
+				}
+
+				if (is_same<T, float>::value)
+				{
+					tmp = convertSampleToFloat(rawTmp);
+				}
+				else
+				{
+#pragma warning(push)
+#pragma warning(disable : 4244) // Disable conversion warning.
+					tmp = convertSampleToDouble(rawTmp);
+#pragma warning(pop)
+				}
 
 				// Calibration.
-				tmp -= variableHeader.digitalMinimum[channelI];
-				tmp /= scale[channelI];
-				tmp += variableHeader.physicalMinimum[channelI];
+				tmp -= static_cast<T>(vh.digitalMinimum[channelI]);
+				tmp /= static_cast<T>(scale[channelI]);
+				tmp += static_cast<T>(vh.physicalMinimum[channelI]);
 
 				data[dataIndex + channelI*n + i] = tmp;
 			}
@@ -264,8 +300,11 @@ void GDF2::readFile(T* val, int elements)
 	}
 }
 
-void GDF2::seekFile(int position, bool fromStart)
+void GDF2::seekFile(size_t position, bool fromStart)
 {
-	int res = fseek(file, position, fromStart ? SEEK_SET : SEEK_CUR);
+	size_t res = fseek(file, static_cast<long>(position), fromStart ? SEEK_SET : SEEK_CUR);
 	assert(res == 0); // error if res is not zero
 }
+
+
+

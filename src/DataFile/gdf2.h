@@ -17,13 +17,20 @@ public:
 	}
 	virtual unsigned int getChannelCount()
 	{
-		return fixedHeader.numberOfChannels;
+		return fh.numberOfChannels;
 	}
 	virtual uint64_t getSamplesRecorded()
 	{
 		return samplesRecorded;
 	}
-	virtual void readData(double* data, unsigned int firstSample, unsigned int lastSample);
+	virtual void readData(float* data, uint64_t firstSample, uint64_t lastSample)
+	{
+		readDataLocal(data, firstSample, lastSample);
+	}
+	virtual void readData(double* data, uint64_t firstSample, uint64_t lastSample)
+	{
+		readDataLocal(data, firstSample, lastSample);
+	}
 
 private:
 	FILE* file;
@@ -34,6 +41,8 @@ private:
 	double* scale;
 	int dataTypeSize;
 	double (* convertSampleToDouble)(void* sample);
+	float (* convertSampleToFloat)(void* sample);
+	int version;
 
 	struct
 	{
@@ -56,10 +65,10 @@ private:
 		float positionRE[3];
 		float positionGE[3];
 		int64_t numberOfDataRecords;
-		uint32_t durationOfDataRecord[2];
+		char durationOfDataRecord[8];
 		uint16_t numberOfChannels;
 		// 2B reserved
-	} fixedHeader;
+	} fh;
 
 	struct
 	{
@@ -80,12 +89,13 @@ private:
 		uint32_t* typeOfData;
 		float (* sensorPosition)[3];
 		char (* sensorInfo)[20];
-	} variableHeader;
+	} vh;
 
 	template<typename T>
+	void readDataLocal(T* data, uint64_t firstSample, uint64_t lastSample);
+	template<typename T>
 	void readFile(T* val, int elements = 1);
-
-	void seekFile(int position, bool fromStart = false);
+	void seekFile(size_t position, bool fromStart = false);
 };
 
 #endif // GDF2_H

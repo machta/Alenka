@@ -3,14 +3,18 @@
 #include <cstdlib>
 #include <cstdio>
 
+using fType = double;
+
 int main()
 {
 	const int LEN = 20;
 
 	GDF2 gdf("..\\test_data\\sample.gdf");
+	//GDF2 gdf("..\\test_data\\sin\\a0.gdf");
 
-	double* data = new double[gdf.getChannelCount()*LEN];
+	fType* data = new fType[gdf.getChannelCount()*LEN];
 	gdf.readData(data, 190, 190 + LEN - 1);
+	//gdf.readData(data, 0, 0 + LEN - 1);
 
 	for (int i = 0; i < LEN; ++i)
 	{
@@ -21,7 +25,7 @@ int main()
 				std::printf(" ");
 			}
 
-			std::printf("%10.2lf", data[LEN*c + i]);
+			std::printf("%10.2f", data[LEN*c + i]);
 		}
 		std::printf("\n");
 	}
