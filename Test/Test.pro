@@ -1,11 +1,23 @@
-SOURCES += \
-    test.cpp \
-    ../src/DataFile/gdf2.cpp
+include(../build.txt)
+
+INCLUDEPATH +=../App/src
 
 HEADERS += \
-    ../src/DataFile/datafile.h \
-    ../src/DataFile/gdf2.h
+	../App/src/DataFile/datafile.h \
+	../App/src/DataFile/gdf2.h \
+    gdf2_test.h
 
-#QMAKE_CXXFLAGS += -std=c++11
+SOURCES += \
+    test.cpp \
+    ../App/src/DataFile/gdf2.cpp
 
-DISTFILES +=
+DISTFILES += \
+    data/gdf/t00.gdf \
+    data/gdf/t01.gdf \
+    data/gdf/t00_info.txt \
+    data/gdf/t00_values.txt \
+    data/gdf/t01_info.txt \
+    data/gdf/t01_values.txt
+
+
+

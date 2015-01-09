@@ -1,6 +1,7 @@
-HEADERS += \
-    src/DataFile/datafile.h \
-    src/DataFile/gdf2.h
+TEMPLATE = subdirs
 
-SOURCES += \
-    src/DataFile/gdf2.cpp
+SUBDIRS += \
+    Test \
+    App
+
+

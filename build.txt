@@ -1,0 +1,9 @@
+win32
+{
+	INCLUDEPATH += "C:/Program Files/boost_1_55_0"
+}
+
+unix
+{
+	QMAKE_CXXFLAGS += -std=c++11
+}
