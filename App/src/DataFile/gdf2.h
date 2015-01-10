@@ -23,11 +23,11 @@ public:
 	{
 		return samplesRecorded;
 	}
-	virtual void readData(float* data, uint64_t firstSample, uint64_t lastSample)
+	virtual void readData(float* data, int64_t firstSample, int64_t lastSample)
 	{
 		readDataLocal(data, firstSample, lastSample);
 	}
-	virtual void readData(double* data, uint64_t firstSample, uint64_t lastSample)
+	virtual void readData(double* data, int64_t firstSample, int64_t lastSample)
 	{
 		readDataLocal(data, firstSample, lastSample);
 	}
@@ -92,7 +92,7 @@ private:
 	} vh;
 
 	template<typename T>
-	void readDataLocal(T* data, uint64_t firstSample, uint64_t lastSample);
+	void readDataLocal(T* data, int64_t firstSample, int64_t lastSample);
 	template<typename T>
 	void readFile(T* val, int elements = 1);
 	void seekFile(size_t position, bool fromStart = false);

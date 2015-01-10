@@ -11,8 +11,8 @@ public:
 	virtual double getSamplingFrequency() = 0;
 	virtual unsigned int getChannelCount() = 0;
 	virtual uint64_t getSamplesRecorded() = 0;
-	virtual void readData(float* data, uint64_t firstSample, uint64_t lastSample) = 0;
-	virtual void readData(double* data, uint64_t firstSample, uint64_t lastSample) = 0;
+	virtual void readData(float* data, int64_t firstSample, int64_t lastSample) = 0;
+	virtual void readData(double* data, int64_t firstSample, int64_t lastSample) = 0;
 
 protected:
 	bool testLittleEndian()

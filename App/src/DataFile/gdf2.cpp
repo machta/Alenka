@@ -225,23 +225,56 @@ GDF2::~GDF2()
 }
 
 template<typename T>
-void GDF2::readDataLocal(T* data, uint64_t firstSample, uint64_t lastSample)
+void GDF2::readDataLocal(T* data, int64_t firstSample, int64_t lastSample)
 {
 	if (lastSample < firstSample)
 	{
 		throw invalid_argument("lastSample must be greater or equeal than firstSample.");
 	}
 
-	if (lastSample >= samplesRecorded)
+	int samplesPerRecord = vh.samplesPerRecord[0];
+	uint64_t rowLen = lastSample - firstSample + 1,
+			 dataOffset, dataIndex = 0, recordI, lastRecordI, n;
+
+	if (firstSample < 0)
 	{
-		throw out_of_range("Data beyond the end of the data region requested.");
+		dataOffset = -firstSample;
+		firstSample = recordI = 0;
+
+		for (int j = 0; j < getChannelCount(); ++j)
+		{
+			for (int i = 0; i < dataOffset; ++i)
+			{
+				data[j*rowLen + i] = 0;
+			}
+		}
+	}
+	else
+	{
+		dataOffset = 0;
+		recordI = firstSample/samplesPerRecord;
 	}
 
-	int samplesPerRecord = vh.samplesPerRecord[0];
-	uint64_t	n = lastSample - firstSample + 1,
-				dataIndex = 0,
-				recordI = firstSample/samplesPerRecord,
-				lastRecordI = lastSample/samplesPerRecord;
+	if (lastSample >= samplesRecorded)
+	{
+		int extra = lastSample - samplesRecorded + 1;
+		lastSample = samplesRecorded - 1;
+		lastRecordI = lastSample/samplesPerRecord;
+		n = lastSample - firstSample + 1;
+
+		for (int j = 0; j < getChannelCount(); ++j)
+		{
+			for (int i = 0; i < extra; ++i)
+			{
+				data[j*rowLen + dataOffset + n + i] = 0;
+			}
+		}
+	}
+	else
+	{
+		n = lastSample - firstSample + 1;
+		lastRecordI = lastSample/samplesPerRecord;
+	}
 
 	seekFile(startOfData + recordI*samplesPerRecord*getChannelCount()*dataTypeSize, true);
 
@@ -290,7 +323,7 @@ void GDF2::readDataLocal(T* data, uint64_t firstSample, uint64_t lastSample)
 				tmp /= static_cast<T>(scale[channelI]);
 				tmp += static_cast<T>(vh.physicalMinimum[channelI]);
 
-				data[dataIndex + channelI*n + i] = tmp;
+				data[channelI*rowLen + dataOffset + dataIndex + i] = tmp;
 			}
 		}
 
