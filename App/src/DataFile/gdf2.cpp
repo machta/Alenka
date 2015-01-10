@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <cassert>
 #include <type_traits>
+#include <sstream>
+#include <exception>
 
 using namespace std;
 
@@ -14,7 +16,12 @@ GDF2::GDF2(const char* filePath)
 	isLittleEndian = testLittleEndian();
 
 	file = fopen(filePath, "r+b");
-	assert(file != NULL); // test whether the file exists, if it was opened properly, if it is gdf2
+    if (file == nullptr)
+    {
+        stringstream ss;
+        ss << "File '" << filePath << "' not found.";
+        throw runtime_error(ss.str());
+    }
 
 	// Load fixed header.
 	seekFile(0, true);
@@ -24,6 +31,11 @@ GDF2::GDF2(const char* filePath)
 	int major, minor;
 	sscanf(fh.versionID + 4, "%d.%d", &major, &minor);
 	version = minor + 100*major;
+
+    if (string(fh.versionID, 3) != "GDF" || major != 2)
+    {
+        throw runtime_error("Unrecognized file format.");
+    }
 
 	readFile(fh.patientID, 66);
 	fh.patientID[66] = 0;
@@ -81,7 +93,7 @@ GDF2::GDF2(const char* filePath)
 
 	// Load variable header.
 	seekFile(2);
-	assert(ftell(file) == 256);
+    assert(ftell(file) == 256);
 
 	vh.label = new char[getChannelCount()][16 + 1];
 	for (unsigned int i = 0; i < getChannelCount(); ++i)
@@ -143,7 +155,7 @@ GDF2::GDF2(const char* filePath)
 	assert(ftell(file) == 256 + 256*getChannelCount());
 
 	// Initialize other members.
-	samplesRecorded = getChannelCount()*vh.samplesPerRecord[0]*fh.numberOfDataRecords;
+    samplesRecorded = vh.samplesPerRecord[0]*fh.numberOfDataRecords;
 
 	startOfData = 256*fh.headerLength;
 
@@ -175,7 +187,7 @@ case a_:\
 		CASE(16, float);
 		CASE(17, double);
 	default:
-		assert(0); // error unsupported type
+        throw runtime_error("Unsupported data type.");
 		break;
 	}
 
@@ -249,7 +261,8 @@ void GDF2::readDataLocal(T* data, uint64_t firstSample, uint64_t lastSample)
 				T tmp;
 				char rawTmp[8];
 
-				fread(rawTmp, dataTypeSize, 1, file);
+                //fread(rawTmp, dataTypeSize, 1, file);
+                readFile(rawTmp, dataTypeSize);
 
 				if (isLittleEndian == false)
 				{
@@ -261,15 +274,12 @@ void GDF2::readDataLocal(T* data, uint64_t firstSample, uint64_t lastSample)
 					tmp = convertSampleToFloat(rawTmp);
 				}
 				else
-				{
-#pragma warning(push)
-#pragma warning(disable : 4244) // Disable conversion warning.
+                {
 					tmp = convertSampleToDouble(rawTmp);
-#pragma warning(pop)
 				}
 
 				// Calibration.
-				tmp -= static_cast<T>(vh.digitalMinimum[channelI]);
+                tmp -= static_cast<T>(vh.digitalMinimum[channelI]);
 				tmp /= static_cast<T>(scale[channelI]);
 				tmp += static_cast<T>(vh.physicalMinimum[channelI]);
 
@@ -287,9 +297,18 @@ void GDF2::readFile(T* val, int elements)
 	size_t elementsRead = fread(val, sizeof(T), elements, file);
 	if (elementsRead != elements)
 	{
-		printf("eof=%d error=%d", feof(file), ferror(file));
-	}
-	assert(elementsRead == elements); // assert and/or exception
+        stringstream ss;
+        if (feof(file))
+        {
+            ss << "EOF reached prematurely.";
+        }
+        else
+        {
+            assert(ferror(file));
+            ss << "Error while reading data from file.";
+        }
+        throw runtime_error(ss.str());
+    }
 
 	if (isLittleEndian == false)
 	{
@@ -303,7 +322,12 @@ void GDF2::readFile(T* val, int elements)
 void GDF2::seekFile(size_t position, bool fromStart)
 {
 	size_t res = fseek(file, static_cast<long>(position), fromStart ? SEEK_SET : SEEK_CUR);
-	assert(res == 0); // error if res is not zero
+    if (res != 0)
+    {
+        stringstream ss;
+        ss << "seekFile(" << position << ", " << fromStart << ") failed.";
+        throw runtime_error(ss.str());
+    }
 }
 
 

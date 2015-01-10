@@ -17,7 +17,11 @@ DISTFILES += \
     data/gdf/t00_info.txt \
     data/gdf/t00_values.txt \
     data/gdf/t01_info.txt \
-    data/gdf/t01_values.txt
+    data/gdf/t01_values.txt \
+    data/gdf/empty.gdf \
+    data/gdf/badType.gdf \
+    data/gdf/headerOnly.gdf \
+    data/gdf/badFile.gdf
 
 
 
