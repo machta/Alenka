@@ -16,12 +16,12 @@ GDF2::GDF2(const char* filePath)
 	isLittleEndian = testLittleEndian();
 
 	file = fopen(filePath, "r+b");
-    if (file == nullptr)
-    {
-        stringstream ss;
-        ss << "File '" << filePath << "' not found.";
-        throw runtime_error(ss.str());
-    }
+	if (file == nullptr)
+	{
+		stringstream ss;
+		ss << "File '" << filePath << "' not found.";
+		throw runtime_error(ss.str());
+	}
 
 	// Load fixed header.
 	seekFile(0, true);
@@ -32,10 +32,10 @@ GDF2::GDF2(const char* filePath)
 	sscanf(fh.versionID + 4, "%d.%d", &major, &minor);
 	version = minor + 100*major;
 
-    if (string(fh.versionID, 3) != "GDF" || major != 2)
-    {
-        throw runtime_error("Unrecognized file format.");
-    }
+	if (string(fh.versionID, 3) != "GDF" || major != 2)
+	{
+		throw runtime_error("Unrecognized file format.");
+	}
 
 	readFile(fh.patientID, 66);
 	fh.patientID[66] = 0;
@@ -93,7 +93,7 @@ GDF2::GDF2(const char* filePath)
 
 	// Load variable header.
 	seekFile(2);
-    assert(ftell(file) == 256);
+	assert(ftell(file) == 256);
 
 	vh.label = new char[getChannelCount()][16 + 1];
 	for (unsigned int i = 0; i < getChannelCount(); ++i)
@@ -155,7 +155,7 @@ GDF2::GDF2(const char* filePath)
 	assert(ftell(file) == 256 + 256*getChannelCount());
 
 	// Initialize other members.
-    samplesRecorded = vh.samplesPerRecord[0]*fh.numberOfDataRecords;
+	samplesRecorded = vh.samplesPerRecord[0]*fh.numberOfDataRecords;
 
 	startOfData = 256*fh.headerLength;
 
@@ -187,7 +187,7 @@ case a_:\
 		CASE(16, float);
 		CASE(17, double);
 	default:
-        throw runtime_error("Unsupported data type.");
+		throw runtime_error("Unsupported data type.");
 		break;
 	}
 
@@ -227,8 +227,15 @@ GDF2::~GDF2()
 template<typename T>
 void GDF2::readDataLocal(T* data, uint64_t firstSample, uint64_t lastSample)
 {
-	// test firstSample <= lastSample
-	// test lastSample < samplesRecorded
+	if (lastSample < firstSample)
+	{
+		throw invalid_argument("lastSample must be greater or equeal than firstSample.");
+	}
+
+	if (lastSample >= samplesRecorded)
+	{
+		throw out_of_range("Data beyond the end of the data region requested.");
+	}
 
 	int samplesPerRecord = vh.samplesPerRecord[0];
 	uint64_t	n = lastSample - firstSample + 1,
@@ -261,8 +268,8 @@ void GDF2::readDataLocal(T* data, uint64_t firstSample, uint64_t lastSample)
 				T tmp;
 				char rawTmp[8];
 
-                //fread(rawTmp, dataTypeSize, 1, file);
-                readFile(rawTmp, dataTypeSize);
+				//fread(rawTmp, dataTypeSize, 1, file);
+				readFile(rawTmp, dataTypeSize);
 
 				if (isLittleEndian == false)
 				{
@@ -274,12 +281,12 @@ void GDF2::readDataLocal(T* data, uint64_t firstSample, uint64_t lastSample)
 					tmp = convertSampleToFloat(rawTmp);
 				}
 				else
-                {
+				{
 					tmp = convertSampleToDouble(rawTmp);
 				}
 
 				// Calibration.
-                tmp -= static_cast<T>(vh.digitalMinimum[channelI]);
+				tmp -= static_cast<T>(vh.digitalMinimum[channelI]);
 				tmp /= static_cast<T>(scale[channelI]);
 				tmp += static_cast<T>(vh.physicalMinimum[channelI]);
 
@@ -297,18 +304,18 @@ void GDF2::readFile(T* val, int elements)
 	size_t elementsRead = fread(val, sizeof(T), elements, file);
 	if (elementsRead != elements)
 	{
-        stringstream ss;
-        if (feof(file))
-        {
-            ss << "EOF reached prematurely.";
-        }
-        else
-        {
-            assert(ferror(file));
-            ss << "Error while reading data from file.";
-        }
-        throw runtime_error(ss.str());
-    }
+		stringstream ss;
+		if (feof(file))
+		{
+			ss << "EOF reached prematurely.";
+		}
+		else
+		{
+			assert(ferror(file));
+			ss << "Error while reading data from file.";
+		}
+		throw runtime_error(ss.str());
+	}
 
 	if (isLittleEndian == false)
 	{
@@ -322,12 +329,12 @@ void GDF2::readFile(T* val, int elements)
 void GDF2::seekFile(size_t position, bool fromStart)
 {
 	size_t res = fseek(file, static_cast<long>(position), fromStart ? SEEK_SET : SEEK_CUR);
-    if (res != 0)
-    {
-        stringstream ss;
-        ss << "seekFile(" << position << ", " << fromStart << ") failed.";
-        throw runtime_error(ss.str());
-    }
+	if (res != 0)
+	{
+		stringstream ss;
+		ss << "seekFile(" << position << ", " << fromStart << ") failed.";
+		throw runtime_error(ss.str());
+	}
 }
 
 
