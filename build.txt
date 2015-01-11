@@ -1,6 +1,7 @@
 win32
 {
-	INCLUDEPATH += "C:/Program Files/boost_1_55_0"
+	LIBS += /LIBPATH:C:\boost_1_57_0\static_64\lib
+	INCLUDEPATH += "C:/boost_1_57_0"
 }
 
 unix
