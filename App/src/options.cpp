@@ -22,11 +22,8 @@ Options::Options(int ac, char** av)
 	description = new options_description("Alloved options");
 	description->add(cmdConfig).add(otherConfig);
 
-	if (ac > 1)
-	{
-		store(parse_command_line(ac, av, cmdConfig), vm);
-		notify(vm);
-	}
+    store(parse_command_line(ac, av, cmdConfig), vm);
+    notify(vm);
 
 	ifstream ifs(vm["config"].as<string>());
 

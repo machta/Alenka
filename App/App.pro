@@ -1,4 +1,4 @@
-include(../build.txt)
+include(../build)
 
 HEADERS += \
     src/DataFile/datafile.h \

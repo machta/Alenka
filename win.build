@@ -1,0 +1,4 @@
+LIBS += /LIBPATH:C:\boost_1_57_0\static_64\lib
+
+INCLUDEPATH += "C:/boost_1_57_0"
+

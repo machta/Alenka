@@ -1,4 +1,4 @@
-include(../build.txt)
+include(../build)
 
 INCLUDEPATH +=../App/src
 

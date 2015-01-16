@@ -70,5 +70,8 @@ Thumbs.db
 *.dll
 *.exe
 
-# Qt build folder
+# Qt build folders
 build-*
+
+# platform specific config file
+build
