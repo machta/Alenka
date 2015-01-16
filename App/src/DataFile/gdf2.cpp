@@ -1,5 +1,7 @@
 #include "gdf2.h"
 
+#include "../options.h"
+
 #include <cstdlib>
 #include <cstdio>
 #include <cstdint>
@@ -191,12 +193,21 @@ case a_:\
 		break;
 	}
 
-	scale = new double[getChannelCount()];
-	for (unsigned int i = 0; i < getChannelCount(); ++i)
-	{
-		scale[i] = (vh.digitalMaximum[i] - vh.digitalMinimum[i])/
-				   (vh.physicalMaximum[i] - vh.physicalMinimum[i]);
-	}
+    uncalibrated = PROGRAM_OPTIONS->get("uncalibrated").as<bool>();
+
+    if (uncalibrated == false)
+    {
+        scale = new double[getChannelCount()];
+        for (unsigned int i = 0; i < getChannelCount(); ++i)
+        {
+            scale[i] = (vh.digitalMaximum[i] - vh.digitalMinimum[i])/
+                    (vh.physicalMaximum[i] - vh.physicalMinimum[i]);
+        }
+    }
+    else
+    {
+        scale = nullptr;
+    }
 
 	samplingFrequency = vh.samplesPerRecord[0]/duration;
 }
@@ -319,9 +330,12 @@ void GDF2::readDataLocal(T* data, int64_t firstSample, int64_t lastSample)
 				}
 
 				// Calibration.
-				tmp -= static_cast<T>(vh.digitalMinimum[channelI]);
-				tmp /= static_cast<T>(scale[channelI]);
-				tmp += static_cast<T>(vh.physicalMinimum[channelI]);
+                if (uncalibrated == false)
+                {
+                    tmp -= static_cast<T>(vh.digitalMinimum[channelI]);
+                    tmp /= static_cast<T>(scale[channelI]);
+                    tmp += static_cast<T>(vh.physicalMinimum[channelI]);
+                }
 
 				data[channelI*rowLen + dataOffset + dataIndex + i] = tmp;
 			}
