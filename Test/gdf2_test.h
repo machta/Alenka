@@ -78,8 +78,7 @@ BOOST_AUTO_TEST_CASE(exceptions)
 	delete file;
 
 	BOOST_REQUIRE_NO_THROW(file = new GDF2("data/gdf/t00.gdf"));
-	int tmp = file->getSamplesRecorded();
-	BOOST_CHECK_THROW(file->readData(data, 100, 50); , invalid_argument);
+	BOOST_CHECK_THROW(file->readData(data, 100, 50);, invalid_argument);
 	delete file;
 
 	delete[] data;
@@ -127,7 +126,7 @@ BOOST_AUTO_TEST_CASE(outOfBounds)
 
 	for (int i = 0; i < 100; ++i)
 	{
-		for (int j = 0; j < file.getChannelCount(); ++j)
+		for (unsigned int j = 0; j < file.getChannelCount(); ++j)
 		{
 			BOOST_CHECK_CLOSE(a[(n + 100)*j + i], 0, 0.00001);
 		}
@@ -135,7 +134,7 @@ BOOST_AUTO_TEST_CASE(outOfBounds)
 
 	for (int i = 0; i < n; ++i)
 	{
-		for (int j = 0; j < file.getChannelCount(); ++j)
+		for (unsigned int j = 0; j < file.getChannelCount(); ++j)
 		{
 			BOOST_CHECK_CLOSE(a[(n + 100)*j + 100 + i], b[n*j + i], 0.00001);
 		}
@@ -147,7 +146,7 @@ BOOST_AUTO_TEST_CASE(outOfBounds)
 
 	for (int i = 0; i < 100; ++i)
 	{
-		for (int j = 0; j < file.getChannelCount(); ++j)
+		for (unsigned int j = 0; j < file.getChannelCount(); ++j)
 		{
 			BOOST_CHECK_CLOSE(a[(n + 100)*j + n + i], 0, 0.00001);
 		}
@@ -155,7 +154,7 @@ BOOST_AUTO_TEST_CASE(outOfBounds)
 
 	for (int i = 0; i < n; ++i)
 	{
-		for (int j = 0; j < file.getChannelCount(); ++j)
+		for (unsigned int j = 0; j < file.getChannelCount(); ++j)
 		{
 			BOOST_CHECK_CLOSE(a[(n + 100)*j + i], b[n*j + i], 0.00001);
 		}

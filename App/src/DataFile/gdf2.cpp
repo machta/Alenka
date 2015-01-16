@@ -7,7 +7,6 @@
 #include <cstdint>
 #include <algorithm>
 #include <cassert>
-#include <type_traits>
 #include <sstream>
 #include <exception>
 
@@ -252,7 +251,7 @@ void GDF2::readDataLocal(T* data, int64_t firstSample, int64_t lastSample)
 		dataOffset = -firstSample;
 		firstSample = recordI = 0;
 
-		for (int j = 0; j < getChannelCount(); ++j)
+		for (unsigned int j = 0; j < getChannelCount(); ++j)
 		{
 			for (int i = 0; i < dataOffset; ++i)
 			{
@@ -273,7 +272,7 @@ void GDF2::readDataLocal(T* data, int64_t firstSample, int64_t lastSample)
 		lastRecordI = lastSample/samplesPerRecord;
 		n = lastSample - firstSample + 1;
 
-		for (int j = 0; j < getChannelCount(); ++j)
+		for (unsigned int j = 0; j < getChannelCount(); ++j)
 		{
 			for (int i = 0; i < extra; ++i)
 			{
