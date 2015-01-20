@@ -1,4 +1,9 @@
-LIBS += /LIBPATH:C:\boost_1_57_0\static_64\lib
+LIBS += /LIBPATH:C:\boost_1_57_0\static_64\lib \
+	"C:/Program Files (x86)/AMD APP SDK/2.9-1/lib/x86_64/OpenCL.lib" \
+	"C:/Program Files/clFFT-2.2.0-Windows-x64/lib64/import/clFFT.lib"
 
-INCLUDEPATH += "C:/boost_1_57_0"
+INCLUDEPATH += C:/boost_1_57_0 \
+	"C:/Program Files (x86)/AMD APP SDK/2.9-1/include" \
+	"C:/Program Files/clFFT-2.2.0-Windows-x64/include"
 
+DEFINES += _USE_MATH_DEFINES

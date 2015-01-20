@@ -1,7 +1,5 @@
 #include <boost/test/included/unit_test.hpp>
 
-#include "DataFile/gdf2.h"
-
 #include <cstdlib>
 #include <cstdio>
 #include <string>
@@ -78,7 +76,7 @@ BOOST_AUTO_TEST_CASE(exceptions)
 	delete file;
 
 	BOOST_REQUIRE_NO_THROW(file = new GDF2("data/gdf/t00.gdf"));
-	BOOST_CHECK_THROW(file->readData(data, 100, 50);, invalid_argument);
+	BOOST_CHECK_THROW(file->readData(data, 100, 50); , invalid_argument);
 	delete file;
 
 	delete[] data;
@@ -163,3 +161,4 @@ BOOST_AUTO_TEST_CASE(outOfBounds)
 	delete[] a;
 	delete[] b;
 }
+

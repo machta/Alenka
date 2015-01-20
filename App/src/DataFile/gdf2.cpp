@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <cassert>
 #include <sstream>
-#include <exception>
+#include <stdexcept>
 
 using namespace std;
 

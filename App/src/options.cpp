@@ -19,6 +19,9 @@ Options::Options(int ac, char** av)
     options_description other("Configuration");
     other.add_options()
 	("uncalibrated", value<bool>()->default_value(false), "assume uncalibrated data in gdf files")
+	("platform", value<int>()->default_value(0), "OpenCL platform id")
+	("device", value<int>()->default_value(0), "OpenCL device id")
+	("window", value<string>()->default_value(""), "window function to be used on FIR coefficients (hamming | blackman)")
 	;
 
     options_description all("Alloved options");
