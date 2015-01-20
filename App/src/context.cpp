@@ -38,6 +38,9 @@ Context::Context(unsigned int platform, unsigned int device, cl_device_type devi
 	}
 
 	did = devices[device];
+
+    delete[] platforms;
+    delete[] devices;
 }
 
 Context::~Context()

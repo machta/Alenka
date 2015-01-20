@@ -1,4 +1,7 @@
-LIBS += -lboost_program_options
+LIBS += -lboost_program_options \
+    -lclFFT \
+    -lOpenCL
 
 QMAKE_CXXFLAGS += -std=c++11
 
+INCLUDEPATH += $$(AMDAPPSDKROOT)/include

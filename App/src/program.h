@@ -6,6 +6,7 @@
 #include <CL/cl.h>
 
 #include <sstream>
+#include <stdexcept>
 
 class Program
 {

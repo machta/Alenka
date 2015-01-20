@@ -18,27 +18,27 @@ public:
 	double* computeCoefficients();
 	void printCoefficients(FILE* file);
 
-	double Filter::getLowpass() const
+    double getLowpass() const
 	{
 		return lowpass*Fs/2;
 	}
-	void Filter::setLowpass(double value)
+    void setLowpass(double value)
 	{
 		lowpass = value/Fs*2;
 	}
-	double Filter::getHighpass() const
+    double getHighpass() const
 	{
 		return highpass*Fs/2;
 	}
-	void Filter::setHighpass(double value)
+    void setHighpass(double value)
 	{
 		highpass = value/Fs*2;
 	}
-	bool Filter::getNotch() const
+    bool getNotch() const
 	{
 		return notch;
 	}
-	void Filter::setNotch(bool value)
+    void setNotch(bool value)
 	{
 		notch = value;
 	}
