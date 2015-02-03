@@ -38,6 +38,9 @@ OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device, cl_devi
 	}
 
 	did = devices[device];
+
+    delete[] platforms;
+    delete[] devices;
 }
 
 OpenCLContext::~OpenCLContext()

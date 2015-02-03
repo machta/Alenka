@@ -311,8 +311,7 @@ void GDF2::readDataLocal(T* data, int64_t firstSample, int64_t lastSample)
 				T tmp;
 				char rawTmp[8];
 
-				//fread(rawTmp, dataTypeSize, 1, file);
-				readFile(rawTmp, dataTypeSize);
+                readFile(rawTmp, dataTypeSize);
 
 				if (isLittleEndian == false)
 				{
