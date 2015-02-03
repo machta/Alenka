@@ -42,10 +42,7 @@ Options::Options(int ac, char** av)
 		cerr << "Config file '" << vm["config"].as<string>() << "' not found." << endl;
 	}
 
-	if (isSet("help"))
-	{
-        cout << all << "\n";
-	}
+	desc.add(all);
 }
 
 

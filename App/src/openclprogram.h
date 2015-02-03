@@ -1,17 +1,17 @@
-#ifndef PROGRAM_H
-#define PROGRAM_H
+#ifndef OPENCLPROGRAM_H
+#define OPENCLPROGRAM_H
 
-#include "context.h"
+#include "openclcontext.h"
 
 #include <CL/cl.h>
 
 #include <sstream>
 
-class Program
+class OpenCLProgram
 {
 public:
-	Program(const char* source, Context context);
-	~Program();
+	OpenCLProgram(const char* source, OpenCLContext context);
+	~OpenCLProgram();
 
 	cl_kernel createKernel(const char* kernelName)
 	{
@@ -31,4 +31,4 @@ private:
 	cl_program program;
 };
 
-#endif // PROGRAM_H
+#endif // OPENCLPROGRAM_H

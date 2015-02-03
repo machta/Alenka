@@ -1,7 +1,7 @@
 #ifndef FILTER_H
 #define FILTER_H
 
-#include "../context.h"
+#include "../openclcontext.h"
 
 #include <cstdio>
 #include <cmath>
@@ -50,7 +50,7 @@ private:
 	double highpass;
 	bool notch;
 
-	Context context;
+	OpenCLContext context;
 	cl_command_queue queue;
 	clfftPlanHandle plan;
 	double* coefficients;

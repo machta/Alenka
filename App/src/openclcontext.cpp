@@ -1,4 +1,4 @@
-#include "context.h"
+#include "openclcontext.h"
 
 #include <algorithm>
 #include <stdexcept>
@@ -6,7 +6,7 @@
 
 using namespace std;
 
-Context::Context(unsigned int platform, unsigned int device, cl_device_type deviceType)
+OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device, cl_device_type deviceType)
 {
 	cl_uint pCount = platform + 1;
 	cl_platform_id* platforms = new cl_platform_id[pCount];
@@ -40,7 +40,7 @@ Context::Context(unsigned int platform, unsigned int device, cl_device_type devi
 	did = devices[device];
 }
 
-Context::~Context()
+OpenCLContext::~OpenCLContext()
 {
 	clReleaseContext(context);
 }

@@ -1,4 +1,4 @@
-#include "program.h"
+#include "openclprogram.h"
 
 #include <cstdio>
 
@@ -6,7 +6,7 @@
 
 using namespace std;
 
-Program::Program(const char* source, Context context)
+OpenCLProgram::OpenCLProgram(const char* source, OpenCLContext context)
 {
 	cl_int err;
 
@@ -49,7 +49,7 @@ Program::Program(const char* source, Context context)
 	fclose(file);
 }
 
-Program::~Program()
+OpenCLProgram::~OpenCLProgram()
 {
 	clReleaseProgram(program);
 }

@@ -21,9 +21,14 @@ public:
 	{
 		return vm.count(var) == 1;
 	}
+	boost::program_options::options_description getDescription()
+	{
+		return desc;
+	}
 
 private:
     boost::program_options::variables_map vm;
+	boost::program_options::options_description desc;
 };
 
 extern const Options* PROGRAM_OPTIONS;

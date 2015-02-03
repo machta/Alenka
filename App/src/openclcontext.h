@@ -1,13 +1,13 @@
-#ifndef CONTEXT_H
-#define CONTEXT_H
+#ifndef OPENCLCONTEXT_H
+#define OPENCLCONTEXT_H
 
 #include <CL/cl.h>
 
-class Context
+class OpenCLContext
 {
 public:
-	Context(unsigned int platform, unsigned int device, cl_device_type deviceType);
-	~Context();
+	OpenCLContext(unsigned int platform, unsigned int device, cl_device_type deviceType);
+	~OpenCLContext();
 
 	cl_context getCLContext()
 	{
@@ -28,5 +28,5 @@ private:
 	cl_device_id did;
 };
 
-#endif // CONTEXT_H
+#endif // OPENCLCONTEXT_H
 
