@@ -3,16 +3,16 @@ include(../build)
 INCLUDEPATH +=../App/src
 
 HEADERS += \
-    gdf2_test.h \
-    filter_test.h
+    src/filter_test.h \
+    src/gdf2_test.h
 
 SOURCES += \
-    test.cpp \
     ../App/src/DataFile/gdf2.cpp \
 	../App/src/SignalProcessor/filter.cpp \
     ../App/src/openclcontext.cpp \
     ../App/src/openclprogram.cpp \
-    ../App/src/options.cpp
+    ../App/src/options.cpp \
+    src/test.cpp
 
 DISTFILES += \
     data/gdf/t00.gdf \

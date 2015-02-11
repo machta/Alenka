@@ -75,3 +75,6 @@ build-*
 
 # platform specific config file
 build
+
+# config file
+*/options.cfg

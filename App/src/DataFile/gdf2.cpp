@@ -192,21 +192,21 @@ case a_:\
 		break;
 	}
 
-    uncalibrated = PROGRAM_OPTIONS->get("uncalibrated").as<bool>();
+	uncalibrated = PROGRAM_OPTIONS->get("uncalibrated").as<bool>();
 
-    if (uncalibrated == false)
-    {
-        scale = new double[getChannelCount()];
-        for (unsigned int i = 0; i < getChannelCount(); ++i)
-        {
-            scale[i] = (vh.digitalMaximum[i] - vh.digitalMinimum[i])/
-                    (vh.physicalMaximum[i] - vh.physicalMinimum[i]);
-        }
-    }
-    else
-    {
-        scale = nullptr;
-    }
+	if (uncalibrated == false)
+	{
+		scale = new double[getChannelCount()];
+		for (unsigned int i = 0; i < getChannelCount(); ++i)
+		{
+			scale[i] = (vh.digitalMaximum[i] - vh.digitalMinimum[i])/
+					   (vh.physicalMaximum[i] - vh.physicalMinimum[i]);
+		}
+	}
+	else
+	{
+		scale = nullptr;
+	}
 
 	samplingFrequency = vh.samplesPerRecord[0]/duration;
 }
@@ -311,7 +311,7 @@ void GDF2::readDataLocal(T* data, int64_t firstSample, int64_t lastSample)
 				T tmp;
 				char rawTmp[8];
 
-                readFile(rawTmp, dataTypeSize);
+				readFile(rawTmp, dataTypeSize);
 
 				if (isLittleEndian == false)
 				{
@@ -328,12 +328,12 @@ void GDF2::readDataLocal(T* data, int64_t firstSample, int64_t lastSample)
 				}
 
 				// Calibration.
-                if (uncalibrated == false)
-                {
-                    tmp -= static_cast<T>(vh.digitalMinimum[channelI]);
-                    tmp /= static_cast<T>(scale[channelI]);
-                    tmp += static_cast<T>(vh.physicalMinimum[channelI]);
-                }
+				if (uncalibrated == false)
+				{
+					tmp -= static_cast<T>(vh.digitalMinimum[channelI]);
+					tmp /= static_cast<T>(scale[channelI]);
+					tmp += static_cast<T>(vh.physicalMinimum[channelI]);
+				}
 
 				data[channelI*rowLen + dataOffset + dataIndex + i] = tmp;
 			}

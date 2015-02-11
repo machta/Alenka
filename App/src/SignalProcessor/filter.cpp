@@ -116,7 +116,7 @@ double* Filter::computeCoefficients()
 	// Try to improve filter characteristics by applying a window function.
 	string window = PROGRAM_OPTIONS->get("window").as<string>();
 
-	for (int i = 0; i < M; ++i)
+	for (unsigned int i = 0; i < M; ++i)
 	{
 		if (window == "hamming")
 		{
@@ -135,7 +135,7 @@ double* Filter::computeCoefficients()
 void Filter::printCoefficients(FILE* file)
 {
 	fprintf(file, "%lf\n%lf\n%lf\n", Fs, getLowpass(), getHighpass());
-	for (int i = 0; i < M; ++i)
+	for (unsigned int i = 0; i < M; ++i)
 	{
 		fprintf(file, "%lf\n", coefficients[i]);
 	}

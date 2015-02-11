@@ -22,6 +22,10 @@ Options::Options(int ac, char** av)
 	("platform", value<int>()->default_value(0), "OpenCL platform id")
 	("device", value<int>()->default_value(0), "OpenCL device id")
 	("window", value<string>()->default_value(""), "window function to be used on FIR coefficients (hamming | blackman)")
+	("blockSize", value<int>()->default_value(1024), "size of one block of signal data")
+	("file,f", value<string>(), "data file")
+	("vert", value<string>()->default_value("shader.vert"), "vertex shader source file")
+	("frag", value<string>()->default_value("shader.frag"), "fragment shader source file")
 	;
 
     options_description all("Alloved options");
