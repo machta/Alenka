@@ -37,7 +37,7 @@ private:
 	{
 		for (auto m : log()->loggedMessages())
 		{
-			std::cerr << "OpenGL message: " << m.message().toStdString() << endl;
+            std::cerr << "OpenGL message: " << m.message().toStdString() << std::endl;
 		}
 	}
 };

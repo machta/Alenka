@@ -9,11 +9,13 @@
 using namespace std;
 
 Filter::Filter(unsigned int M, double Fs) : M(M), Fs(Fs), lowpass(2),
-	highpass(-1), notch(false), notchF(50/Fs*2),
-	context(PROGRAM_OPTIONS->get("platform").as<int>(), 0, CL_DEVICE_TYPE_CPU)
+    highpass(-1), notch(false),
+    clContext(PROGRAM_OPTIONS->get("platform").as<int>(), 0, CL_DEVICE_TYPE_CPU),
+    notchF(50/Fs*2)
+
 {
 	size_t size = M;
-	clfftStatus errFFT = clfftCreateDefaultPlan(&plan, context.getCLContext(), CLFFT_1D, &size);
+    clfftStatus errFFT = clfftCreateDefaultPlan(&plan, clContext.getCLContext(), CLFFT_1D, &size);
 	if (errFFT != CL_SUCCESS)
 	{
 		stringstream ss;
@@ -26,7 +28,7 @@ Filter::Filter(unsigned int M, double Fs) : M(M), Fs(Fs), lowpass(2),
 	clfftSetResultLocation(plan, CLFFT_INPLACE);
 
 	cl_int errCL;
-	queue = clCreateCommandQueue(context.getCLContext(), context.getCLDevice(), 0, &errCL);
+    queue = clCreateCommandQueue(clContext.getCLContext(), clContext.getCLDevice(), 0, &errCL);
 	if (errCL != CL_SUCCESS)
 	{
 		stringstream ss;
@@ -94,7 +96,7 @@ double* Filter::computeCoefficients()
 
 	// Compute the iFFT of H to make the FIR filter coefficients h. (eq. 10.2.33)
 	cl_int errCL;
-	cl_mem buffer = clCreateBuffer(context.getCLContext(), CL_MEM_USE_HOST_PTR, 2*cM*sizeof(double), coefficients, &errCL);
+    cl_mem buffer = clCreateBuffer(clContext.getCLContext(), CL_MEM_USE_HOST_PTR, 2*cM*sizeof(double), coefficients, &errCL);
 	if (errCL != CL_SUCCESS)
 	{
 		stringstream ss;
