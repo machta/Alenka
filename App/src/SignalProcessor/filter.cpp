@@ -1,9 +1,8 @@
 #include "filter.h"
 
 #include "../options.h"
+#include "../error.h"
 
-#include <sstream>
-#include <stdexcept>
 #include <complex>
 
 using namespace std;
@@ -14,12 +13,7 @@ Filter::Filter(unsigned int M, double Fs) : M(M), Fs(Fs), lowpass(2),
 {
 	size_t size = M;
 	clfftStatus errFFT = clfftCreateDefaultPlan(&plan, context.getCLContext(), CLFFT_1D, &size);
-	if (errFFT != CL_SUCCESS)
-	{
-		stringstream ss;
-		ss << "clfftCreateDefaultPlan returned with error code " << errFFT << ".";
-		throw runtime_error(ss.str());
-	}
+	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftCreateDefaultPlan()");
 
 	clfftSetPlanPrecision(plan, CLFFT_DOUBLE);
 	clfftSetLayout(plan, CLFFT_HERMITIAN_INTERLEAVED, CLFFT_REAL);
@@ -27,12 +21,7 @@ Filter::Filter(unsigned int M, double Fs) : M(M), Fs(Fs), lowpass(2),
 
 	cl_int errCL;
 	queue = clCreateCommandQueue(context.getCLContext(), context.getCLDevice(), 0, &errCL);
-	if (errCL != CL_SUCCESS)
-	{
-		stringstream ss;
-		ss << "clCreateCommandQueue returned with error code " << errCL << ".";
-		throw runtime_error(ss.str());
-	}
+	checkErrorCode(errCL, CL_SUCCESS, "clCreateCommandQueue()");
 
 	clfftBakePlan(plan, 1, &queue, nullptr, nullptr);
 
@@ -95,20 +84,10 @@ double* Filter::computeCoefficients()
 	// Compute the iFFT of H to make the FIR filter coefficients h. (eq. 10.2.33)
 	cl_int errCL;
 	cl_mem buffer = clCreateBuffer(context.getCLContext(), CL_MEM_USE_HOST_PTR, 2*cM*sizeof(double), coefficients, &errCL);
-	if (errCL != CL_SUCCESS)
-	{
-		stringstream ss;
-		ss << "clCreateBuffer returned with error code " << errCL << ".";
-		throw runtime_error(ss.str());
-	}
+	checkErrorCode(errCL, CL_SUCCESS, "clCreateBuffer()");
 
 	clfftStatus errFFT = clfftEnqueueTransform(plan, CLFFT_BACKWARD, 1, &queue, 0, nullptr, nullptr, &buffer, nullptr, nullptr);
-	if (errFFT != CL_SUCCESS)
-	{
-		stringstream ss;
-		ss << "clfftEnqueueTransform returned with error code " << errFFT << ".";
-		throw runtime_error(ss.str());
-	}
+	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftEnqueueTransform()");
 
 	clFinish(queue);
 	//clEnqueueReadBuffer(queue, buffer, true, 0, M*sizeof(double), coefficients, 0, nullptr, nullptr);

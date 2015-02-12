@@ -122,7 +122,8 @@ void Canvas::paintBlock(const SignalBlock& block)
 void Canvas::paintChannel(unsigned int channel, const SignalBlock& block)
 {
 	GLuint location = fun()->glGetUniformBlockIndex(program->getGLProgram(), "y0");
-	fun()->glUniform1f(location, (channel + 0.5f)*height()/block.getchannelCount());
+	float y0 = (channel + 0.5f)*height()/block.getchannelCount();
+	fun()->glUniform1f(location, y0);
 
 	location = fun()->glGetUniformBlockIndex(program->getGLProgram(), "yScale");
 	fun()->glUniform1f(location, 0.1f);

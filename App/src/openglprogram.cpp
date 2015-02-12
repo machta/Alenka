@@ -1,8 +1,8 @@
 #include "openglprogram.h"
 
+#include "error.h"
+
 #include <cstdio>
-#include <stdexcept>
-#include <sstream>
 
 using namespace std;
 
@@ -33,12 +33,7 @@ OpenGLProgram::OpenGLProgram(const char* vertSource, const char* fragSource)
 	}
 #endif
 
-	if (linkStatus == GL_FALSE)
-	{
-		stringstream ss;
-		ss << "OpenGLProgram ('" << vertSource << "', '" << fragSource << "') link failed.";
-		throw runtime_error(ss.str());
-	}
+	checkNotErrorCode(linkStatus, GL_FALSE, "OpenGLProgram ('" << vertSource << "', '" << fragSource << "') link failed.");
 }
 
 OpenGLProgram::~OpenGLProgram()
@@ -49,12 +44,7 @@ OpenGLProgram::~OpenGLProgram()
 GLchar* OpenGLProgram::readSource(const char* filePath)
 {
 	FILE* file = fopen(filePath, "r");
-	if (file == nullptr)
-	{
-		stringstream ss;
-		ss << "File '" << filePath << "' could not be opened.";
-		throw runtime_error(ss.str());
-	}
+	checkNotErrorCode(file, nullptr, "File '" << filePath << "' could not be opened.");
 
 	fseek(file, 0, SEEK_END);
 	size_t size = ftell(file);
@@ -98,12 +88,7 @@ void OpenGLProgram::addShader(GLuint program, const char* filePath, GLenum type)
 	}
 #endif
 
-	if (compileStatus == GL_FALSE)
-	{
-		stringstream ss;
-		ss << "Shader '" << filePath << "' compilation failed.";
-		throw runtime_error(ss.str());
-	}
+	checkNotErrorCode(compileStatus, GL_FALSE, "Shader '" << filePath << "' compilation failed.");
 
 	fun()->glAttachShader(program, shader);
 

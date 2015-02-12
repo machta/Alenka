@@ -17,7 +17,8 @@ HEADERS += \
     src/SignalProcessor/signalprocessor.h \
     src/SignalProcessor/signalblock.h \
     src/openglprogram.h \
-    src/openglinterface.h
+    src/openglinterface.h \
+    src/error.h
 
 SOURCES += \
     src/DataFile/gdf2.cpp \

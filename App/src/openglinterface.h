@@ -1,12 +1,12 @@
 #ifndef OPENGLINTERFACE_H
 #define OPENGLINTERFACE_H
 
+#include "error.h"
+
 #include <QOpenGLFunctions_4_1_Core>
 #include <QOpenGLDebugLogger>
 
-#include <sstream>
 #include <iostream>
-#include <stdexcept>
 
 class OpenGLInterface
 {
@@ -26,20 +26,10 @@ protected:
 		if (functions == nullptr)
 		{
 			functions = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_4_1_Core>();
-			if (functions == nullptr)
-			{
-				stringstream ss;
-				ss << "versionFunctions<QOpenGLFunctions_4_1_Core>() failed.";
-				throw runtime_error(ss.str());
-			}
+			checkNotErrorCode(functions, nullptr, "versionFunctions<QOpenGLFunctions_4_1_Core>() failed.");
 
 			bool res = functions->initializeOpenGLFunctions();
-			if (res == false)
-			{
-				stringstream ss;
-				ss << "initializeOpenGLFunctions() failed.";
-				throw runtime_error(ss.str());
-			}
+			checkNotErrorCode(res, false, "initializeOpenGLFunctions() failed.");
 		}
 
 		checkGLErrors();
@@ -56,12 +46,7 @@ protected:
 			logger = new QOpenGLDebugLogger();
 
 			bool res = logger->initialize();
-			if (res == false)
-			{
-				stringstream ss;
-				ss << "logger->initialize() failed.";
-				throw runtime_error(ss.str());
-			}
+			checkNotErrorCode(res, false, "logger->initialize() failed.");
 		}
 
 		checkGLErrors();
@@ -89,9 +74,7 @@ private:
 
 		if (errorDetected)
 		{
-			stringstream ss;
-			ss << "OpenGL error detected.";
-			throw runtime_error(ss.str());
+			throw runtime_error("OpenGL error detected.");
 		}
 	}
 };

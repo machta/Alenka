@@ -1,8 +1,8 @@
 #include "openclprogram.h"
 
-#include <cstdio>
+#include "error.h"
 
-#include <stdexcept>
+#include <cstdio>
 
 using namespace std;
 
@@ -11,12 +11,7 @@ OpenCLProgram::OpenCLProgram(const char* source, OpenCLContext context)
 	cl_int err;
 
 	FILE* file = fopen(source, "r");
-	if (file == nullptr)
-	{
-		stringstream ss;
-		ss << "File '" << source << "' could not be opened.";
-		throw runtime_error(ss.str());
-	}
+	checkNotErrorCode(file, nullptr, "File '" << source << "' could not be opened.");
 
 	fseek(file, 0, SEEK_END);
 	size_t size = ftell(file);
@@ -28,20 +23,10 @@ OpenCLProgram::OpenCLProgram(const char* source, OpenCLContext context)
 	fread(tmp, sizeof(char), size, file);
 
 	program = clCreateProgramWithSource(context.getCLContext(), 1, const_cast<const char**>(&tmp), &size, &err);
-	if (err != CL_SUCCESS)
-	{
-		stringstream ss;
-		ss << "clCreateProgramWithSource returned with error code " << err << ".";
-		throw runtime_error(ss.str());
-	}
+	checkErrorCode(err, CL_SUCCESS, "clCreateProgramWithSource()");
 
 	err = clBuildProgram(program, 0, nullptr, nullptr, nullptr, nullptr);
-	if (err != CL_SUCCESS)
-	{
-		stringstream ss;
-		ss << "clBuildProgram returned with error code " << err << ".";
-		throw runtime_error(ss.str());
-	}
+	checkErrorCode(err, CL_SUCCESS, "clBuildProgram()");
 
 	// to do: print compilation output
 

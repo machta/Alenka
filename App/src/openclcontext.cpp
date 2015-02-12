@@ -1,8 +1,8 @@
 #include "openclcontext.h"
 
+#include "error.h"
+
 #include <algorithm>
-#include <stdexcept>
-#include <sstream>
 
 using namespace std;
 
@@ -30,12 +30,7 @@ OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device, cl_devi
 
 	cl_int err;
 	context = clCreateContext(nullptr, 1, devices + device, nullptr, nullptr, &err);
-	if (err != CL_SUCCESS)
-	{
-		stringstream ss;
-		ss << "clCreateContext returned with error code " << err << ".";
-		throw runtime_error(ss.str());
-	}
+	checkErrorCode(err, CL_SUCCESS, "clCreateContext()");
 
 	did = devices[device];
 

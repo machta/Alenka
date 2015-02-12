@@ -1,14 +1,13 @@
 #include "gdf2.h"
 
 #include "../options.h"
+#include "../error.h"
 
 #include <cstdlib>
 #include <cstdio>
 #include <cstdint>
 #include <algorithm>
 #include <cassert>
-#include <sstream>
-#include <stdexcept>
 
 using namespace std;
 
@@ -17,12 +16,7 @@ GDF2::GDF2(const char* filePath)
 	isLittleEndian = testLittleEndian();
 
 	file = fopen(filePath, "r+b");
-	if (file == nullptr)
-	{
-		stringstream ss;
-		ss << "File '" << filePath << "' not found.";
-		throw runtime_error(ss.str());
-	}
+	checkNotErrorCode(file, nullptr, "File '" << filePath << "' not found.");
 
 	// Load fixed header.
 	seekFile(0, true);
@@ -373,13 +367,8 @@ void GDF2::readFile(T* val, int elements)
 
 void GDF2::seekFile(size_t position, bool fromStart)
 {
-	size_t res = fseek(file, static_cast<long>(position), fromStart ? SEEK_SET : SEEK_CUR);
-	if (res != 0)
-	{
-		stringstream ss;
-		ss << "seekFile(" << position << ", " << fromStart << ") failed.";
-		throw runtime_error(ss.str());
-	}
+	int res = fseek(file, static_cast<long>(position), fromStart ? SEEK_SET : SEEK_CUR);
+	checkErrorCode(res, 0, "seekFile(" << position << ", " << fromStart << ") failed.");
 }
 
 

@@ -2,11 +2,9 @@
 #define OPENCLPROGRAM_H
 
 #include "openclcontext.h"
+#include "error.h"
 
 #include <CL/cl.h>
-
-#include <sstream>
-#include <stdexcept>
 
 class OpenCLProgram
 {
@@ -17,13 +15,9 @@ public:
 	cl_kernel createKernel(const char* kernelName)
 	{
 		cl_int err;
+
 		cl_kernel kernel = clCreateKernel(program, kernelName, &err);
-		if (err != CL_SUCCESS)
-		{
-			std::stringstream ss;
-			ss << "clCreateKernel returned with error code " << err << ".";
-			throw std::runtime_error(ss.str());
-		}
+		checkErrorCode(err, CL_SUCCESS, "clCreateKernel()");
 
 		return kernel;
 	}
