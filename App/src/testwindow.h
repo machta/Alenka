@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 
+#include "signalviewer.h"
+
 namespace Ui {
 class TestWindow;
 }

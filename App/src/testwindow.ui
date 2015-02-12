@@ -83,7 +83,7 @@
      <x>0</x>
      <y>0</y>
      <width>703</width>
-     <height>21</height>
+     <height>25</height>
     </rect>
    </property>
   </widget>
@@ -118,7 +118,7 @@
   <customwidget>
    <class>SignalViewer</class>
    <extends>QWidget</extends>
-   <header>signalviewer.h</header>
+   <header>src/signalviewer.h</header>
    <container>1</container>
    <slots>
     <signal>virtualWidthChanged(int)</signal>
