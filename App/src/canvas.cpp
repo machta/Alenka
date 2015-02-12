@@ -51,7 +51,10 @@ void Canvas::resizeGL(int w, int h)
 	QMatrix4x4 matrix;
 	matrix.ortho(rect);
 
-	GLuint location = fun()->glGetUniformBlockIndex(program->getGLProgram(), "transformMatrix");
+	fun()->glUseProgram(program->getGLProgram());
+
+	GLuint location = fun()->glGetUniformLocation(program->getGLProgram(), "transformMatrix");
+	checkNotErrorCode(location, -1, "glGetUniformLocation() failed.");
 	fun()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
 
 	checkGLMessages();
@@ -110,7 +113,8 @@ void Canvas::paintBlock(const SignalBlock& block)
 	//fun()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, nullptr);
 	fun()->glEnableVertexAttribArray(0);
 
-	GLuint location = fun()->glGetUniformBlockIndex(program->getGLProgram(), "firstSample");
+	GLuint location = fun()->glGetUniformLocation(program->getGLProgram(), "firstSample");
+	checkNotErrorCode(location, -1, "glGetUniformLocation() failed.");
 	fun()->glUniform1i(location, block.getFirstSample());
 
 	for (unsigned int i = 0; i < block.getchannelCount(); ++i)
@@ -121,11 +125,13 @@ void Canvas::paintBlock(const SignalBlock& block)
 
 void Canvas::paintChannel(unsigned int channel, const SignalBlock& block)
 {
-	GLuint location = fun()->glGetUniformBlockIndex(program->getGLProgram(), "y0");
+	GLuint location = fun()->glGetUniformLocation(program->getGLProgram(), "y0");
+	checkNotErrorCode(location, -1, "glGetUniformLocation() failed.");
 	float y0 = (channel + 0.5f)*height()/block.getchannelCount();
 	fun()->glUniform1f(location, y0);
 
-	location = fun()->glGetUniformBlockIndex(program->getGLProgram(), "yScale");
+	location = fun()->glGetUniformLocation(program->getGLProgram(), "yScale");
+	checkNotErrorCode(location, -1, "glGetUniformLocation() failed.");
 	fun()->glUniform1f(location, 0.1f);
 
 	GLint size = block.getLastSample() - block.getFirstSample() + 1;
