@@ -7,6 +7,12 @@
 namespace
 {
 template <typename T>
+void printEC(T val, std::stringstream& ss)
+{
+    ss << std::dec << val << "(0x" << std::hex << val << std::dec << ")";
+}
+
+template <typename T>
 void CEC(T val, T expected, std::string message, const char* file, int line)
 {
 	std::stringstream ss;
@@ -35,13 +41,6 @@ void CNEC(T val, std::string message, const char* file, int line)
 
 	throw std::runtime_error(ss.str());
 }
-
-template <typename T>
-void printEC(T val, std::stringstream& ss)
-{
-	ss << std::dec << val << "(0x" << std::hex << val << std::dec << ")";
-}
-
 }
 
 #define checkErrorCode(val_, expected_, message_) if(val_ != expected_) { std::stringstream ss; ss << message_; CEC(val_, expected_, ss.str(), __FILE__, __LINE__); }
