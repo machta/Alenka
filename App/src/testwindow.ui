@@ -53,13 +53,13 @@
       <item row="0" column="1">
        <widget class="QSlider" name="horizontalSlider">
         <property name="minimum">
-         <number>200</number>
+         <number>1000</number>
         </property>
         <property name="maximum">
-         <number>10000</number>
+         <number>500000</number>
         </property>
         <property name="value">
-         <number>1000</number>
+         <number>10000</number>
         </property>
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -83,7 +83,7 @@
      <x>0</x>
      <y>0</y>
      <width>703</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>
@@ -118,7 +118,7 @@
   <customwidget>
    <class>SignalViewer</class>
    <extends>QWidget</extends>
-   <header>src/signalviewer.h</header>
+   <header>signalviewer.h</header>
    <container>1</container>
    <slots>
     <signal>virtualWidthChanged(int)</signal>

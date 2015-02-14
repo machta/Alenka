@@ -43,7 +43,7 @@ private:
 	Canvas* canvas;
 	QScrollBar* scrollBar;
 	QVBoxLayout* box;
-	int virtualWidth = 1000;
+	int virtualWidth = 10000;
 	int position = 0;
 
 	void resizeSignalViewer()

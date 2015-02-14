@@ -41,23 +41,11 @@ void Canvas::initializeGL()
 	checkGLMessages();
 }
 
-void Canvas::resizeGL(int w, int h)
+void Canvas::resizeGL(int /*w*/, int /*h*/)
 {
-	const SignalViewer* parent = reinterpret_cast<SignalViewer*>(parentWidget());
+	//const SignalViewer* parent = reinterpret_cast<SignalViewer*>(parentWidget());
 
-	double ratio = samplePixelRatio();
-	QRectF rect(parent->getPosition()*ratio, 0, w*ratio, h);
-
-	QMatrix4x4 matrix;
-	matrix.ortho(rect);
-
-	fun()->glUseProgram(program->getGLProgram());
-
-	GLuint location = fun()->glGetUniformLocation(program->getGLProgram(), "transformMatrix");
-	checkNotErrorCode(location, -1, "glGetUniformLocation() failed.");
-	fun()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
-
-	checkGLMessages();
+	//checkGLMessages();
 }
 
 void Canvas::paintGL()
@@ -68,9 +56,21 @@ void Canvas::paintGL()
 	fun()->glBindVertexArray(vertexArray);
 
 	const SignalViewer* parent = reinterpret_cast<SignalViewer*>(parentWidget());
-
 	double ratio = samplePixelRatio();
 
+	// Update the transformMatrix.
+	QRectF rect(parent->getPosition()*ratio, 0, width()*ratio, height());
+
+	QMatrix4x4 matrix;
+	matrix.ortho(rect);
+
+	fun()->glUseProgram(program->getGLProgram());
+
+	GLuint location = fun()->glGetUniformLocation(program->getGLProgram(), "transformMatrix");
+	checkNotErrorCode(location, -1, "glGetUniformLocation() failed.");
+	fun()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
+
+	// Create the data block range needed.
 	int firstIndex = static_cast<int>(floor(parent->getPosition()*ratio)),
 	    lastIndex = static_cast<int>(ceil((parent->getPosition()+width())*ratio));
 
@@ -83,6 +83,7 @@ void Canvas::paintGL()
 		indexSet.insert(i);
 	}
 
+	// Render one block at a time.
 	while (indexSet.empty() == false)
 	{
 		SignalBlock block = signalProcessor->getAnyBlock(indexSet);
@@ -90,6 +91,7 @@ void Canvas::paintGL()
 		indexSet.erase(block.getIndex());
 	}
 
+	// Finish rendering.
 	fun()->glFlush();
 	fun()->glFinish();
 
@@ -109,13 +111,10 @@ double Canvas::samplePixelRatio()
 void Canvas::paintBlock(const SignalBlock& block)
 {
 	fun()->glBindBuffer(GL_ARRAY_BUFFER, block.geGLBuffer());
+
 	fun()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, (const GLvoid*)0);
 	//fun()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, nullptr);
 	fun()->glEnableVertexAttribArray(0);
-
-	GLuint location = fun()->glGetUniformLocation(program->getGLProgram(), "firstSample");
-	checkNotErrorCode(location, -1, "glGetUniformLocation() failed.");
-	fun()->glUniform1i(location, block.getFirstSample());
 
 	for (unsigned int i = 0; i < block.getchannelCount(); ++i)
 	{
@@ -132,8 +131,14 @@ void Canvas::paintChannel(unsigned int channel, const SignalBlock& block)
 
 	location = fun()->glGetUniformLocation(program->getGLProgram(), "yScale");
 	checkNotErrorCode(location, -1, "glGetUniformLocation() failed.");
-	fun()->glUniform1f(location, 0.1f);
+	fun()->glUniform1f(location, -0.000008f*height());
 
 	GLint size = block.getLastSample() - block.getFirstSample() + 1;
-	fun()->glDrawArrays(GL_LINE_STRIP, channel*size, size);
+	GLint first = channel*size;
+
+	location = fun()->glGetUniformLocation(program->getGLProgram(), "bufferOffset");
+	checkNotErrorCode(location, -1, "glGetUniformLocation() failed.");
+	fun()->glUniform1i(location, block.getFirstSample() - first);
+
+	fun()->glDrawArrays(GL_LINE_STRIP, first , size);
 }

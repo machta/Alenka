@@ -47,6 +47,8 @@ protected:
 
 			bool res = logger->initialize();
 			checkNotErrorCode(res, false, "logger->initialize() failed.");
+
+			logger->logMessage(QOpenGLDebugMessage::createApplicationMessage("OpenGL debug log initialized."));
 		}
 
 		checkGLErrors();
