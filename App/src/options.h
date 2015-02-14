@@ -1,5 +1,7 @@
 #include <boost/program_options.hpp>
 #include <string>
+#include <sstream>
+#include <stdexcept>
 
 #ifndef OPTIONS_H
 #define OPTIONS_H
@@ -13,21 +15,30 @@ public:
 	{
 		return vm[var];
 	}
-    const boost::program_options::variable_value& get(const std::string& var) const
-    {
-        return (*this)[var];
-    }
+	const boost::program_options::variable_value& get(const std::string& var) const
+	{
+		if (isSet(var))
+		{
+			return (*this)[var];
+		}
+		else
+		{
+			std::stringstream ss;
+			ss << "Option '" << var << "' has no value.";
+			throw std::runtime_error(ss.str());
+		}
+	}
 	bool isSet(const std::string& var) const
 	{
 		return vm.count(var) == 1;
 	}
-	boost::program_options::options_description getDescription()
+	const boost::program_options::options_description& getDescription() const
 	{
 		return desc;
 	}
 
 private:
-    boost::program_options::variables_map vm;
+	boost::program_options::variables_map vm;
 	boost::program_options::options_description desc;
 };
 
