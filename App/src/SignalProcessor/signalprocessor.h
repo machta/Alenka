@@ -6,14 +6,20 @@
 #include "signalblock.h"
 #include "../DataFile/datafile.h"
 #include "../options.h"
+#include "buffer.h"
 
-#include <inttypes.h>
+#include <cinttypes>
 #include <set>
+#include <array>
+#include <thread>
+#include <atomic>
+#include <mutex>
+#include <condition_variable>
 
 class SignalProcessor : public OpenGLInterface
 {
 public:
-	SignalProcessor(DataFile* file, uint memory = 1024*1024*1024, double bufferRatio = 1);
+	SignalProcessor(DataFile* file, unsigned int memory = 128*1024*1024, double bufferRatio = 1);
 	~SignalProcessor();
 
 	int64_t getBlockSize()
@@ -26,9 +32,21 @@ public:
 	SignalBlock getAnyBlock(const std::set<unsigned int>& index);
 
 private:
+	std::mutex mtx;
+
 	DataFile* dataFile;
-	GLuint buffer;
+	Buffer* rawBuffer;
 	float* tmpBuffer;
+	std::array<std::condition_variable, 2> cvs;
+
+	std::atomic<bool> threadsStop = false;
+	std::thread rawBufferFillerThread;
+
+	void rawBufferFiller();
+	void joinThreads()
+	{
+		rawBufferFillerThread.join();
+	}
 };
 
 #endif // SIGNALPROCESSOR_H

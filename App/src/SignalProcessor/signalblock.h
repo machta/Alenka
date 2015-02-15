@@ -8,7 +8,7 @@
 class SignalBlock
 {
 public:
-	SignalBlock(GLuint buffer, unsigned int index, unsigned int channelCount, int64_t firstSample, int64_t lastSample) :
+	SignalBlock(GLuint buffer, unsigned int index, unsigned int channelCount = 0, int64_t firstSample = 0, int64_t lastSample = 0) :
 		buffer(buffer), index(index), channelCount(channelCount), firstSample(firstSample), lastSample(lastSample) {}
 	~SignalBlock() {}
 

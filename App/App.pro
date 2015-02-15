@@ -18,7 +18,8 @@ HEADERS += \
     src/SignalProcessor/signalblock.h \
     src/openglprogram.h \
     src/openglinterface.h \
-    src/error.h
+    src/error.h \
+    src/SignalProcessor/buffer.h
 
 SOURCES += \
     src/DataFile/gdf2.cpp \
@@ -33,7 +34,8 @@ SOURCES += \
     src/SignalProcessor/signalprocessor.cpp \
     src/SignalProcessor/signalblock.cpp \
     src/openglprogram.cpp \
-    src/openglinterface.cpp
+    src/openglinterface.cpp \
+    src/SignalProcessor/buffer.cpp
 
 FORMS += \
     src/testwindow.ui

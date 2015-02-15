@@ -35,9 +35,9 @@ private:
 	void paintChannel(unsigned int channel, const SignalBlock& block);
 	void checkGLMessages()
 	{
-		for (auto m : log()->loggedMessages())
+		for (const auto& m : log()->loggedMessages())
 		{
-            std::cerr << "OpenGL message: " << m.message().toStdString() << std::endl;
+			std::cerr << "OpenGL message: " << m.message().toStdString() << std::endl;
 		}
 	}
 };
