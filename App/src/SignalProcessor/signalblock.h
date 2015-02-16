@@ -8,13 +8,13 @@
 class SignalBlock
 {
 public:
-	SignalBlock(GLuint buffer, unsigned int index, unsigned int channelCount = 0, int64_t firstSample = 0, int64_t lastSample = 0) :
-		buffer(buffer), index(index), channelCount(channelCount), firstSample(firstSample), lastSample(lastSample) {}
+	SignalBlock(GLuint vertexArray, unsigned int index, unsigned int channelCount = 0, int64_t firstSample = 0, int64_t lastSample = 0) :
+		vertexArray(vertexArray), index(index), channelCount(channelCount), firstSample(firstSample), lastSample(lastSample) {}
 	~SignalBlock() {}
 
-	GLuint geGLBuffer() const
+	GLuint geVertexArray() const
 	{
-		return buffer;
+		return vertexArray;
 	}
 	//... geCLBuffer(){}
 
@@ -36,7 +36,7 @@ public:
 	}
 
 private:
-	GLuint buffer;
+	GLuint vertexArray;
 	unsigned int index;
 	unsigned int channelCount;
 	int64_t firstSample;

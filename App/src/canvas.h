@@ -7,10 +7,6 @@
 #include "SignalProcessor/signalprocessor.h"
 #include "openglprogram.h"
 
-#include <QMatrix4x4>
-
-#include <QList>
-
 class Canvas : public QOpenGLWidget, public OpenGLInterface
 {
 	Q_OBJECT
@@ -26,9 +22,8 @@ protected:
 
 private:
 	SignalProcessor* signalProcessor = nullptr;
-	OpenGLProgram* program;
-	DataFile* dataFile;
-	//GLuint vertexArray;
+	OpenGLProgram* program = nullptr;
+	DataFile* dataFile = nullptr;
 
 	double samplePixelRatio();
 	void paintBlock(const SignalBlock& block);

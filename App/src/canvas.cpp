@@ -4,6 +4,8 @@
 #include "DataFile/gdf2.h"
 #include "signalviewer.h"
 
+#include <QMatrix4x4>
+
 #include <string>
 #include <cmath>
 #include <set>
@@ -23,8 +25,6 @@ Canvas::~Canvas()
 	delete signalProcessor;
 	delete program;
 	delete dataFile;
-
-	//fun()->glDeleteVertexArrays(1, &vertexArray);
 }
 
 void Canvas::initializeGL()
@@ -35,9 +35,7 @@ void Canvas::initializeGL()
 
 	program = new OpenGLProgram(PROGRAM_OPTIONS->get("vert").as<string>().c_str(),
 								PROGRAM_OPTIONS->get("frag").as<string>().c_str());
-
-	//fun()->glGenVertexArrays(1, &vertexArray);
-	//fun()->glBindVertexArray(vertexArray);
+	fun()->glUseProgram(program->getGLProgram());
 
 	fun()->glClearColor(1, 1, 1, 1);
 
@@ -51,26 +49,21 @@ void Canvas::resizeGL(int /*w*/, int /*h*/)
 
 	//const SignalViewer* parent = reinterpret_cast<SignalViewer*>(parentWidget());
 
-	//checkGLMessages();
+	checkGLMessages();
 }
 
 void Canvas::paintGL()
 {
 	fun()->glClear(GL_COLOR_BUFFER_BIT);
 
-	fun()->glUseProgram(program->getGLProgram());
-	//fun()->glBindVertexArray(vertexArray);
-
+	// Calculate the transformMatrix.
 	const SignalViewer* parent = reinterpret_cast<SignalViewer*>(parentWidget());
 	double ratio = samplePixelRatio();
 
-	// Update the transformMatrix.
 	QRectF rect(parent->getPosition()*ratio, 0, width()*ratio, height());
 
 	QMatrix4x4 matrix;
 	matrix.ortho(rect);
-
-	fun()->glUseProgram(program->getGLProgram());
 
 	GLuint location = fun()->glGetUniformLocation(program->getGLProgram(), "transformMatrix");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
@@ -95,11 +88,15 @@ void Canvas::paintGL()
 		SignalBlock block = signalProcessor->getAnyBlock(indexSet);
 		paintBlock(block);
 		indexSet.erase(block.getIndex());
+
+		checkGLMessages();
 	}
 
 	// Finish rendering.
 	fun()->glFlush();
 	fun()->glFinish();
+
+	fun()->glBindVertexArray(0);
 
 	checkGLMessages();
 }
@@ -116,28 +113,19 @@ double Canvas::samplePixelRatio()
 
 void Canvas::paintBlock(const SignalBlock& block)
 {
-	GLuint va;
-	fun()->glGenVertexArrays(1, &va);
-	fun()->glBindVertexArray(va);
-
-	fun()->glBindBuffer(GL_ARRAY_BUFFER, block.geGLBuffer());
-
-	fun()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, (const GLvoid*)0);
-	//fun()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, nullptr);
-	fun()->glEnableVertexAttribArray(0);
+	fun()->glBindVertexArray(block.geVertexArray());
 
 	for (unsigned int i = 0; i < block.getchannelCount(); ++i)
 	{
 		paintChannel(i, block);
 	}
 
-	cerr << "Block " << block.getIndex() << " painted." << endl;
-
-	fun()->glDeleteVertexArrays(1, &va);
+	cerr << "Block with index " << block.getIndex() << " painted." << endl;
 }
 
 void Canvas::paintChannel(unsigned int channel, const SignalBlock& block)
 {
+	// Set the uniform variables specific for every channel. (This could be moved to paintGL(), calculate all values at once and here update only index to arrays.)
 	GLuint location = fun()->glGetUniformLocation(program->getGLProgram(), "y0");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
 	float y0 = (channel + 0.5f)*height()/block.getchannelCount();
@@ -154,6 +142,7 @@ void Canvas::paintChannel(unsigned int channel, const SignalBlock& block)
 	checkNotErrorCode(location,static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
 	fun()->glUniform1i(location, block.getFirstSample() - first);
 
+	// Draw onto the screen.
 	fun()->glDrawArrays(GL_LINE_STRIP, first, size);
 }
 

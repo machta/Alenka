@@ -6,18 +6,37 @@ using namespace std;
 
 #define fun() fun_shortcut()
 
-Buffer::Buffer(unsigned int numberOfBlocks, condition_variable cvs[2]) :
-	inCV(cvs), outCV(cvs + 1),
+Buffer::Buffer(unsigned int numberOfBlocks, unsigned int blockSizeInBytes, condition_variable conditionVariables[2]) :
+	inCV(conditionVariables), outCV(conditionVariables + 1),
 	queue(queueComparator),
 	bufferTable(numberOfBlocks)
 {
+	vertexArrays.insert(vertexArrays.begin(), numberOfBlocks, 0);
+	fun()->glGenVertexArrays(numberOfBlocks, vertexArrays.data());
+
 	buffers.insert(buffers.begin(), numberOfBlocks, 0);
 	fun()->glGenBuffers(numberOfBlocks, buffers.data());
+
+	for (unsigned int i = 0; i < numberOfBlocks; ++i)
+	{
+		fun()->glBindVertexArray(vertexArrays[i]);
+		fun()->glBindBuffer(GL_ARRAY_BUFFER, buffers[i]);
+
+		fun()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, (const GLvoid*)0);
+		//fun()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+		fun()->glEnableVertexAttribArray(0);
+
+		fun()->glBufferData(GL_ARRAY_BUFFER, blockSizeInBytes, nullptr, GL_STATIC_DRAW);
+	}
+
+	fun()->glBindVertexArray(0);
 }
 
 Buffer::~Buffer()
 {
 	fun()->glDeleteBuffers(buffers.size(), buffers.data());
+	fun()->glDeleteVertexArrays(vertexArrays.size(), vertexArrays.data());
 }
 
 #undef fun
@@ -86,7 +105,7 @@ SignalBlock Buffer::fillBuffer(atomic<bool>* stop)
 		blockBufferMap[blockIndex] = lastBuffer;
 		queue.pop();
 
-		return SignalBlock(buffers[lastBuffer], blockIndex);
+		return SignalBlock(vertexArrays[lastBuffer], blockIndex);
 	}
 
 	return SignalBlock(0, 0);
@@ -134,7 +153,7 @@ SignalBlock Buffer::readAnyBlock(const set<unsigned int>& index, atomic<bool>* s
 			bufferTable.updateLastUsed(bufferIndex);
 			bufferTable.setNotInUse(bufferIndex, false);
 
-			return SignalBlock(buffers[bufferIndex], blockFound);
+			return SignalBlock(vertexArrays[bufferIndex], blockFound);
 		}
 	}
 

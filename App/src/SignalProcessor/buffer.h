@@ -19,7 +19,7 @@
 class Buffer : public OpenGLInterface
 {
 public:
-	Buffer(unsigned int numberOfBlocks, std::condition_variable cvs[2]);
+	Buffer(unsigned int numberOfBlocks, unsigned int blockSizeInBytes, std::condition_variable conditionVariables[2]);
 	~Buffer();
 
 	void clearBuffer();
@@ -34,6 +34,7 @@ private:
 	std::condition_variable* inCV;
 	std::condition_variable* outCV;
 
+	std::vector<GLuint> vertexArrays;
 	std::vector<GLuint> buffers;
 
 	struct QueueComparator

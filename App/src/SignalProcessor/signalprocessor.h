@@ -38,7 +38,7 @@ private:
 
 	DataFile* dataFile;
 	Buffer* rawBuffer;
-	float* tmpBuffer;
+	float* rawBufferThreadTmp;
 	std::array<std::condition_variable, 2> cvs;
 	std::atomic<bool> threadsStop{false};
 	std::thread rawBufferFillerThread;
