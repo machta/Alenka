@@ -45,7 +45,7 @@ OpenGLProgram::~OpenGLProgram()
 
 GLchar* OpenGLProgram::readSource(const char* filePath)
 {
-	FILE* file = fopen(filePath, "r");
+	FILE* file = fopen(filePath, "rb");
 	checkNotErrorCode(file, nullptr, "File '" << filePath << "' could not be opened.");
 
 	fseek(file, 0, SEEK_END);

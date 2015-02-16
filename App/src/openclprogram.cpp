@@ -11,7 +11,7 @@ OpenCLProgram::OpenCLProgram(const char* source, OpenCLContext context)
 {
 	cl_int err;
 
-	FILE* file = fopen(source, "r");
+	FILE* file = fopen(source, "rb");
 	checkNotErrorCode(file, nullptr, "File '" << source << "' could not be opened.");
 
 	fseek(file, 0, SEEK_END);

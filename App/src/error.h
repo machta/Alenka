@@ -50,20 +50,22 @@ void CNEC(T val, std::string message, const char* file, int line)
 
 inline std::size_t freadChecked(void* data, std::size_t size, std::size_t n, FILE* file)
 {
+	using namespace std;
+
 	size_t elementsRead = fread(data, size, n, file);
 	if (elementsRead != n)
 	{
-		std::stringstream ss;
+		stringstream ss;
 		if (feof(file))
 		{
 			ss << "EOF reached prematurely.";
 		}
 		else
 		{
-			//assert(ferror(file));
+			assert(ferror(file));
 			ss << "Error while reading data from file.";
 		}
-		throw std::runtime_error(ss.str());
+		throw runtime_error(ss.str());
 	}
 	return elementsRead;
 }
