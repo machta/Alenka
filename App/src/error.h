@@ -9,7 +9,7 @@ namespace
 template <typename T>
 void printEC(T val, std::stringstream& ss)
 {
-    ss << std::dec << val << "(0x" << std::hex << val << std::dec << ")";
+	ss << std::dec << val << "(0x" << std::hex << val << std::dec << ")";
 }
 
 template <typename T>
@@ -43,7 +43,7 @@ void CNEC(T val, std::string message, const char* file, int line)
 }
 }
 
-#define checkErrorCode(val_, expected_, message_) if(val_ != expected_) { std::stringstream ss; ss << message_; CEC(val_, expected_, ss.str(), __FILE__, __LINE__); }
-#define checkNotErrorCode(val_, expected_, message_) if(val_ == expected_) { std::stringstream ss; ss << message_; CNEC(val_, ss.str(), __FILE__, __LINE__); }
+#define checkErrorCode(val_, expected_, message_) if((val_) != (expected_)) { std::stringstream ss; ss << message_; CEC(val_, expected_, ss.str(), __FILE__, __LINE__); }
+#define checkNotErrorCode(val_, expected_, message_) if((val_) == (expected_)) { std::stringstream ss; ss << message_; CNEC(val_, ss.str(), __FILE__, __LINE__); }
 
 #endif // ERROR_H

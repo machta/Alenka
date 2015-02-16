@@ -8,11 +8,9 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory, double buf
 
 	tmpBuffer = new float[rawBufferBlockSize];
 
+	rawBufferDummySurface.create();
 	rawBuffer = new Buffer(memory/rawBufferBlockSize/sizeof(float), cvs.data());
-
-	rawBufferFillerThread = thread(&SignalProcessor::rawBufferFiller, this);
-
-	fun(); // Initialization needs to happen on thread #0.
+	rawBufferFillerThread = thread(&SignalProcessor::rawBufferFiller, this, &threadsStop, QOpenGLContext::currentContext());
 }
 
 SignalProcessor::~SignalProcessor()
@@ -44,13 +42,20 @@ SignalBlock SignalProcessor::getAnyBlock(const set<unsigned int>& index)
 	return SignalBlock(sb.geGLBuffer(), sb.getIndex(), dataFile->getChannelCount(), from, to);
 }
 
-void SignalProcessor::rawBufferFiller()
+void SignalProcessor::rawBufferFiller(atomic<bool>* stop, QOpenGLContext* parentContext)
 {
-	while (threadsStop.load() == false)
+	QOpenGLContext context;
+	context.setShareContext(parentContext);
+	checkErrorCode(context.create(), true, "creating a new OpenGL context");
+	checkErrorCode(context.makeCurrent(&rawBufferDummySurface), true, "make this context current");
+
+	OpenGLInterface local;
+
+	while (stop->load() == false)
 	{
 		SignalBlock sb = rawBuffer->fillBuffer(&threadsStop);
 
-		fun()->glBindBuffer(GL_ARRAY_BUFFER, sb.geGLBuffer());
+		local.fun()->glBindBuffer(GL_ARRAY_BUFFER, sb.geGLBuffer());
 
 		int64_t from = sb.getIndex()*getBlockSize(),
 				to = from + getBlockSize() - 1;
@@ -58,7 +63,7 @@ void SignalProcessor::rawBufferFiller()
 		dataFile->readData(tmpBuffer, from, to);
 
 		size_t size = getBlockSize()*dataFile->getChannelCount()*sizeof(float);
-		fun()->glBufferData(GL_ARRAY_BUFFER, size, tmpBuffer, GL_STATIC_DRAW);
+		local.fun()->glBufferData(GL_ARRAY_BUFFER, size, tmpBuffer, GL_STATIC_DRAW);
 
 		rawBuffer->release(sb);
 	}

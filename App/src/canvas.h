@@ -28,7 +28,7 @@ private:
 	SignalProcessor* signalProcessor = nullptr;
 	OpenGLProgram* program;
 	DataFile* dataFile;
-	GLuint vertexArray;
+	//GLuint vertexArray;
 
 	double samplePixelRatio();
 	void paintBlock(const SignalBlock& block);

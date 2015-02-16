@@ -12,6 +12,7 @@ using namespace std;
 
 Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent)
 {
+	int dummy = 5;
 
 }
 
@@ -21,7 +22,7 @@ Canvas::~Canvas()
 	delete program;
 	delete dataFile;
 
-	fun()->glDeleteVertexArrays(1, &vertexArray);
+	//fun()->glDeleteVertexArrays(1, &vertexArray);
 }
 
 void Canvas::initializeGL()
@@ -33,8 +34,8 @@ void Canvas::initializeGL()
 	program = new OpenGLProgram(PROGRAM_OPTIONS->get("vert").as<string>().c_str(),
 								PROGRAM_OPTIONS->get("frag").as<string>().c_str());
 
-	fun()->glGenVertexArrays(1, &vertexArray);
-	fun()->glBindVertexArray(vertexArray);
+	//fun()->glGenVertexArrays(1, &vertexArray);
+	//fun()->glBindVertexArray(vertexArray);
 
 	fun()->glClearColor(1, 1, 1, 1);
 
@@ -43,6 +44,8 @@ void Canvas::initializeGL()
 
 void Canvas::resizeGL(int /*w*/, int /*h*/)
 {
+	int dummy = 5;
+
 	//const SignalViewer* parent = reinterpret_cast<SignalViewer*>(parentWidget());
 
 	//checkGLMessages();
@@ -53,7 +56,7 @@ void Canvas::paintGL()
 	fun()->glClear(GL_COLOR_BUFFER_BIT);
 
 	fun()->glUseProgram(program->getGLProgram());
-	fun()->glBindVertexArray(vertexArray);
+	//fun()->glBindVertexArray(vertexArray);
 
 	const SignalViewer* parent = reinterpret_cast<SignalViewer*>(parentWidget());
 	double ratio = samplePixelRatio();
@@ -110,6 +113,10 @@ double Canvas::samplePixelRatio()
 
 void Canvas::paintBlock(const SignalBlock& block)
 {
+	GLuint va;
+	fun()->glGenVertexArrays(1, &va);
+	fun()->glBindVertexArray(va);
+
 	fun()->glBindBuffer(GL_ARRAY_BUFFER, block.geGLBuffer());
 
 	fun()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, (const GLvoid*)0);
@@ -120,6 +127,10 @@ void Canvas::paintBlock(const SignalBlock& block)
 	{
 		paintChannel(i, block);
 	}
+
+	cerr << "Block " << block.getIndex() << " painted." << endl;
+
+	fun()->glDeleteVertexArrays(1, &va);
 }
 
 void Canvas::paintChannel(unsigned int channel, const SignalBlock& block)
@@ -140,5 +151,5 @@ void Canvas::paintChannel(unsigned int channel, const SignalBlock& block)
 	checkNotErrorCode(location,static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
 	fun()->glUniform1i(location, block.getFirstSample() - first);
 
-	fun()->glDrawArrays(GL_LINE_STRIP, first , size);
+	fun()->glDrawArrays(GL_LINE_STRIP, first, size);
 }

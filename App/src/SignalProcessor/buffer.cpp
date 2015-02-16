@@ -55,7 +55,11 @@ SignalBlock Buffer::fillBuffer(atomic<bool>* stop)
 		{
 			// This block is already buffered -- only update its priority.
 			unsigned int bufferIndex = blockBufferMap[blockIndex];
+
 			bufferTable.setPriority(bufferIndex, min(priority, bufferTable.getPriority(bufferIndex)));
+
+			queue.pop();
+
 			continue;
 		}
 
@@ -76,6 +80,7 @@ SignalBlock Buffer::fillBuffer(atomic<bool>* stop)
 		bufferTable.setNotInUse(lastBuffer, false);
 
 		blockBufferMap[blockIndex] = lastBuffer;
+		queue.pop();
 
 		return SignalBlock(buffers[lastBuffer], blockIndex);
 	}
@@ -95,7 +100,7 @@ SignalBlock Buffer::readAnyBlock(const set<unsigned int>& index, atomic<bool>* s
 		int blockFound = -1, bufferIndex;
 		while (mapP != blockBufferMap.end() && setP != index.end())
 		{
-			if (mapP->first == *setP && bufferTable.getNotInUse(mapP->first) == false)
+			if (mapP->first == *setP && bufferTable.getNotInUse(mapP->first) == true)
 			{
 				blockFound = mapP->first;
 				bufferIndex = mapP->second;
@@ -116,6 +121,7 @@ SignalBlock Buffer::readAnyBlock(const set<unsigned int>& index, atomic<bool>* s
 		{
 			// No block found -- wait.
 			outCV->wait(lock);
+			continue; // not needed
 		}
 		else
 		{

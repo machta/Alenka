@@ -11,28 +11,37 @@
 class OpenGLInterface
 {
 public:
-	OpenGLInterface() {} // Initialization is done when the interface pointers are needed for the first time.
+	//OpenGLInterface() {} // Initialization is done when the interface pointers are needed for the first time.
 
 	~OpenGLInterface()
 	{
 		delete logger;
 	}
 
-protected:
-	QOpenGLFunctions_4_1_Core* fun()
+	//protected:
+	QOpenGLFunctions_4_1_Core* fun(const char* file, int line)
 	{
 		using namespace std;
 
 		if (functions == nullptr)
 		{
-			functions = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_4_1_Core>();
+			QOpenGLContext* c = QOpenGLContext::currentContext();
+			checkErrorCode(c->isValid(), true, "is current context valid");
+
+			functions = c->versionFunctions<QOpenGLFunctions_4_1_Core>();
 			checkNotErrorCode(functions, nullptr, "versionFunctions<QOpenGLFunctions_4_1_Core>() failed.");
 
-			bool res = functions->initializeOpenGLFunctions();
-			checkNotErrorCode(res, false, "initializeOpenGLFunctions() failed.");
+			checkNotErrorCode(functions->initializeOpenGLFunctions(), false, "initializeOpenGLFunctions() failed.");
 		}
 
 		checkGLErrors();
+#ifndef NDEBUG
+		lastCallFile = file;
+		lastCallLine = line;
+#else
+		(void*)file;
+		(void*)line;
+#endif
 
 		return functions;
 	}
@@ -45,8 +54,7 @@ protected:
 		{
 			logger = new QOpenGLDebugLogger();
 
-			bool res = logger->initialize();
-			checkNotErrorCode(res, false, "logger->initialize() failed.");
+			checkNotErrorCode(logger->initialize(), false, "logger->initialize() failed.");
 
 			logger->logMessage(QOpenGLDebugMessage::createApplicationMessage("OpenGL debug log initialized."));
 		}
@@ -60,6 +68,13 @@ private:
 	QOpenGLFunctions_4_1_Core* functions = nullptr;
 	QOpenGLDebugLogger* logger = nullptr;
 
+#ifndef NDEBUG
+	const char* lastCallFile;
+	int lastCallLine;
+	//	const char* lastCallFile = "";
+	//	int lastCallLine = 0;
+#endif
+
 	void checkGLErrors()
 	{
 		using namespace std;
@@ -71,7 +86,11 @@ private:
 		{
 			errorDetected = true;
 
-			cerr << "OpenGL error: " << err << "(0x" << hex << err << ")" << endl;
+			cerr << "OpenGL error: " << err << "(0x" << hex << err << dec << ")";
+#ifndef NDEBUG
+			cerr << " last call from " << lastCallFile << ":" << lastCallLine;
+#endif
+			cerr << endl;
 		}
 
 		if (errorDetected)
@@ -80,5 +99,7 @@ private:
 		}
 	}
 };
+
+#define fun() fun(__FILE__, __LINE__)
 
 #endif // OPENGLINTERFACE_H

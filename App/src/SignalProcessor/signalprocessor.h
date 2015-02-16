@@ -8,6 +8,8 @@
 #include "../options.h"
 #include "buffer.h"
 
+#include <QOffscreenSurface>
+
 #include <cinttypes>
 #include <set>
 #include <array>
@@ -19,7 +21,7 @@
 class SignalProcessor : public OpenGLInterface
 {
 public:
-	SignalProcessor(DataFile* file, unsigned int memory = 128*1024*1024, double bufferRatio = 1);
+	SignalProcessor(DataFile* file, unsigned int memory = 1*1024*1024, double bufferRatio = 1);
 	~SignalProcessor();
 
 	int64_t getBlockSize()
@@ -38,11 +40,11 @@ private:
 	Buffer* rawBuffer;
 	float* tmpBuffer;
 	std::array<std::condition_variable, 2> cvs;
-
 	std::atomic<bool> threadsStop = false;
 	std::thread rawBufferFillerThread;
+	QOffscreenSurface rawBufferDummySurface;
 
-	void rawBufferFiller();
+	void rawBufferFiller(std::atomic<bool>* stop, QOpenGLContext* parentContext);
 	void joinThreads()
 	{
 		rawBufferFillerThread.join();
