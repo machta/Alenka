@@ -340,21 +340,7 @@ void GDF2::readDataLocal(T* data, int64_t firstSample, int64_t lastSample)
 template<typename T>
 void GDF2::readFile(T* val, int elements)
 {
-	size_t elementsRead = fread(val, sizeof(T), elements, file);
-	if (elementsRead != elements)
-	{
-		stringstream ss;
-		if (feof(file))
-		{
-			ss << "EOF reached prematurely.";
-		}
-		else
-		{
-			assert(ferror(file));
-			ss << "Error while reading data from file.";
-		}
-		throw runtime_error(ss.str());
-	}
+	freadChecked(val, sizeof(T), elements, file);
 
 	if (isLittleEndian == false)
 	{

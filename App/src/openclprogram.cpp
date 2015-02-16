@@ -2,6 +2,7 @@
 
 #include "error.h"
 
+#include <cstdlib>
 #include <cstdio>
 
 using namespace std;
@@ -20,7 +21,7 @@ OpenCLProgram::OpenCLProgram(const char* source, OpenCLContext context)
 	tmp[size] = 0;
 
 	rewind(file);
-	fread(tmp, sizeof(char), size, file);
+	freadChecked(tmp, sizeof(char), size, file);
 
 	program = clCreateProgramWithSource(context.getCLContext(), 1, const_cast<const char**>(&tmp), &size, &err);
 	checkErrorCode(err, CL_SUCCESS, "clCreateProgramWithSource()");

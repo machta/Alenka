@@ -10,10 +10,12 @@
 
 using namespace std;
 
+#define fun() fun_shortcut()
+
 Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent)
 {
 	int dummy = 5;
-
+	(void)dummy;
 }
 
 Canvas::~Canvas()
@@ -45,6 +47,7 @@ void Canvas::initializeGL()
 void Canvas::resizeGL(int /*w*/, int /*h*/)
 {
 	int dummy = 5;
+	(void)dummy;
 
 	//const SignalViewer* parent = reinterpret_cast<SignalViewer*>(parentWidget());
 
@@ -153,3 +156,5 @@ void Canvas::paintChannel(unsigned int channel, const SignalBlock& block)
 
 	fun()->glDrawArrays(GL_LINE_STRIP, first, size);
 }
+
+#undef fun

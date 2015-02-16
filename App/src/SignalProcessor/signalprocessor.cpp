@@ -2,7 +2,7 @@
 
 using namespace std;
 
-SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory, double bufferRatio) : dataFile(file)
+SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory, double /*bufferRatio*/) : dataFile(file)
 {
 	unsigned int rawBufferBlockSize = getBlockSize()*file->getChannelCount();
 
@@ -42,6 +42,8 @@ SignalBlock SignalProcessor::getAnyBlock(const set<unsigned int>& index)
 	return SignalBlock(sb.geGLBuffer(), sb.getIndex(), dataFile->getChannelCount(), from, to);
 }
 
+#define fun() fun_shortcut()
+
 void SignalProcessor::rawBufferFiller(atomic<bool>* stop, QOpenGLContext* parentContext)
 {
 	QOpenGLContext context;
@@ -69,3 +71,4 @@ void SignalProcessor::rawBufferFiller(atomic<bool>* stop, QOpenGLContext* parent
 	}
 }
 
+#undef fun

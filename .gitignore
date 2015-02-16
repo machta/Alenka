@@ -78,3 +78,6 @@ build
 
 # config file
 */options.cfg
+
+# local excludes file
+excludes.txt

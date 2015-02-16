@@ -39,8 +39,8 @@ public:
 		lastCallFile = file;
 		lastCallLine = line;
 #else
-		(void*)file;
-		(void*)line;
+		//(void)file;
+		//(void)line;
 #endif
 
 		return functions;
@@ -100,6 +100,6 @@ private:
 	}
 };
 
-#define fun() fun(__FILE__, __LINE__)
+#define fun_shortcut() fun(__FILE__, __LINE__)
 
 #endif // OPENGLINTERFACE_H

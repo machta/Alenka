@@ -6,6 +6,8 @@
 
 using namespace std;
 
+#define fun() fun_shortcut()
+
 OpenGLProgram::OpenGLProgram(const char* vertSource, const char* fragSource)
 {
 	program = fun()->glCreateProgram();
@@ -53,7 +55,7 @@ GLchar* OpenGLProgram::readSource(const char* filePath)
 	source[size] = 0;
 
 	rewind(file);
-	fread(source, sizeof(char), size, file);
+	freadChecked(source, sizeof(char), size, file);
 
 	fclose(file);
 
@@ -95,3 +97,4 @@ void OpenGLProgram::addShader(GLuint program, const char* filePath, GLenum type)
 	fun()->glDeleteShader(shader);
 }
 
+#undef fun

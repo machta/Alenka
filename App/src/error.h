@@ -3,6 +3,8 @@
 
 #include <sstream>
 #include <stdexcept>
+#include <cstdio>
+#include <cassert>
 
 namespace
 {
@@ -45,5 +47,25 @@ void CNEC(T val, std::string message, const char* file, int line)
 
 #define checkErrorCode(val_, expected_, message_) if((val_) != (expected_)) { std::stringstream ss; ss << message_; CEC(val_, expected_, ss.str(), __FILE__, __LINE__); }
 #define checkNotErrorCode(val_, expected_, message_) if((val_) == (expected_)) { std::stringstream ss; ss << message_; CNEC(val_, ss.str(), __FILE__, __LINE__); }
+
+inline std::size_t freadChecked(void* data, std::size_t size, std::size_t n, FILE* file)
+{
+	size_t elementsRead = fread(data, size, n, file);
+	if (elementsRead != n)
+	{
+		std::stringstream ss;
+		if (feof(file))
+		{
+			ss << "EOF reached prematurely.";
+		}
+		else
+		{
+			//assert(ferror(file));
+			ss << "Error while reading data from file.";
+		}
+		throw std::runtime_error(ss.str());
+	}
+	return elementsRead;
+}
 
 #endif // ERROR_H

@@ -40,7 +40,7 @@ private:
 	Buffer* rawBuffer;
 	float* tmpBuffer;
 	std::array<std::condition_variable, 2> cvs;
-	std::atomic<bool> threadsStop = false;
+	std::atomic<bool> threadsStop{false};
 	std::thread rawBufferFillerThread;
 	QOffscreenSurface rawBufferDummySurface;
 

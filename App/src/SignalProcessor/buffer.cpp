@@ -4,6 +4,8 @@
 
 using namespace std;
 
+#define fun() fun_shortcut()
+
 Buffer::Buffer(unsigned int numberOfBlocks, condition_variable cvs[2]) :
 	inCV(cvs), outCV(cvs + 1),
 	queue(queueComparator),
@@ -17,6 +19,8 @@ Buffer::~Buffer()
 {
 	fun()->glDeleteBuffers(buffers.size(), buffers.data());
 }
+
+#undef fun
 
 void Buffer::clearBuffer()
 {
@@ -84,6 +88,8 @@ SignalBlock Buffer::fillBuffer(atomic<bool>* stop)
 
 		return SignalBlock(buffers[lastBuffer], blockIndex);
 	}
+
+	return SignalBlock(0, 0);
 }
 
 SignalBlock Buffer::readAnyBlock(const set<unsigned int>& index, atomic<bool>* stop)
@@ -131,6 +137,8 @@ SignalBlock Buffer::readAnyBlock(const set<unsigned int>& index, atomic<bool>* s
 			return SignalBlock(buffers[bufferIndex], blockFound);
 		}
 	}
+
+	return SignalBlock(0, 0);
 }
 
 void Buffer::release(const SignalBlock& block)
