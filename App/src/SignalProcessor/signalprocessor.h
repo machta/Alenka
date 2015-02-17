@@ -21,17 +21,29 @@
 class SignalProcessor : public OpenGLInterface
 {
 public:
-	SignalProcessor(DataFile* file, unsigned int memory = 1*1024*1024, double bufferRatio = 1);
+	SignalProcessor(DataFile* file, unsigned int memory = PROGRAM_OPTIONS->get("memoryBuffersSize").as<unsigned int>(), double bufferRatio = 1);
 	~SignalProcessor();
 
 	int64_t getBlockSize()
 	{
-		return PROGRAM_OPTIONS->get("blockSize").as<int>();
+		return PROGRAM_OPTIONS->get("blockSize").as<unsigned int>();
 	}
 
 	// ..
 
 	SignalBlock getAnyBlock(const std::set<unsigned int>& index);
+	void release(const SignalBlock& block)
+	{
+		rawBuffer->release(block);
+	}
+	void release(const SignalBlock& block, int newPriority)
+	{
+		rawBuffer->release(block, newPriority);
+	}
+	void prepareBlocks(const std::set<unsigned int>& index, int priority)
+	{
+		rawBuffer->enqueue(index, priority);
+	}
 
 private:
 	std::mutex mtx;

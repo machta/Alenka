@@ -9,7 +9,7 @@ public:
 	OpenGLProgram(const char* vertSource, const char* fragSource);
 	~OpenGLProgram();
 
-	GLuint getGLProgram()
+	GLuint getGLProgram() const
 	{
 		return program;
 	}
@@ -17,8 +17,8 @@ public:
 private:
 	GLuint program;
 
-	void addShader(GLuint program, const char* filePath, GLenum type);
 	GLchar* readSource(const char* filePath);
+	void addShader(GLuint program, const char* filePath, GLenum type);
 };
 
 #endif // OPENGLPROGRAM_H

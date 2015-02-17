@@ -22,15 +22,15 @@ Buffer::Buffer(unsigned int numberOfBlocks, unsigned int blockSizeInBytes, condi
 		fun()->glBindVertexArray(vertexArrays[i]);
 		fun()->glBindBuffer(GL_ARRAY_BUFFER, buffers[i]);
 
-		fun()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, (const GLvoid*)0);
-		//fun()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, nullptr);
-
+		fun()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(0));
 		fun()->glEnableVertexAttribArray(0);
 
-		fun()->glBufferData(GL_ARRAY_BUFFER, blockSizeInBytes, nullptr, GL_STATIC_DRAW);
+		//fun()->glBufferData(GL_ARRAY_BUFFER, blockSizeInBytes, nullptr, GL_STATIC_DRAW);
 	}
 
+	fun()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 	fun()->glBindVertexArray(0);
+	fun()->glFlush();
 }
 
 Buffer::~Buffer()
@@ -102,13 +102,23 @@ SignalBlock Buffer::fillBuffer(atomic<bool>* stop)
 		bufferTable.setPriority(lastBuffer, priority);
 		bufferTable.setNotInUse(lastBuffer, false);
 
+		cerr << "Block " << blockIndex << " loaded into memory." << endl;
+		if (bufferBlockMap.count(lastBuffer))
+		{
+			cerr << "Block " << bufferBlockMap[lastBuffer] << " replaced in memory." << endl;
+			blockBufferMap.erase(bufferBlockMap[lastBuffer]);
+		}
+
+		bufferBlockMap[lastBuffer] = blockIndex;
 		blockBufferMap[blockIndex] = lastBuffer;
+		assert(bufferBlockMap.size() == blockBufferMap.size());
+
 		queue.pop();
 
-		return SignalBlock(vertexArrays[lastBuffer], blockIndex);
+		return SignalBlock(vertexArrays[lastBuffer], buffers[lastBuffer], blockIndex);
 	}
 
-	return SignalBlock(0, 0);
+	return SignalBlock(0, 0, 0);
 }
 
 SignalBlock Buffer::readAnyBlock(const set<unsigned int>& index, atomic<bool>* stop)
@@ -125,7 +135,7 @@ SignalBlock Buffer::readAnyBlock(const set<unsigned int>& index, atomic<bool>* s
 		int blockFound = -1, bufferIndex;
 		while (mapP != blockBufferMap.end() && setP != index.end())
 		{
-			if (mapP->first == *setP && bufferTable.getNotInUse(mapP->first) == true)
+			if (mapP->first == *setP && bufferTable.getNotInUse(mapP->second) == true)
 			{
 				blockFound = mapP->first;
 				bufferIndex = mapP->second;
@@ -153,11 +163,11 @@ SignalBlock Buffer::readAnyBlock(const set<unsigned int>& index, atomic<bool>* s
 			bufferTable.updateLastUsed(bufferIndex);
 			bufferTable.setNotInUse(bufferIndex, false);
 
-			return SignalBlock(vertexArrays[bufferIndex], blockFound);
+			return SignalBlock(vertexArrays[bufferIndex], buffers[bufferIndex], blockFound);
 		}
 	}
 
-	return SignalBlock(0, 0);
+	return SignalBlock(0, 0, 0);
 }
 
 void Buffer::release(const SignalBlock& block)

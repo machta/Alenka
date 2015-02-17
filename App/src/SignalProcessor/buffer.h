@@ -47,6 +47,7 @@ private:
 	std::priority_queue<std::pair<unsigned int, int>, std::vector<std::pair<unsigned int, int>>, QueueComparator> queue;
 
 	std::map<unsigned int, unsigned int> blockBufferMap;
+	std::map<unsigned int, unsigned int> bufferBlockMap;
 
 	struct Table
 	{

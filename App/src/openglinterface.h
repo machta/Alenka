@@ -19,7 +19,7 @@ public:
 	}
 
 	//protected:
-	QOpenGLFunctions_4_1_Core* fun(const char* file, int line)
+	QOpenGLFunctions_4_1_Core* fun(const char* file = "", int line = 0)
 	{
 		using namespace std;
 

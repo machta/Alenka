@@ -14,7 +14,7 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory, double /*b
 	unsigned int rawBufferBlockCount = memory/rawBufferBytes;
 	if (rawBufferBlockCount <= 0)
 	{
-		throw runtime_error("Not enough availible memory for the rawBuffer");
+		throw runtime_error("Not enough available memory for the rawBuffer");
 	}
 
 	rawBufferDummySurface.create();
@@ -49,7 +49,7 @@ SignalBlock SignalProcessor::getAnyBlock(const set<unsigned int>& index)
 	int64_t from = sb.getIndex()*getBlockSize(),
 			to = from + getBlockSize() - 1;
 
-	return SignalBlock(sb.geVertexArray(), sb.getIndex(), dataFile->getChannelCount(), from, to);
+	return SignalBlock(sb.geGLVertexArray(), sb.getGLBuffer(), sb.getIndex(), dataFile->getChannelCount(), from, to);
 }
 
 #define fun() fun_shortcut()
@@ -67,9 +67,7 @@ void SignalProcessor::rawBufferFiller(atomic<bool>* stop, QOpenGLContext* parent
 	{
 		SignalBlock sb = rawBuffer->fillBuffer(&threadsStop);
 
-		//local.fun()->glBindBuffer(GL_ARRAY_BUFFER, sb);
-		local.fun()->glBindVertexArray(sb.geVertexArray());
-		local.fun();
+		local.fun()->glBindBuffer(GL_ARRAY_BUFFER, sb.getGLBuffer());
 
 		int64_t from = sb.getIndex()*getBlockSize(),
 				to = from + getBlockSize() - 1;
@@ -77,12 +75,12 @@ void SignalProcessor::rawBufferFiller(atomic<bool>* stop, QOpenGLContext* parent
 		dataFile->readData(rawBufferThreadTmp, from, to);
 
 		size_t size = getBlockSize()*dataFile->getChannelCount()*sizeof(float);
-		local.fun()->glBufferSubData(GL_ARRAY_BUFFER, 0, size, rawBufferThreadTmp);
-		//local.fun()->glBufferData(GL_ARRAY_BUFFER, size, tmpBuffer, GL_STATIC_DRAW);
+		//local.fun()->glBufferSubData(GL_ARRAY_BUFFER, 0, size, rawBufferThreadTmp);
+		local.fun()->glBufferData(GL_ARRAY_BUFFER, size, rawBufferThreadTmp, GL_STATIC_DRAW);
 
+		local.fun()->glBindBuffer(GL_ARRAY_BUFFER, 0);
+		local.fun()->glFlush();
 		rawBuffer->release(sb);
-
-		fun()->glBindVertexArray(0);
 	}
 }
 
