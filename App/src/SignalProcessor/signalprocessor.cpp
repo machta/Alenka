@@ -44,7 +44,7 @@ SignalProcessor::~SignalProcessor()
 
 SignalBlock SignalProcessor::getAnyBlock(const set<unsigned int>& index)
 {
-	SignalBlock sb = rawBuffer->readAnyBlock(index, &threadsStop);
+	SignalBlock sb = rawBuffer->readAnyBlock(index, nullptr);
 
 	int64_t from = sb.getIndex()*getBlockSize(),
 			to = from + getBlockSize() - 1;
@@ -63,9 +63,15 @@ void SignalProcessor::rawBufferFiller(atomic<bool>* stop, QOpenGLContext* parent
 
 	OpenGLInterface local;
 
-	while (stop->load() == false)
+	//while (stop->load() == false)
+	while (1)
 	{
-		SignalBlock sb = rawBuffer->fillBuffer(&threadsStop);
+		SignalBlock sb = rawBuffer->fillBuffer(stop);
+
+		if (stop->load() == true)
+		{
+			break;
+		}
 
 		local.fun()->glBindBuffer(GL_ARRAY_BUFFER, sb.getGLBuffer());
 
@@ -75,8 +81,15 @@ void SignalProcessor::rawBufferFiller(atomic<bool>* stop, QOpenGLContext* parent
 		dataFile->readData(rawBufferThreadTmp, from, to);
 
 		size_t size = getBlockSize()*dataFile->getChannelCount()*sizeof(float);
-		//local.fun()->glBufferSubData(GL_ARRAY_BUFFER, 0, size, rawBufferThreadTmp);
-		local.fun()->glBufferData(GL_ARRAY_BUFFER, size, rawBufferThreadTmp, GL_STATIC_DRAW);
+
+		if (REALLOCATE_BUFFER)
+		{
+			local.fun()->glBufferData(GL_ARRAY_BUFFER, size, rawBufferThreadTmp, GL_STATIC_DRAW);
+		}
+		else
+		{
+			local.fun()->glBufferSubData(GL_ARRAY_BUFFER, 0, size, rawBufferThreadTmp);
+		}
 
 		local.fun()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 		local.fun()->glFlush();

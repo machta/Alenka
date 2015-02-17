@@ -5,6 +5,7 @@
 
 #include "signalblock.h"
 
+#include <cstdio>
 #include <algorithm>
 #include <set>
 #include <array>
@@ -15,6 +16,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <utility>
+#include <limits>
 
 class Buffer : public OpenGLInterface
 {
@@ -49,9 +51,8 @@ private:
 	std::map<unsigned int, unsigned int> blockBufferMap;
 	std::map<unsigned int, unsigned int> bufferBlockMap;
 
-	struct Table
+	class Table
 	{
-	private:
 		bool dirty = true;
 		std::vector<unsigned int> order;
 		std::vector<bool> notInUse;
@@ -68,7 +69,7 @@ private:
 			}
 
 			notInUse.insert(notInUse.begin(), blocks, true);
-			priority.insert(priority.begin(), blocks, 0);
+			priority.insert(priority.begin(), blocks, std::numeric_limits<int>::max());
 			lastUsed.insert(lastUsed.begin(), blocks, 0);
 		}
 
@@ -107,6 +108,7 @@ private:
 
 				std::sort(order.begin(), order.end(), predicate);
 			}
+
 			return order[i];
 		}
 		unsigned int getLastOrder()
@@ -167,6 +169,40 @@ private:
 		return bufferIndex;
 	}
 
+	void printTable()
+	{
+		using namespace std;
+
+		//fprintf(stderr, "Buffer Table:\n");
+
+		//fprintf(stderr, "");
+		fprintf(stderr, "|  blockI notInUse priority lastUsed\n"); // 8 chars per collumn
+
+		for (unsigned int i = 0; i < buffers.size(); ++i)
+		{
+			fprintf(stderr, "|");
+			int order = bufferTable.getOrder(i);
+			if (bufferBlockMap.count(order) == 0)
+			{
+				fprintf(stderr, "   empty ");
+			}
+			else
+			{
+				fprintf(stderr, "%8u ", bufferBlockMap[order]);
+			}
+			fprintf(stderr, "%8s ", bufferTable.getNotInUse(order) ? "true" : "false");
+			if (bufferTable.getPriority(order) == std::numeric_limits<int>::max())
+			{
+				fprintf(stderr, "     inf ");
+			}
+			else
+			{
+				fprintf(stderr, "%8d ", bufferTable.getPriority(order));
+			}
+			fprintf(stderr, "%8u", bufferTable.getLastUsed(order));
+			fprintf(stderr, "\n");
+		}
+	}
 };
 
 #endif // BUFFER_H

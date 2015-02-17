@@ -25,7 +25,10 @@ Buffer::Buffer(unsigned int numberOfBlocks, unsigned int blockSizeInBytes, condi
 		fun()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(0));
 		fun()->glEnableVertexAttribArray(0);
 
-		//fun()->glBufferData(GL_ARRAY_BUFFER, blockSizeInBytes, nullptr, GL_STATIC_DRAW);
+		if (!REALLOCATE_BUFFER)
+		{
+			fun()->glBufferData(GL_ARRAY_BUFFER, blockSizeInBytes, nullptr, GL_STATIC_DRAW);
+		}
 	}
 
 	fun()->glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -87,6 +90,7 @@ SignalBlock Buffer::fillBuffer(atomic<bool>* stop)
 		}
 
 		unsigned int lastBuffer = bufferTable.getLastOrder();
+		//printTable();
 
 		if (bufferTable.getNotInUse(lastBuffer) == false || priority > bufferTable.getPriority(lastBuffer))
 		{
@@ -99,13 +103,14 @@ SignalBlock Buffer::fillBuffer(atomic<bool>* stop)
 		assert(priority <= bufferTable.getPriority(lastBuffer));
 
 		// Reserve the last buffer, update blockBufferMap and return the appropriate object.
-		bufferTable.setPriority(lastBuffer, priority);
 		bufferTable.setNotInUse(lastBuffer, false);
+		bufferTable.setPriority(lastBuffer, priority);
+		bufferTable.updateLastUsed(lastBuffer);
 
-		cerr << "Block " << blockIndex << " loaded into memory." << endl;
+		//cerr << "Block " << blockIndex << " loaded into memory." << endl;
 		if (bufferBlockMap.count(lastBuffer))
 		{
-			cerr << "Block " << bufferBlockMap[lastBuffer] << " replaced in memory." << endl;
+			//cerr << "Block " << bufferBlockMap[lastBuffer] << " replaced in memory." << endl;
 			blockBufferMap.erase(bufferBlockMap[lastBuffer]);
 		}
 
@@ -127,7 +132,7 @@ SignalBlock Buffer::readAnyBlock(const set<unsigned int>& index, atomic<bool>* s
 
 	unique_lock<mutex> lock(mtx);
 
-	while (stop->load() == false)
+	while (stop == nullptr || stop->load() == false)
 	{
 		// Try to find if any block is already buffered.
 		auto mapP = blockBufferMap.begin();

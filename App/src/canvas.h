@@ -35,6 +35,18 @@ private:
 			std::cerr << "OpenGL message: " << m.message().toStdString() << std::endl;
 		}
 	}
+
+	template <typename T>
+	std::set<T> createSetFromRange(T from, T to)
+	{
+		std::set<unsigned int> s;
+		for (int i = from; i <= to; ++i)
+		{
+			s.insert(i);
+		}
+
+		return s;
+	}
 };
 
 #endif // CANVAS_H
