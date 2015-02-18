@@ -1,12 +1,13 @@
 #ifndef PRIORITYCACHELOGIC_H
 #define PRIORITYCACHELOGIC_H
 
+#include <algorithm>
+#include <cassert>
 #include <cstdio>
 #include <queue>
+#include <limits>
 #include <map>
 #include <set>
-#include <limits>
-#include <cassert>
 
 class PriorityCacheLogicTable
 {

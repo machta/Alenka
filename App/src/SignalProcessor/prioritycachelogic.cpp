@@ -39,7 +39,7 @@ bool PriorityCacheLogic::fill(unsigned int* cacheIndex, int* index)
 		else
 		{
 			unsigned int lastCacheIndex = table.getLast();
-			table.printTable(cacheIndexMap);
+			//table.printTable(cacheIndexMap);
 
 			if (table.getInUse(lastCacheIndex) || table.getPriority(lastCacheIndex) < topPriority)
 			{
