@@ -39,7 +39,7 @@ private:
 	template <typename T>
 	std::set<T> createSetFromRange(T from, T to)
 	{
-		std::set<unsigned int> s;
+		std::set<T> s;
 		for (int i = from; i <= to; ++i)
 		{
 			s.insert(i);

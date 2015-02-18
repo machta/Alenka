@@ -6,13 +6,13 @@
 #include "signalblock.h"
 #include "../DataFile/datafile.h"
 #include "../options.h"
-#include "buffer.h"
+#include "prioritycachelogic.h"
 
 #include <QOffscreenSurface>
 
 #include <cinttypes>
 #include <set>
-#include <array>
+#include <vector>
 #include <thread>
 #include <atomic>
 #include <mutex>
@@ -24,43 +24,47 @@ public:
 	SignalProcessor(DataFile* file, unsigned int memory = PROGRAM_OPTIONS->get("memoryBuffersSize").as<unsigned int>(), double bufferRatio = 1);
 	~SignalProcessor();
 
-	int64_t getBlockSize()
+	int64_t getBlockSize() const
 	{
 		return PROGRAM_OPTIONS->get("blockSize").as<unsigned int>();
 	}
 
 	// ..
 
-	SignalBlock getAnyBlock(const std::set<unsigned int>& index);
+	SignalBlock getAnyBlock(const std::set<int>& indexSet);
 	void release(const SignalBlock& block)
 	{
-		rawBuffer->release(block);
+		std::lock_guard<std::mutex> lock(dataFileCacheMutex);
+		dataFileCacheLogic->release(block.getIndex());
+		dataFileCacheInCV.notify_one();
 	}
 	void release(const SignalBlock& block, int newPriority)
 	{
-		rawBuffer->release(block, newPriority);
+		std::lock_guard<std::mutex> lock(dataFileCacheMutex);
+		dataFileCacheLogic->release(block.getIndex(), newPriority);
+		dataFileCacheInCV.notify_one();
 	}
-	void prepareBlocks(const std::set<unsigned int>& index, int priority)
+	void prepareBlocks(const std::set<int>& indexSet, int priority)
 	{
-		rawBuffer->enqueue(index, priority);
+		std::lock_guard<std::mutex> lock(dataFileCacheMutex);
+		dataFileCacheLogic->enqueue(indexSet, priority);
+		dataFileCacheInCV.notify_all();
 	}
 
 private:
-	std::mutex mtx;
-
 	DataFile* dataFile;
-	Buffer* rawBuffer;
-	float* rawBufferThreadTmp;
-	std::array<std::condition_variable, 2> cvs;
-	std::atomic<bool> threadsStop{false};
-	std::thread rawBufferFillerThread;
-	QOffscreenSurface rawBufferDummySurface;
+	std::atomic<bool> threadsStop {false};
+	GLuint vertexArray;
+	GLuint buffer;
 
-	void rawBufferFiller(std::atomic<bool>* stop, QOpenGLContext* parentContext);
-	void joinThreads()
-	{
-		rawBufferFillerThread.join();
-	}
+	std::mutex dataFileCacheMutex;
+	std::condition_variable dataFileCacheInCV;
+	std::condition_variable dataFileCacheOutCV;
+	std::vector<float*> dataFileCache;
+	PriorityCacheLogic* dataFileCacheLogic;
+	std::thread dataFileCacherFillerThread;
+
+	void dataFileCacheFiller(std::atomic<bool>* stop);
 };
 
 #endif // SIGNALPROCESSOR_H

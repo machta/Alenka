@@ -19,7 +19,7 @@ HEADERS += \
     src/openglprogram.h \
     src/openglinterface.h \
     src/error.h \
-    src/SignalProcessor/buffer.h
+    src/SignalProcessor/prioritycachelogic.h
 
 SOURCES += \
     src/DataFile/gdf2.cpp \
@@ -35,7 +35,7 @@ SOURCES += \
     src/SignalProcessor/signalblock.cpp \
     src/openglprogram.cpp \
     src/openglinterface.cpp \
-    src/SignalProcessor/buffer.cpp
+    src/SignalProcessor/prioritycachelogic.cpp
 
 FORMS += \
     src/testwindow.ui

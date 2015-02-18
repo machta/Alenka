@@ -70,19 +70,19 @@ void Canvas::paintGL()
 	fun()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
 
 	// Create the data block range needed.
-	unsigned int firstIndex = static_cast<unsigned int>(floor(parent->getPosition()*ratio)),
-				 lastIndex = static_cast<unsigned int>(ceil((parent->getPosition()+width())*ratio));
+	int firstIndex = static_cast<unsigned int>(floor(parent->getPosition()*ratio)),
+		lastIndex = static_cast<unsigned int>(ceil((parent->getPosition()+width())*ratio));
 
 	firstIndex /= signalProcessor->getBlockSize();
 	lastIndex /= signalProcessor->getBlockSize();
 
-	set<unsigned int> indexSet = createSetFromRange(firstIndex, lastIndex);
+	set<int> indexSet = createSetFromRange(firstIndex, lastIndex);
 
 	// Notify the signal processor to prepare some blocks.
 	signalProcessor->prepareBlocks(indexSet, 0);
 
-	unsigned int size = lastIndex - firstIndex + 1;
-	set<unsigned int> nextIndexSet = createSetFromRange(firstIndex + size, lastIndex + size);
+	int size = lastIndex - firstIndex + 1;
+	set<int> nextIndexSet = createSetFromRange(firstIndex + size, lastIndex + size);
 	signalProcessor->prepareBlocks(nextIndexSet, 2);
 
 	// Render one block at a time.
@@ -101,7 +101,7 @@ void Canvas::paintGL()
 
 	// Finish rendering.
 	fun()->glFlush();
-	fun()->glFinish();
+	//fun()->glFinish();
 
 	fun()->glBindVertexArray(0);
 
@@ -148,7 +148,9 @@ void Canvas::paintChannel(unsigned int channel, const SignalBlock& block)
 	fun()->glUniform1i(location, block.getFirstSample() - first);
 
 	// Draw onto the screen.
+	fun();
 	fun()->glDrawArrays(GL_LINE_STRIP, first, size);
+	fun();
 }
 
 #undef fun

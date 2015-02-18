@@ -5,96 +5,142 @@
 
 using namespace std;
 
+#define fun() fun_shortcut()
+
 SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory, double /*bufferRatio*/) : dataFile(file)
 {
-	unsigned int rawBufferBlockSize = getBlockSize()*file->getChannelCount();
-	unsigned int rawBufferBytes = rawBufferBlockSize*sizeof(float);
+	unsigned int dataFileCacheBlockSize = getBlockSize()*file->getChannelCount();
 
-	//unsigned int rawBufferBlockCounts = max<unsigned int>(1, memory/rawBufferBytes);
-	unsigned int rawBufferBlockCount = memory/rawBufferBytes;
-	if (rawBufferBlockCount <= 0)
+	unsigned int dataFileCacheBlockCount = memory/dataFileCacheBlockSize/sizeof(float);
+	if (dataFileCacheBlockCount <= 0)
 	{
-		throw runtime_error("Not enough available memory for the rawBuffer");
+		throw runtime_error("Not enough available memory for the dataFileCache");
 	}
 
-	rawBufferDummySurface.create();
-	rawBuffer = new Buffer(rawBufferBlockCount, rawBufferBytes, cvs.data());
-	rawBufferThreadTmp = new float[rawBufferBlockSize];
-	rawBufferFillerThread = thread(&SignalProcessor::rawBufferFiller, this, &threadsStop, QOpenGLContext::currentContext());
+	dataFileCache.insert(dataFileCache.begin(), dataFileCacheBlockCount, nullptr);
+	for (auto& e : dataFileCache)
+	{
+		e = new float[dataFileCacheBlockSize];
+	}
+
+	dataFileCacheLogic = new PriorityCacheLogic(dataFileCacheBlockCount);
+	dataFileCacherFillerThread = thread(&SignalProcessor::dataFileCacheFiller, this, &threadsStop);
+
+	// OpenGL stuff.
+	fun()->glGenVertexArrays(1, &vertexArray);
+	fun()->glBindVertexArray(vertexArray);
+
+	fun()->glGenBuffers(1, &buffer);
+	fun()->glBindBuffer(GL_ARRAY_BUFFER, buffer);
+
+	fun()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(0));
+	fun()->glEnableVertexAttribArray(0);
+
+	if (!REALLOCATE_BUFFER)
+	{
+		fun()->glBufferData(GL_ARRAY_BUFFER, dataFileCacheBlockSize*sizeof(float), nullptr, GL_DYNAMIC_DRAW);
+	}
+
+	fun()->glBindBuffer(GL_ARRAY_BUFFER, 0);
+	fun()->glBindVertexArray(0);
 }
 
 SignalProcessor::~SignalProcessor()
 {
-	// First finish all secondary threads.
+	// Join dataFileCacherFillerThread.
 	threadsStop.store(true);
 
-	thread t(&SignalProcessor::joinThreads, this);
+	thread t([this] () { dataFileCacherFillerThread.join();	});
 
-	for (auto& e : cvs)
-	{
-		e.notify_all();
-	}
+	dataFileCacheInCV.notify_all();
+	//dataFileCacheOutCV.notify_all();
 
 	t.join();
 
 	// Release resources.
-	delete rawBuffer;
-	delete[] rawBufferThreadTmp;
+	delete dataFileCacheLogic;
+
+	for (auto& e : dataFileCache)
+	{
+		delete[] e;
+	}
+
+	fun()->glDeleteBuffers(1, &buffer);
+	fun()->glDeleteVertexArrays(1, &vertexArray);
 }
 
-SignalBlock SignalProcessor::getAnyBlock(const set<unsigned int>& index)
+SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 {
-	SignalBlock sb = rawBuffer->readAnyBlock(index, nullptr);
+	unique_lock<mutex> lock(dataFileCacheMutex);
 
-	int64_t from = sb.getIndex()*getBlockSize(),
-			to = from + getBlockSize() - 1;
-
-	return SignalBlock(sb.geGLVertexArray(), sb.getGLBuffer(), sb.getIndex(), dataFile->getChannelCount(), from, to);
-}
-
-#define fun() fun_shortcut()
-
-void SignalProcessor::rawBufferFiller(atomic<bool>* stop, QOpenGLContext* parentContext)
-{
-	QOpenGLContext context;
-	context.setShareContext(parentContext);
-	checkErrorCode(context.create(), true, "creating a new OpenGL context");
-	checkErrorCode(context.makeCurrent(&rawBufferDummySurface), true, "make this context current");
-
-	OpenGLInterface local;
-
-	//while (stop->load() == false)
 	while (1)
 	{
-		SignalBlock sb = rawBuffer->fillBuffer(stop);
+		unsigned int cacheIndex;
+		int blockIndex;
 
-		if (stop->load() == true)
+		bool blockFound = dataFileCacheLogic->readAny(indexSet, &cacheIndex, &blockIndex);
+
+		if (blockFound)
 		{
-			break;
-		}
+			fun()->glBindBuffer(GL_ARRAY_BUFFER, buffer);
 
-		local.fun()->glBindBuffer(GL_ARRAY_BUFFER, sb.getGLBuffer());
+			int64_t from = blockIndex*getBlockSize(),
+					to = from + getBlockSize() - 1;
 
-		int64_t from = sb.getIndex()*getBlockSize(),
-				to = from + getBlockSize() - 1;
+			size_t size = getBlockSize()*dataFile->getChannelCount()*sizeof(float);
 
-		dataFile->readData(rawBufferThreadTmp, from, to);
+			if (REALLOCATE_BUFFER)
+			{
+				fun()->glBufferData(GL_ARRAY_BUFFER, size, dataFileCache[cacheIndex], GL_STATIC_DRAW);
+			}
+			else
+			{
+				fun()->glBufferSubData(GL_ARRAY_BUFFER, 0, size, dataFileCache[cacheIndex]);
+			}
 
-		size_t size = getBlockSize()*dataFile->getChannelCount()*sizeof(float);
+			fun()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-		if (REALLOCATE_BUFFER)
-		{
-			local.fun()->glBufferData(GL_ARRAY_BUFFER, size, rawBufferThreadTmp, GL_STATIC_DRAW);
+			return SignalBlock(vertexArray, buffer, blockIndex, dataFile->getChannelCount(), from, to);
 		}
 		else
 		{
-			local.fun()->glBufferSubData(GL_ARRAY_BUFFER, 0, size, rawBufferThreadTmp);
-		}
+			// The same as 'prepareBlocks(indexSet, -1);'
+			dataFileCacheLogic->enqueue(indexSet, -1);
+			dataFileCacheInCV.notify_all();
 
-		local.fun()->glBindBuffer(GL_ARRAY_BUFFER, 0);
-		local.fun()->glFlush();
-		rawBuffer->release(sb);
+			dataFileCacheOutCV.wait(lock);
+		}
 	}
 }
 
 #undef fun
+
+void SignalProcessor::dataFileCacheFiller(atomic<bool>* stop)
+{
+	unique_lock<mutex> lock(dataFileCacheMutex);
+
+	while (stop->load() == false)
+	{
+		unsigned int cacheIndex;
+		int blockIndex;
+
+		bool notEmpty = dataFileCacheLogic->fill(&cacheIndex, &blockIndex);
+
+		if (notEmpty)
+		{
+			int64_t from = blockIndex*getBlockSize(),
+					to = from + getBlockSize() - 1;
+
+			dataFile->readData(dataFileCache[cacheIndex], from, to);
+
+			dataFileCacheLogic->release(blockIndex);
+
+			dataFileCacheOutCV.notify_one();
+		}
+		else
+		{
+			dataFileCacheInCV.wait(lock);
+		}
+	}
+}
+
