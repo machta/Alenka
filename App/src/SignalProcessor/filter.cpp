@@ -8,9 +8,9 @@
 using namespace std;
 
 Filter::Filter(unsigned int M, double Fs) : M(M), Fs(Fs), lowpass(2),
-    highpass(-1), notch(false),
-    clContext(PROGRAM_OPTIONS->get("platform").as<int>(), 0, CL_DEVICE_TYPE_CPU),
-    notchF(50/Fs*2)
+	highpass(-1), notch(false),
+	clContext(PROGRAM_OPTIONS->get("platform").as<int>(), 0, CL_DEVICE_TYPE_CPU),
+	notchF(50/Fs*2)
 
 {
 	size_t size = M;
@@ -97,13 +97,16 @@ double* Filter::computeCoefficients()
 	// Try to improve filter characteristics by applying a window function.
 	string window = PROGRAM_OPTIONS->get("window").as<string>();
 
-	for (unsigned int i = 0; i < M; ++i)
+	if (window == "hamming")
 	{
-		if (window == "hamming")
+		for (unsigned int i = 0; i < M; ++i)
 		{
 			coefficients[i] *= hammingWindow(i, M);
 		}
-		else if (window == "blackman")
+	}
+	else if (window == "blackman")
+	{
+		for (unsigned int i = 0; i < M; ++i)
 		{
 			coefficients[i] *= blackmanWindow(i, M);
 		}

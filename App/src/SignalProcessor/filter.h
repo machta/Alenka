@@ -59,7 +59,8 @@ private:
 	double hammingWindow(int n, int M)
 	{
 		using namespace std;
-		return 0.54 - 0.46*cos(2*M_PI*n/(M - 1));
+		const double tmp = 2*M_PI*n/(M - 1);
+		return 0.54 - 0.46*cos(tmp);
 	}
 	double blackmanWindow(int n, int M)
 	{

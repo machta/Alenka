@@ -33,7 +33,8 @@ bool PriorityCacheLogic::fill(unsigned int* cacheIndex, int* index)
 		if (indexMap.count(topIndex) != 0)
 		{
 			unsigned int ci = indexMap[topIndex];
-			table.setPriority(ci, min(table.getPriority(ci), topPriority));
+			//table.setPriority(ci, min(table.getPriority(ci), topPriority));
+			table.setPriority(ci, topPriority);
 			queue.pop();
 		}
 		else

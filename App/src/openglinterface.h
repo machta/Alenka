@@ -39,8 +39,8 @@ public:
 		lastCallFile = file;
 		lastCallLine = line;
 #else
-		//(void)file;
-		//(void)line;
+		(void)file;
+		(void)line;
 #endif
 
 		return functions;

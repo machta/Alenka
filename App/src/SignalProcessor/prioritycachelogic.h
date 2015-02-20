@@ -110,6 +110,19 @@ public:
 
 	void enqueue(const std::set<int>& indexSet, int priority);
 	bool fill(unsigned int* cacheIndex, int* index);
+	bool read(int index, unsigned int* cacheIndex)
+	{
+		int oldIndex = index;
+
+		//std::set<int> indexSet {index};
+		//indexSet.insert(index);
+		//bool ret = readAny(indexSet, cacheIndex, &index);
+		bool ret = readAny(std::set<int> {index}, cacheIndex, &index);
+
+		assert(index == oldIndex);
+
+		return ret;
+	}
 	bool readAny(const std::set<int>& indexSet, unsigned int* cacheIndex, int* index);
 	unsigned int release(int index)
 	{
