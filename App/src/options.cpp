@@ -26,6 +26,7 @@ Options::Options(int ac, char** av)
 	("file,f", value<string>(), "data file")
 	("vert", value<string>()->default_value("shader.vert"), "vertex shader source file")
 	("frag", value<string>()->default_value("shader.frag"), "fragment shader source file")
+	("kernels", value<string>()->default_value("kernels.cl"), "OpenCL kernel source file")
 	;
 
 	options_description all("Alloved options");

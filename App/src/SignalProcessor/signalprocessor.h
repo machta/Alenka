@@ -31,7 +31,7 @@ public:
 
 	int64_t getBlockSize() const
 	{
-		return PROGRAM_OPTIONS->get("blockSize").as<unsigned int>() - offset;
+		return blockSize;
 	}
 
 	// ..
@@ -78,7 +78,11 @@ private:
 	int M;
 	int offset;
 	int delay;
-	unsigned int cacheBlockSize;
+	int padding;
+	unsigned int blockSize;
+	unsigned int dataFileGpuCacheBlockSize;
+	unsigned int processorCacheBlockSizeCL;
+	unsigned int processorCacheBlockSizeGL;
 
 	std::condition_variable_any inCV;
 	std::condition_variable_any dataFileGpuCV;

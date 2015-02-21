@@ -19,7 +19,10 @@ HEADERS += \
     src/openglprogram.h \
     src/openglinterface.h \
     src/error.h \
-    src/SignalProcessor/prioritycachelogic.h
+    src/SignalProcessor/prioritycachelogic.h \
+    src/SignalProcessor/filterprocessor.h \
+    src/SignalProcessor/montageprocessor.h \
+    src/SignalProcessor/montage.h
 
 SOURCES += \
     src/DataFile/gdf2.cpp \
@@ -35,11 +38,15 @@ SOURCES += \
     src/SignalProcessor/signalblock.cpp \
     src/openglprogram.cpp \
     src/openglinterface.cpp \
-    src/SignalProcessor/prioritycachelogic.cpp
+    src/SignalProcessor/prioritycachelogic.cpp \
+    src/SignalProcessor/filterprocessor.cpp \
+    src/SignalProcessor/montageprocessor.cpp \
+    src/SignalProcessor/montage.cpp
 
 FORMS += \
     src/testwindow.ui
 
 DISTFILES += \
     shader.vert \
-    shader.frag
+    shader.frag \
+    kernels.cl
