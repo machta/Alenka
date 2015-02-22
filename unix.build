@@ -2,6 +2,8 @@ LIBS += -lboost_program_options \
     -lclFFT \
     -lOpenCL
 
+INCLUDEPATH += $$(AMDAPPSDKROOT)/include
+
 QMAKE_CXXFLAGS += -std=c++11
 
-INCLUDEPATH += $$(AMDAPPSDKROOT)/include
+DEFINES += UNIX_BUILD

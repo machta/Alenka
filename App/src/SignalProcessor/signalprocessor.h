@@ -8,9 +8,11 @@
 #include "../options.h"
 #include "prioritycachelogic.h"
 #include "../openclcontext.h"
+#include "filterprocessor.h"
+#include "montageprocessor.h"
 
 #include <QOffscreenSurface>
-#include <CL/cl.h>
+#include <CL/cl_gl.h>
 
 #include <cinttypes>
 #include <set>
@@ -75,10 +77,16 @@ private:
 	GLuint vertexArray;
 	GLuint buffer;
 	OpenCLContext* clContext;
+	FilterProcessor* filterProcessor;
+	Filter* filter;
+	MontageProcessor* montageProcessor;
+	Montage* montage;
+
 	int M;
 	int offset;
 	int delay;
 	int padding;
+
 	unsigned int blockSize;
 	unsigned int dataFileGpuCacheBlockSize;
 	unsigned int processorCacheBlockSizeCL;

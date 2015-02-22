@@ -48,11 +48,11 @@ int main(int ac, char** av)
 	}
 	catch (exception& e)
 	{
-		cerr << "Exception: " << e.what() << endl;
+		cerr << "Exception caught in main(): " << e.what() << endl;
 	}
 	catch (...)
 	{
-		cerr << "Unknown exception caught." << endl;
+		cerr << "Unknown exception caught in main()." << endl;
 	}
 
 	return -1;

@@ -102,6 +102,4 @@ private:
 
 #define fun_shortcut() fun(__FILE__, __LINE__)
 
-const bool REALLOCATE_BUFFER = false;
-
 #endif // OPENGLINTERFACE_H

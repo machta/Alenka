@@ -19,7 +19,6 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory, double /*b
 	blockSize = PROGRAM_OPTIONS->get("blockSize").as<unsigned int>() - offset;
 	dataFileGpuCacheBlockSize = (blockSize + offset)*file->getChannelCount();
 	processorCacheBlockSizeCL = (blockSize + offset + padding)*file->getChannelCount();
-	//processorCacheBlockSizeGL = blockSize*montageRows
 
 	// Ensure required sizes.
 	if (M%4 || (blockSize + offset)%4)
@@ -29,14 +28,19 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory, double /*b
 
 	clContext = new OpenCLContext(PROGRAM_OPTIONS->get("platform").as<int>(),
 								  PROGRAM_OPTIONS->get("device").as<int>(),
-								  CL_DEVICE_TYPE_ALL);
+								  CL_DEVICE_TYPE_ALL, QOpenGLContext::currentContext());
 
+	filter = new Filter(M, dataFile->getSamplingFrequency());
+	filterProcessor = new FilterProcessor(M, blockSize + offset, dataFile->getChannelCount(), clContext);
+	filterProcessor->change(filter);
 
+	montage = new Montage(vector<string> {"out=in(0);", "out=in(1);", "out=in(2);", "out=(in(0)+in(1)+in(2))/3;", "out=sum(0,2)/3;"}, clContext);
+	montageProcessor = new MontageProcessor(offset, blockSize);
+	montageProcessor->change(montage);
 
+	processorCacheBlockSizeGL = blockSize*montage->getNumberOfRows();
 
-
-
-	// Construct the dataFile cache.	
+	// Construct the dataFile cache.
 	unsigned int dataFileCacheBlockCount = 2*memory/dataFileGpuCacheBlockSize/sizeof(float); // 2* bigger than gpu buffer
 
 	if (dataFileCacheBlockCount <= 0)
@@ -97,10 +101,7 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory, double /*b
 		fun()->glBindBuffer(GL_ARRAY_BUFFER, processorCacheGLBuffers[i]);
 		fun()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(0));
 		fun()->glEnableVertexAttribArray(0);
-		if (!REALLOCATE_BUFFER)
-		{
-			fun()->glBufferData(GL_ARRAY_BUFFER, processorCacheBlockSizeGL*sizeof(float), nullptr, GL_DYNAMIC_DRAW);
-		}
+		fun()->glBufferData(GL_ARRAY_BUFFER, processorCacheBlockSizeGL*sizeof(float), nullptr, GL_DYNAMIC_DRAW);
 	}
 
 	fun()->glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -111,7 +112,7 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory, double /*b
 
 SignalProcessor::~SignalProcessor()
 {
-	// Join dataFileCacherFillerThread.
+	// Join all previously spawned threads.
 	threadsStop.store(true);
 
 	thread t([this] ()
@@ -130,17 +131,22 @@ SignalProcessor::~SignalProcessor()
 
 	delete clContext;
 
+	delete filterProcessor;
+	delete filter;
+	delete montageProcessor;
+	delete montage;
+
 	delete dataFileCacheLogic;
 	delete gpuCacheLogic;
 	delete processorCacheLogic;
 
 	err = clReleaseCommandQueue(gpuCacheQueue);
-	checkErrorCode(err, CL_SUCCESS, "clReleaseCommandQueue");
+	checkErrorCode(err, CL_SUCCESS, "clReleaseCommandQueue()");
 
 	for (auto& e : processorCacheQueues)
 	{
 		err = clReleaseCommandQueue(e);
-		checkErrorCode(err, CL_SUCCESS, "clReleaseCommandQueue");
+		checkErrorCode(err, CL_SUCCESS, "clReleaseCommandQueue()");
 	}
 
 	for (auto& e : dataFileCache)
@@ -193,18 +199,26 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 
 		processorCacheLock.lock();
 
-		// queue filter
-		// queue montage
+		filterProcessor->process(gpuCache[gpuCacheIndex], processorCacheCLBuffers[processorCacheIndex], processorCacheQueues[processorCacheIndex]);
+
+		cl_mem buffer = clCreateFromGLBuffer(clContext->getCLContext(), CL_MEM_WRITE_ONLY, processorCacheGLBuffers[processorCacheIndex], &err);
+		checkErrorCode(err, CL_SUCCESS, "clCreateFromGLBuffer()");
+
+		montageProcessor->process(processorCacheCLBuffers[processorCacheIndex], buffer, processorCacheQueues[processorCacheIndex]);
+
+		err = clReleaseMemObject(buffer);
+		checkErrorCode(err, CL_SUCCESS, "clReleaseMemObject()");
 
 		cl_event event = clCreateUserEvent(clContext->getCLContext(), &err);
-		checkErrorCode(err, CL_SUCCESS, "clCreateUserEvent");
+		checkErrorCode(err, CL_SUCCESS, "clCreateUserEvent()");
 
 		cacheCallbackData* data = new cacheCallbackData {&processorCacheMutex, &gpuCacheMutex, processorCacheLogic, gpuCacheLogic, &outCV, blockIndex};
 
 		err = clSetEventCallback(event, CL_COMPLETE, &cacheCallback, data);
-		checkErrorCode(err, CL_SUCCESS, "clSetEventCallback");
+		checkErrorCode(err, CL_SUCCESS, "clSetEventCallback()");
 
 		err = clEnqueueBarrierWithWaitList(processorCacheQueues[processorCacheIndex], 0, nullptr, &event);
+		checkErrorCode(err, CL_SUCCESS, "clEnqueueBarrierWithWaitList()");
 	}
 
 	// Get loop.
@@ -225,79 +239,95 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 
 #undef fun
 
+// TODO: add try/catch block to functions *Filler
+
 void SignalProcessor::dataFileCacheFiller(atomic<bool>* stop)
 {
-	unique_lock<recursive_mutex> lock(dataFileCacheMutex);
-
-	while (stop->load() == false)
+	try
 	{
-		unsigned int cacheIndex;
-		int blockIndex;
+		unique_lock<recursive_mutex> lock(dataFileCacheMutex);
 
-		bool notEmpty = dataFileCacheLogic->fill(&cacheIndex, &blockIndex);
-
-		if (notEmpty)
+		while (stop->load() == false)
 		{
-			auto fromTo = getBlockBoundaries(blockIndex);
+			unsigned int cacheIndex;
+			int blockIndex;
 
-			dataFile->readData(dataFileCache[cacheIndex], fromTo.first - offset + delay, fromTo.second + delay);
+			bool notEmpty = dataFileCacheLogic->fill(&cacheIndex, &blockIndex);
 
-			dataFileCacheLogic->release(blockIndex);
+			if (notEmpty)
+			{
+				auto fromTo = getBlockBoundaries(blockIndex);
 
-			dataFileGpuCV.notify_one();
+				dataFile->readData(dataFileCache[cacheIndex], fromTo.first - offset + delay, fromTo.second + delay);
+
+				dataFileCacheLogic->release(blockIndex);
+
+				dataFileGpuCV.notify_one();
+			}
+			else
+			{
+				inCV.wait(lock);
+			}
 		}
-		else
-		{
-			inCV.wait(lock);
-		}
+	}
+	catch (exception& e)
+	{
+		cerr << "Exception caught in dataFileCacheFiller(): " << e.what() << endl;
 	}
 }
 
 void SignalProcessor::gpuCacheFiller(atomic<bool>* stop)
 {
-	unique_lock<recursive_mutex> gpuCacheLock(gpuCacheMutex);
-
-	while (stop->load() == false)
+	try
 	{
-		unsigned int gpuCacheIndex;
-		int blockIndex;
+		unique_lock<recursive_mutex> gpuCacheLock(gpuCacheMutex);
 
-		bool notEmpty = gpuCacheLogic->fill(&gpuCacheIndex, &blockIndex);
-
-		if (notEmpty)
+		while (stop->load() == false)
 		{
-			gpuCacheLock.unlock();
+			unsigned int gpuCacheIndex;
+			int blockIndex;
 
-			unsigned int dataFileCacheIndex;
+			bool notEmpty = gpuCacheLogic->fill(&gpuCacheIndex, &blockIndex);
 
+			if (notEmpty)
 			{
-				unique_lock<recursive_mutex> dataFileCacheLock(dataFileCacheMutex);
+				gpuCacheLock.unlock();
 
-				while (dataFileCacheLogic->read(blockIndex, &dataFileCacheIndex) == false)
+				unsigned int dataFileCacheIndex;
+
 				{
-					dataFileGpuCV.wait(dataFileCacheLock);
+					unique_lock<recursive_mutex> dataFileCacheLock(dataFileCacheMutex);
+
+					while (dataFileCacheLogic->read(blockIndex, &dataFileCacheIndex) == false)
+					{
+						dataFileGpuCV.wait(dataFileCacheLock);
+					}
 				}
+
+				gpuCacheLock.lock();
+
+				cl_int err;
+
+				cl_event event = clCreateUserEvent(clContext->getCLContext(), &err);
+				checkErrorCode(err, CL_SUCCESS, "clCreateUserEvent()");
+
+				cacheCallbackData* data = new cacheCallbackData {&gpuCacheMutex, &dataFileCacheMutex, dataFileCacheLogic, gpuCacheLogic, &gpuProcessorCV, blockIndex};
+
+				err = clSetEventCallback(event, CL_COMPLETE, &cacheCallback, data);
+				checkErrorCode(err, CL_SUCCESS, "clSetEventCallback()");
+
+				err = clEnqueueWriteBuffer(gpuCacheQueue, gpuCache[gpuCacheIndex], CL_FALSE, 0, dataFileGpuCacheBlockSize*sizeof(float), dataFileCache[dataFileCacheIndex], 0, nullptr, &event);
+				checkErrorCode(err, CL_SUCCESS, "clEnqueueWriteBuffer()");
 			}
-
-			gpuCacheLock.lock();
-
-			cl_int err;
-
-			cl_event event = clCreateUserEvent(clContext->getCLContext(), &err);
-			checkErrorCode(err, CL_SUCCESS, "clCreateUserEvent");
-
-			cacheCallbackData* data = new cacheCallbackData {&gpuCacheMutex, &dataFileCacheMutex, dataFileCacheLogic, gpuCacheLogic, &gpuProcessorCV, blockIndex};
-
-			err = clSetEventCallback(event, CL_COMPLETE, &cacheCallback, data);
-			checkErrorCode(err, CL_SUCCESS, "clSetEventCallback");
-
-			err = clEnqueueWriteBuffer(gpuCacheQueue, gpuCache[gpuCacheIndex], CL_FALSE, 0, dataFileGpuCacheBlockSize*sizeof(float), nullptr, 0, nullptr, &event);
-			checkErrorCode(err, CL_SUCCESS, "clEnqueueWriteBuffer");
+			else
+			{
+				dataFileGpuCV.wait(gpuCacheLock);
+			}
 		}
-		else
-		{
-			dataFileGpuCV.wait(gpuCacheLock);
-		}
+	}
+	catch (exception& e)
+	{
+		cerr << "Exception caught in gpuCacheFiller(): " << e.what() << endl;
 	}
 }
 
@@ -317,7 +347,7 @@ void SignalProcessor::cacheCallback(cl_event event, cl_int event_command_exec_st
 	get<4>(*data)->notify_one();
 
 	cl_int err = clReleaseEvent(event);
-	checkErrorCode(err, CL_SUCCESS, "clReleaseEvent");
+	checkErrorCode(err, CL_SUCCESS, "clReleaseEvent()");
 
 	delete data;
 }

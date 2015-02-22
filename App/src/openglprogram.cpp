@@ -8,7 +8,35 @@ using namespace std;
 
 #define fun() fun_shortcut()
 
-OpenGLProgram::OpenGLProgram(const char* vertSource, const char* fragSource)
+OpenGLProgram::OpenGLProgram(FILE *vertSource, FILE *fragSource)
+{
+	char* tmp[2];
+	FILE* file[] = {vertSource, fragSource};
+
+	for (int i = 0; i < 2; ++i)
+	{
+		fseek(file[i], 0, SEEK_END);
+		size_t size = ftell(file[i]);
+
+		tmp[i] = new char[size + 1];
+		tmp[i][size] = 0;
+
+		rewind(file[i]);
+		freadChecked(tmp[i], sizeof(char), size, file[i]);
+	}
+
+	construct(tmp[0], tmp[1]);
+
+	delete[] tmp[0];
+	delete[] tmp[1];
+}
+
+OpenGLProgram::~OpenGLProgram()
+{
+	fun()->glDeleteProgram(program);
+}
+
+void OpenGLProgram::construct(const char* vertSource, const char* fragSource)
 {
 	program = fun()->glCreateProgram();
 
@@ -26,7 +54,7 @@ OpenGLProgram::OpenGLProgram(const char* vertSource, const char* fragSource)
 
 	if (logLength > 1)
 	{
-		GLchar* log = new GLchar[logLength];
+		char* log = new char[logLength];
 		fun()->glGetProgramInfoLog(program, logLength, &logLength, log);
 
 		cerr << "OpenGLProgram ('" << vertSource << "', '" << fragSource << "') link log:" << endl << log;
@@ -38,37 +66,11 @@ OpenGLProgram::OpenGLProgram(const char* vertSource, const char* fragSource)
 	checkNotErrorCode(linkStatus, GL_FALSE, "OpenGLProgram ('" << vertSource << "', '" << fragSource << "') link failed.");
 }
 
-OpenGLProgram::~OpenGLProgram()
-{
-	fun()->glDeleteProgram(program);
-}
-
-GLchar* OpenGLProgram::readSource(const char* filePath)
-{
-	FILE* file = fopen(filePath, "rb");
-	checkNotErrorCode(file, nullptr, "File '" << filePath << "' could not be opened.");
-
-	fseek(file, 0, SEEK_END);
-	size_t size = ftell(file);
-
-	GLchar* source = new GLchar[size + 1];
-	source[size] = 0;
-
-	rewind(file);
-	freadChecked(source, sizeof(char), size, file);
-
-	fclose(file);
-
-	return source;
-}
-
-void OpenGLProgram::addShader(GLuint program, const char* filePath, GLenum type)
+void OpenGLProgram::addShader(GLuint program, const char* sourceText, GLenum type)
 {
 	GLuint shader = fun()->glCreateShader(type);
 
-	GLchar* sourceText = readSource(filePath);
 	fun()->glShaderSource(shader, 1, &sourceText, nullptr);
-	delete[] sourceText;
 
 	fun()->glCompileShader(shader);
 
@@ -81,16 +83,16 @@ void OpenGLProgram::addShader(GLuint program, const char* filePath, GLenum type)
 
 	if (logLength > 1)
 	{
-		GLchar* log = new GLchar[logLength];
+		char* log = new char[logLength];
 		fun()->glGetShaderInfoLog(shader, logLength, &logLength, log);
 
-		cerr << "Shader '" << filePath << "' compilation log:" << endl << log;
+		cerr << "Shader " << type << " compilation log:" << endl << log;
 
 		delete log;
 	}
 #endif
 
-	checkNotErrorCode(compileStatus, GL_FALSE, "Shader '" << filePath << "' compilation failed.");
+	checkNotErrorCode(compileStatus, GL_FALSE, "Shader " << type << " compilation failed.");
 
 	fun()->glAttachShader(program, shader);
 

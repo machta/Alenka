@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <cmath>
 
-#include <CL/cl.h>
+#include <CL/cl_gl.h>
 #include <clFFT.h>
 
 class Filter

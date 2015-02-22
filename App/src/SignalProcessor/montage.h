@@ -4,7 +4,7 @@
 #include "../openclcontext.h"
 #include "../openclprogram.h"
 
-#include <CL/cl.h>
+#include <CL/cl_gl.h>
 
 #include <vector>
 #include <string>

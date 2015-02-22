@@ -6,6 +6,7 @@
 
 #include <QMatrix4x4>
 
+#include <cstdio>
 #include <string>
 #include <cmath>
 #include <set>
@@ -33,8 +34,17 @@ void Canvas::initializeGL()
 
 	signalProcessor = new SignalProcessor(dataFile);
 
-	program = new OpenGLProgram(PROGRAM_OPTIONS->get("vert").as<string>().c_str(),
-								PROGRAM_OPTIONS->get("frag").as<string>().c_str());
+	FILE* file1 = fopen(PROGRAM_OPTIONS->get("vert").as<string>().c_str(), "rb");
+	checkNotErrorCode(file1, nullptr, "File '" << PROGRAM_OPTIONS->get("vert").as<string>().c_str() << "' could not be opened.");
+
+	FILE* file2 = fopen(PROGRAM_OPTIONS->get("frag").as<string>().c_str(), "rb");
+	checkNotErrorCode(file2, nullptr, "File '" << PROGRAM_OPTIONS->get("frag").as<string>().c_str() << "' could not be opened.");
+
+	program = new OpenGLProgram(file1, file2);
+
+	fclose(file1);
+	fclose(file2);
+
 	fun()->glUseProgram(program->getGLProgram());
 
 	fun()->glClearColor(1, 1, 1, 1);

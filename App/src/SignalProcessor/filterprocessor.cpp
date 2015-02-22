@@ -9,12 +9,17 @@ using namespace std;
 
 FilterProcessor::FilterProcessor(unsigned int M, unsigned int blockWidth, unsigned int blockHeight, OpenCLContext* context) : M(M), width(blockWidth), height(blockHeight)
 {
-	assert(blockWidth%4);
+	assert(blockWidth%4 == 0);
 
 	cl_int err;
 	clfftStatus errFFT;
 
-	program = new OpenCLProgram(PROGRAM_OPTIONS->get("kernels").as<string>().c_str(), context);
+	FILE* file = fopen(PROGRAM_OPTIONS->get("kernels").as<string>().c_str(), "rb");
+	checkNotErrorCode(file, nullptr, "File '" << PROGRAM_OPTIONS->get("kernels").as<string>().c_str() << "' could not be opened.");
+
+	program = new OpenCLProgram(file, context);
+
+	fclose(file);
 
 	filterKernel = program->createKernel("filter");
 

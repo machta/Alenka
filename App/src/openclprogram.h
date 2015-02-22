@@ -4,15 +4,34 @@
 #include "openclcontext.h"
 #include "error.h"
 
-#include <CL/cl.h>
+#include <CL/cl_gl.h>
 
+#include <cstdio>
 #include <string>
 #include <stdexcept>
 
 class OpenCLProgram
 {
 public:
-	OpenCLProgram(const char* source, OpenCLContext* context);
+	OpenCLProgram(FILE* source, OpenCLContext* context) : clContext(context)
+	{
+		fseek(source, 0, SEEK_END);
+		size_t size = ftell(source);
+
+		char* tmp = new char[size + 1];
+		tmp[size] = 0;
+
+		rewind(source);
+		freadChecked(tmp, sizeof(char), size, source);
+
+		construct(tmp);
+
+		delete[] tmp;
+	}
+	OpenCLProgram(std::string source, OpenCLContext* context) : clContext(context)
+	{
+		construct(source);
+	}
 	~OpenCLProgram();
 
 	cl_kernel createKernel(const char* kernelName)
@@ -40,6 +59,8 @@ private:
 
 	bool invalid;
 	OpenCLContext* clContext;
+
+	void construct(const std::string& source);
 };
 
 #endif // OPENCLPROGRAM_H

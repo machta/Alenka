@@ -1,12 +1,13 @@
 #ifndef OPENCLCONTEXT_H
 #define OPENCLCONTEXT_H
 
-#include <CL/cl.h>
+#include <QOpenGLContext>
+#include <CL/cl_gl.h>
 
 class OpenCLContext
 {
 public:
-	OpenCLContext(unsigned int platform, unsigned int device, cl_device_type deviceType);
+	OpenCLContext(unsigned int platform, unsigned int device, cl_device_type deviceType, QOpenGLContext* parentContext = nullptr);
 	~OpenCLContext();
 
 	cl_context getCLContext()
@@ -15,17 +16,17 @@ public:
 	}
 	cl_platform_id getCLPlatform()
 	{
-		return pid;
+		return platformId;
 	}
 	cl_device_id getCLDevice()
 	{
-		return did;
+		return deviceId;
 	}
 
 private:
 	cl_context context;
-	cl_platform_id pid;
-	cl_device_id did;
+	cl_platform_id platformId;
+	cl_device_id deviceId;
 };
 
 #endif // OPENCLCONTEXT_H
