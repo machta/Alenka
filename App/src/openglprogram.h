@@ -11,7 +11,7 @@ public:
 	OpenGLProgram(FILE* vertSource, FILE* fragSource);
 	OpenGLProgram(const std::string& vertSource, const std::string& fragSource)
 	{
-		construct(vertSource.c_str(), vertSource.c_str());
+        construct(vertSource.c_str(), fragSource.c_str());
 	}
 	~OpenGLProgram();
 

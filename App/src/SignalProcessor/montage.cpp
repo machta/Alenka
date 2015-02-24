@@ -79,7 +79,7 @@ string Montage::buildSource(const vector<string>& sources)
 	src += kernelDefinition();
 	src += "{\n";
 
-	for (int i = 0; i < sources.size(); ++i)
+    for (unsigned int i = 0; i < sources.size(); ++i)
 	{
 		src += rowDefinitionStart();
 		src += sources[i];
