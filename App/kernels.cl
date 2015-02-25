@@ -10,7 +10,7 @@ __kernel void filter(__global float4* a, __global float4* b)
 	float4 lb = b[id1];
 
 	float4 tmp = (float4)(-la.s1, la.s0, -la.s3, la.s2);
-	a[id] = la*lb.s0033 + tmp*lb.s1133;
+        //a[id] = la*lb.s0033 + tmp*lb.s1133;
 }
 
 /*

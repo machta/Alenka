@@ -26,9 +26,9 @@ bool init()
 
 int main(int ac, char** av)
 {
-	clfftSetupData fftSetup;
-	clfftInitSetupData(&fftSetup);
-	clfftSetup(&fftSetup);
+	clfftSetupData setupData;
+	clfftInitSetupData(&setupData);
+	clfftSetup(&setupData);
 
 	Options* options = new Options(1, av);
     PROGRAM_OPTIONS_POINTER = options;

@@ -42,12 +42,12 @@ public:
 	void release(const SignalBlock& block)
 	{
 		std::lock_guard<std::recursive_mutex> lock(processorCacheMutex);
-		dataFileCacheLogic->release(block.getIndex());
+		processorCacheLogic->release(block.getIndex());
 	}
 	void release(const SignalBlock& block, int newPriority)
 	{
 		std::lock_guard<std::recursive_mutex> lock(processorCacheMutex);
-		dataFileCacheLogic->release(block.getIndex(), newPriority);
+		processorCacheLogic->release(block.getIndex(), newPriority);
 	}
 	void prepareBlocks(const std::set<int>& indexSet, int priority)
 	{
@@ -66,8 +66,11 @@ public:
 			processorCacheLogic->enqueue(indexSet, priority);
 		}
 
+		fprintf(stderr, "inCV(0x%p).notify_all()\n", &inCV);
 		inCV.notify_all();
+		fprintf(stderr, "dataFileGpuCV(0x%p).notify_all()\n", &dataFileGpuCV);
 		dataFileGpuCV.notify_all();
+		fprintf(stderr, "gpuProcessorCV(0x%p).notify_all()\n", &gpuProcessorCV);
 		gpuProcessorCV.notify_all();
 	}
 

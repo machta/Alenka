@@ -105,7 +105,7 @@ void Canvas::paintGL()
 		indexSet.erase(block.getIndex());
 		signalProcessor->release(block, 1);
 
-		//cerr << "Block " << block.getIndex() << " painted." << endl;
+		cerr << "Block " << block.getIndex() << " painted." << endl;
 		checkGLMessages();
 	}
 

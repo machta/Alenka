@@ -58,7 +58,8 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory, double /*b
 
     filterProcessor->change(filter);
 
-	montage = new Montage(vector<string> {"out=in(0);", "out=in(1);", "out=in(2);", "out=(in(0)+in(1)+in(2))/3;", "out=sum(0,2)/3;"}, clContext);
+	//montage = new Montage(vector<string> {"out=in(0);", "out=in(1);", "out=in(2);", "out=(in(0)+in(1)+in(2))/3;", "out=sum(0,2)/3;"}, clContext);
+	montage = new Montage(vector<string> {"out=in(0);", "out=10*in(0);", "out=1000*cos(get_global_id(0)/100.);"}, clContext);
 	montageProcessor = new MontageProcessor(offset, blockSize);
 	montageProcessor->change(montage);
 
@@ -145,7 +146,9 @@ SignalProcessor::~SignalProcessor()
 		gpuCacheFillerThread.join();
 	});
 
+	fprintf(stderr, "inCV(0x%p).notify_all()\n", &inCV);
 	inCV.notify_all();
+	fprintf(stderr, "dataFileGpuCV(0x%p).notify_all()\n", &dataFileGpuCV);
 	dataFileGpuCV.notify_all();
 
 	t.join();
@@ -217,6 +220,7 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 
 			while (gpuCacheLogic->read(blockIndex, &gpuCacheIndex) == false)
 			{
+				fprintf(stderr, "gpuProcessorCV(0x%p).wait()\n", &gpuProcessorCV);
 				gpuProcessorCV.wait(gpuCacheLock);
 			}
 		}
@@ -233,16 +237,20 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 		err = clReleaseMemObject(buffer);
 		checkErrorCode(err, CL_SUCCESS, "clReleaseMemObject()");
 
-		cl_event event = clCreateUserEvent(clContext->getCLContext(), &err);
-		checkErrorCode(err, CL_SUCCESS, "clCreateUserEvent()");
+		cl_event event;
+
+		err = clEnqueueBarrierWithWaitList(processorCacheQueues[processorCacheIndex], 0, nullptr, &event);
+		checkErrorCode(err, CL_SUCCESS, "clEnqueueBarrierWithWaitList()");
 
 		cacheCallbackData* data = new cacheCallbackData {&processorCacheMutex, &gpuCacheMutex, processorCacheLogic, gpuCacheLogic, &outCV, blockIndex};
 
 		err = clSetEventCallback(event, CL_COMPLETE, &cacheCallback, data);
 		checkErrorCode(err, CL_SUCCESS, "clSetEventCallback()");
 
-		err = clEnqueueBarrierWithWaitList(processorCacheQueues[processorCacheIndex], 0, nullptr, &event);
-		checkErrorCode(err, CL_SUCCESS, "clEnqueueBarrierWithWaitList()");
+		err = clFlush(processorCacheQueues[processorCacheIndex]);
+		checkErrorCode(err, CL_SUCCESS, "clFlush()");
+		//err = clFinish(processorCacheQueues[processorCacheIndex]);
+		//checkErrorCode(err, CL_SUCCESS, "clFinish()");
 	}
 
 	// Get loop.
@@ -252,10 +260,11 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 		{
 			auto fromTo = getBlockBoundaries(blockIndex);
 			return SignalBlock(processorCacheVertexArrays[processorCacheIndex], processorCacheGLBuffers[processorCacheIndex],
-							   blockIndex, dataFile->getChannelCount(), fromTo.first, fromTo.second);
+							   blockIndex, montage->getNumberOfRows(), fromTo.first, fromTo.second);
 		}
 		else
 		{
+			fprintf(stderr, "outCV(0x%p).wait()\n", &outCV);
 			outCV.wait(processorCacheLock);
 		}
 	}
@@ -284,10 +293,12 @@ void SignalProcessor::dataFileCacheFiller(atomic<bool>* stop)
 
 				dataFileCacheLogic->release(blockIndex);
 
+				fprintf(stderr, "dataFileGpuCV(0x%p).notify_one()\n", &dataFileGpuCV);
 				dataFileGpuCV.notify_one();
 			}
 			else
 			{
+				fprintf(stderr, "inCV(0x%p).wait()\n", &inCV);
 				inCV.wait(lock);
 			}
 		}
@@ -323,6 +334,7 @@ void SignalProcessor::gpuCacheFiller(atomic<bool>* stop)
 
 					while (dataFileCacheLogic->read(blockIndex, &dataFileCacheIndex) == false)
 					{
+						fprintf(stderr, "dataFileGpuCV(0x%p).wait()\n", &dataFileGpuCV);
 						dataFileGpuCV.wait(dataFileCacheLock);
 					}
 				}
@@ -331,19 +343,24 @@ void SignalProcessor::gpuCacheFiller(atomic<bool>* stop)
 
 				cl_int err;
 
-				cl_event event = clCreateUserEvent(clContext->getCLContext(), &err);
-				checkErrorCode(err, CL_SUCCESS, "clCreateUserEvent()");
+				cl_event event;
+
+				err = clEnqueueWriteBuffer(gpuCacheQueue, gpuCache[gpuCacheIndex], CL_FALSE, 0, dataFileGpuCacheBlockSize*sizeof(float), dataFileCache[dataFileCacheIndex], 0, nullptr, &event);
+				checkErrorCode(err, CL_SUCCESS, "clEnqueueWriteBuffer()");
 
 				cacheCallbackData* data = new cacheCallbackData {&gpuCacheMutex, &dataFileCacheMutex, dataFileCacheLogic, gpuCacheLogic, &gpuProcessorCV, blockIndex};
 
 				err = clSetEventCallback(event, CL_COMPLETE, &cacheCallback, data);
 				checkErrorCode(err, CL_SUCCESS, "clSetEventCallback()");
 
-				err = clEnqueueWriteBuffer(gpuCacheQueue, gpuCache[gpuCacheIndex], CL_FALSE, 0, dataFileGpuCacheBlockSize*sizeof(float), dataFileCache[dataFileCacheIndex], 0, nullptr, &event);
-				checkErrorCode(err, CL_SUCCESS, "clEnqueueWriteBuffer()");
+				err = clFlush(gpuCacheQueue);
+				checkErrorCode(err, CL_SUCCESS, "clFlush()");
+				//err = clFinish(gpuCacheQueue);
+				//checkErrorCode(err, CL_SUCCESS, "clFinish()");
 			}
 			else
 			{
+				fprintf(stderr, "dataFileGpuCV(0x%p).wait()\n", &dataFileGpuCV);
 				dataFileGpuCV.wait(gpuCacheLock);
 			}
 		}
@@ -357,6 +374,8 @@ void SignalProcessor::gpuCacheFiller(atomic<bool>* stop)
 
 void SignalProcessor::cacheCallback(cl_event event, cl_int event_command_exec_status, void* user_data)
 {
+	//fprintf(stderr, "cacheCallback()\n");
+
 	assert(event_command_exec_status == CL_COMPLETE);
 
 	cacheCallbackData* data = reinterpret_cast<cacheCallbackData*>(user_data);
@@ -368,6 +387,7 @@ void SignalProcessor::cacheCallback(cl_event event, cl_int event_command_exec_st
 	get<2>(*data)->release(blockIndex);
 	get<3>(*data)->release(blockIndex);
 
+	fprintf(stderr, "get<4>(*data)(0x%p)->notify_one()\n", get<4>(*data));
 	get<4>(*data)->notify_one();
 
 	cl_int err = clReleaseEvent(event);

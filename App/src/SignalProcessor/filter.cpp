@@ -37,7 +37,12 @@ Filter::Filter(unsigned int M, double Fs) : M(M), Fs(Fs), lowpass(2),
 Filter::~Filter()
 {
 	clReleaseCommandQueue(queue);
-	clfftDestroyPlan(&plan);
+
+//	clfftStatus errFFT;
+
+//	errFFT = clfftDestroyPlan(&plan);
+//	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
+
 	delete[] coefficients;
 }
 
@@ -127,7 +132,7 @@ void Filter::printCoefficients(FILE* file)
 	fprintf(file, "%lf\n%lf\n%lf\n", Fs, getLowpass(), getHighpass());
 	for (unsigned int i = 0; i < M; ++i)
 	{
-        fprintf(file, "%lf\n", tmp[i]);
+		fprintf(file, "%lf\n", tmp[i]);
 	}
 }
 

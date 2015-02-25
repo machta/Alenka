@@ -3,6 +3,7 @@
 
 #include <QApplication>
 #include <QSurfaceFormat>
+#include <clFFT.h>
 
 #include <iostream>
 #include <stdexcept>
@@ -25,6 +26,15 @@ int main(int ac, char** av)
 			return 0;
 		}
 
+		// Set up the clFFT library.
+		clfftSetupData setupData;
+
+		clfftStatus errFFT = clfftInitSetupData(&setupData);
+		checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftInitSetupData()");
+
+		errFFT = clfftSetup(&setupData);
+		checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftSetup()");
+
 		// Set the OpenGL context details.
 		QSurfaceFormat format = QSurfaceFormat::defaultFormat();
 		format.setVersion(4, 1);
@@ -42,6 +52,9 @@ int main(int ac, char** av)
 		window.show();
 
 		int res = app.exec();
+
+		// Clean up.
+		clfftTeardown();
 
 		delete options;
 		return res;

@@ -65,6 +65,28 @@ bool PriorityCacheLogic::fill(unsigned int* cacheIndex, int* index)
 			*cacheIndex = lastCacheIndex;
 			*index = topIndex;
 			return true;
+
+//			if (table.getInUse(lastCacheIndex) == false && table.getPriority(lastCacheIndex) >= topPriority)
+//			{
+//				queue.pop();
+
+//				if (cacheIndexMap.count(lastCacheIndex) != 0)
+//				{
+//					int previousIndex = cacheIndexMap[lastCacheIndex];
+//					indexMap.erase(previousIndex);
+//				}
+//				indexMap[topIndex] = lastCacheIndex;
+//				cacheIndexMap[lastCacheIndex] = topIndex;
+//				assert(indexMap.size() == cacheIndexMap.size());
+
+//				table.setInUse(lastCacheIndex, true);
+//				table.setPriority(lastCacheIndex, topPriority);
+//				table.updateLastUsed(lastCacheIndex);
+
+//				*cacheIndex = lastCacheIndex;
+//				*index = topIndex;
+//				return true;
+//			}
 		}
 	}
 

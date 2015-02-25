@@ -47,7 +47,7 @@ FilterProcessor::FilterProcessor(unsigned int M, unsigned int blockWidth, unsign
 	errFFT = clfftCreateDefaultPlan(&ifftPlanBatch, context->getCLContext(), CLFFT_1D, &size);
 	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftCreateDefaultPlan()");
 	clfftSetLayout(ifftPlanBatch, CLFFT_HERMITIAN_INTERLEAVED, CLFFT_REAL);
-	clfftSetResultLocation(fftPlan, CLFFT_INPLACE);
+	clfftSetResultLocation(ifftPlanBatch, CLFFT_INPLACE);
 	clfftSetPlanBatchSize(ifftPlanBatch, height);
 	clfftSetPlanDistance(ifftPlanBatch, outBufferDistance/2, outBufferDistance);
 }
@@ -57,14 +57,14 @@ FilterProcessor::~FilterProcessor()
 	delete program;
 	delete[] coefficients;
 
-	clfftStatus errFFT;
+//	clfftStatus errFFT;
 
-	errFFT = clfftDestroyPlan(&fftPlan);
-	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
-	errFFT = clfftDestroyPlan(&fftPlanBatch);
-	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
-	errFFT = clfftDestroyPlan(&ifftPlanBatch);
-	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
+//	errFFT = clfftDestroyPlan(&fftPlan);
+//	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
+//	errFFT = clfftDestroyPlan(&fftPlanBatch);
+//	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
+//	errFFT = clfftDestroyPlan(&ifftPlanBatch);
+//	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
 }
 
 void FilterProcessor::change(Filter* filter)
