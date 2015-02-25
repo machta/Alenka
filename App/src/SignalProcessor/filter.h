@@ -12,10 +12,10 @@
 class Filter
 {
 public:
-	Filter(unsigned int M, double Fs);
+    Filter(unsigned int M, double Fs);
 	~Filter();
 
-	double* computeCoefficients();
+    double* computeCoefficients();
 	void printCoefficients(FILE* file);
 
     double getLowpass() const
@@ -45,27 +45,27 @@ public:
 
 private:
 	unsigned int M;
-	double Fs;
-	double lowpass;
-	double highpass;
+    double Fs;
+    double lowpass;
+    double highpass;
 	bool notch;
 
     OpenCLContext clContext;
 	cl_command_queue queue;
 	clfftPlanHandle plan;
-	double* coefficients;
-	double notchF;
+    double* coefficients;
+    double notchF;
 
-	double hammingWindow(int n, int M)
+    double hammingWindow(int n, int M)
 	{
 		using namespace std;
-		const double tmp = 2*M_PI*n/(M - 1);
+        const double tmp = 2*M_PI*n/(M - 1);
 		return 0.54 - 0.46*cos(tmp);
 	}
-	double blackmanWindow(int n, int M)
+    double blackmanWindow(int n, int M)
 	{
 		using namespace std;
-		const double a = 0.16, a0 = (1 - a)/2, a1 = 0.5, a2 = a/2, tmp = 2*M_PI*n/(M - 1);
+        const double a = 0.16, a0 = (1 - a)/2, a1 = 0.5, a2 = a/2, tmp = 2*M_PI*n/(M - 1);
 		return a0 - a1*cos(tmp) + a2*cos(2*tmp);
 	}
 };

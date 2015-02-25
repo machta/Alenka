@@ -42,6 +42,8 @@ private:
 	boost::program_options::options_description desc;
 };
 
-extern const Options* PROGRAM_OPTIONS;
+extern const Options* PROGRAM_OPTIONS_POINTER;
+
+#define PROGRAM_OPTIONS (*PROGRAM_OPTIONS_POINTER)
 
 #endif // OPTIONS_H

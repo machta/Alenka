@@ -31,7 +31,7 @@ int main(int ac, char** av)
 	clfftSetup(&fftSetup);
 
 	Options* options = new Options(1, av);
-	PROGRAM_OPTIONS = options;
+    PROGRAM_OPTIONS_POINTER = options;
 
 	int res = boost::unit_test::unit_test_main(init, ac, av);
 

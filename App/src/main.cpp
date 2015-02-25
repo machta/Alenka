@@ -15,7 +15,7 @@ int main(int ac, char** av)
 	{
 		// Create global options object.
 		Options* options = new Options(ac, av);
-		PROGRAM_OPTIONS = options;
+        PROGRAM_OPTIONS_POINTER = options;
 
 		if (options->isSet("help"))
 		{
@@ -48,12 +48,12 @@ int main(int ac, char** av)
 	}
 	catch (exception& e)
 	{
-		cerr << "Exception caught in main(): " << e.what() << endl;
+        cerr << "Exception caught in main(): " << e.what() << endl;
 	}
 	catch (...)
 	{
 		cerr << "Unknown exception caught in main()." << endl;
 	}
 
-	return -1;
+    return EXIT_FAILURE;
 }

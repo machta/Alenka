@@ -28,7 +28,7 @@ using cacheCallbackData = std::tuple<std::recursive_mutex*, std::recursive_mutex
 class SignalProcessor : public OpenGLInterface
 {
 public:
-	SignalProcessor(DataFile* file, unsigned int memory = PROGRAM_OPTIONS->get("memoryBuffersSize").as<unsigned int>(), double bufferRatio = 1);
+    SignalProcessor(DataFile* file, unsigned int memory = PROGRAM_OPTIONS["memoryBuffersSize"].as<unsigned int>(), double bufferRatio = 1);
 	~SignalProcessor();
 
 	int64_t getBlockSize() const

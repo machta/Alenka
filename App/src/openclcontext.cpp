@@ -75,7 +75,7 @@ OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device, cl_devi
 
 	properties.push_back(0);
 
-	context = clCreateContext(nullptr, 1, &deviceId, nullptr, nullptr, &err);
+    context = clCreateContext(properties.data(), 1, &deviceId, nullptr, nullptr, &err);
 	checkErrorCode(err, CL_SUCCESS, "clCreateContext()");
 
 	delete[] platforms;
