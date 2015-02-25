@@ -5,7 +5,8 @@
 
 #include "signalviewer.h"
 
-namespace Ui {
+namespace Ui
+{
 class TestWindow;
 }
 
@@ -14,11 +15,11 @@ class TestWindow : public QMainWindow
 	Q_OBJECT
 
 public:
-	explicit TestWindow(QWidget *parent = 0);
+	explicit TestWindow(QWidget* parent = 0);
 	~TestWindow();
 
 private:
-	Ui::TestWindow *ui;
+	Ui::TestWindow* ui;
 };
 
 #endif // TESTWINDOW_H

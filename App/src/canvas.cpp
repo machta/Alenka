@@ -30,15 +30,15 @@ Canvas::~Canvas()
 
 void Canvas::initializeGL()
 {
-    dataFile = new GDF2(PROGRAM_OPTIONS["file"].as<string>().c_str());
+	dataFile = new GDF2(PROGRAM_OPTIONS["file"].as<string>().c_str());
 
 	signalProcessor = new SignalProcessor(dataFile);
 
-    FILE* file1 = fopen(PROGRAM_OPTIONS["vert"].as<string>().c_str(), "rb");
-    checkNotErrorCode(file1, nullptr, "File '" << PROGRAM_OPTIONS["vert"].as<string>() << "' could not be opened.");
+	FILE* file1 = fopen(PROGRAM_OPTIONS["vert"].as<string>().c_str(), "rb");
+	checkNotErrorCode(file1, nullptr, "File '" << PROGRAM_OPTIONS["vert"].as<string>() << "' could not be opened.");
 
-    FILE* file2 = fopen(PROGRAM_OPTIONS["frag"].as<string>().c_str(), "rb");
-    checkNotErrorCode(file2, nullptr, "File '" << PROGRAM_OPTIONS["frag"].as<string>() << "' could not be opened.");
+	FILE* file2 = fopen(PROGRAM_OPTIONS["frag"].as<string>().c_str(), "rb");
+	checkNotErrorCode(file2, nullptr, "File '" << PROGRAM_OPTIONS["frag"].as<string>() << "' could not be opened.");
 
 	program = new OpenGLProgram(file1, file2);
 

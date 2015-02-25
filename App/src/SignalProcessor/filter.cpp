@@ -9,39 +9,39 @@ using namespace std;
 
 Filter::Filter(unsigned int M, double Fs) : M(M), Fs(Fs), lowpass(2),
 	highpass(-1), notch(false),
-    clContext(PROGRAM_OPTIONS["platform"].as<int>(), 0, CL_DEVICE_TYPE_CPU),
+	clContext(PROGRAM_OPTIONS["platform"].as<int>(), 0, CL_DEVICE_TYPE_CPU),
 	notchF(50/Fs*2)
 
 {
-    cl_int errCL;
-    clfftStatus errFFT;
+	cl_int errCL;
+	clfftStatus errFFT;
 
 	size_t size = M;
 
-    errFFT = clfftCreateDefaultPlan(&plan, clContext.getCLContext(), CLFFT_1D, &size);
+	errFFT = clfftCreateDefaultPlan(&plan, clContext.getCLContext(), CLFFT_1D, &size);
 	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftCreateDefaultPlan()");
 
-    clfftSetPlanPrecision(plan, CLFFT_DOUBLE);
+	clfftSetPlanPrecision(plan, CLFFT_DOUBLE);
 	clfftSetLayout(plan, CLFFT_HERMITIAN_INTERLEAVED, CLFFT_REAL);
 	clfftSetResultLocation(plan, CLFFT_INPLACE);
 
 	queue = clCreateCommandQueue(clContext.getCLContext(), clContext.getCLDevice(), 0, &errCL);
 	checkErrorCode(errCL, CL_SUCCESS, "clCreateCommandQueue()");
 
-    errFFT = clfftBakePlan(plan, 1, &queue, nullptr, nullptr);
-    checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftBakePlan()");
+	errFFT = clfftBakePlan(plan, 1, &queue, nullptr, nullptr);
+	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftBakePlan()");
 
-    coefficients = new double[2*(1 + M/2)];
+	coefficients = new double[2*(1 + M/2)];
 }
 
 Filter::~Filter()
 {
 	clReleaseCommandQueue(queue);
 
-//	clfftStatus errFFT;
+	//	clfftStatus errFFT;
 
-//	errFFT = clfftDestroyPlan(&plan);
-//	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
+	//	errFFT = clfftDestroyPlan(&plan);
+	//	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
 
 	delete[] coefficients;
 }
@@ -53,8 +53,8 @@ double* Filter::computeCoefficients()
 	// Initialize cofficients with the values of Hr.
 	for (int i = 0; i < cM; ++i)
 	{
-        double f = 2.*i/M;
-        double val = 1;
+		double f = 2.*i/M;
+		double val = 1;
 
 		if (f >= lowpass)
 		{
@@ -66,7 +66,7 @@ double* Filter::computeCoefficients()
 		}
 		else if (notch)
 		{
-            double tmp = round(f/notchF);
+			double tmp = round(f/notchF);
 			tmp = fabs(f - tmp*notchF);
 			if (tmp <= 1./M*Fs/M)
 			{
@@ -81,11 +81,11 @@ double* Filter::computeCoefficients()
 	// Multiply Hr by exp(...) to make the frequency response H. (eq. 10.2.35)
 	for (int i = 0; i < cM; ++i)
 	{
-        complex<double> tmp(0, 1);
+		complex<double> tmp(0, 1);
 		tmp *= -2*M_PI*i*(M - 1)/2/M;
 		tmp = exp(tmp);
 
-        complex<double> tmp2(coefficients[2*i], coefficients[2*i + 1]);
+		complex<double> tmp2(coefficients[2*i], coefficients[2*i + 1]);
 		tmp *= tmp2;
 
 		coefficients[2*i] = tmp.real();
@@ -94,17 +94,17 @@ double* Filter::computeCoefficients()
 
 	// Compute the iFFT of H to make the FIR filter coefficients h. (eq. 10.2.33)
 	cl_int errCL;
-    cl_mem buffer = clCreateBuffer(clContext.getCLContext(), CL_MEM_USE_HOST_PTR, 2*cM*sizeof(double), coefficients, &errCL);
+	cl_mem buffer = clCreateBuffer(clContext.getCLContext(), CL_MEM_USE_HOST_PTR, 2*cM*sizeof(double), coefficients, &errCL);
 	checkErrorCode(errCL, CL_SUCCESS, "clCreateBuffer()");
 
 	clfftStatus errFFT = clfftEnqueueTransform(plan, CLFFT_BACKWARD, 1, &queue, 0, nullptr, nullptr, &buffer, nullptr, nullptr);
 	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftEnqueueTransform()");
 
 	clFinish(queue);
-    //clEnqueueReadBuffer(queue, buffer, true, 0, M*sizeof(double), coefficients, 0, nullptr, nullptr);
+	//clEnqueueReadBuffer(queue, buffer, true, 0, M*sizeof(double), coefficients, 0, nullptr, nullptr);
 
 	// Try to improve filter characteristics by applying a window function.
-    string window = PROGRAM_OPTIONS.isSet("window") ? PROGRAM_OPTIONS["window"].as<string>() : "";
+	string window = PROGRAM_OPTIONS.isSet("window") ? PROGRAM_OPTIONS["window"].as<string>() : "";
 
 	if (window == "hamming")
 	{
@@ -127,7 +127,7 @@ double* Filter::computeCoefficients()
 
 void Filter::printCoefficients(FILE* file)
 {
-    double* tmp = computeCoefficients();
+	double* tmp = computeCoefficients();
 
 	fprintf(file, "%lf\n%lf\n%lf\n", Fs, getLowpass(), getHighpass());
 	for (unsigned int i = 0; i < M; ++i)

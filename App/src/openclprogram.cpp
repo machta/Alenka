@@ -33,7 +33,7 @@ string OpenCLProgram::getCompilationLog()
 	return str;
 }
 
-void OpenCLProgram::construct(const string &source)
+void OpenCLProgram::construct(const string& source)
 {
 	cl_int err;
 

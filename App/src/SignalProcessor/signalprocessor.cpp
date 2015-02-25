@@ -16,7 +16,7 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory, double /*b
 	offset = M;
 	delay = M/2 - 1;
 	padding = 4;
-    blockSize = PROGRAM_OPTIONS["blockSize"].as<unsigned int>() - offset;
+	blockSize = PROGRAM_OPTIONS["blockSize"].as<unsigned int>() - offset;
 	dataFileGpuCacheBlockSize = (blockSize + offset)*file->getChannelCount();
 	processorCacheBlockSizeCL = (blockSize + offset + padding)*file->getChannelCount();
 
@@ -26,37 +26,37 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory, double /*b
 		throw runtime_error("SignalProcessor requires both the filter length and block length to be multiples of 4");
 	}
 
-    clContext = new OpenCLContext(PROGRAM_OPTIONS["platform"].as<int>(),
-                                  PROGRAM_OPTIONS["device"].as<int>(),
+	clContext = new OpenCLContext(PROGRAM_OPTIONS["platform"].as<int>(),
+								  PROGRAM_OPTIONS["device"].as<int>(),
 								  CL_DEVICE_TYPE_ALL, QOpenGLContext::currentContext());
 
 
-    filterProcessor = new FilterProcessor(M, blockSize + offset, dataFile->getChannelCount(), clContext);
+	filterProcessor = new FilterProcessor(M, blockSize + offset, dataFile->getChannelCount(), clContext);
 
-    double Fs = dataFile->getSamplingFrequency();
-    filter = new Filter(M, Fs);
-    filter->setHighpass(0);
-    filter->setLowpass(Fs/4);
-    filter->setNotch(false);
+	double Fs = dataFile->getSamplingFrequency();
+	filter = new Filter(M, Fs);
+	filter->setHighpass(0);
+	filter->setLowpass(Fs/4);
+	filter->setNotch(false);
 
-    if (PROGRAM_OPTIONS.isSet("printFilter"))
-    {
-        if (PROGRAM_OPTIONS.isSet("printFilterFile"))
-        {
-            FILE* file = fopen(PROGRAM_OPTIONS["printFilterFile"].as<string>().c_str(), "w");
-            checkNotErrorCode(file, nullptr, "File '" << PROGRAM_OPTIONS["printFilterFile"].as<string>() << "' could not be opened for wtiting.");
+	if (PROGRAM_OPTIONS.isSet("printFilter"))
+	{
+		if (PROGRAM_OPTIONS.isSet("printFilterFile"))
+		{
+			FILE* file = fopen(PROGRAM_OPTIONS["printFilterFile"].as<string>().c_str(), "w");
+			checkNotErrorCode(file, nullptr, "File '" << PROGRAM_OPTIONS["printFilterFile"].as<string>() << "' could not be opened for wtiting.");
 
-            filter->printCoefficients(file);
+			filter->printCoefficients(file);
 
-            fclose(file);
-        }
-        else
-        {
-            filter->printCoefficients(stderr);
-        }
-    }
+			fclose(file);
+		}
+		else
+		{
+			filter->printCoefficients(stderr);
+		}
+	}
 
-    filterProcessor->change(filter);
+	filterProcessor->change(filter);
 
 	//montage = new Montage(vector<string> {"out=in(0);", "out=in(1);", "out=in(2);", "out=(in(0)+in(1)+in(2))/3;", "out=sum(0,2)/3;"}, clContext);
 	montage = new Montage(vector<string> {"out=in(0);", "out=10*in(0);", "out=1000*cos(get_global_id(0)/100.);"}, clContext);
@@ -104,7 +104,7 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory, double /*b
 	gpuCacheFillerThread = thread(&SignalProcessor::gpuCacheFiller, this, &threadsStop);
 
 	// Construct the processor cache.
-    unsigned int processorCacheSize = PROGRAM_OPTIONS["processorQueues"].as<unsigned int>();
+	unsigned int processorCacheSize = PROGRAM_OPTIONS["processorQueues"].as<unsigned int>();
 
 	processorCacheQueues.insert(processorCacheQueues.begin(), processorCacheSize, 0);
 	processorCacheCLBuffers.insert(processorCacheCLBuffers.begin(), processorCacheSize, 0);
@@ -305,8 +305,8 @@ void SignalProcessor::dataFileCacheFiller(atomic<bool>* stop)
 	}
 	catch (exception& e)
 	{
-        cerr << "Exception caught in dataFileCacheFiller(): " << e.what() << endl;
-        abort();
+		cerr << "Exception caught in dataFileCacheFiller(): " << e.what() << endl;
+		abort();
 	}
 }
 
@@ -367,8 +367,8 @@ void SignalProcessor::gpuCacheFiller(atomic<bool>* stop)
 	}
 	catch (exception& e)
 	{
-        cerr << "Exception caught in gpuCacheFiller(): " << e.what() << endl;
-        abort();
+		cerr << "Exception caught in gpuCacheFiller(): " << e.what() << endl;
+		abort();
 	}
 }
 

@@ -43,7 +43,7 @@ private:
 	double (* convertSampleToDouble)(void* sample);
 	float (* convertSampleToFloat)(void* sample);
 	int version;
-    bool uncalibrated;
+	bool uncalibrated;
 
 	struct
 	{

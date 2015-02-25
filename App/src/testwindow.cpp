@@ -1,7 +1,7 @@
 #include "testwindow.h"
 #include "ui_testwindow.h"
 
-TestWindow::TestWindow(QWidget *parent) :
+TestWindow::TestWindow(QWidget* parent) :
 	QMainWindow(parent),
 	ui(new Ui::TestWindow)
 {

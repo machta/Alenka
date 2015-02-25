@@ -14,8 +14,8 @@ FilterProcessor::FilterProcessor(unsigned int M, unsigned int blockWidth, unsign
 	cl_int err;
 	clfftStatus errFFT;
 
-    FILE* file = fopen(PROGRAM_OPTIONS["kernels"].as<string>().c_str(), "rb");
-    checkNotErrorCode(file, nullptr, "File '" << PROGRAM_OPTIONS["kernels"].as<string>() << "' could not be opened.");
+	FILE* file = fopen(PROGRAM_OPTIONS["kernels"].as<string>().c_str(), "rb");
+	checkNotErrorCode(file, nullptr, "File '" << PROGRAM_OPTIONS["kernels"].as<string>() << "' could not be opened.");
 
 	program = new OpenCLProgram(file, context);
 
@@ -57,23 +57,23 @@ FilterProcessor::~FilterProcessor()
 	delete program;
 	delete[] coefficients;
 
-//	clfftStatus errFFT;
+	//	clfftStatus errFFT;
 
-//	errFFT = clfftDestroyPlan(&fftPlan);
-//	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
-//	errFFT = clfftDestroyPlan(&fftPlanBatch);
-//	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
-//	errFFT = clfftDestroyPlan(&ifftPlanBatch);
-//	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
+	//	errFFT = clfftDestroyPlan(&fftPlan);
+	//	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
+	//	errFFT = clfftDestroyPlan(&fftPlanBatch);
+	//	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
+	//	errFFT = clfftDestroyPlan(&ifftPlanBatch);
+	//	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
 }
 
 void FilterProcessor::change(Filter* filter)
 {
-    double* tmp = filter->computeCoefficients();
+	double* tmp = filter->computeCoefficients();
 
 	for (unsigned int i = 0; i < M; ++i)
 	{
-        coefficients[i] = static_cast<float>(tmp[i]);
+		coefficients[i] = static_cast<float>(tmp[i]);
 	}
 
 	coefficientsChanged = true;

@@ -11,7 +11,7 @@ public:
 	OpenGLProgram(FILE* vertSource, FILE* fragSource);
 	OpenGLProgram(const std::string& vertSource, const std::string& fragSource)
 	{
-        construct(vertSource.c_str(), fragSource.c_str());
+		construct(vertSource.c_str(), fragSource.c_str());
 	}
 	~OpenGLProgram();
 
@@ -23,7 +23,7 @@ public:
 private:
 	GLuint program;
 
-	void construct(const char *vertSource, const char *fragSource);
+	void construct(const char* vertSource, const char* fragSource);
 	void addShader(GLuint program, const char* sourceText, GLenum type);
 };
 

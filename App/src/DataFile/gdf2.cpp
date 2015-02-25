@@ -186,7 +186,7 @@ case a_:\
 		break;
 	}
 
-    uncalibrated = PROGRAM_OPTIONS["uncalibrated"].as<bool>();
+	uncalibrated = PROGRAM_OPTIONS["uncalibrated"].as<bool>();
 
 	if (uncalibrated == false)
 	{

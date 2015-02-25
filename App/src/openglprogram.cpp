@@ -8,7 +8,7 @@ using namespace std;
 
 #define fun() fun_shortcut()
 
-OpenGLProgram::OpenGLProgram(FILE *vertSource, FILE *fragSource)
+OpenGLProgram::OpenGLProgram(FILE* vertSource, FILE* fragSource)
 {
 	char* tmp[2];
 	FILE* file[] = {vertSource, fragSource};
