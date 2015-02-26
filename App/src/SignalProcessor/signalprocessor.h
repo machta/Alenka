@@ -23,7 +23,8 @@
 #include <condition_variable>
 #include <tuple>
 
-using cacheCallbackData = std::tuple<std::recursive_mutex*, std::recursive_mutex*, PriorityCacheLogic*, PriorityCacheLogic*, std::condition_variable_any*, int>;
+using gpuCacheQueueCallbackData = std::tuple<std::mutex*, std::mutex*, PriorityCacheLogic*, PriorityCacheLogic*, std::condition_variable_any*, int>;
+using processorCacheQueueCallbackData = std::tuple<std::mutex*, std::vector<int>*, int>;
 
 class SignalProcessor : public OpenGLInterface
 {
@@ -41,37 +42,35 @@ public:
 	SignalBlock getAnyBlock(const std::set<int>& indexSet);
 	void release(const SignalBlock& block)
 	{
-		std::lock_guard<std::recursive_mutex> lock(processorCacheMutex);
+		std::lock_guard<std::mutex> lock(processorCacheMutex);
 		processorCacheLogic->release(block.getIndex());
 	}
 	void release(const SignalBlock& block, int newPriority)
 	{
-		std::lock_guard<std::recursive_mutex> lock(processorCacheMutex);
+		std::lock_guard<std::mutex> lock(processorCacheMutex);
 		processorCacheLogic->release(block.getIndex(), newPriority);
 	}
 	void prepareBlocks(const std::set<int>& indexSet, int priority)
 	{
 		{
-			std::lock_guard<std::recursive_mutex> lock(dataFileCacheMutex);
+			std::lock_guard<std::mutex> lock(dataFileCacheMutex);
 			dataFileCacheLogic->enqueue(indexSet, priority);
 		}
 
 		{
-			std::lock_guard<std::recursive_mutex> lock(gpuCacheMutex);
+			std::lock_guard<std::mutex> lock(gpuCacheMutex);
 			gpuCacheLogic->enqueue(indexSet, priority);
 		}
 
 		{
-			std::lock_guard<std::recursive_mutex> lock(processorCacheMutex);
+			std::lock_guard<std::mutex> lock(processorCacheMutex);
 			processorCacheLogic->enqueue(indexSet, priority);
 		}
 
-		fprintf(stderr, "inCV(0x%p).notify_all()\n", &inCV);
-		inCV.notify_all();
-		fprintf(stderr, "dataFileGpuCV(0x%p).notify_all()\n", &dataFileGpuCV);
-		dataFileGpuCV.notify_all();
-		fprintf(stderr, "gpuProcessorCV(0x%p).notify_all()\n", &gpuProcessorCV);
-		gpuProcessorCV.notify_all();
+		fprintf(stderr, "dataFileCacheOutCV(0x%p).notify_all()\n", &dataFileCacheOutCV);
+		dataFileCacheOutCV.notify_all();
+		fprintf(stderr, "gpuCacheOutCV(0x%p).notify_all()\n", &gpuCacheOutCV);
+		gpuCacheOutCV.notify_all();
 	}
 
 private:
@@ -95,32 +94,33 @@ private:
 	unsigned int processorCacheBlockSizeCL;
 	unsigned int processorCacheBlockSizeGL;
 
-	std::condition_variable_any inCV;
-	std::condition_variable_any dataFileGpuCV;
-	std::condition_variable_any gpuProcessorCV;
-	std::condition_variable_any outCV;
-
-	std::recursive_mutex dataFileCacheMutex;
+	std::mutex dataFileCacheMutex;
+	std::condition_variable_any dataFileCacheOutCV;
 	std::vector<float*> dataFileCache;
 	PriorityCacheLogic* dataFileCacheLogic;
 	std::thread dataFileCacheFillerThread;
 
-	std::recursive_mutex gpuCacheMutex;
+	std::mutex gpuCacheMutex;
+	std::condition_variable_any gpuCacheInCV;
+	std::condition_variable_any gpuCacheOutCV;
 	std::vector<cl_mem> gpuCache;
 	PriorityCacheLogic* gpuCacheLogic;
 	std::thread gpuCacheFillerThread;
 	cl_command_queue gpuCacheQueue;
 
-	std::recursive_mutex processorCacheMutex;
+	std::mutex processorCacheMutex;
+	std::condition_variable_any processorCacheInCV;
 	PriorityCacheLogic* processorCacheLogic;
 	std::vector<cl_command_queue> processorCacheQueues;
+	std::vector<int> processorCacheQueuesDone;
 	std::vector<cl_mem> processorCacheCLBuffers;
 	std::vector<GLuint> processorCacheGLBuffers;
 	std::vector<GLuint> processorCacheVertexArrays;
 
 	void dataFileCacheFiller(std::atomic<bool>* stop);
 	void gpuCacheFiller(std::atomic<bool>* stop);
-	static void cacheCallback (cl_event event, cl_int event_command_exec_status, void* user_data);
+	static void gpuCacheQueueCallback(cl_event event, cl_int event_command_exec_status, void* user_data);
+	static void processorCacheQueueCallback(cl_event event, cl_int event_command_exec_status, void* user_data);
 	std::pair<std::int64_t, std::int64_t> getBlockBoundaries(int index)
 	{
 		int64_t from = index*getBlockSize(),

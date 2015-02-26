@@ -31,12 +31,7 @@ public:
 protected:
 	virtual void resizeEvent(QResizeEvent*)
 	{
-		int page = canvas->size().width();
-
-		scrollBar->setRange(0, virtualWidth - page);
-		scrollBar->setPageStep(page);
-		scrollBar->setSingleStep(std::max(1, page/20));
-		//scrollBar->setValue();
+		updateSignalViewer();
 	}
 
 private:
@@ -46,10 +41,16 @@ private:
 	int virtualWidth = 10000;
 	int position = 0;
 
-	void resizeSignalViewer()
+	void updateSignalViewer()
 	{
-		resizeEvent(nullptr);
-		canvas->resize(canvas->size());
+		int page = canvas->size().width();
+
+		scrollBar->setRange(0, virtualWidth - page);
+		scrollBar->setPageStep(page);
+		scrollBar->setSingleStep(std::max(1, page/20));
+		//scrollBar->setValue();
+
+		canvas->update();
 	}
 
 signals:
@@ -62,7 +63,7 @@ public slots:
 		if (value != virtualWidth)
 		{
 			virtualWidth = value;
-			resizeSignalViewer();
+			updateSignalViewer();
 			emit virtualWidthChanged(virtualWidth);
 		}
 	}
@@ -71,7 +72,7 @@ public slots:
 		if (value != position)
 		{
 			position = value;
-			resizeSignalViewer();
+			updateSignalViewer();
 			emit positionChanged(position);
 		}
 	}

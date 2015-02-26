@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
-#include <queue>
+#include <vector>
 #include <limits>
 #include <map>
 #include <set>
@@ -92,7 +92,7 @@ public:
 		lastUsed[i] = 0;
 	}
 
-	void printTable(const std::map<unsigned int, int>& cacheIndexMap);
+	void printTable(const std::map<unsigned int, int>& cacheIndexMap) const;
 
 private:
 	bool dirty = true;
@@ -114,9 +114,6 @@ public:
 	{
 		int oldIndex = index;
 
-		//std::set<int> indexSet {index};
-		//indexSet.insert(index);
-		//bool ret = readAny(indexSet, cacheIndex, &index);
 		bool ret = readAny(std::set<int> {index}, cacheIndex, &index);
 
 		assert(index == oldIndex);
@@ -140,6 +137,7 @@ public:
 		return cacheIndex;
 	}
 	void clear() {}
+	void printInfo() const;
 
 private:
 	struct QueueComparator
@@ -148,15 +146,45 @@ private:
 		{
 			return a.second > b.second;
 		}
-	};
-	std::priority_queue<std::pair<int, int>, std::vector<std::pair<unsigned int, int>>, QueueComparator> queue;
+	} queueComparator;
+	std::vector<std::pair<int, int>> queue;
 
 	std::map<int, unsigned int> indexMap;
 	std::map<unsigned int, int> cacheIndexMap;
 
+	unsigned int capacity;
 	PriorityCacheLogicTable table;
 	int indexFrom;
 	int indexTo;
+
+	void push(int val, int priority)
+	{
+#ifdef NDEBUG
+		if (queue.size() >= 100*capacity)
+		{
+			queue.back() = std::make_pair(val, priority);
+		}
+		else
+#endif
+		{
+			queue.push_back(std::make_pair(val, priority));
+		}
+
+		std::push_heap(queue.begin(), queue.end(), queueComparator);
+
+		assert(is_heap(queue.begin(), queue.end(), queueComparator));
+	}
+	void pop()
+	{
+		std::pop_heap(queue.begin(), queue.end(), queueComparator);
+		queue.pop_back();
+
+		assert(is_heap(queue.begin(), queue.end(), queueComparator));
+	}
+	std::pair<int, int>& top()
+	{
+		return queue[0];
+	}
 };
 
 #endif // PRIORITYCACHELOGIC_H

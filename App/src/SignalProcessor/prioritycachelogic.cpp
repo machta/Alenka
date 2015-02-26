@@ -1,11 +1,11 @@
 #include "prioritycachelogic.h"
 
-#include <algorithm>
+#include <iostream>
 
 using namespace std;
 
 PriorityCacheLogic::PriorityCacheLogic(unsigned int capacity, int from, int to) :
-	table(capacity), indexFrom(from), indexTo(to)
+	capacity(capacity), table(capacity), indexFrom(from), indexTo(to)
 {
 
 }
@@ -19,7 +19,7 @@ void PriorityCacheLogic::enqueue(const set<int>& indexSet, int priority)
 {
 	for (const auto& e : indexSet)
 	{
-		queue.emplace(e, priority);
+		push(e, priority);
 	}
 }
 
@@ -27,27 +27,27 @@ bool PriorityCacheLogic::fill(unsigned int* cacheIndex, int* index)
 {
 	while (queue.empty() == false)
 	{
-		int topIndex = queue.top().first;
-		int topPriority = queue.top().second;
+		int topIndex = top().first;
+		int topPriority = top().second;
 
 		if (indexMap.count(topIndex) != 0)
 		{
 			unsigned int ci = indexMap[topIndex];
-			//table.setPriority(ci, min(table.getPriority(ci), topPriority));
-			table.setPriority(ci, topPriority);
-			queue.pop();
+			table.setPriority(ci, min(table.getPriority(ci), topPriority));
+			//table.setPriority(ci, topPriority);
+			pop();
 		}
 		else
 		{
 			unsigned int lastCacheIndex = table.getLast();
 			//table.printTable(cacheIndexMap);
 
-			if (table.getInUse(lastCacheIndex) || table.getPriority(lastCacheIndex) < topPriority)
+			if (table.getInUse(lastCacheIndex) || table.getPriority(lastCacheIndex) <= topPriority)
 			{
 				return false;
 			}
 
-			queue.pop();
+			pop();
 
 			if (cacheIndexMap.count(lastCacheIndex) != 0)
 			{
@@ -65,28 +65,6 @@ bool PriorityCacheLogic::fill(unsigned int* cacheIndex, int* index)
 			*cacheIndex = lastCacheIndex;
 			*index = topIndex;
 			return true;
-
-//			if (table.getInUse(lastCacheIndex) == false && table.getPriority(lastCacheIndex) >= topPriority)
-//			{
-//				queue.pop();
-
-//				if (cacheIndexMap.count(lastCacheIndex) != 0)
-//				{
-//					int previousIndex = cacheIndexMap[lastCacheIndex];
-//					indexMap.erase(previousIndex);
-//				}
-//				indexMap[topIndex] = lastCacheIndex;
-//				cacheIndexMap[lastCacheIndex] = topIndex;
-//				assert(indexMap.size() == cacheIndexMap.size());
-
-//				table.setInUse(lastCacheIndex, true);
-//				table.setPriority(lastCacheIndex, topPriority);
-//				table.updateLastUsed(lastCacheIndex);
-
-//				*cacheIndex = lastCacheIndex;
-//				*index = topIndex;
-//				return true;
-//			}
 		}
 	}
 
@@ -121,6 +99,7 @@ bool PriorityCacheLogic::readAny(const set<int>& indexSet, unsigned int* cacheIn
 
 	if (indexFound == -1)
 	{
+		enqueue(indexSet, -1);
 		return false;
 	}
 	else
@@ -133,7 +112,7 @@ bool PriorityCacheLogic::readAny(const set<int>& indexSet, unsigned int* cacheIn
 	}
 }
 
-void PriorityCacheLogicTable::printTable(const map<unsigned int, int>& cacheIndexMap)
+void PriorityCacheLogicTable::printTable(const map<unsigned int, int>& cacheIndexMap) const
 {
 #ifndef NDEBUG
 	//fprintf(stderr, "Buffer Table:\n");
@@ -168,4 +147,15 @@ void PriorityCacheLogicTable::printTable(const map<unsigned int, int>& cacheInde
 
 	fflush(stderr);
 #endif
+}
+
+void PriorityCacheLogic::printInfo() const
+{
+	table.printTable(cacheIndexMap);
+
+	for (const auto& e : queue)
+	{
+		cerr << "(" << e.first << ", " << e.second << ") ";
+	}
+	cerr << endl;
 }
