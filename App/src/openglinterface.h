@@ -11,15 +11,20 @@
 class OpenGLInterface
 {
 public:
-	//OpenGLInterface() {} // Initialization is done when the interface pointers are needed for the first time.
+	//OpenGLInterface() {}
+	// Initialization is done when the interface pointers are needed for the first time. Initialize() could be added instead so that the condition can be removed from fun() and log().
 
 	~OpenGLInterface()
 	{
 		delete logger;
 	}
 
-	//protected:
+protected:
+#ifndef NDEBUG
 	QOpenGLFunctions_4_1_Core* fun(const char* file = "", int line = 0)
+#else
+	QOpenGLFunctions_4_1_Core* fun(const char*, int)
+#endif
 	{
 		using namespace std;
 
@@ -35,12 +40,10 @@ public:
 		}
 
 		checkGLErrors();
+
 #ifndef NDEBUG
 		lastCallFile = file;
 		lastCallLine = line;
-#else
-		(void)file;
-		(void)line;
 #endif
 
 		return functions;
@@ -69,10 +72,8 @@ private:
 	QOpenGLDebugLogger* logger = nullptr;
 
 #ifndef NDEBUG
-	const char* lastCallFile;
-	int lastCallLine;
-	//	const char* lastCallFile = "";
-	//	int lastCallLine = 0;
+	const char* lastCallFile = "none";
+	int lastCallLine = -1;
 #endif
 
 	void checkGLErrors()

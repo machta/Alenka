@@ -1,5 +1,6 @@
 #include "options.h"
 #include "testwindow.h"
+#include "openclcontext.h"
 
 #include <QApplication>
 #include <QSurfaceFormat>
@@ -12,19 +13,13 @@ using namespace std;
 
 int main(int ac, char** av)
 {
+	int ret = EXIT_FAILURE;
+
 	try
 	{
 		// Create global options object.
 		Options* options = new Options(ac, av);
 		PROGRAM_OPTIONS_POINTER = options;
-
-		if (options->isSet("help"))
-		{
-			cout << options->getDescription() << endl;
-
-			delete options;
-			return 0;
-		}
 
 		// Set up the clFFT library.
 		clfftSetupData setupData;
@@ -45,19 +40,58 @@ int main(int ac, char** av)
 
 		QSurfaceFormat::setDefaultFormat(format);
 
-		// Create application and show main window.
-		QApplication app(ac, av);
+		// Process some of the commandline only options.
+		if (PROGRAM_OPTIONS.isSet("help"))
+		{
+			cout << PROGRAM_OPTIONS.getDescription() << endl;
 
-		TestWindow window;
-		window.show();
+			ret = EXIT_SUCCESS;
+		}
+		else if (PROGRAM_OPTIONS.isSet("platformInfo"))
+		{
+			OpenCLContext context1(SIGNAL_PROCESSOR_CONTEXT_PARAMETERS);
+			OpenCLContext context2(FILTER_CONTEXT_PARAMETERS);
 
-		int res = app.exec();
+			if (context1.getCLPlatform() == context2.getCLPlatform())
+			{
+				cout << context1.getPlatformInfo() << endl;
+			}
+			else
+			{
+				cout << "Platform 1" << endl;
+				cout << context1.getPlatformInfo() << endl << endl;
+				cout << "Platform 2" << endl;
+				cout << context2.getPlatformInfo() << endl;
+			}
+
+			ret = EXIT_SUCCESS;
+		}
+		else if (PROGRAM_OPTIONS.isSet("deviceInfo"))
+		{
+			OpenCLContext context1(SIGNAL_PROCESSOR_CONTEXT_PARAMETERS);
+			OpenCLContext context2(FILTER_CONTEXT_PARAMETERS);
+
+			cout << "Device used in SignalProcessor" << endl;
+			cout << context1.getDeviceInfo() << endl << endl;
+			cout << "Device used in Filter" << endl;
+			cout << context2.getDeviceInfo() << endl;
+
+			ret = EXIT_SUCCESS;
+		}
+		else
+		{
+			// Create application and show main window.
+			QApplication app(ac, av);
+
+			TestWindow window;
+			window.show();
+
+			ret = app.exec();
+		}
 
 		// Clean up.
 		clfftTeardown();
-
 		delete options;
-		return res;
 	}
 	catch (exception& e)
 	{
@@ -68,5 +102,5 @@ int main(int ac, char** av)
 		cerr << "Unknown exception caught in main()." << endl;
 	}
 
-	return EXIT_FAILURE;
+	return ret;
 }

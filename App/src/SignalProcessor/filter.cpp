@@ -9,7 +9,7 @@ using namespace std;
 
 Filter::Filter(unsigned int M, double Fs) : M(M), Fs(Fs), lowpass(2),
 	highpass(-1), notch(false),
-	clContext(PROGRAM_OPTIONS["platform"].as<int>(), 0, CL_DEVICE_TYPE_CPU),
+	clContext(FILTER_CONTEXT_PARAMETERS),
 	notchF(50/Fs*2)
 
 {

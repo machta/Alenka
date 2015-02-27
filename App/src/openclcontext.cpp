@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <iostream>
 
 using namespace std;
 
@@ -85,5 +86,107 @@ OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device, cl_devi
 OpenCLContext::~OpenCLContext()
 {
 	clReleaseContext(context);
+}
+
+string OpenCLContext::getPlatformInfo()
+{
+	cl_int err;
+	size_t size, maxSize = 0;
+
+	// Find the maximum size needed for the value.
+	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_VERSION, 0, nullptr, &size);
+	checkErrorCode(err, CL_SUCCESS, "clGetPlatformInfo()");
+	maxSize = max(maxSize, size);
+
+	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_NAME, 0, nullptr, &size);
+	checkErrorCode(err, CL_SUCCESS, "clGetPlatformInfo()");
+	maxSize = max(maxSize, size);
+
+	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_VENDOR, 0, nullptr, &size);
+	checkErrorCode(err, CL_SUCCESS, "clGetPlatformInfo()");
+	maxSize = max(maxSize, size);
+
+	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_EXTENSIONS, 0, nullptr, &size);
+	checkErrorCode(err, CL_SUCCESS, "clGetPlatformInfo()");
+	maxSize = max(maxSize, size);
+
+	// Build the string.
+	char* tmp = new char[maxSize];
+	string str;
+
+	str += "Version: ";
+	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_VERSION, maxSize, tmp, nullptr);
+	checkErrorCode(err, CL_SUCCESS, "clGetPlatformInfo()");
+	str += tmp;
+
+	str += "\nName: ";
+	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_NAME, maxSize, tmp, nullptr);
+	checkErrorCode(err, CL_SUCCESS, "clGetPlatformInfo()");
+	str += tmp;
+
+	str += "\nVendor: ";
+	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_VENDOR, maxSize, tmp, nullptr);
+	checkErrorCode(err, CL_SUCCESS, "clGetPlatformInfo()");
+	str += tmp;
+
+	str += "\nExtensions: ";
+	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_EXTENSIONS, maxSize, tmp, nullptr);
+	checkErrorCode(err, CL_SUCCESS, "clGetPlatformInfo()");
+	str += tmp;
+
+	delete[] tmp;
+
+	return str;
+}
+
+string OpenCLContext::getDeviceInfo()
+{
+	cl_int err;
+	size_t size, maxSize = 0;
+
+	// Find the maximum size needed for the value.
+	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_VERSION, 0, nullptr, &size);
+	checkErrorCode(err, CL_SUCCESS, "clGetDeviceInfo()");
+	maxSize = max(maxSize, size);
+
+	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_NAME, 0, nullptr, &size);
+	checkErrorCode(err, CL_SUCCESS, "clGetDeviceInfo()");
+	maxSize = max(maxSize, size);
+
+	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_VENDOR, 0, nullptr, &size);
+	checkErrorCode(err, CL_SUCCESS, "clGetDeviceInfo()");
+	maxSize = max(maxSize, size);
+
+	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_EXTENSIONS, 0, nullptr, &size);
+	checkErrorCode(err, CL_SUCCESS, "clGetDeviceInfo()");
+	maxSize = max(maxSize, size);
+
+	// Build the string.
+	char* tmp = new char[maxSize];
+	string str;
+
+	str += "Version: ";
+	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_VERSION, maxSize, tmp, nullptr);
+	checkErrorCode(err, CL_SUCCESS, "clGetDeviceInfo()");
+	str += tmp;
+
+	str += "\nName: ";
+	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_NAME, maxSize, tmp, nullptr);
+	checkErrorCode(err, CL_SUCCESS, "clGetDeviceInfo()");
+	str += tmp;
+
+	str += "\nVendor: ";
+	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_VENDOR, maxSize, tmp, nullptr);
+	checkErrorCode(err, CL_SUCCESS, "clGetDeviceInfo()");
+	str += tmp;
+
+	str += "\nExtensions: ";
+	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_EXTENSIONS, maxSize, tmp, nullptr);
+	checkErrorCode(err, CL_SUCCESS, "clGetDeviceInfo()");
+	str += tmp;
+
+	delete[] tmp;
+
+	return str;
 }
 

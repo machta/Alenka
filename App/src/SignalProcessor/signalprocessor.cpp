@@ -26,9 +26,7 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory, double /*b
 		throw runtime_error("SignalProcessor requires both the filter length and block length to be multiples of 4");
 	}
 
-	clContext = new OpenCLContext(PROGRAM_OPTIONS["platform"].as<int>(),
-								  PROGRAM_OPTIONS["device"].as<int>(),
-								  CL_DEVICE_TYPE_ALL, QOpenGLContext::currentContext());
+	clContext = new OpenCLContext(SIGNAL_PROCESSOR_CONTEXT_PARAMETERS, QOpenGLContext::currentContext());
 
 
 	filterProcessor = new FilterProcessor(M, blockSize + offset, dataFile->getChannelCount(), clContext);

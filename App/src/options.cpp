@@ -12,14 +12,16 @@ Options::Options(int ac, char** av)
 	commandLineOnly.add_options()
 	("help", "help message")
 	("config,c", value<string>()->default_value("options.cfg"), "config file")
-	("printFilter", "should the filter coefficients be printed, printFilterFile sets the file name")
+	("printFilter", "should the filter coefficients be printed (everytime they are computed)")
+	("platformInfo", "print OpenCL platform info")
+	("deviceInfo", "print OpenCL device info")
 	;
 
 	options_description other("Configuration");
 	other.add_options()
 	("uncalibrated", value<bool>()->default_value(false), "assume uncalibrated data in gdf files")
 	("platform", value<int>()->default_value(0), "OpenCL platform id")
-	("device", value<int>()->default_value(0), "OpenCL device id")
+	("device", value<int>()->default_value(0), "OpenCL device id to be used in SignalProcessor")
 	("window", value<string>(), "window function to be used on FIR coefficients (hamming | blackman)")
 	("blockSize", value<unsigned int>()->default_value(8*1024), "size of one block of signal data")
 	("processorQueues", value<unsigned int>()->default_value(8), "the number of parallel command queues in SignalProcessor")
