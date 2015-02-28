@@ -3,9 +3,11 @@
 #include "error.h"
 
 #if defined WIN_BUILD
-#include <QtPlatformHeaders/QWGLNativeContext>
+//#include <QtPlatformHeaders/QWGLNativeContext>
+#include <windows.h>
 #elif defined UNIX_BUILD
-#include <QtPlatformHeaders/QGLXNativeContext>
+//#include <QtPlatformHeaders/QGLXNativeContext>
+#include <GL/glx.h>
 #endif
 
 #include <algorithm>
@@ -46,31 +48,18 @@ OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device, cl_devi
 
 	if (parentContext != nullptr)
 	{
-		properties.push_back(CL_GL_CONTEXT_KHR);
-
-		QVariant nativeHandle = parentContext->nativeHandle();
-		checkErrorCode(nativeHandle.isNull(), false, "parentContext->nativeHandle()");
-
 #if defined WIN_BUILD
-		if (nativeHandle.canConvert<QWGLNativeContext>())
-		{
-			auto nativeContext = nativeHandle.value<QWGLNativeContext>();
-			properties.push_back(reinterpret_cast<cl_context_properties>(nativeContext.context()));
-		}
-		else
-		{
-			throw runtime_error("Cannot convert to QWGLNativeContext.");
-		}
+		properties.push_back(CL_GL_CONTEXT_KHR);
+		properties.push_back(reinterpret_cast<cl_context_properties>(wglGetCurrentContext()));
+
+		properties.push_back(CL_WGL_HDC_KHR);
+		properties.push_back(reinterpret_cast<cl_context_properties>(wglGetCurrentDC()));
 #elif defined UNIX_BUILD
-		if (nativeHandle.canConvert<QGLXNativeContext>())
-		{
-			auto nativeContext = nativeHandle.value<QGLXNativeContext>();
-			properties.push_back(reinterpret_cast<cl_context_properties>(nativeContext.context()));
-		}
-		else
-		{
-			throw runtime_error("Cannot convert to QGLXNativeContext.");
-		}
+		properties.push_back(CL_GL_CONTEXT_KHR);
+		properties.push_back(reinterpret_cast<cl_context_properties>(glXGetCurrentContext()));
+
+		properties.push_back(CL_GLX_DISPLAY_KHR);
+		properties.push_back(reinterpret_cast<cl_context_properties>(glXGetCurrentDisplay()));
 #endif
 	}
 

@@ -33,8 +33,8 @@ bool PriorityCacheLogic::fill(unsigned int* cacheIndex, int* index)
 		if (indexMap.count(topIndex) != 0)
 		{
 			unsigned int ci = indexMap[topIndex];
-			table.setPriority(ci, min(table.getPriority(ci), topPriority));
-			//table.setPriority(ci, topPriority);
+			//table.setPriority(ci, min(table.getPriority(ci), topPriority));
+			table.setPriority(ci, topPriority);
 			pop();
 		}
 		else
@@ -99,7 +99,6 @@ bool PriorityCacheLogic::readAny(const set<int>& indexSet, unsigned int* cacheIn
 
 	if (indexFound == -1)
 	{
-		enqueue(indexSet, -1);
 		return false;
 	}
 	else

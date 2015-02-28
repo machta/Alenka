@@ -26,10 +26,23 @@ Canvas::~Canvas()
 	delete signalProcessor;
 	delete program;
 	delete dataFile;
+
+	fun();
 }
 
 void Canvas::initializeGL()
 {
+	if (PROGRAM_OPTIONS.isSet("glInfo"))
+	{
+		cout << "Version: " << fun()->glGetString(GL_VERSION) << endl;
+		cout << "Renderer: " << fun()->glGetString(GL_RENDERER) << endl;
+		cout << "Vendor: " << fun()->glGetString(GL_VENDOR) << endl;
+		cout << "GLSH version: " << fun()->glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
+		cout << "Extensions: " << fun()->glGetString(GL_EXTENSIONS) << endl;
+
+		exit(EXIT_SUCCESS);
+	}
+
 	dataFile = new GDF2(PROGRAM_OPTIONS["file"].as<string>().c_str());
 
 	signalProcessor = new SignalProcessor(dataFile);
@@ -103,10 +116,8 @@ void Canvas::paintGL()
 		paintBlock(block);
 
 		indexSet.erase(block.getIndex());
-		signalProcessor->release(block, 1);
 
 		cerr << "Block " << block.getIndex() << " painted." << endl;
-		checkGLMessages();
 	}
 
 	// Finish rendering.

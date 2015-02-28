@@ -15,6 +15,7 @@ Options::Options(int ac, char** av)
 	("printFilter", "should the filter coefficients be printed (everytime they are computed)")
 	("platformInfo", "print OpenCL platform info")
 	("deviceInfo", "print OpenCL device info")
+	("glInfo", "print OpenGL info")
 	;
 
 	options_description other("Configuration");

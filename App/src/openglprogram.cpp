@@ -34,6 +34,8 @@ OpenGLProgram::OpenGLProgram(FILE* vertSource, FILE* fragSource)
 OpenGLProgram::~OpenGLProgram()
 {
 	fun()->glDeleteProgram(program);
+
+	fun();
 }
 
 void OpenGLProgram::construct(const char* vertSource, const char* fragSource)
