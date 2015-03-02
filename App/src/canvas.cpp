@@ -115,6 +115,8 @@ void Canvas::paintGL()
 
 		paintBlock(block);
 
+		fun()->glFlush();
+
 		indexSet.erase(block.getIndex());
 
 		cerr << "Block " << block.getIndex() << " painted." << endl;
@@ -141,7 +143,7 @@ double Canvas::samplePixelRatio()
 
 void Canvas::paintBlock(const SignalBlock& block)
 {
-	fun()->glBindVertexArray(block.geGLVertexArray());
+	fun()->glBindVertexArray(block.getGLVertexArray());
 
 	for (unsigned int i = 0; i < block.getchannelCount(); ++i)
 	{

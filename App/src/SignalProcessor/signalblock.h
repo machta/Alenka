@@ -2,17 +2,20 @@
 #define SIGNALBLOCK_H
 
 #include "../openglinterface.h"
+#include "CL/cl_gl.h"
 
 #include <cinttypes>
+#include <atomic>
 
 class SignalBlock
 {
 public:
-	SignalBlock(GLuint vertexArray, unsigned int index, unsigned int channelCount = 0, int64_t firstSample = 0, int64_t lastSample = 0) :
-		vertexArray(vertexArray), index(index), channelCount(channelCount), firstSample(firstSample), lastSample(lastSample) {}
+	SignalBlock(unsigned int index, unsigned int channelCount, int64_t firstSample, int64_t lastSample, GLuint vertexArray) :
+		index(index), channelCount(channelCount), firstSample(firstSample), lastSample(lastSample), vertexArray(vertexArray)
+	{}
 	~SignalBlock() {}
 
-	GLuint geGLVertexArray() const
+	GLuint getGLVertexArray() const
 	{
 		return vertexArray;
 	}
@@ -34,11 +37,11 @@ public:
 	}
 
 private:
-	GLuint vertexArray;
 	unsigned int index;
 	unsigned int channelCount;
 	int64_t firstSample;
 	int64_t lastSample;
+	GLuint vertexArray;
 };
 
 #endif // SIGNALBLOCK_H

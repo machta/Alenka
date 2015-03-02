@@ -142,7 +142,7 @@ public:
 private:
 	struct QueueComparator
 	{
-		bool operator()(std::pair<unsigned int, int> a, std::pair<unsigned int, int> b)
+		bool operator()(std::pair<int, int> a, std::pair<int, int> b)
 		{
 			return a.second > b.second;
 		}
@@ -170,18 +170,34 @@ private:
 			queue.push_back(std::make_pair(val, priority));
 		}
 
+#ifdef NDEBUG
 		std::push_heap(queue.begin(), queue.end(), queueComparator);
+#else
+		std::sort(queue.begin(), queue.end(), queueComparator);
+		std::reverse(queue.begin(), queue.end());
+#endif
 
+		//if (is_heap(queue.begin(), queue.end(), queueComparator) == false) printInfo();
 		assert(is_heap(queue.begin(), queue.end(), queueComparator));
 	}
 	void pop()
 	{
+		assert(queue.empty() == false);
+
+#ifdef NDEBUG
 		std::pop_heap(queue.begin(), queue.end(), queueComparator);
 		queue.pop_back();
+#else
+		std::swap(queue.front(), queue.back());
+		queue.pop_back();
+		std::sort(queue.begin(), queue.end(), queueComparator);
+		std::reverse(queue.begin(), queue.end());
+#endif
 
+		//if (is_heap(queue.begin(), queue.end(), queueComparator) == false) printInfo();
 		assert(is_heap(queue.begin(), queue.end(), queueComparator));
 	}
-	std::pair<int, int>& top()
+	const std::pair<int, int>& top() const
 	{
 		return queue[0];
 	}

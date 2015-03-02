@@ -23,8 +23,7 @@
 #include <condition_variable>
 #include <tuple>
 
-using gpuCacheQueueCallbackData = std::tuple<std::mutex*, std::mutex*, PriorityCacheLogic*, PriorityCacheLogic*, std::condition_variable_any*, int>;
-using processorQueueCallbackData = std::tuple<std::mutex*, PriorityCacheLogic*, int>;
+using gpuCacheQueueCallbackData = std::tuple<std::mutex*, std::mutex*, PriorityCacheLogic*, PriorityCacheLogic*, std::condition_variable*, int>;
 
 class SignalProcessor : public OpenGLInterface
 {
@@ -80,31 +79,28 @@ private:
 	unsigned int processorOutputBlockSize;
 
 	std::mutex dataFileCacheMutex;
-	std::condition_variable_any dataFileCacheOutCV;
+	std::condition_variable dataFileCacheOutCV;
 	std::vector<float*> dataFileCache;
 	PriorityCacheLogic* dataFileCacheLogic;
 	std::thread dataFileCacheFillerThread;
 
 	std::mutex gpuCacheMutex;
-	std::condition_variable_any gpuCacheInCV;
-	std::condition_variable_any gpuCacheOutCV;
+	std::condition_variable gpuCacheInCV;
+	std::condition_variable gpuCacheOutCV;
 	std::vector<cl_mem> gpuCache;
 	PriorityCacheLogic* gpuCacheLogic;
 	std::thread gpuCacheFillerThread;
 	cl_command_queue gpuCacheQueue;
 
-	std::condition_variable_any processorInCV;
-	unsigned int processorQueuesCount;
-	unsigned int processorQueuesIndex = 0;
-	std::vector<cl_command_queue> processorQueues;
-	std::vector<cl_mem> processorTmpBuffers;
-	std::vector<cl_mem> processorOutputBuffers;
-	std::vector<GLuint> processorVertexArrays;
+	std::condition_variable processorInCV;
+	cl_command_queue processorQueue;
+	cl_mem processorTmpBuffer;
+	cl_mem processorOutputBuffer;
+	GLuint processorVertexArray;
 
 	void dataFileCacheFiller(std::atomic<bool>* stop);
 	void gpuCacheFiller(std::atomic<bool>* stop);
 	static void gpuCacheQueueCallback(cl_event event, cl_int event_command_exec_status, void* user_data);
-	static void processorQueueCallback(cl_event event, cl_int event_command_exec_status, void* user_data);
 	std::pair<std::int64_t, std::int64_t> getBlockBoundaries(int index)
 	{
 		int64_t from = index*getBlockSize(),
