@@ -44,7 +44,7 @@ bool PriorityCacheLogic::fill(unsigned int* cacheIndex, int* index)
 
 			// Possible problem because of the '<='. This way blocks with the same priority cannot be replaced
 			// which could make trouble if there are more blocks with the same priority than there is capacity.
-			if (table.getInUse(lastCacheIndex) || table.getPriority(lastCacheIndex) <= topPriority)
+			if (table.getInUse(lastCacheIndex) || table.getPriority(lastCacheIndex) < topPriority)
 			{
 				return false;
 			}

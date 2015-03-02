@@ -204,26 +204,19 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 
 		while (gpuCacheLogic->readAny(indexSet, &gpuCacheIndex, &blockIndex) == false)
 		{
-			gpuCacheLogic->printInfo();
+			//gpuCacheLogic->printInfo();
 
-			lock.unlock();
-			prepareBlocks(indexSet, -1);
-			lock.lock();
+			thread t ([this, indexSet] () { prepareBlocks(indexSet, -1); });
+			t.detach();
 
-			gpuCacheLogic->printInfo();
+			//gpuCacheLogic->printInfo();
 
-			fprintf(stderr, "processorInCV(0x%p).wait(", &processorInCV);
-			for (const auto& e : indexSet)
-			{
-				if (e != *indexSet.begin())
-				{
-					fprintf(stderr, ", ");
-				}
-				fprintf(stderr, "%d", e);
-			}
-			fprintf(stderr, ")\n");
-
+#if THREAD_DEBUG_OUTPUT
+			fprintf(stderr, "processorInCV(0x%p).wait(%s)\n", &processorInCV, indexSetString(indexSet).c_str());
+#endif
 			processorInCV.wait(lock);
+
+			//gpuCacheLogic->printInfo();
 		}
 	}
 
@@ -238,6 +231,11 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 		lock_guard<mutex> lock(gpuCacheMutex);
 
 		gpuCacheLogic->release(blockIndex);
+
+#if THREAD_DEBUG_OUTPUT
+		fprintf(stderr, "gpuCacheOutCV(0x%p).notify_one(%d)\n", &gpuCacheOutCV, blockIndex);
+#endif
+		gpuCacheOutCV.notify_one();
 	}
 
 	fun()->glFinish();
@@ -278,12 +276,16 @@ void SignalProcessor::dataFileCacheFiller(atomic<bool>* stop)
 
 				dataFileCacheLogic->release(blockIndex);
 
-				fprintf(stderr, "gpuCacheInCV(0x%p).notify_one()\n", &gpuCacheInCV);
+#if THREAD_DEBUG_OUTPUT
+				fprintf(stderr, "gpuCacheInCV(0x%p).notify_one(%d)\n", &gpuCacheInCV, blockIndex);
+#endif
 				gpuCacheInCV.notify_one();
 			}
 			else
 			{
-				fprintf(stderr, "dataFileCacheOutCV(0x%p).wait()\n", &dataFileCacheOutCV);
+#if THREAD_DEBUG_OUTPUT
+				fprintf(stderr, "dataFileCacheOutCV(0x%p).wait(?)\n", &dataFileCacheOutCV);
+#endif
 				dataFileCacheOutCV.wait(lock);
 			}
 		}
@@ -317,7 +319,12 @@ void SignalProcessor::gpuCacheFiller(atomic<bool>* stop)
 
 					while (dataFileCacheLogic->read(blockIndex, &dataFileCacheIndex) == false)
 					{
-						fprintf(stderr, "gpuCacheInCV(0x%p).wait()\n", &gpuCacheInCV);
+						thread t ([this, blockIndex] () { prepareBlocks(set<int> {blockIndex}, -1); });
+						t.detach();
+
+#if THREAD_DEBUG_OUTPUT
+						fprintf(stderr, "gpuCacheInCV(0x%p).wait(%d)\n", &gpuCacheInCV, blockIndex);
+#endif
 						gpuCacheInCV.wait(dataFileCacheLock);
 					}
 				}
@@ -331,7 +338,7 @@ void SignalProcessor::gpuCacheFiller(atomic<bool>* stop)
 				err = clEnqueueWriteBuffer(gpuCacheQueue, gpuCache[gpuCacheIndex], CL_FALSE, 0, dataFileGpuCacheBlockSize*sizeof(float), dataFileCache[dataFileCacheIndex], 0, nullptr, &event);
 				checkErrorCode(err, CL_SUCCESS, "clEnqueueWriteBuffer()");
 
-				gpuCacheQueueCallbackData* data = new gpuCacheQueueCallbackData {&dataFileCacheMutex, &gpuCacheMutex, dataFileCacheLogic, gpuCacheLogic, &processorInCV, blockIndex};
+				gpuCacheQueueCallbackData* data = new gpuCacheQueueCallbackData {array<mutex*, 2> {&dataFileCacheMutex, &gpuCacheMutex}, array<PriorityCacheLogic*, 2> {dataFileCacheLogic, gpuCacheLogic}, array<condition_variable*, 3> {&dataFileCacheOutCV, &gpuCacheOutCV, &processorInCV}, blockIndex};
 
 				err = clSetEventCallback(event, CL_COMPLETE, &gpuCacheQueueCallback, data);
 				checkErrorCode(err, CL_SUCCESS, "clSetEventCallback()");
@@ -341,7 +348,9 @@ void SignalProcessor::gpuCacheFiller(atomic<bool>* stop)
 			}
 			else
 			{
-				fprintf(stderr, "gpuCacheOutCV(0x%p).wait()\n", &gpuCacheOutCV);
+#if THREAD_DEBUG_OUTPUT
+				fprintf(stderr, "gpuCacheOutCV(0x%p).wait(?)\n", &gpuCacheOutCV);
+#endif
 				gpuCacheOutCV.wait(gpuCacheLock);
 			}
 		}
@@ -361,15 +370,21 @@ void SignalProcessor::gpuCacheQueueCallback(cl_event event, cl_int event_command
 
 	gpuCacheQueueCallbackData* data = reinterpret_cast<gpuCacheQueueCallbackData*>(user_data);
 
-	lock_guard<mutex> lock1(*get<0>(*data));
-	lock_guard<mutex> lock2(*get<1>(*data));
+	int blockIndex = get<3>(*data);
 
-	int blockIndex = get<5>(*data);
-	get<2>(*data)->release(blockIndex);
-	get<3>(*data)->release(blockIndex);
+	for (int i = 0; i < 2; ++i)
+	{
+		lock_guard<mutex> lock(*get<0>(*data)[i]);
+		get<1>(*data)[i]->release(blockIndex);
+	}
 
-	fprintf(stderr, "get<4>(*data)(0x%p)->notify_one()\n", get<4>(*data));
-	get<4>(*data)->notify_one();
+	for (const auto& e: get<2>(*data))
+	{
+#if THREAD_DEBUG_OUTPUT
+		fprintf(stderr, "e(0x%p)->notify_one(%d)\n", e, blockIndex);
+#endif
+		e->notify_one();
+	}
 
 	cl_int err = clReleaseEvent(event);
 	checkErrorCode(err, CL_SUCCESS, "clReleaseEvent()");

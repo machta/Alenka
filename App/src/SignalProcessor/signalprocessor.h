@@ -1,6 +1,8 @@
 #ifndef SIGNALPROCESSOR_H
 #define SIGNALPROCESSOR_H
 
+#define THREAD_DEBUG_OUTPUT 0
+
 #include "../openglinterface.h"
 
 #include "signalblock.h"
@@ -22,8 +24,10 @@
 #include <mutex>
 #include <condition_variable>
 #include <tuple>
+#include <array>
+#include <sstream>
 
-using gpuCacheQueueCallbackData = std::tuple<std::mutex*, std::mutex*, PriorityCacheLogic*, PriorityCacheLogic*, std::condition_variable*, int>;
+using gpuCacheQueueCallbackData = std::tuple<std::array<std::mutex*, 2>, std::array<PriorityCacheLogic*, 2>, std::array<std::condition_variable*, 3>, int>;
 
 class SignalProcessor : public OpenGLInterface
 {
@@ -51,12 +55,16 @@ public:
 			gpuCacheLogic->enqueue(indexSet, priority);
 		}
 
+#if THREAD_DEBUG_OUTPUT
 		fprintf(stderr, "dataFileCacheOutCV(0x%p).notify_all()\n", &dataFileCacheOutCV);
+#endif
 		dataFileCacheOutCV.notify_all();
+
+#if THREAD_DEBUG_OUTPUT
 		fprintf(stderr, "gpuCacheOutCV(0x%p).notify_all()\n", &gpuCacheOutCV);
+#endif
 		gpuCacheOutCV.notify_all();
 	}
-
 private:
 	DataFile* dataFile;
 	std::atomic<bool> threadsStop {false};
@@ -107,6 +115,21 @@ private:
 				to = from + getBlockSize() - 1;
 
 		return std::pair<std::int64_t, std::int64_t>(from, to);
+	}	
+	std::string indexSetString(const std::set<int>& indexSet)
+	{
+		std::stringstream ss;
+
+		for (const auto& e : indexSet)
+		{
+			if (e != *indexSet.begin())
+			{
+				ss << ", ";
+			}
+			ss << e;
+		}
+
+		return ss.str();
 	}
 };
 

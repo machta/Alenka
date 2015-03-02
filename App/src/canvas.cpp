@@ -119,7 +119,7 @@ void Canvas::paintGL()
 
 		indexSet.erase(block.getIndex());
 
-		cerr << "Block " << block.getIndex() << " painted." << endl;
+		//cerr << "Block " << block.getIndex() << " painted." << endl;
 	}
 
 	// Finish rendering.
