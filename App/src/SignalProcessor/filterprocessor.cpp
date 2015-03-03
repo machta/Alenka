@@ -54,11 +54,18 @@ FilterProcessor::FilterProcessor(unsigned int M, unsigned int blockWidth, unsign
 
 FilterProcessor::~FilterProcessor()
 {
+	cl_int err;
+
 	delete program;
 	delete[] coefficients;
 
-	//	clfftStatus errFFT;
+	err = clReleaseKernel(filterKernel);
+	checkErrorCode(err, CL_SUCCESS, "clReleaseKernel()");
 
+	err = clReleaseMemObject(filterBuffer);
+	checkErrorCode(err, CL_SUCCESS, "clReleaseMemObject()");
+
+	//clfftStatus errFFT;
 	//	errFFT = clfftDestroyPlan(&fftPlan);
 	//	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
 	//	errFFT = clfftDestroyPlan(&fftPlanBatch);

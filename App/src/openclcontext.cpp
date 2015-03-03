@@ -74,7 +74,8 @@ OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device, cl_devi
 
 OpenCLContext::~OpenCLContext()
 {
-	clReleaseContext(context);
+	cl_int err = clReleaseContext(context);
+	checkErrorCode(err, CL_SUCCESS, "clCreateContext()");
 }
 
 string OpenCLContext::getPlatformInfo()

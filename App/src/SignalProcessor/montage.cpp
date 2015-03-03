@@ -54,6 +54,9 @@ Montage::Montage(const vector<string>& sources, OpenCLContext* context)
 Montage::~Montage()
 {
 	delete program;
+
+	cl_int err = clReleaseKernel(kernel);
+	checkErrorCode(err, CL_SUCCESS, "clReleaseKernel()");
 }
 
 string Montage::test(const string& source, OpenCLContext* context)
