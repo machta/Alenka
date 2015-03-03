@@ -105,8 +105,16 @@ void Canvas::paintGL()
 	signalProcessor->prepareBlocks(indexSet, 0);
 
 	int size = lastIndex - firstIndex + 1;
-	set<int> nextIndexSet = createSetFromRange(firstIndex + size, lastIndex + size);
-	signalProcessor->prepareBlocks(nextIndexSet, 2);
+
+	set<int> s = createSetFromRange(firstIndex + size, lastIndex + size);
+	signalProcessor->prepareBlocks(s, 2);
+//	s = createSetFromRange(firstIndex - size, lastIndex - size);
+//	signalProcessor->prepareBlocks(s, 2);
+
+//	s = createSetFromRange(firstIndex + 2*size, lastIndex + 2*size);
+//	signalProcessor->prepareBlocks(s, 3);
+//	s = createSetFromRange(firstIndex - 2*size, lastIndex - 2*size);
+//	signalProcessor->prepareBlocks(s, 3);
 
 	// Render one block at a time.
 	while (indexSet.empty() == false)
@@ -119,7 +127,7 @@ void Canvas::paintGL()
 
 		indexSet.erase(block.getIndex());
 
-		//cerr << "Block " << block.getIndex() << " painted." << endl;
+		cerr << "Block " << block.getIndex() << " painted." << endl;
 	}
 
 	// Finish rendering.

@@ -231,42 +231,48 @@ GDF2::~GDF2()
 	delete[] vh.sensorInfo;
 }
 
-#ifdef NDEBUG
-#define data(a_) data->operator[a_]
-#else
-#define data(a_) data->at(a_)
-#endif
-
 template<typename T>
 void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSample)
 {
-	assert(lastSample - firstSample + 1 <= data->size());
-
-	int64_t originalFS = firstSample, originalLS = lastSample;
+#ifndef NDEBUG
+	int64_t originalFS = firstSample, originalLS = lastSample; (void)originalFS; (void)originalLS;
+#endif
 
 	if (lastSample < firstSample)
 	{
-		throw invalid_argument("lastSample must be greater or equeal than firstSample.");
+		throw invalid_argument("lastSample must be greater than or equeal to firstSample.");
 	}
 
-	int samplesPerRecord = vh.samplesPerRecord[0];
-	uint64_t rowLen = lastSample - firstSample + 1,
-			 dataIndex = 0,
-			 dataOffset, recordI, lastRecordI, n;
+	if (lastSample - firstSample + 1 > data->size())
+	{
+		throw invalid_argument("The requested range cannot fit into data.");
+	}
 
 	// Special cases for when data before or after the file is requested.
+	if (firstSample < 0 || lastSample >= samplesRecorded)
+	{
+		for (auto& e : *data)
+		{
+			e = 0;
+		}
+
+		// Exit early if there is nothing to read.
+		if (lastSample < 0 || firstSample >= static_cast<int64_t>(samplesRecorded))
+		{
+			return;
+		}
+	}
+
+	// Init variables needed later.
+	int samplesPerRecord = vh.samplesPerRecord[0];
+	int64_t rowLen = lastSample - firstSample + 1,
+			dataIndex = 0,
+			dataOffset, recordI, lastRecordI, n;
+
 	if (firstSample < 0)
 	{
 		dataOffset = -firstSample;
 		firstSample = recordI = 0;
-
-		for (unsigned int j = 0; j < getChannelCount(); ++j)
-		{
-			for (int i = 0; i < dataOffset; ++i)
-			{
-				data(j*rowLen + i) = 0;
-			}
-		}
 	}
 	else
 	{
@@ -276,31 +282,11 @@ void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSampl
 
 	if (lastSample >= samplesRecorded)
 	{
-		int extra = lastSample - samplesRecorded + 1;
 		lastSample = samplesRecorded - 1;
-
-		n = lastSample - firstSample + 1;
-		lastRecordI = lastSample/samplesPerRecord;
-
-		for (unsigned int j = 0; j < getChannelCount(); ++j)
-		{
-			for (int i = 0; i < extra; ++i)
-			{
-				try
-				{data(j*rowLen + dataOffset + n + i) = 0;}
-				catch (exception& e)
-				{
-					cerr << "Exception accessing data: " << e.what() << endl;
-					abort();
-				}
-			}
-		}
 	}
-	else
-	{
-		n = lastSample - firstSample + 1;
-		lastRecordI = lastSample/samplesPerRecord;
-	}
+
+	n = lastSample - firstSample + 1;
+	lastRecordI = lastSample/samplesPerRecord;
 
 	// Read data from the file.
 	seekFile(startOfData + recordI*samplesPerRecord*getChannelCount()*dataTypeSize, true);
@@ -308,7 +294,7 @@ void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSampl
 	for (; recordI <= lastRecordI; ++recordI)
 	{
 		int recordOffset = static_cast<int>((firstSample + dataIndex)%samplesPerRecord);
-		int samplesToRead = static_cast<int>(min(static_cast<uint64_t>(samplesPerRecord - recordOffset), n - dataIndex));
+		int samplesToRead = static_cast<int>(min(static_cast<int64_t>(samplesPerRecord - recordOffset), n - dataIndex));
 
 		for (unsigned int channelI = 0; channelI < getChannelCount(); ++channelI)
 		{
@@ -325,6 +311,7 @@ void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSampl
 
 			for (int i = 0; i < samplesToRead; ++i)
 			{
+				// Read the sample the file.
 				T tmp;
 				char rawTmp[8];
 
@@ -335,6 +322,7 @@ void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSampl
 					changeEndianness(rawTmp, dataTypeSize);
 				}
 
+				// Convert the value to either float or double.
 				if (is_same<T, float>::value)
 				{
 					tmp = convertSampleToFloat(rawTmp);
@@ -352,15 +340,19 @@ void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSampl
 					tmp += static_cast<T>(vh.physicalMinimum[channelI]);
 				}
 
-				data(channelI*rowLen + dataOffset + dataIndex + i) = tmp;
+				int64_t index = channelI*rowLen + dataOffset + dataIndex + i;
+
+#ifdef NDEBUG
+				data->operator[index] = tmp
+#else
+				data->at(index) = tmp;
+#endif
 			}
 		}
 
 		dataIndex += samplesToRead;
 	}
 }
-
-#undef data
 
 template<typename T>
 void GDF2::readFile(T* val, int elements)

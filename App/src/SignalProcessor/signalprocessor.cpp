@@ -187,7 +187,9 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 {
 	assert(indexSet.empty() == false);
 
+#if THREAD_DEBUG_OUTPUT
 	//gpuCacheLogic->printInfo();
+#endif
 
 	cl_int err;
 	unsigned int gpuCacheIndex;
@@ -203,18 +205,22 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 			thread t ([this, indexSet] () { prepareBlocks(indexSet, -1); });
 			t.detach();
 
-			//gpuCacheLogic->printInfo();
-
 #if THREAD_DEBUG_OUTPUT
+			gpuCacheLogic->printInfo();
+
 			fprintf(stderr, "processorInCV(0x%p).wait(%s)\n", &processorInCV, indexSetString(indexSet).c_str());
 #endif
 			processorInCV.wait(lock);
 
-			//gpuCacheLogic->printInfo();
+#if THREAD_DEBUG_OUTPUT
+			gpuCacheLogic->printInfo();
+#endif
 		}
 	}
 
-	//gpuCacheLogic->printInfo();
+#if THREAD_DEBUG_OUTPUT
+	gpuCacheLogic->printInfo();
+#endif
 
 	filterProcessor->process(gpuCache[gpuCacheIndex], processorTmpBuffer, processorQueue);
 
