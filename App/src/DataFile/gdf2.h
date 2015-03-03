@@ -23,11 +23,11 @@ public:
 	{
 		return samplesRecorded;
 	}
-	virtual void readData(float* data, int64_t firstSample, int64_t lastSample)
+	virtual void readData(std::vector<float>* data, int64_t firstSample, int64_t lastSample)
 	{
 		readDataLocal(data, firstSample, lastSample);
 	}
-	virtual void readData(double* data, int64_t firstSample, int64_t lastSample)
+	virtual void readData(std::vector<double>* data, int64_t firstSample, int64_t lastSample)
 	{
 		readDataLocal(data, firstSample, lastSample);
 	}
@@ -93,10 +93,10 @@ private:
 	} vh;
 
 	template<typename T>
-	void readDataLocal(T* data, int64_t firstSample, int64_t lastSample);
+	void readDataLocal(std::vector<T>* data, int64_t firstSample, int64_t lastSample);
 	template<typename T>
 	void readFile(T* val, int elements = 1);
-	void seekFile(size_t position, bool fromStart = false);
+	void seekFile(size_t offset, bool fromStart = false);
 };
 
 #endif // GDF2_H

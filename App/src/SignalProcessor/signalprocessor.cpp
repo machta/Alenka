@@ -70,11 +70,10 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory, double /*b
 		throw runtime_error("Not enough available memory for the dataFileCache");
 	}
 
-	dataFileCache.insert(dataFileCache.begin(), dataFileCacheBlockCount, nullptr);
+	dataFileCache.insert(dataFileCache.begin(), dataFileCacheBlockCount, vector<float>());
 	for (auto& e : dataFileCache)
 	{
-		e = new float[dataFileGpuCacheBlockSize];
-		assert(e != nullptr);
+		e.insert(e.begin(), dataFileGpuCacheBlockSize, 0);
 	}
 
 	dataFileCacheLogic = new PriorityCacheLogic(dataFileCacheBlockCount);
@@ -166,11 +165,6 @@ SignalProcessor::~SignalProcessor()
 
 	err = clReleaseCommandQueue(processorQueue);
 	checkErrorCode(err, CL_SUCCESS, "clReleaseCommandQueue()");
-
-	for (auto& e : dataFileCache)
-	{
-		delete[] e;
-	}
 
 	for (auto& e : gpuCache)
 	{
@@ -272,7 +266,7 @@ void SignalProcessor::dataFileCacheFiller(atomic<bool>* stop)
 			{
 				auto fromTo = getBlockBoundaries(blockIndex);
 
-				dataFile->readData(dataFileCache[cacheIndex], fromTo.first - offset + delay, fromTo.second + delay);
+				dataFile->readData(&dataFileCache[cacheIndex], fromTo.first - offset + delay, fromTo.second + delay);
 
 				dataFileCacheLogic->release(blockIndex);
 
@@ -335,7 +329,7 @@ void SignalProcessor::gpuCacheFiller(atomic<bool>* stop)
 
 				cl_event event;
 
-				err = clEnqueueWriteBuffer(gpuCacheQueue, gpuCache[gpuCacheIndex], CL_FALSE, 0, dataFileGpuCacheBlockSize*sizeof(float), dataFileCache[dataFileCacheIndex], 0, nullptr, &event);
+				err = clEnqueueWriteBuffer(gpuCacheQueue, gpuCache[gpuCacheIndex], CL_FALSE, 0, dataFileGpuCacheBlockSize*sizeof(float), dataFileCache[dataFileCacheIndex].data(), 0, nullptr, &event);
 				checkErrorCode(err, CL_SUCCESS, "clEnqueueWriteBuffer()");
 
 				gpuCacheQueueCallbackData* data = new gpuCacheQueueCallbackData {array<mutex*, 2> {&dataFileCacheMutex, &gpuCacheMutex}, array<PriorityCacheLogic*, 2> {dataFileCacheLogic, gpuCacheLogic}, array<condition_variable*, 3> {&dataFileCacheOutCV, &gpuCacheOutCV, &processorInCV}, blockIndex};

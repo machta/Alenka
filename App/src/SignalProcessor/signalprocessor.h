@@ -88,7 +88,7 @@ private:
 
 	std::mutex dataFileCacheMutex;
 	std::condition_variable dataFileCacheOutCV;
-	std::vector<float*> dataFileCache;
+	std::vector<std::vector<float>> dataFileCache;
 	PriorityCacheLogic* dataFileCacheLogic;
 	std::thread dataFileCacheFillerThread;
 

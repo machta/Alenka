@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <cassert>
+#include <iostream>
 
 using namespace std;
 
@@ -186,6 +187,8 @@ case a_:\
 		break;
 	}
 
+#undef CASE
+
 	uncalibrated = PROGRAM_OPTIONS["uncalibrated"].as<bool>();
 
 	if (uncalibrated == false)
@@ -228,9 +231,19 @@ GDF2::~GDF2()
 	delete[] vh.sensorInfo;
 }
 
+#ifdef NDEBUG
+#define data(a_) data->operator[a_]
+#else
+#define data(a_) data->at(a_)
+#endif
+
 template<typename T>
-void GDF2::readDataLocal(T* data, int64_t firstSample, int64_t lastSample)
+void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSample)
 {
+	assert(lastSample - firstSample + 1 <= data->size());
+
+	int64_t originalFS = firstSample, originalLS = lastSample;
+
 	if (lastSample < firstSample)
 	{
 		throw invalid_argument("lastSample must be greater or equeal than firstSample.");
@@ -238,8 +251,10 @@ void GDF2::readDataLocal(T* data, int64_t firstSample, int64_t lastSample)
 
 	int samplesPerRecord = vh.samplesPerRecord[0];
 	uint64_t rowLen = lastSample - firstSample + 1,
-			 dataOffset, dataIndex = 0, recordI, lastRecordI, n;
+			 dataIndex = 0,
+			 dataOffset, recordI, lastRecordI, n;
 
+	// Special cases for when data before or after the file is requested.
 	if (firstSample < 0)
 	{
 		dataOffset = -firstSample;
@@ -249,7 +264,7 @@ void GDF2::readDataLocal(T* data, int64_t firstSample, int64_t lastSample)
 		{
 			for (int i = 0; i < dataOffset; ++i)
 			{
-				data[j*rowLen + i] = 0;
+				data(j*rowLen + i) = 0;
 			}
 		}
 	}
@@ -263,14 +278,21 @@ void GDF2::readDataLocal(T* data, int64_t firstSample, int64_t lastSample)
 	{
 		int extra = lastSample - samplesRecorded + 1;
 		lastSample = samplesRecorded - 1;
-		lastRecordI = lastSample/samplesPerRecord;
+
 		n = lastSample - firstSample + 1;
+		lastRecordI = lastSample/samplesPerRecord;
 
 		for (unsigned int j = 0; j < getChannelCount(); ++j)
 		{
 			for (int i = 0; i < extra; ++i)
 			{
-				data[j*rowLen + dataOffset + n + i] = 0;
+				try
+				{data(j*rowLen + dataOffset + n + i) = 0;}
+				catch (exception& e)
+				{
+					cerr << "Exception accessing data: " << e.what() << endl;
+					abort();
+				}
 			}
 		}
 	}
@@ -280,6 +302,7 @@ void GDF2::readDataLocal(T* data, int64_t firstSample, int64_t lastSample)
 		lastRecordI = lastSample/samplesPerRecord;
 	}
 
+	// Read data from the file.
 	seekFile(startOfData + recordI*samplesPerRecord*getChannelCount()*dataTypeSize, true);
 
 	for (; recordI <= lastRecordI; ++recordI)
@@ -309,7 +332,7 @@ void GDF2::readDataLocal(T* data, int64_t firstSample, int64_t lastSample)
 
 				if (isLittleEndian == false)
 				{
-					changeEndianness(rawTmp, 2);
+					changeEndianness(rawTmp, dataTypeSize);
 				}
 
 				if (is_same<T, float>::value)
@@ -329,13 +352,15 @@ void GDF2::readDataLocal(T* data, int64_t firstSample, int64_t lastSample)
 					tmp += static_cast<T>(vh.physicalMinimum[channelI]);
 				}
 
-				data[channelI*rowLen + dataOffset + dataIndex + i] = tmp;
+				data(channelI*rowLen + dataOffset + dataIndex + i) = tmp;
 			}
 		}
 
 		dataIndex += samplesToRead;
 	}
 }
+
+#undef data
 
 template<typename T>
 void GDF2::readFile(T* val, int elements)
@@ -351,10 +376,10 @@ void GDF2::readFile(T* val, int elements)
 	}
 }
 
-void GDF2::seekFile(size_t position, bool fromStart)
+void GDF2::seekFile(size_t offset, bool fromStart)
 {
-	int res = fseek(file, static_cast<long>(position), fromStart ? SEEK_SET : SEEK_CUR);
-	checkErrorCode(res, 0, "seekFile(" << position << ", " << fromStart << ") failed.");
+	int res = fseek(file, static_cast<long>(offset), fromStart ? SEEK_SET : SEEK_CUR);
+	checkErrorCode(res, 0, "seekFile(" << offset << ", " << fromStart << ") failed.");
 }
 
 
