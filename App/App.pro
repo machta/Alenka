@@ -19,10 +19,10 @@ HEADERS += \
     src/openglprogram.h \
     src/openglinterface.h \
     src/error.h \
-    src/SignalProcessor/prioritycachelogic.h \
     src/SignalProcessor/filterprocessor.h \
     src/SignalProcessor/montageprocessor.h \
-    src/SignalProcessor/montage.h
+    src/SignalProcessor/montage.h \
+    src/SignalProcessor/gpucache.h
 
 SOURCES += \
     src/DataFile/gdf2.cpp \
@@ -38,10 +38,10 @@ SOURCES += \
     src/SignalProcessor/signalblock.cpp \
     src/openglprogram.cpp \
     src/openglinterface.cpp \
-    src/SignalProcessor/prioritycachelogic.cpp \
     src/SignalProcessor/filterprocessor.cpp \
     src/SignalProcessor/montageprocessor.cpp \
-    src/SignalProcessor/montage.cpp
+    src/SignalProcessor/montage.cpp \
+    src/SignalProcessor/gpucache.cpp
 
 FORMS += \
     src/testwindow.ui

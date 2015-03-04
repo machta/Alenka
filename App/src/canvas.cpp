@@ -99,22 +99,18 @@ void Canvas::paintGL()
 	firstIndex /= signalProcessor->getBlockSize();
 	lastIndex /= signalProcessor->getBlockSize();
 
-	set<int> indexSet = createSetFromRange(firstIndex, lastIndex);
+	set<int> indexSet;
 
-	// Notify the signal processor to prepare some blocks.
-	signalProcessor->prepareBlocks(indexSet, 0);
+	unsigned int indexSetSize = lastIndex - firstIndex + 1;
+	for (unsigned int i = 0; i < indexSetSize; ++i)
+	{
+		indexSet.insert(firstIndex + i);
+	}
 
-	int size = lastIndex - firstIndex + 1;
-
-	set<int> s = createSetFromRange(firstIndex + size, lastIndex + size);
-	signalProcessor->prepareBlocks(s, 2);
-//	s = createSetFromRange(firstIndex - size, lastIndex - size);
-//	signalProcessor->prepareBlocks(s, 2);
-
-//	s = createSetFromRange(firstIndex + 2*size, lastIndex + 2*size);
-//	signalProcessor->prepareBlocks(s, 3);
-//	s = createSetFromRange(firstIndex - 2*size, lastIndex - 2*size);
-//	signalProcessor->prepareBlocks(s, 3);
+	if (signalProcessor->getCapacity() > indexSetSize)
+	{
+		prepareBlocks(firstIndex, lastIndex);
+	}
 
 	// Render one block at a time.
 	while (indexSet.empty() == false)
@@ -133,6 +129,9 @@ void Canvas::paintGL()
 	// Finish rendering.
 	fun()->glFlush();
 	//fun()->glFinish();
+
+	// Prepare some blocks for next frame.
+	//prepare(indexSetSize, 0, static_cast<int>(ceil(parent->getVirtualWidth()*ratio)), firstIndex - indexSetSize, lastIndex + indexSetSize, min(4*indexSetSize, signalProcessor->getCapacity() - indexSetSize));
 
 	fun()->glBindVertexArray(0);
 

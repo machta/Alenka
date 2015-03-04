@@ -5,6 +5,7 @@
 #include <cassert>
 #include <algorithm>
 #include <vector>
+#include <utility>
 
 class DataFile
 {
@@ -16,6 +17,11 @@ public:
 	virtual uint64_t getSamplesRecorded() = 0;
 	virtual void readData(std::vector<float>* data, int64_t firstSample, int64_t lastSample) = 0;
 	virtual void readData(std::vector<double>* data, int64_t firstSample, int64_t lastSample) = 0;
+
+	static std::pair<std::int64_t, std::int64_t> getBlockBoundaries(int index, unsigned int blockSize)
+	{
+		return std::pair<std::int64_t, std::int64_t>(index*blockSize, (index + 1)*blockSize - 1);
+	}
 
 protected:
 	bool testLittleEndian()

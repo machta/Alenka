@@ -7,6 +7,8 @@
 #include "SignalProcessor/signalprocessor.h"
 #include "openglprogram.h"
 
+#include <algorithm>
+
 class Canvas : public QOpenGLWidget, public OpenGLInterface
 {
 	Q_OBJECT
@@ -35,17 +37,28 @@ private:
 			std::cerr << "OpenGL message: " << m.message().toStdString() << std::endl;
 		}
 	}
-
-	template <typename T>
-	std::set<T> createSetFromRange(T from, T to)
+	void prepareBlocks(int from, int to)
 	{
-		std::set<T> s;
-		for (int i = from; i <= to; ++i)
+		for (; from <= to; ++from)
 		{
-			s.insert(i);
+			signalProcessor->prepareBlocks(from);
+		}
+	}
+	void prepare(int size, int minIndex, int maxIndex, int lowIndex, int highIndex, int capacity)
+	{
+		using namespace std;
+
+		if (capacity <= 0)
+		{
+			return;
 		}
 
-		return s;
+		prepare(size, minIndex, maxIndex, lowIndex - size, highIndex + size, capacity - 2*size);
+
+		capacity = min(2*size, capacity);
+
+		prepareBlocks(max(lowIndex, minIndex), lowIndex + capacity/2);
+		prepareBlocks(highIndex, min(highIndex, maxIndex) + capacity/2);
 	}
 };
 
