@@ -14,7 +14,7 @@ public:
 	~FilterProcessor();
 
 	void change(Filter* filter);
-	void process(cl_mem inBuffer, cl_mem outBuffer, cl_command_queue queue);
+	void process(cl_mem buffer, cl_command_queue queue);
 
 private:
 	unsigned int M;

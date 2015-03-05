@@ -130,27 +130,20 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 
 	cl_int err;
 
-	cl_mem buffer;
-	cl_event readyEvent, doneEvent;
+	cl_event readyEvent = clCreateUserEvent(clContext->getCLContext(), &err);
+	checkErrorCode(err, CL_SUCCESS, "clCreateUserEvent()");
 
-	int index = cache->getAny(indexSet, &buffer, &readyEvent, &doneEvent);
+	cerr << "Create event " << readyEvent <<  "(" << &readyEvent << ")" << endl;
 
 	err = clEnqueueBarrierWithWaitList(processorQueue, 1, &readyEvent, nullptr);
 	checkErrorCode(err, CL_SUCCESS, "clEnqueueBarrierWithWaitList()");
 
-	cerr << "Release ready event " << readyEvent << endl;
-
 	err = clReleaseEvent(readyEvent);
 	checkErrorCode(err, CL_SUCCESS, "clReleaseEvent()");
 
-	filterProcessor->process(buffer, processorTmpBuffer, processorQueue);
+	int index = cache->getAny(indexSet, processorTmpBuffer, readyEvent);
 
-	cl_event event;
-	err = clEnqueueMarkerWithWaitList(processorQueue, 0, nullptr, &event);
-	checkErrorCode(err, CL_SUCCESS, "clEnqueueMarkerWithWaitList()");
-
-	err = clSetEventCallback(event, CL_COMPLETE, &GPUCache::signalEventCallbackDone, &doneEvent);
-	checkErrorCode(err, CL_SUCCESS, "clSetEventCallback()");
+	filterProcessor->process(processorTmpBuffer, processorQueue);
 
 	err = clFlush(processorQueue);
 	checkErrorCode(err, CL_SUCCESS, "clFlush()");

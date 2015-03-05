@@ -109,7 +109,7 @@ void Canvas::paintGL()
 
 	if (signalProcessor->getCapacity() > indexSetSize)
 	{
-		prepareBlocks(firstIndex, lastIndex);
+		//prepareBlocks(firstIndex, lastIndex);
 	}
 
 	// Render one block at a time.

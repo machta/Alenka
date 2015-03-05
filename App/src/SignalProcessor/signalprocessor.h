@@ -17,6 +17,7 @@
 #include <set>
 #include <vector>
 #include <sstream>
+#include <iostream>
 
 class SignalProcessor : public OpenGLInterface
 {
@@ -35,16 +36,16 @@ public:
 	void prepareBlocks(int index)
 	{
 		cl_int err;
-		cl_mem buffer;
-		cl_event readyEvent, doneEvent;
 
-		cache->getAny(std::set<int> {index}, &buffer, &readyEvent, &doneEvent);
+		cl_event readyEvent = clCreateUserEvent(clContext->getCLContext(), &err);
+		checkErrorCode(err, CL_SUCCESS, "clCreateUserEvent()");
+
+		std::cerr << "Create dummy event " << readyEvent << std::endl;
+
+		cache->getAny(std::set<int> {index}, nullptr, readyEvent);
 
 		err = clReleaseEvent(readyEvent);
 		checkErrorCode(err, CL_SUCCESS, "clReleaseEvent()");
-
-		err = clSetUserEventStatus(doneEvent, CL_COMPLETE);
-		checkErrorCode(err, CL_SUCCESS, "clSetUserEventStatus()");
 	}
 	unsigned int getCapacity() const
 	{
@@ -54,7 +55,6 @@ public:
 private:
 	//DataFile* dataFile;
 	GLuint vertexArray;
-	GLuint buffer;
 	OpenCLContext* clContext;
 	FilterProcessor* filterProcessor;
 	Filter* filter;
