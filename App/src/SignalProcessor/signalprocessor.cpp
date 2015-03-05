@@ -87,10 +87,20 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFi
 	fun()->glEnableVertexAttribArray(0);
 	fun()->glBufferData(GL_ARRAY_BUFFER, processorOutputBlockSize*sizeof(float), nullptr, GL_STATIC_DRAW);
 
-	processorTmpBuffer = clCreateBuffer(clContext->getCLContext(), CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS, processorTmpBlockSize*sizeof(float), nullptr, &err);
+	cl_mem_flags flags = CL_MEM_READ_WRITE;
+#ifdef NDEBUG
+	flags |= CL_MEM_HOST_NO_ACCESS;
+#endif
+
+	processorTmpBuffer = clCreateBuffer(clContext->getCLContext(), flags, processorTmpBlockSize*sizeof(float), nullptr, &err);
 	checkErrorCode(err, CL_SUCCESS, "clCreateBuffer()");
 
-	processorOutputBuffer = clCreateFromGLBuffer(clContext->getCLContext(), CL_MEM_WRITE_ONLY, buffer, &err);
+	flags = CL_MEM_READ_WRITE;
+#ifdef NDEBUG
+	flags = CL_MEM_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS;
+#endif
+
+	processorOutputBuffer = clCreateFromGLBuffer(clContext->getCLContext(), flags, buffer, &err);
 	checkErrorCode(err, CL_SUCCESS, "clCreateFromGLBuffer()");
 
 	fun()->glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -143,7 +153,11 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 
 	int index = cache->getAny(indexSet, processorTmpBuffer, readyEvent);
 
+	printBuffer("after_getAny.txt", processorTmpBuffer, processorQueue);
+
 	filterProcessor->process(processorTmpBuffer, processorQueue);
+
+	printBuffer("after_filter.txt", processorTmpBuffer, processorQueue);
 
 	err = clFlush(processorQueue);
 	checkErrorCode(err, CL_SUCCESS, "clFlush()");
@@ -154,6 +168,8 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 	checkErrorCode(err, CL_SUCCESS, "clEnqueueAcquireGLObjects()");
 
 	montageProcessor->process(processorTmpBuffer, processorOutputBuffer, processorQueue);
+
+	//printBuffer("after_montage.txt", processorOutputBuffer, processorQueue);
 
 	err = clEnqueueReleaseGLObjects(processorQueue, 1, &processorOutputBuffer, 0, nullptr, nullptr);
 	checkErrorCode(err, CL_SUCCESS, "clEnqueueReleaseGLObjects()");

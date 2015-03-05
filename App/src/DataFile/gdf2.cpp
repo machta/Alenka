@@ -343,7 +343,7 @@ void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSampl
 				int64_t index = channelI*rowLen + dataOffset + dataIndex + i;
 
 #ifdef NDEBUG
-				data->operator[index] = tmp
+				data->operator [](index) = tmp;
 #else
 				data->at(index) = tmp;
 #endif

@@ -13,7 +13,12 @@ GPUCache::GPUCache(unsigned int blockSize, int offset, int delay, unsigned int c
 
 	for (unsigned int i = 0; i < capacity; ++i)
 	{
-		buffers.push_back(clCreateBuffer(context->getCLContext(), CL_MEM_READ_WRITE | CL_MEM_HOST_WRITE_ONLY, (blockSize + offset)*file->getChannelCount()*sizeof(float), nullptr, &err));
+		cl_mem_flags flags = CL_MEM_READ_WRITE;
+#ifdef NDEBUG
+		flags |= CL_MEM_HOST_WRITE_ONLY;
+#endif
+
+		buffers.push_back(clCreateBuffer(context->getCLContext(), flags, (blockSize + offset)*file->getChannelCount()*sizeof(float), nullptr, &err));
 		checkErrorCode(err, CL_SUCCESS, "clCreateBuffer()");
 
 		lastUsed.push_back(0);
@@ -121,10 +126,14 @@ void GPUCache::loaderThreadFunction()
 				auto fromTo = file->getBlockBoundaries(index, blockSize);
 				file->readData(&tmpBuffer, fromTo.first - offset + delay, fromTo.second + delay);
 
+				//printBuffer("after_readData.txt", tmpBuffer.data(), tmpBuffer.size());
+
 				//lock.lock();
 
 				cl_int err = clEnqueueWriteBuffer(commandQueue, buffers[cacheIndex], CL_FALSE, 0, (blockSize + offset)*file->getChannelCount()*sizeof(float), tmpBuffer.data(), 0, nullptr, nullptr);
 				checkErrorCode(err, CL_SUCCESS, "clEnqueueWriteBuffer()");
+
+				//printBuffer("after_writeBuffer.txt", buffers[cacheIndex], commandQueue);
 
 				enqueuCopy(buffers[cacheIndex], buffer, readyEvent);
 			}
@@ -151,10 +160,10 @@ void GPUCache::enqueuCopy(cl_mem source, cl_mem destination, cl_event readyEvent
 		cl_int err;
 		cl_event event;
 		size_t origin[] = {0, 0, 0};
-		size_t rowLen = blockSize + offset;
+		size_t rowLen = (blockSize + offset)*sizeof(float);
 		size_t region[] = {rowLen, file->getChannelCount(), 1};
 
-		err = clEnqueueCopyBufferRect(commandQueue, source, destination, origin, origin, region, rowLen, 0, rowLen + 4, 0, 0, nullptr, &event);
+		err = clEnqueueCopyBufferRect(commandQueue, source, destination, origin, origin, region, rowLen, 0, rowLen + 4*sizeof(float), 0, 0, nullptr, &event);
 		checkErrorCode(err, CL_SUCCESS, "clEnqueueCopyBufferRect()");
 
 		cerr << "Setting callback for event " << readyEvent << "(" << &readyEvent << ")" << endl;
