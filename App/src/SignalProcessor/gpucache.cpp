@@ -126,14 +126,14 @@ void GPUCache::loaderThreadFunction()
 				auto fromTo = file->getBlockBoundaries(index, blockSize);
 				file->readData(&tmpBuffer, fromTo.first - offset + delay, fromTo.second + delay);
 
-				//printBuffer("after_readData.txt", tmpBuffer.data(), tmpBuffer.size());
+				printBuffer("after_readData.txt", tmpBuffer.data(), tmpBuffer.size());
 
 				//lock.lock();
 
 				cl_int err = clEnqueueWriteBuffer(commandQueue, buffers[cacheIndex], CL_FALSE, 0, (blockSize + offset)*file->getChannelCount()*sizeof(float), tmpBuffer.data(), 0, nullptr, nullptr);
 				checkErrorCode(err, CL_SUCCESS, "clEnqueueWriteBuffer()");
 
-				//printBuffer("after_writeBuffer.txt", buffers[cacheIndex], commandQueue);
+				printBuffer("after_writeBuffer.txt", buffers[cacheIndex], commandQueue);
 
 				enqueuCopy(buffers[cacheIndex], buffer, readyEvent);
 			}

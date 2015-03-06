@@ -33,8 +33,8 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFi
 
 	double Fs = file->getSamplingFrequency();
 	filter = new Filter(M, Fs);
-	filter->setHighpass(0);
-	filter->setLowpass(Fs/4);
+	filter->setHighpass(-100);
+	filter->setLowpass(10);
 	filter->setNotch(false);
 
 	if (PROGRAM_OPTIONS.isSet("printFilter"))
@@ -169,7 +169,7 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 
 	montageProcessor->process(processorTmpBuffer, processorOutputBuffer, processorQueue);
 
-	//printBuffer("after_montage.txt", processorOutputBuffer, processorQueue);
+	printBuffer("after_montage.txt", processorOutputBuffer, processorQueue);
 
 	err = clEnqueueReleaseGLObjects(processorQueue, 1, &processorOutputBuffer, 0, nullptr, nullptr);
 	checkErrorCode(err, CL_SUCCESS, "clEnqueueReleaseGLObjects()");
@@ -177,7 +177,7 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 	err = clFinish(processorQueue);
 	checkErrorCode(err, CL_SUCCESS, "clFinish()");
 
-	auto fromTo = DataFile::getBlockBoundaries(index, cacheBlockSize);
+	auto fromTo = DataFile::getBlockBoundaries(index, getBlockSize());
 	return SignalBlock(index, montage->getNumberOfRows(), fromTo.first, fromTo.second, processorVertexArray);
 }
 
