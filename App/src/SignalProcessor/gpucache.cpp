@@ -128,8 +128,6 @@ void GPUCache::loaderThreadFunction()
 
 				printBuffer("after_readData.txt", tmpBuffer.data(), tmpBuffer.size());
 
-				//lock.lock();
-
 				cl_int err = clEnqueueWriteBuffer(commandQueue, buffers[cacheIndex], CL_FALSE, 0, (blockSize + offset)*file->getChannelCount()*sizeof(float), tmpBuffer.data(), 0, nullptr, nullptr);
 				checkErrorCode(err, CL_SUCCESS, "clEnqueueWriteBuffer()");
 
@@ -178,17 +176,25 @@ void GPUCache::enqueuCopy(cl_mem source, cl_mem destination, cl_event readyEvent
 
 void GPUCache::signalEventCallback(cl_event callbackEvent, cl_int status, void* data)
 {
-	assert(status == CL_COMPLETE);
+	try
+	{
+		assert(status == CL_COMPLETE);
 
-	cl_event event = reinterpret_cast<cl_event>(data);
+		cl_event event = reinterpret_cast<cl_event>(data);
 
-	cl_int err;
+		cl_int err;
 
-	cerr << "Signal event " << event << "(" << data << ")" << endl;
+		cerr << "Signal event " << event << "(" << data << ")" << endl;
 
-	err = clSetUserEventStatus(event, CL_COMPLETE);
-	checkErrorCode(err, CL_SUCCESS, "clSetUserEventStatus()");
+		err = clSetUserEventStatus(event, CL_COMPLETE);
+		checkErrorCode(err, CL_SUCCESS, "clSetUserEventStatus()");
 
-	err = clReleaseEvent(callbackEvent);
-	checkErrorCode(err, CL_SUCCESS, "clReleaseEvent()");
+		err = clReleaseEvent(callbackEvent);
+		checkErrorCode(err, CL_SUCCESS, "clReleaseEvent()");
+	}
+	catch (exception& e)
+	{
+		cerr << "Exception caught in signalEventCallback(): " << e.what() << endl;
+		abort();
+	}
 }

@@ -12,9 +12,9 @@ class DataFile
 public:
 	virtual ~DataFile() {}
 
-	virtual double getSamplingFrequency() = 0;
-	virtual unsigned int getChannelCount() = 0;
-	virtual uint64_t getSamplesRecorded() = 0;
+	virtual double getSamplingFrequency() const = 0;
+	virtual unsigned int getChannelCount() const = 0;
+	virtual uint64_t getSamplesRecorded() const = 0;
 	virtual void readData(std::vector<float>* data, int64_t firstSample, int64_t lastSample) = 0;
 	virtual void readData(std::vector<double>* data, int64_t firstSample, int64_t lastSample) = 0;
 
@@ -24,13 +24,13 @@ public:
 	}
 
 protected:
-	bool testLittleEndian()
+	bool testLittleEndian() const
 	{
 		int number = 1;
 		char* bytes = reinterpret_cast<char*>(&number);
 		return *bytes != 0;
 	}
-	void changeEndianness(char* data, int n)
+	void changeEndianness(char* data, int n) const
 	{
 		assert(n%2 == 0);
 
@@ -40,7 +40,7 @@ protected:
 		}
 	}
 	template<typename T>
-	void changeEndianness(T* val)
+	void changeEndianness(T* val) const
 	{
 		changeEndianness(reinterpret_cast<char*>(val), sizeof(T));
 	}

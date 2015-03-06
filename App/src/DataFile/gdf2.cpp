@@ -1,11 +1,8 @@
 #include "gdf2.h"
 
 #include "../options.h"
-#include "../error.h"
 
 #include <cstdlib>
-#include <cstdio>
-#include <cstdint>
 #include <algorithm>
 #include <cassert>
 #include <iostream>
@@ -234,6 +231,8 @@ GDF2::~GDF2()
 template<typename T>
 void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSample)
 {
+	lock_guard<mutex> lock(mtx);
+
 #ifndef NDEBUG
 	int64_t originalFS = firstSample, originalLS = lastSample; (void)originalFS; (void)originalLS;
 #endif
@@ -311,7 +310,7 @@ void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSampl
 
 			for (int i = 0; i < samplesToRead; ++i)
 			{
-				// Read the sample the file.
+				// Read a sample from the file.
 				T tmp;
 				char rawTmp[8];
 
@@ -353,26 +352,3 @@ void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSampl
 		dataIndex += samplesToRead;
 	}
 }
-
-template<typename T>
-void GDF2::readFile(T* val, int elements)
-{
-	freadChecked(val, sizeof(T), elements, file);
-
-	if (isLittleEndian == false)
-	{
-		for (int i = 0; i < elements; ++i)
-		{
-			changeEndianness(val + i);
-		}
-	}
-}
-
-void GDF2::seekFile(size_t offset, bool fromStart)
-{
-	int res = fseek(file, static_cast<long>(offset), fromStart ? SEEK_SET : SEEK_CUR);
-	checkErrorCode(res, 0, "seekFile(" << offset << ", " << fromStart << ") failed.");
-}
-
-
-

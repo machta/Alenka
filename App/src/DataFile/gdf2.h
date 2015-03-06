@@ -1,6 +1,9 @@
 #include "datafile.h"
 
+#include "../error.h"
+
 #include <cstdio>
+#include <mutex>
 
 #ifndef GDF2_H
 #define GDF2_H
@@ -11,15 +14,15 @@ public:
 	GDF2(const char* filePath);
 	virtual ~GDF2();
 
-	virtual double getSamplingFrequency()
+	virtual double getSamplingFrequency() const
 	{
 		return samplingFrequency;
 	}
-	virtual unsigned int getChannelCount()
+	virtual unsigned int getChannelCount() const
 	{
 		return fh.numberOfChannels;
 	}
-	virtual uint64_t getSamplesRecorded()
+	virtual uint64_t getSamplesRecorded() const
 	{
 		return samplesRecorded;
 	}
@@ -33,6 +36,7 @@ public:
 	}
 
 private:
+	std::mutex mtx;
 	FILE* file;
 	double samplingFrequency;
 	uint64_t samplesRecorded;
@@ -95,8 +99,23 @@ private:
 	template<typename T>
 	void readDataLocal(std::vector<T>* data, int64_t firstSample, int64_t lastSample);
 	template<typename T>
-	void readFile(T* val, int elements = 1);
-	void seekFile(size_t offset, bool fromStart = false);
+	void readFile(T* val, int elements = 1)
+	{
+		freadChecked(val, sizeof(T), elements, file);
+
+		if (isLittleEndian == false)
+		{
+			for (int i = 0; i < elements; ++i)
+			{
+				changeEndianness(val + i);
+			}
+		}
+	}
+	void seekFile(size_t offset, bool fromStart = false)
+	{
+		int res = std::fseek(file, static_cast<long>(offset), fromStart ? SEEK_SET : SEEK_CUR);
+		checkErrorCode(res, 0, "seekFile(" << offset << ", " << fromStart << ") failed.");
+	}
 };
 
 #endif // GDF2_H

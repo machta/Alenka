@@ -13,6 +13,7 @@ Options::Options(int ac, char** av)
 	("help", "help message")
 	("config,c", value<string>()->default_value("options.cfg"), "config file")
 	("printFilter", "should the filter coefficients be printed (everytime they are computed)")
+	("printBuffers", "print the values in buffers during signal processing")
 	("platformInfo", "print OpenCL platform info")
 	("deviceInfo", "print OpenCL device info")
 	("glInfo", "print OpenGL info")
@@ -30,7 +31,8 @@ Options::Options(int ac, char** av)
 	("vert", value<string>()->default_value("shader.vert"), "vertex shader source file")
 	("frag", value<string>()->default_value("shader.frag"), "fragment shader source file")
 	("kernels", value<string>()->default_value("kernels.cl"), "OpenCL kernel source file")
-	("printFilterFile", value<string>(), "print filter to a file with this name, if not set stderr is used")
+	("printFilterFile", value<string>(), "print filter to a file with this name; if empty, stderr is used")
+	("printBuffersFolder", value<string>()->default_value("."), "path to the folder to which the values will be saved (no end slash), only in debug build")
 	;
 
 	options_description all("Alloved options");
