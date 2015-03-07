@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cassert>
 #include <iostream>
+#include <cstring>
 
 using namespace std;
 
@@ -203,6 +204,13 @@ case a_:\
 	}
 
 	samplingFrequency = vh.samplesPerRecord[0]/duration;
+
+	// Construct the cache.
+	unsigned int memoryAvailable = PROGRAM_OPTIONS["dataFileCacheSize"].as<unsigned int>();
+	if (memoryAvailable > 0)
+	{
+		cache = new QCache<unsigned int, std::vector<char>>(max(static_cast<unsigned int>(1), memoryAvailable/(vh.samplesPerRecord[0]*getChannelCount()*dataTypeSize)));
+	}
 }
 
 GDF2::~GDF2()
@@ -288,38 +296,44 @@ void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSampl
 	lastRecordI = lastSample/samplesPerRecord;
 
 	// Read data from the file.
-	seekFile(startOfData + recordI*samplesPerRecord*getChannelCount()*dataTypeSize, true);
-
 	for (; recordI <= lastRecordI; ++recordI)
 	{
+		vector<char>* record;
+
+		if (cache == nullptr || (record = cache->operator [](recordI)) == nullptr)
+		{
+			record = new vector<char>(samplesPerRecord*getChannelCount()*dataTypeSize);
+
+			seekFile(startOfData + recordI*samplesPerRecord*getChannelCount()*dataTypeSize, true);
+
+			freadChecked(record->data(), dataTypeSize, samplesPerRecord*getChannelCount(), file);
+
+			if (isLittleEndian == false)
+			{
+				for (int i = 0; i < samplesPerRecord*getChannelCount(); ++i)
+				{
+					changeEndianness(record->data() + i*dataTypeSize, dataTypeSize);
+				}
+			}
+
+			if (cache != nullptr)
+			{
+				cache->insert(recordI, record);
+			}
+		}
+
 		int recordOffset = static_cast<int>((firstSample + dataIndex)%samplesPerRecord);
 		int samplesToRead = static_cast<int>(min(static_cast<int64_t>(samplesPerRecord - recordOffset), n - dataIndex));
 
 		for (unsigned int channelI = 0; channelI < getChannelCount(); ++channelI)
 		{
-			int skip = recordOffset*dataTypeSize;;
-			if (channelI > 0)
-			{
-				skip += (samplesPerRecord - samplesToRead - recordOffset)*dataTypeSize;
-			}
-
-			if (skip > 0)
-			{
-				seekFile(skip);
-			}
-
 			for (int i = 0; i < samplesToRead; ++i)
 			{
-				// Read a sample from the file.
+				// Copy a sample from the rocord.
 				T tmp;
 				char rawTmp[8];
 
-				readFile(rawTmp, dataTypeSize);
-
-				if (isLittleEndian == false)
-				{
-					changeEndianness(rawTmp, dataTypeSize);
-				}
+				memcpy(rawTmp, record->data() + (channelI*samplesPerRecord + recordOffset + i)*dataTypeSize, dataTypeSize);
 
 				// Convert the value to either float or double.
 				if (is_same<T, float>::value)
@@ -350,5 +364,10 @@ void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSampl
 		}
 
 		dataIndex += samplesToRead;
+
+		if (cache == nullptr)
+		{
+			delete record;
+		}
 	}
 }

@@ -2,6 +2,8 @@
 
 #include "../error.h"
 
+#include <QCache>
+
 #include <cstdio>
 #include <mutex>
 
@@ -48,6 +50,7 @@ private:
 	float (* convertSampleToFloat)(void* sample);
 	int version;
 	bool uncalibrated;
+	QCache<unsigned int, std::vector<char>>* cache = nullptr;
 
 	struct
 	{

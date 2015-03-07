@@ -8,7 +8,7 @@ yScale = 0.00001*height;
 
 y0 = zeros(m, 1);
 for i = 1:m
-    y0(i) = (5 - i + 0.5)*height/m;
+    y0(i) = (m - i + 0.5)*height/m;
 end
 
 y0 = repmat(y0, 1, n);

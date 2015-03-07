@@ -22,7 +22,7 @@
 class SignalProcessor : public OpenGLInterface
 {
 public:
-	SignalProcessor(DataFile* file, unsigned int memory = PROGRAM_OPTIONS["memoryBuffersSize"].as<unsigned int>());
+	SignalProcessor(DataFile* file, unsigned int memory = PROGRAM_OPTIONS["gpuMemorySize"].as<unsigned int>());
 	~SignalProcessor();
 
 	int64_t getBlockSize() const
