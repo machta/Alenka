@@ -217,6 +217,7 @@ GDF2::~GDF2()
 {
 	fclose(file);
 	delete[] scale;
+	delete cache;
 
 	// Delete variable header.
 	delete[] vh.label;

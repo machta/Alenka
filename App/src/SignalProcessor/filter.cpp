@@ -38,10 +38,9 @@ Filter::~Filter()
 {
 	clReleaseCommandQueue(queue);
 
-	//	clfftStatus errFFT;
-
-	//	errFFT = clfftDestroyPlan(&plan);
-	//	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
+	clfftStatus errFFT;
+	errFFT = clfftDestroyPlan(&plan);
+	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
 
 	delete[] coefficients;
 }

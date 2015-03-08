@@ -75,12 +75,12 @@ public:
 	}
 
 private:
-	//DataFile* dataFile;
-	GLuint vertexArray;
 	OpenCLContext* clContext;
 	FilterProcessor* filterProcessor;
 	MontageProcessor* montageProcessor;
 	GPUCache* cache;
+	Filter* filter;
+	Montage* montage;
 
 	int M;
 	int offset;
@@ -98,7 +98,7 @@ private:
 	cl_mem processorOutputBuffer;
 	GLuint processorVertexArray;
 
-	std::string indexSetString(const std::set<int>& indexSet)
+	std::string indexSetToString(const std::set<int>& indexSet)
 	{
 		std::stringstream ss;
 

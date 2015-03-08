@@ -72,13 +72,13 @@ FilterProcessor::~FilterProcessor()
 	err = clReleaseMemObject(filterBuffer);
 	checkErrorCode(err, CL_SUCCESS, "clReleaseMemObject()");
 
-	//clfftStatus errFFT;
-	//	errFFT = clfftDestroyPlan(&fftPlan);
-	//	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
-	//	errFFT = clfftDestroyPlan(&fftPlanBatch);
-	//	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
-	//	errFFT = clfftDestroyPlan(&ifftPlanBatch);
-	//	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
+	clfftStatus errFFT;
+	errFFT = clfftDestroyPlan(&fftPlan);
+	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
+	errFFT = clfftDestroyPlan(&fftPlanBatch);
+	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
+	errFFT = clfftDestroyPlan(&ifftPlanBatch);
+	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
 }
 
 void FilterProcessor::change(Filter* filter)

@@ -28,12 +28,12 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFi
 
 	// Filter and motage stuff.
 	double Fs = file->getSamplingFrequency();
-	Filter* filter = new Filter(M, Fs);
+	/*Filter**/ filter = new Filter(M, Fs);
 	filter->setHighpass(-100);
 	filter->setLowpass(10);
 	filter->setNotch(false);
 
-	Montage* montage = new Montage(vector<string> {"out=in(0);", "out=in(1);", "out=in(2);", "out=(in(0)+in(1)+in(2))/3;", "out=sum(0,2)/3;"}, clContext);
+	/*Montage**/ montage = new Montage(vector<string> {"out=in(0);", "out=in(1);", "out=in(2);", "out=(in(0)+in(1)+in(2))/3;", "out=sum(0,2)/3;"}, clContext);
 	//montage = new Montage(vector<string> {"out=in(0);", "out=10*in(0);", "out=1000*cos(get_global_id(0)/100.);"}, clContext);
 
 	filterProcessor = new FilterProcessor(M, blockSize + offset, file->getChannelCount(), clContext);
@@ -41,9 +41,6 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFi
 
 	changeFilter(filter);
 	changeMontage(montage);
-
-	//delete filter;
-	//delete montage;
 
 	// Construct the cache.
 	unsigned int blockCount = memory/cacheBlockSize/sizeof(float);
@@ -94,13 +91,15 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFi
 
 SignalProcessor::~SignalProcessor()
 {
-	// Release resources.
 	cl_int err;
 
 	delete clContext;
 
 	delete filterProcessor;
 	delete montageProcessor;
+
+	delete filter;
+	delete montage;
 
 	err = clReleaseCommandQueue(processorQueue);
 	checkErrorCode(err, CL_SUCCESS, "clReleaseCommandQueue()");
