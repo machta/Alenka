@@ -1,4 +1,4 @@
-function [ ] = visualizeFilter( fileName, mode )
+function [ b ] = visualizeFilter( fileName, mode )
 %VISUALIZEFILTER A tool for visualizing properties of a FIR filter.
 %   
 %   fileName  name of the input file
@@ -36,5 +36,4 @@ else
     freqz(hd);
 end
 
-fprintf(1,'Length of the filter = %d\n',length(b));
 end

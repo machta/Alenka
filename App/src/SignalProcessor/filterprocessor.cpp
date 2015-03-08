@@ -23,7 +23,12 @@ FilterProcessor::FilterProcessor(unsigned int M, unsigned int blockWidth, unsign
 
 	filterKernel = program->createKernel("filter");
 
-	filterBuffer = clCreateBuffer(context->getCLContext(), CL_MEM_READ_WRITE | CL_MEM_HOST_WRITE_ONLY, (width + 4)*sizeof(float), nullptr, &err);
+	cl_mem_flags flags = CL_MEM_READ_WRITE;
+#ifdef NDEBUG
+	flags |= CL_MEM_HOST_WRITE_ONLY;
+#endif
+
+	filterBuffer = clCreateBuffer(context->getCLContext(), flags, (width + 4)*sizeof(float), nullptr, &err);
 	checkErrorCode(err, CL_SUCCESS, "clCreateBuffer");
 
 	coefficients = new float[M];
@@ -102,16 +107,20 @@ void FilterProcessor::process(cl_mem buffer, cl_command_queue queue)
 		err = clEnqueueFillBuffer(queue, filterBuffer, &zero, sizeof(zero), 0, width + 4, 0, nullptr, nullptr);
 		checkErrorCode(err, CL_SUCCESS, "clEnqueueFillBuffer()");
 
-		err = clEnqueueWriteBuffer(queue, filterBuffer, CL_FALSE, 0, M, coefficients, 0, nullptr, nullptr);
+		err = clEnqueueWriteBuffer(queue, filterBuffer, CL_FALSE, 0, M*sizeof(float), coefficients, 0, nullptr, nullptr);
 		checkErrorCode(err, CL_SUCCESS, "clEnqueueWriteBuffer()");
 
 		errFFT = clfftEnqueueTransform(fftPlan, CLFFT_FORWARD, 1, &queue, 0, nullptr, nullptr, &filterBuffer, nullptr, nullptr);
 		checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftEnqueueTransform");
+
+		printBuffer("filterBuffer.txt", filterBuffer, queue);
 	}
 
 	// FFT.
 	errFFT = clfftEnqueueTransform(fftPlanBatch, CLFFT_FORWARD, 1, &queue, 0, nullptr, nullptr, &buffer, nullptr, nullptr);
 	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftEnqueueTransform");
+
+	printBuffer("after_fft.txt", buffer, queue);
 
 	// Multiply.
 	err = clSetKernelArg(filterKernel, 0, sizeof(cl_mem), &buffer);
@@ -124,6 +133,8 @@ void FilterProcessor::process(cl_mem buffer, cl_command_queue queue)
 
 	err = clEnqueueNDRangeKernel(queue, filterKernel, 2, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
 	checkErrorCode(err, CL_SUCCESS, "clEnqueueNDRangeKernel()");
+
+	printBuffer("after_multiply.txt", buffer, queue);
 
 	// IFFT.
 	errFFT = clfftEnqueueTransform(ifftPlanBatch, CLFFT_BACKWARD, 1, &queue, 0, nullptr, nullptr, &buffer, nullptr, nullptr);

@@ -1,13 +1,15 @@
-function [ after_readData after_writeBuffer after_getAny after_filter after_montage ] = loadBuffers( fileC, montC )
+function [ ret ] = loadBuffers( fileC, montC )
 %LOADBUFFERS Load content of buffers from files.
 %   
 
-after_readData = readBuffer('after_readData.txt', fileC);
-after_writeBuffer = readBuffer('after_writeBuffer.txt', fileC);
-
-after_getAny = readBuffer('after_getAny.txt', fileC);
-after_filter = readBuffer('after_filter.txt', fileC);
-after_montage = readBuffer('after_montage.txt', montC);
+ret.filterBuffer = readBuffer('filterBuffer.txt', 1);
+ret.after_readData = readBuffer('after_readData.txt', fileC);
+ret.after_writeBuffer = readBuffer('after_writeBuffer.txt', fileC);
+ret.after_getAny = readBuffer('after_getAny.txt', fileC);
+ret.after_fft = readBuffer('after_fft.txt', fileC);
+ret.after_multiply = readBuffer('after_multiply.txt', fileC);
+ret.after_filter = readBuffer('after_filter.txt', fileC);
+ret.after_montage = readBuffer('after_montage.txt', montC);
 
 end
 
