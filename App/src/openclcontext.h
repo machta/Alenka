@@ -12,20 +12,21 @@ public:
 	OpenCLContext(unsigned int platform, unsigned int device, cl_device_type deviceType, QOpenGLContext* parentContext = nullptr);
 	~OpenCLContext();
 
-	cl_context getCLContext()
+	cl_context getCLContext() const
 	{
 		return context;
 	}
-	cl_platform_id getCLPlatform()
+	cl_platform_id getCLPlatform() const
 	{
 		return platformId;
 	}
-	cl_device_id getCLDevice()
+	cl_device_id getCLDevice() const
 	{
 		return deviceId;
 	}
-	std::string getPlatformInfo();
-	std::string getDeviceInfo();
+	std::string getPlatformInfo() const;
+	std::string getDeviceInfo() const;
+
 private:
 	cl_context context;
 	cl_platform_id platformId;

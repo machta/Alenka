@@ -13,7 +13,7 @@ OpenCLProgram::~OpenCLProgram()
 	clReleaseProgram(program);
 }
 
-string OpenCLProgram::getCompilationLog()
+string OpenCLProgram::getCompilationLog() const
 {
 	size_t logLength;
 

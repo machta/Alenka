@@ -26,9 +26,9 @@ public:
 protected:
 	bool testLittleEndian() const
 	{
-		int number = 1;
+		unsigned int number = 1;
 		char* bytes = reinterpret_cast<char*>(&number);
-		return *bytes != 0;
+		return *bytes == 1;
 	}
 	void changeEndianness(char* data, int n) const
 	{

@@ -29,27 +29,49 @@ public:
 	{
 		return blockSize;
 	}
+	void changeFilter(Filter* filter)
+	{
+		using namespace std;
 
-	// ..
+		if (PROGRAM_OPTIONS.isSet("printFilter"))
+		{
+			if (PROGRAM_OPTIONS.isSet("printFilterFile"))
+			{
+				FILE* file = fopen(PROGRAM_OPTIONS["printFilterFile"].as<string>().c_str(), "w");
+				checkNotErrorCode(file, nullptr, "File '" << PROGRAM_OPTIONS["printFilterFile"].as<string>() << "' could not be opened for wtiting.");
 
+				filter->printCoefficients(file);
+
+				fclose(file);
+			}
+			else
+			{
+				filter->printCoefficients(stderr);
+			}
+		}
+
+		filterProcessor->change(filter);
+	}
+	void changeMontage(Montage* montage)
+	{
+		montageProcessor->change(montage);
+	}
+	unsigned int getCapacity() const
+	{
+		return cache->getCapacity();
+	}
 	SignalBlock getAnyBlock(const std::set<int>& indexSet);
-	void prepareBlocks(int index)
+	void prepareBlock(int index)
 	{
 		cl_int err;
 
 		cl_event readyEvent = clCreateUserEvent(clContext->getCLContext(), &err);
 		checkErrorCode(err, CL_SUCCESS, "clCreateUserEvent()");
 
-		std::cerr << "Create dummy event " << readyEvent << std::endl;
-
 		cache->getAny(std::set<int> {index}, nullptr, readyEvent);
 
 		err = clReleaseEvent(readyEvent);
 		checkErrorCode(err, CL_SUCCESS, "clReleaseEvent()");
-	}
-	unsigned int getCapacity() const
-	{
-		return cache->getCapacity();
 	}
 
 private:
@@ -57,9 +79,7 @@ private:
 	GLuint vertexArray;
 	OpenCLContext* clContext;
 	FilterProcessor* filterProcessor;
-	Filter* filter;
 	MontageProcessor* montageProcessor;
-	Montage* montage;
 	GPUCache* cache;
 
 	int M;

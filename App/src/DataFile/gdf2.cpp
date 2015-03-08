@@ -10,11 +10,11 @@
 
 using namespace std;
 
-GDF2::GDF2(const char* filePath)
+GDF2::GDF2(const string& filePath)
 {
 	isLittleEndian = testLittleEndian();
 
-	file = fopen(filePath, "r+b");
+	file = fopen(filePath.c_str(), "r+b");
 	checkNotErrorCode(file, nullptr, "File '" << filePath << "' not found.");
 
 	// Load fixed header.

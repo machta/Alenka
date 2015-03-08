@@ -117,7 +117,7 @@ void GPUCache::loaderThreadFunction()
 				cl_event readyEvent = get<2>(queue.front());
 				cl_mem buffer = get<3>(queue.front());
 
-				cerr << "Queue top: " << index << ", " << cacheIndex << ", " << readyEvent  << "(" << &readyEvent << ")" << ", " << buffer << endl;
+				cerr << "Loading block " << index << "." << endl;
 
 				queue.pop();
 
@@ -164,8 +164,6 @@ void GPUCache::enqueuCopy(cl_mem source, cl_mem destination, cl_event readyEvent
 		err = clEnqueueCopyBufferRect(commandQueue, source, destination, origin, origin, region, rowLen, 0, rowLen + 4*sizeof(float), 0, 0, nullptr, &event);
 		checkErrorCode(err, CL_SUCCESS, "clEnqueueCopyBufferRect()");
 
-		cerr << "Setting callback for event " << readyEvent << "(" << &readyEvent << ")" << endl;
-
 		err = clSetEventCallback(event, CL_COMPLETE, &signalEventCallback, readyEvent);
 		checkErrorCode(err, CL_SUCCESS, "clSetEventCallback()");
 
@@ -183,8 +181,6 @@ void GPUCache::signalEventCallback(cl_event callbackEvent, cl_int status, void* 
 		cl_event event = reinterpret_cast<cl_event>(data);
 
 		cl_int err;
-
-		cerr << "Signal event " << event << "(" << data << ")" << endl;
 
 		err = clSetUserEventStatus(event, CL_COMPLETE);
 		checkErrorCode(err, CL_SUCCESS, "clSetUserEventStatus()");

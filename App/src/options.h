@@ -13,19 +13,21 @@ public:
 
 	const boost::program_options::variable_value& operator[](const std::string& var) const
 	{
-		return vm[var];
+		return get(var);
 	}
 	const boost::program_options::variable_value& get(const std::string& var) const
 	{
+		using namespace std;
+
 		if (isSet(var))
 		{
-			return (*this)[var];
+			return vm[var];
 		}
 		else
 		{
-			std::stringstream ss;
+			stringstream ss;
 			ss << "Option '" << var << "' has no value.";
-			throw std::runtime_error(ss.str());
+			throw runtime_error(ss.str());
 		}
 	}
 	bool isSet(const std::string& var) const

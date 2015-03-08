@@ -21,9 +21,9 @@ public:
 
 protected:
 #ifndef NDEBUG
-	QOpenGLFunctions_4_1_Core* fun(const char* file = "", int line = 0)
+	QOpenGLFunctions_4_1_Core* gl(const char* file = "", int line = 0)
 #else
-	QOpenGLFunctions_4_1_Core* fun(const char*, int)
+	QOpenGLFunctions_4_1_Core* gl(const char*, int)
 #endif
 	{
 		using namespace std;
@@ -101,6 +101,6 @@ private:
 	}
 };
 
-#define fun_shortcut() fun(__FILE__, __LINE__)
+#define gl() gl(__FILE__, __LINE__)
 
 #endif // OPENGLINTERFACE_H

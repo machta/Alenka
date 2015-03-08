@@ -6,8 +6,6 @@
 
 using namespace std;
 
-#define fun() fun_shortcut()
-
 OpenGLProgram::OpenGLProgram(FILE* vertSource, FILE* fragSource)
 {
 	char* tmp[2];
@@ -33,31 +31,31 @@ OpenGLProgram::OpenGLProgram(FILE* vertSource, FILE* fragSource)
 
 OpenGLProgram::~OpenGLProgram()
 {
-	fun()->glDeleteProgram(program);
+	gl()->glDeleteProgram(program);
 
-	fun();
+	gl();
 }
 
 void OpenGLProgram::construct(const char* vertSource, const char* fragSource)
 {
-	program = fun()->glCreateProgram();
+	program = gl()->glCreateProgram();
 
 	addShader(program, vertSource, GL_VERTEX_SHADER);
 	addShader(program, fragSource, GL_FRAGMENT_SHADER);
 
-	fun()->glLinkProgram(program);
+	gl()->glLinkProgram(program);
 
 	GLint linkStatus;
-	fun()->glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
+	gl()->glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
 
 #ifndef NDEBUG
 	GLint logLength;
-	fun()->glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
+	gl()->glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
 
 	if (logLength > 1)
 	{
 		char* log = new char[logLength];
-		fun()->glGetProgramInfoLog(program, logLength, &logLength, log);
+		gl()->glGetProgramInfoLog(program, logLength, &logLength, log);
 
 		cerr << "OpenGLProgram ('" << vertSource << "', '" << fragSource << "') link log:" << endl << log;
 
@@ -70,23 +68,23 @@ void OpenGLProgram::construct(const char* vertSource, const char* fragSource)
 
 void OpenGLProgram::addShader(GLuint program, const char* sourceText, GLenum type)
 {
-	GLuint shader = fun()->glCreateShader(type);
+	GLuint shader = gl()->glCreateShader(type);
 
-	fun()->glShaderSource(shader, 1, &sourceText, nullptr);
+	gl()->glShaderSource(shader, 1, &sourceText, nullptr);
 
-	fun()->glCompileShader(shader);
+	gl()->glCompileShader(shader);
 
 	GLint compileStatus;
-	fun()->glGetShaderiv(shader, GL_COMPILE_STATUS, &compileStatus);
+	gl()->glGetShaderiv(shader, GL_COMPILE_STATUS, &compileStatus);
 
 #ifndef NDEBUG
 	GLint logLength;
-	fun()->glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLength);
+	gl()->glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLength);
 
 	if (logLength > 1)
 	{
 		char* log = new char[logLength];
-		fun()->glGetShaderInfoLog(shader, logLength, &logLength, log);
+		gl()->glGetShaderInfoLog(shader, logLength, &logLength, log);
 
 		cerr << "Shader " << type << " compilation log:" << endl << log;
 
@@ -96,9 +94,7 @@ void OpenGLProgram::addShader(GLuint program, const char* sourceText, GLenum typ
 
 	checkNotErrorCode(compileStatus, GL_FALSE, "Shader " << type << " compilation failed.");
 
-	fun()->glAttachShader(program, shader);
+	gl()->glAttachShader(program, shader);
 
-	fun()->glDeleteShader(shader);
+	gl()->glDeleteShader(shader);
 }
-
-#undef fun

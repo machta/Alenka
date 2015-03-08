@@ -6,8 +6,6 @@
 
 using namespace std;
 
-#define fun() fun_shortcut()
-
 SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFile(file)
 {
 	cl_int err;
@@ -20,7 +18,7 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFi
 	cacheBlockSize = (blockSize + offset)*file->getChannelCount();
 	processorTmpBlockSize = (blockSize + offset + padding)*file->getChannelCount();
 
-	// Ensure required sizes.
+	// Check block sizes.
 	if (M%4 || (blockSize + offset)%4)
 	{
 		throw runtime_error("SignalProcessor requires both the filter length and block length to be multiples of 4");
@@ -29,37 +27,23 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFi
 	clContext = new OpenCLContext(SIGNAL_PROCESSOR_CONTEXT_PARAMETERS, QOpenGLContext::currentContext());
 
 	// Filter and motage stuff.
-	filterProcessor = new FilterProcessor(M, blockSize + offset, file->getChannelCount(), clContext);
-
 	double Fs = file->getSamplingFrequency();
-	filter = new Filter(M, Fs);
+	Filter* filter = new Filter(M, Fs);
 	filter->setHighpass(-100);
 	filter->setLowpass(10);
 	filter->setNotch(false);
 
-	if (PROGRAM_OPTIONS.isSet("printFilter"))
-	{
-		if (PROGRAM_OPTIONS.isSet("printFilterFile"))
-		{
-			FILE* file = fopen(PROGRAM_OPTIONS["printFilterFile"].as<string>().c_str(), "w");
-			checkNotErrorCode(file, nullptr, "File '" << PROGRAM_OPTIONS["printFilterFile"].as<string>() << "' could not be opened for wtiting.");
-
-			filter->printCoefficients(file);
-
-			fclose(file);
-		}
-		else
-		{
-			filter->printCoefficients(stderr);
-		}
-	}
-
-	filterProcessor->change(filter);
-
-	montage = new Montage(vector<string> {"out=in(0);", "out=in(1);", "out=in(2);", "out=(in(0)+in(1)+in(2))/3;", "out=sum(0,2)/3;"}, clContext);
+	Montage* montage = new Montage(vector<string> {"out=in(0);", "out=in(1);", "out=in(2);", "out=(in(0)+in(1)+in(2))/3;", "out=sum(0,2)/3;"}, clContext);
 	//montage = new Montage(vector<string> {"out=in(0);", "out=10*in(0);", "out=1000*cos(get_global_id(0)/100.);"}, clContext);
+
+	filterProcessor = new FilterProcessor(M, blockSize + offset, file->getChannelCount(), clContext);
 	montageProcessor = new MontageProcessor(offset, blockSize);
-	montageProcessor->change(montage);
+
+	changeFilter(filter);
+	changeMontage(montage);
+
+	//delete filter;
+	//delete montage;
 
 	// Construct the cache.
 	unsigned int blockCount = memory/cacheBlockSize/sizeof(float);
@@ -73,19 +57,19 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFi
 	// Construct processor.
 	processorOutputBlockSize = blockSize*montage->getNumberOfRows();
 
-	processorQueue  = clCreateCommandQueue(clContext->getCLContext(), clContext->getCLDevice(), 0, &err);
+	processorQueue = clCreateCommandQueue(clContext->getCLContext(), clContext->getCLDevice(), 0, &err);
 	checkErrorCode(err, CL_SUCCESS, "clCreateCommandQueue()");
 
 	GLuint buffer;
 
-	fun()->glGenBuffers(1, &buffer);
-	fun()->glGenVertexArrays(1, &processorVertexArray);
+	gl()->glGenBuffers(1, &buffer);
+	gl()->glGenVertexArrays(1, &processorVertexArray);
 
-	fun()->glBindVertexArray(processorVertexArray);
-	fun()->glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	fun()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(0));
-	fun()->glEnableVertexAttribArray(0);
-	fun()->glBufferData(GL_ARRAY_BUFFER, processorOutputBlockSize*sizeof(float), nullptr, GL_STATIC_DRAW);
+	gl()->glBindVertexArray(processorVertexArray);
+	gl()->glBindBuffer(GL_ARRAY_BUFFER, buffer);
+	gl()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(0));
+	gl()->glEnableVertexAttribArray(0);
+	gl()->glBufferData(GL_ARRAY_BUFFER, processorOutputBlockSize*sizeof(float), nullptr, GL_STATIC_DRAW);
 
 	cl_mem_flags flags = CL_MEM_READ_WRITE;
 #ifdef NDEBUG
@@ -103,9 +87,9 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFi
 	processorOutputBuffer = clCreateFromGLBuffer(clContext->getCLContext(), flags, buffer, &err);
 	checkErrorCode(err, CL_SUCCESS, "clCreateFromGLBuffer()");
 
-	fun()->glBindBuffer(GL_ARRAY_BUFFER, 0);
-	fun()->glBindVertexArray(0);
-	fun()->glDeleteBuffers(1, &buffer);
+	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
+	gl()->glBindVertexArray(0);
+	gl()->glDeleteBuffers(1, &buffer);
 }
 
 SignalProcessor::~SignalProcessor()
@@ -116,9 +100,7 @@ SignalProcessor::~SignalProcessor()
 	delete clContext;
 
 	delete filterProcessor;
-	delete filter;
 	delete montageProcessor;
-	delete montage;
 
 	err = clReleaseCommandQueue(processorQueue);
 	checkErrorCode(err, CL_SUCCESS, "clReleaseCommandQueue()");
@@ -129,9 +111,9 @@ SignalProcessor::~SignalProcessor()
 	err = clReleaseMemObject(processorOutputBuffer);
 	checkErrorCode(err, CL_SUCCESS, "clReleaseMemObject()");
 
-	fun()->glDeleteVertexArrays(1, &processorVertexArray);
+	gl()->glDeleteVertexArrays(1, &processorVertexArray);
 
-	fun();
+	gl();
 }
 
 SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
@@ -142,8 +124,6 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 
 	cl_event readyEvent = clCreateUserEvent(clContext->getCLContext(), &err);
 	checkErrorCode(err, CL_SUCCESS, "clCreateUserEvent()");
-
-	cerr << "Create event " << readyEvent <<  "(" << &readyEvent << ")" << endl;
 
 	err = clEnqueueBarrierWithWaitList(processorQueue, 1, &readyEvent, nullptr);
 	checkErrorCode(err, CL_SUCCESS, "clEnqueueBarrierWithWaitList()");
@@ -162,7 +142,7 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 	err = clFlush(processorQueue);
 	checkErrorCode(err, CL_SUCCESS, "clFlush()");
 
-	fun()->glFinish();
+	gl()->glFinish();
 
 	err = clEnqueueAcquireGLObjects(processorQueue, 1, &processorOutputBuffer, 0, nullptr, nullptr);
 	checkErrorCode(err, CL_SUCCESS, "clEnqueueAcquireGLObjects()");
@@ -178,7 +158,5 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 	checkErrorCode(err, CL_SUCCESS, "clFinish()");
 
 	auto fromTo = DataFile::getBlockBoundaries(index, getBlockSize());
-	return SignalBlock(index, montage->getNumberOfRows(), fromTo.first, fromTo.second, processorVertexArray);
+	return SignalBlock(index, montageProcessor->getNumberOfRows(), fromTo.first, fromTo.second, processorVertexArray);
 }
-
-#undef fun

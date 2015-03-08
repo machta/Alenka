@@ -41,7 +41,7 @@ private:
 	{
 		for (; from <= to; ++from)
 		{
-			signalProcessor->prepareBlocks(from);
+			signalProcessor->prepareBlock(from);
 		}
 	}
 	void prepare(int size, int minIndex, int maxIndex, int lowIndex, int highIndex, int capacity)

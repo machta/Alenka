@@ -34,7 +34,7 @@ public:
 	}
 	~OpenCLProgram();
 
-	cl_kernel createKernel(const char* kernelName)
+	cl_kernel createKernel(const std::string& kernelName)
 	{
 		if (compilationSuccessful() == false)
 		{
@@ -43,16 +43,16 @@ public:
 
 		cl_int err;
 
-		cl_kernel kernel = clCreateKernel(program, kernelName, &err);
+		cl_kernel kernel = clCreateKernel(program, kernelName.c_str(), &err);
 		checkErrorCode(err, CL_SUCCESS, "clCreateKernel()");
 
 		return kernel;
 	}
-	bool compilationSuccessful()
+	bool compilationSuccessful() const
 	{
 		return !invalid;
 	}
-	std::string getCompilationLog();
+	std::string getCompilationLog() const;
 
 private:
 	cl_program program;

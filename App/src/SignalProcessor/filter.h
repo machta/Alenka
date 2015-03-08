@@ -15,8 +15,8 @@ public:
 	Filter(unsigned int M, double Fs);
 	~Filter();
 
-	double* computeCoefficients();
 	void printCoefficients(FILE* file);
+	double* computeCoefficients();
 
 	double getLowpass() const
 	{

@@ -78,7 +78,7 @@ OpenCLContext::~OpenCLContext()
 	checkErrorCode(err, CL_SUCCESS, "clCreateContext()");
 }
 
-string OpenCLContext::getPlatformInfo()
+string OpenCLContext::getPlatformInfo() const
 {
 	cl_int err;
 	size_t size, maxSize = 0;
@@ -129,7 +129,7 @@ string OpenCLContext::getPlatformInfo()
 	return str;
 }
 
-string OpenCLContext::getDeviceInfo()
+string OpenCLContext::getDeviceInfo() const
 {
 	cl_int err;
 	size_t size, maxSize = 0;

@@ -13,7 +13,7 @@
 class GDF2 : public DataFile
 {
 public:
-	GDF2(const char* filePath);
+	GDF2(const std::string& filePath);
 	virtual ~GDF2();
 
 	virtual double getSamplingFrequency() const

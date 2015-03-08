@@ -13,8 +13,6 @@
 
 using namespace std;
 
-#define fun() fun_shortcut()
-
 Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent)
 {
 	int dummy = 5;
@@ -27,18 +25,18 @@ Canvas::~Canvas()
 	delete program;
 	delete dataFile;
 
-	fun();
+	gl();
 }
 
 void Canvas::initializeGL()
 {
 	if (PROGRAM_OPTIONS.isSet("glInfo"))
 	{
-		cout << "Version: " << fun()->glGetString(GL_VERSION) << endl;
-		cout << "Renderer: " << fun()->glGetString(GL_RENDERER) << endl;
-		cout << "Vendor: " << fun()->glGetString(GL_VENDOR) << endl;
-		cout << "GLSH version: " << fun()->glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
-		cout << "Extensions: " << fun()->glGetString(GL_EXTENSIONS) << endl;
+		cout << "Version: " << gl()->glGetString(GL_VERSION) << endl;
+		cout << "Renderer: " << gl()->glGetString(GL_RENDERER) << endl;
+		cout << "Vendor: " << gl()->glGetString(GL_VENDOR) << endl;
+		cout << "GLSH version: " << gl()->glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
+		cout << "Extensions: " << gl()->glGetString(GL_EXTENSIONS) << endl;
 
 		exit(EXIT_SUCCESS);
 	}
@@ -58,9 +56,9 @@ void Canvas::initializeGL()
 	fclose(file1);
 	fclose(file2);
 
-	fun()->glUseProgram(program->getGLProgram());
+	gl()->glUseProgram(program->getGLProgram());
 
-	fun()->glClearColor(1, 1, 1, 1);
+	gl()->glClearColor(1, 1, 1, 1);
 
 	checkGLMessages();
 }
@@ -77,7 +75,7 @@ void Canvas::resizeGL(int /*w*/, int /*h*/)
 
 void Canvas::paintGL()
 {
-	fun()->glClear(GL_COLOR_BUFFER_BIT);
+	gl()->glClear(GL_COLOR_BUFFER_BIT);
 
 	// Calculate the transformMatrix.
 	const SignalViewer* parent = reinterpret_cast<SignalViewer*>(parentWidget());
@@ -88,9 +86,9 @@ void Canvas::paintGL()
 	QMatrix4x4 matrix;
 	matrix.ortho(rect);
 
-	GLuint location = fun()->glGetUniformLocation(program->getGLProgram(), "transformMatrix");
+	GLuint location = gl()->glGetUniformLocation(program->getGLProgram(), "transformMatrix");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-	fun()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
+	gl()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
 
 	// Create the data block range needed.
 	int firstIndex = static_cast<unsigned int>(floor(parent->getPosition()*ratio)),
@@ -119,7 +117,7 @@ void Canvas::paintGL()
 
 		paintBlock(block);
 
-		fun()->glFlush();
+		gl()->glFlush();
 
 		indexSet.erase(block.getIndex());
 
@@ -127,13 +125,13 @@ void Canvas::paintGL()
 	}
 
 	// Finish rendering.
-	fun()->glFlush();
+	gl()->glFlush();
 	//fun()->glFinish();
 
 	// Prepare some blocks for next frame.
 	//prepare(indexSetSize, 0, static_cast<int>(ceil(parent->getVirtualWidth()*ratio)), firstIndex - indexSetSize, lastIndex + indexSetSize, min(4*indexSetSize, signalProcessor->getCapacity() - indexSetSize));
 
-	fun()->glBindVertexArray(0);
+	gl()->glBindVertexArray(0);
 
 	checkGLMessages();
 }
@@ -150,7 +148,7 @@ double Canvas::samplePixelRatio()
 
 void Canvas::paintBlock(const SignalBlock& block)
 {
-	fun()->glBindVertexArray(block.getGLVertexArray());
+	gl()->glBindVertexArray(block.getGLVertexArray());
 
 	for (unsigned int i = 0; i < block.getchannelCount(); ++i)
 	{
@@ -161,26 +159,24 @@ void Canvas::paintBlock(const SignalBlock& block)
 void Canvas::paintChannel(unsigned int channel, const SignalBlock& block)
 {
 	// Set the uniform variables specific for every channel. (This could be moved to paintGL(), calculate all values at once and here update only index to arrays.)
-	GLuint location = fun()->glGetUniformLocation(program->getGLProgram(), "y0");
+	GLuint location = gl()->glGetUniformLocation(program->getGLProgram(), "y0");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
 	float y0 = (channel + 0.5f)*height()/block.getchannelCount();
-	fun()->glUniform1f(location, y0);
+	gl()->glUniform1f(location, y0);
 
-	location = fun()->glGetUniformLocation(program->getGLProgram(), "yScale");
+	location = gl()->glGetUniformLocation(program->getGLProgram(), "yScale");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-	fun()->glUniform1f(location, -0.000008f*height());
+	gl()->glUniform1f(location, -0.000008f*height());
 
 	GLint size = block.getLastSample() - block.getFirstSample() + 1;
 	GLint first = channel*size;
 
-	location = fun()->glGetUniformLocation(program->getGLProgram(), "bufferOffset");
+	location = gl()->glGetUniformLocation(program->getGLProgram(), "bufferOffset");
 	checkNotErrorCode(location,static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-	fun()->glUniform1i(location, block.getFirstSample() - first);
+	gl()->glUniform1i(location, block.getFirstSample() - first);
 
 	// Draw onto the screen.
-	fun();
-	fun()->glDrawArrays(GL_LINE_STRIP, first, size);
-	fun();
+	gl();
+	gl()->glDrawArrays(GL_LINE_STRIP, first, size);
+	gl();
 }
-
-#undef fun

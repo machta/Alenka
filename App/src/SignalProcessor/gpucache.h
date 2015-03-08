@@ -25,15 +25,15 @@ public:
 	~GPUCache();
 
 	int getAny(const std::set<int> &indexSet, cl_mem buffer, cl_event readyEvent);
-	void clear()
-	{
-		indexMap.clear();
-		reverseIndexMap.clear();
-	}
 	unsigned int getCapacity() const
 	{
 		return capacity;
 	}
+//	void clear()
+//	{
+//		indexMap.clear();
+//		reverseIndexMap.clear();
+//	}
 
 private:
 	unsigned int blockSize;
