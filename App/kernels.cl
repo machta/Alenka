@@ -56,3 +56,11 @@ __kernel void filter(__global float4* a, __global float4* b)
 	a[id] = (float4)(cmult(la.s01, lb.s01), cmult(la.s23, lb.s23));
 }
 */
+
+// Assign zero to all elements.
+
+__kernel void zero(__global float4* a)
+{
+	int id0 = get_global_id(0);
+	a[id0] = (float4)(0, 0, 0, 0);
+}

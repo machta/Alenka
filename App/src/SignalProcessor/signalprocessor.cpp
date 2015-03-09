@@ -124,8 +124,13 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 	cl_event readyEvent = clCreateUserEvent(clContext->getCLContext(), &err);
 	checkErrorCode(err, CL_SUCCESS, "clCreateUserEvent()");
 
+#if CL_VERSION_1_2
 	err = clEnqueueBarrierWithWaitList(processorQueue, 1, &readyEvent, nullptr);
 	checkErrorCode(err, CL_SUCCESS, "clEnqueueBarrierWithWaitList()");
+#else
+	err = clEnqueueWaitForEvents(processorQueue, 1, &readyEvent);
+	checkErrorCode(err, CL_SUCCESS, "clEnqueueBarrierWithWaitList()");
+#endif
 
 	err = clReleaseEvent(readyEvent);
 	checkErrorCode(err, CL_SUCCESS, "clReleaseEvent()");

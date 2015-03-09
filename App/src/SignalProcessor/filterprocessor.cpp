@@ -17,11 +17,12 @@ FilterProcessor::FilterProcessor(unsigned int M, unsigned int blockWidth, unsign
 	FILE* file = fopen(PROGRAM_OPTIONS["kernels"].as<string>().c_str(), "rb");
 	checkNotErrorCode(file, nullptr, "File '" << PROGRAM_OPTIONS["kernels"].as<string>() << "' could not be opened.");
 
-	program = new OpenCLProgram(file, context);
+	OpenCLProgram program(file, context);
 
 	fclose(file);
 
-	filterKernel = program->createKernel("filter");
+	filterKernel = program.createKernel("filter");
+	zeroKernel = program.createKernel("zero");
 
 	cl_mem_flags flags = CL_MEM_READ_WRITE;
 #ifdef NDEBUG
@@ -63,10 +64,12 @@ FilterProcessor::~FilterProcessor()
 {
 	cl_int err;
 
-	delete program;
 	delete[] coefficients;
 
 	err = clReleaseKernel(filterKernel);
+	checkErrorCode(err, CL_SUCCESS, "clReleaseKernel()");
+
+	err = clReleaseKernel(zeroKernel);
 	checkErrorCode(err, CL_SUCCESS, "clReleaseKernel()");
 
 	err = clReleaseMemObject(filterBuffer);
@@ -103,9 +106,19 @@ void FilterProcessor::process(cl_mem buffer, cl_command_queue queue)
 		coefficientsChanged = false;
 
 		// Update values in the filterBuffer.
+#if CL_VERSION_1_2
 		float zero = 0;
 		err = clEnqueueFillBuffer(queue, filterBuffer, &zero, sizeof(zero), 0, width + 4, 0, nullptr, nullptr);
 		checkErrorCode(err, CL_SUCCESS, "clEnqueueFillBuffer()");
+#else
+		err = clSetKernelArg(zeroKernel, 0, sizeof(cl_mem), &filterBuffer);
+		checkErrorCode(err, CL_SUCCESS, "clSetKernelArg()");
+
+		size_t globalWorkSize = (width + 4)/4;
+
+		err = clEnqueueNDRangeKernel(queue, zeroKernel, 1, nullptr, &globalWorkSize, nullptr, 0, nullptr, nullptr);
+		checkErrorCode(err, CL_SUCCESS, "clEnqueueNDRangeKernel()");
+#endif
 
 		err = clEnqueueWriteBuffer(queue, filterBuffer, CL_FALSE, 0, M*sizeof(float), coefficients, 0, nullptr, nullptr);
 		checkErrorCode(err, CL_SUCCESS, "clEnqueueWriteBuffer()");
@@ -129,7 +142,7 @@ void FilterProcessor::process(cl_mem buffer, cl_command_queue queue)
 	err = clSetKernelArg(filterKernel, 1, sizeof(cl_mem), &filterBuffer);
 	checkErrorCode(err, CL_SUCCESS, "clSetKernelArg()");
 
-	size_t globalWorkSize[2] = {height, (width + 4)/4}; // +4 is for padding (as defined in SignalProcessor constructor) because the last complex number overlaps to this area.
+	size_t globalWorkSize[2] = {height, (width + 4)/4};
 
 	err = clEnqueueNDRangeKernel(queue, filterKernel, 2, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
 	checkErrorCode(err, CL_SUCCESS, "clEnqueueNDRangeKernel()");

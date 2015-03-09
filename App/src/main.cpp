@@ -11,6 +11,11 @@
 
 using namespace std;
 
+#if CL_VERSION_1_1
+#else
+#error OpenCL 1.1 or later required.
+#endif
+
 int main(int ac, char** av)
 {
 	int ret = EXIT_FAILURE;

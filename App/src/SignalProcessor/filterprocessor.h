@@ -22,6 +22,7 @@ private:
 	unsigned int height;
 	OpenCLProgram* program;
 	cl_kernel filterKernel;
+	cl_kernel zeroKernel;
 	cl_mem filterBuffer;
 	bool coefficientsChanged = false;
 	float* coefficients;
