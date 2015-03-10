@@ -97,8 +97,8 @@ double* Filter::computeCoefficients()
 	clfftStatus errFFT = clfftEnqueueTransform(plan, CLFFT_BACKWARD, 1, &queue, 0, nullptr, nullptr, &buffer, nullptr, nullptr);
 	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftEnqueueTransform()");
 
-	errCL = clFinish(queue);
-	checkErrorCode(errCL, CL_SUCCESS, "clFinish()");
+	errCL = clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, 2*cM*sizeof(double), coefficients, 0, nullptr, nullptr);
+	checkErrorCode(errCL, CL_SUCCESS, "clEnqueueReadBuffer()");
 
 	// Try to improve filter characteristics by applying a window function.
 	string window = PROGRAM_OPTIONS.isSet("window") ? PROGRAM_OPTIONS["window"].as<string>() : "";
@@ -134,8 +134,3 @@ void Filter::printCoefficients(FILE* file)
 		fprintf(file, "%lf\n", tmp[i]);
 	}
 }
-
-
-
-
-
