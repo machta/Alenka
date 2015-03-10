@@ -26,7 +26,9 @@ FilterProcessor::FilterProcessor(unsigned int M, unsigned int blockWidth, unsign
 
 	cl_mem_flags flags = CL_MEM_READ_WRITE;
 #ifdef NDEBUG
+#if CL_VERSION_1_2
 	flags |= CL_MEM_HOST_WRITE_ONLY;
+#endif
 #endif
 
 	filterBuffer = clCreateBuffer(context->getCLContext(), flags, (width + 4)*sizeof(float), nullptr, &err);

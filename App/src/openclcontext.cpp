@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <vector>
 #include <iostream>
+#include <sstream>
 
 using namespace std;
 
@@ -25,7 +26,9 @@ OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device, cl_devi
 	clGetPlatformIDs(pCount, platforms, &pCount);
 	if (platform >= pCount)
 	{
-		throw runtime_error("Platform ID too high.");
+		stringstream ss;
+		ss << "Platform ID " << platform << " too high.";
+		throw runtime_error(ss.str());
 	}
 
 	platformId = platforms[platform];
@@ -36,7 +39,9 @@ OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device, cl_devi
 	clGetDeviceIDs(platformId, deviceType, dCount, devices, &dCount);
 	if (device >= dCount)
 	{
-		throw runtime_error("Device ID too high.");
+		stringstream ss;
+		ss << "Device ID " << device << " too high.";
+		throw runtime_error(ss.str());
 	}
 
 	deviceId = devices[device];

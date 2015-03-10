@@ -14,8 +14,7 @@ Options::Options(int ac, char** av)
 	("config,c", value<string>()->default_value("options.cfg"), "config file")
 	("printFilter", "should the filter coefficients be printed (everytime they are computed)")
 	("printBuffers", "print the values in buffers during signal processing")
-	("platformInfo", "print OpenCL platform info")
-	("deviceInfo", "print OpenCL device info")
+	("clInfo", "print OpenCL platform and device info")
 	("glInfo", "print OpenGL info")
 	;
 

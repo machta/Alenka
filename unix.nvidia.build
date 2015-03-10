@@ -1,0 +1,9 @@
+LIBS += -lboost_program_options \
+    -lclFFT \
+    -lOpenCL
+
+INCLUDEPATH += /opt/cuda-6.5/include/
+
+QMAKE_CXXFLAGS += -std=c++11
+
+DEFINES += UNIX_BUILD

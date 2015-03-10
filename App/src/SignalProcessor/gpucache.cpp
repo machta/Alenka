@@ -15,7 +15,9 @@ GPUCache::GPUCache(unsigned int blockSize, int offset, int delay, unsigned int c
 	{
 		cl_mem_flags flags = CL_MEM_READ_WRITE;
 #ifdef NDEBUG
+#if CL_VERSION_1_2
 		flags |= CL_MEM_HOST_WRITE_ONLY;
+#endif
 #endif
 
 		buffers.push_back(clCreateBuffer(context->getCLContext(), flags, (blockSize + offset)*file->getChannelCount()*sizeof(float), nullptr, &err));
@@ -177,6 +179,7 @@ void GPUCache::signalEventCallback(cl_event callbackEvent, cl_int status, void* 
 	try
 	{
 		assert(status == CL_COMPLETE);
+		(void)status;
 
 		cl_event event = reinterpret_cast<cl_event>(data);
 

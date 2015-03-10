@@ -146,7 +146,7 @@ GDF2::GDF2(const string& filePath)
 	vh.sensorInfo = new char[getChannelCount()][20];
 	readFile(*vh.sensorInfo, 20*getChannelCount());
 
-	assert(ftell(file) == 256 + 256*getChannelCount());
+	assert(ftell(file) == static_cast<int>(256 + 256*getChannelCount()));
 
 	// Initialize other members.
 	samplesRecorded = vh.samplesPerRecord[0]*fh.numberOfDataRecords;

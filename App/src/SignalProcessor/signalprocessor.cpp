@@ -70,7 +70,9 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFi
 
 	cl_mem_flags flags = CL_MEM_READ_WRITE;
 #ifdef NDEBUG
+#if CL_VERSION_1_2
 	flags |= CL_MEM_HOST_NO_ACCESS;
+#endif
 #endif
 
 	processorTmpBuffer = clCreateBuffer(clContext->getCLContext(), flags, processorTmpBlockSize*sizeof(float), nullptr, &err);
@@ -78,7 +80,10 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFi
 
 	flags = CL_MEM_READ_WRITE;
 #ifdef NDEBUG
-	flags = CL_MEM_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS;
+	flags = CL_MEM_WRITE_ONLY;
+#if CL_VERSION_1_2
+	flags |= CL_MEM_HOST_NO_ACCESS;
+#endif
 #endif
 
 	processorOutputBuffer = clCreateFromGLBuffer(clContext->getCLContext(), flags, buffer, &err);

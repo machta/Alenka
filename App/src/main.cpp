@@ -52,34 +52,14 @@ int main(int ac, char** av)
 
 			ret = EXIT_SUCCESS;
 		}
-		else if (PROGRAM_OPTIONS.isSet("platformInfo"))
+		else if (PROGRAM_OPTIONS.isSet("clInfo"))
 		{
-			OpenCLContext context1(SIGNAL_PROCESSOR_CONTEXT_PARAMETERS);
-			OpenCLContext context2(FILTER_CONTEXT_PARAMETERS);
+			OpenCLContext context(SIGNAL_PROCESSOR_CONTEXT_PARAMETERS);
 
-			if (context1.getCLPlatform() == context2.getCLPlatform())
-			{
-				cout << context1.getPlatformInfo() << endl;
-			}
-			else
-			{
-				cout << "Platform 1" << endl;
-				cout << context1.getPlatformInfo() << endl << endl;
-				cout << "Platform 2" << endl;
-				cout << context2.getPlatformInfo() << endl;
-			}
-
-			ret = EXIT_SUCCESS;
-		}
-		else if (PROGRAM_OPTIONS.isSet("deviceInfo"))
-		{
-			OpenCLContext context1(SIGNAL_PROCESSOR_CONTEXT_PARAMETERS);
-			OpenCLContext context2(FILTER_CONTEXT_PARAMETERS);
-
-			cout << "Device used in SignalProcessor" << endl;
-			cout << context1.getDeviceInfo() << endl << endl;
-			cout << "Device used in Filter" << endl;
-			cout << context2.getDeviceInfo() << endl;
+			cout << "Platform" << endl;
+			cout << context.getPlatformInfo() << endl << endl;
+			cout << "Device" << endl;
+			cout << context.getDeviceInfo() << endl;
 
 			ret = EXIT_SUCCESS;
 		}

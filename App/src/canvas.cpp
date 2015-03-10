@@ -36,7 +36,16 @@ void Canvas::initializeGL()
 		cout << "Renderer: " << gl()->glGetString(GL_RENDERER) << endl;
 		cout << "Vendor: " << gl()->glGetString(GL_VENDOR) << endl;
 		cout << "GLSH version: " << gl()->glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
-		cout << "Extensions: " << gl()->glGetString(GL_EXTENSIONS) << endl;
+
+		const GLubyte* str = gl()->glGetString(GL_EXTENSIONS);
+		if (str == nullptr)
+		{
+			cout << "Extensions:" << endl;
+		}
+		else
+		{
+			cout << "Extensions: " << str << endl;
+		}
 
 		exit(EXIT_SUCCESS);
 	}

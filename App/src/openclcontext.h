@@ -34,7 +34,6 @@ private:
 };
 
 #define SIGNAL_PROCESSOR_CONTEXT_PARAMETERS PROGRAM_OPTIONS["platform"].as<int>(), PROGRAM_OPTIONS["device"].as<int>(), CL_DEVICE_TYPE_ALL
-#define FILTER_CONTEXT_PARAMETERS PROGRAM_OPTIONS["platform"].as<int>(), 0, CL_DEVICE_TYPE_CPU
 
 #endif // OPENCLCONTEXT_H
 

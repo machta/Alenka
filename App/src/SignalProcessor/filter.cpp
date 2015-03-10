@@ -9,7 +9,7 @@ using namespace std;
 
 Filter::Filter(unsigned int M, double Fs) : M(M), Fs(Fs), lowpass(2),
 	highpass(-1), notch(false),
-	clContext(FILTER_CONTEXT_PARAMETERS),
+	clContext(SIGNAL_PROCESSOR_CONTEXT_PARAMETERS),
 	notchF(50/Fs*2)
 
 {
