@@ -24,7 +24,7 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFi
 		throw runtime_error("SignalProcessor requires both the filter length and block length to be multiples of 4");
 	}
 
-	clContext = new OpenCLContext(SIGNAL_PROCESSOR_CONTEXT_PARAMETERS, QOpenGLContext::currentContext());
+	clContext = new OpenCLContext(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS, QOpenGLContext::currentContext());
 
 	// Filter and motage stuff.
 	double Fs = file->getSamplingFrequency();

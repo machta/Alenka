@@ -54,7 +54,7 @@ int main(int ac, char** av)
 		}
 		else if (PROGRAM_OPTIONS.isSet("clInfo"))
 		{
-			OpenCLContext context(SIGNAL_PROCESSOR_CONTEXT_PARAMETERS);
+			OpenCLContext context(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS);
 
 			cout << "Platform" << endl;
 			cout << context.getPlatformInfo() << endl << endl;

@@ -7,11 +7,9 @@
 
 using namespace std;
 
-Filter::Filter(unsigned int M, double Fs) : M(M), Fs(Fs), lowpass(2),
-	highpass(-1), notch(false),
-	clContext(SIGNAL_PROCESSOR_CONTEXT_PARAMETERS),
-	notchF(50/Fs*2)
-
+Filter::Filter(unsigned int M, double Fs) : M(M), Fs(Fs), lowpass(2), highpass(-1), notch(false),
+	clContext(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS),
+	notchF(PROGRAM_OPTIONS["powerFrequency"].as<double>()/Fs*2)
 {
 	cl_int errCL;
 	clfftStatus errFFT;
@@ -99,8 +97,8 @@ double* Filter::computeCoefficients()
 	clfftStatus errFFT = clfftEnqueueTransform(plan, CLFFT_BACKWARD, 1, &queue, 0, nullptr, nullptr, &buffer, nullptr, nullptr);
 	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftEnqueueTransform()");
 
-	clFinish(queue);
-	//clEnqueueReadBuffer(queue, buffer, true, 0, M*sizeof(double), coefficients, 0, nullptr, nullptr);
+	errCL = clFinish(queue);
+	checkErrorCode(errCL, CL_SUCCESS, "clFinish()");
 
 	// Try to improve filter characteristics by applying a window function.
 	string window = PROGRAM_OPTIONS.isSet("window") ? PROGRAM_OPTIONS["window"].as<string>() : "";
@@ -120,7 +118,9 @@ double* Filter::computeCoefficients()
 		}
 	}
 
-	clReleaseMemObject(buffer);
+	errCL = clReleaseMemObject(buffer);
+	checkErrorCode(errCL, CL_SUCCESS, "clReleaseMemObject()");
+
 	return coefficients;
 }
 

@@ -33,6 +33,7 @@ Options::Options(int ac, char** av)
 	("kernels", value<string>()->default_value("kernels.cl"), "OpenCL kernel source file")
 	("printFilterFile", value<string>(), "print filter to a file with this name; if empty, stderr is used")
 	("printBuffersFolder", value<string>()->default_value("."), "path to the folder to which the values will be saved (no end slash), only in debug build")
+	("powerFrequency", value<double>()->default_value(50), "frequency used to filter power interference with the signal")
 	;
 
 	options_description all("Alloved options");

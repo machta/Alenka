@@ -33,7 +33,7 @@ private:
 	cl_device_id deviceId;
 };
 
-#define SIGNAL_PROCESSOR_CONTEXT_PARAMETERS PROGRAM_OPTIONS["platform"].as<int>(), PROGRAM_OPTIONS["device"].as<int>(), CL_DEVICE_TYPE_ALL
+#define OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS PROGRAM_OPTIONS["platform"].as<int>(), PROGRAM_OPTIONS["device"].as<int>(), CL_DEVICE_TYPE_ALL
 
 #endif // OPENCLCONTEXT_H
 
