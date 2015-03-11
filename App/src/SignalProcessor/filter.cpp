@@ -65,7 +65,7 @@ double* Filter::computeCoefficients()
 		{
 			double tmp = round(f/notchF);
 			tmp = fabs(f - tmp*notchF);
-			if (tmp <= 1./M*Fs/M)
+			if (tmp <= 3./M*Fs/M) // possibly make the '3.' into a parameter
 			{
 				val = 0;
 			}

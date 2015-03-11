@@ -24,7 +24,7 @@ Options::Options(int ac, char** av)
 	("platform", value<int>()->default_value(0), "OpenCL platform id")
 	("device", value<int>()->default_value(0), "OpenCL device id to be used in SignalProcessor")
 	("window", value<string>(), "window function to be used on FIR coefficients (hamming | blackman)")
-	("blockSize", value<unsigned int>()->default_value(8*1024), "size of one block of signal data")
+	("blockSize", value<unsigned int>()->default_value(32*1024), "size of one block of signal data")
 	("gpuMemorySize", value<unsigned int>()->default_value(100*1000*1000), "total size of the GPU memory used in bytes")
 	("dataFileCacheSize", value<unsigned int>()->default_value(0), "maximum total memory used by the data file cache; zero means don't use cache")
 	("file,f", value<string>(), "data file")
@@ -34,6 +34,11 @@ Options::Options(int ac, char** av)
 	("printFilterFile", value<string>(), "print filter to a file with this name; if empty, stderr is used")
 	("printBuffersFolder", value<string>()->default_value("."), "path to the folder to which the values will be saved (no end slash), only in debug build")
 	("powerFrequency", value<double>()->default_value(50), "frequency used to filter power interference with the signal")
+
+	("lowpass", value<double>()->default_value(1000*1000*1000), "lowpass filter frequency")
+	("highpass", value<double>()->default_value(-1), "highpass filter frequency")
+	("notch", value<bool>()->default_value(false), "notch filter on or off")
+	("montageFile", value<string>(), "definition of the montage, one row per line")
 	;
 
 	options_description all("Alloved options");

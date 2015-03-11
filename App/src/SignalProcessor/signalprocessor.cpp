@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include <cassert>
+#include <fstream>
 
 using namespace std;
 
@@ -29,12 +30,32 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFi
 	// Filter and motage stuff.
 	double Fs = file->getSamplingFrequency();
 	/*Filter**/ filter = new Filter(M, Fs);
-	filter->setHighpass(-100);
-	filter->setLowpass(10);
-	filter->setNotch(false);
+	filter->setHighpass(PROGRAM_OPTIONS["highpass"].as<double>());
+	filter->setLowpass(PROGRAM_OPTIONS["lowpass"].as<double>());
+	filter->setNotch(PROGRAM_OPTIONS["notch"].as<bool>());
 
-	/*Montage**/ montage = new Montage(vector<string> {"out=in(0);", "out=in(1);", "out=in(2);", "out=(in(0)+in(1)+in(2))/3;", "out=sum(0,2)/3;"}, clContext);
-	//montage = new Montage(vector<string> {"out=in(0);", "out=10*in(0);", "out=1000*cos(get_global_id(0)/100.);"}, clContext);
+	vector<string> rows;
+	if (PROGRAM_OPTIONS.isSet("montageFile"))
+	{
+		ifstream mf(PROGRAM_OPTIONS["montageFile"].as<string>());
+
+		while (mf.peek() != EOF)
+		{
+			string s;
+			getline(mf, s);
+			rows.push_back(s);
+		}
+	}
+	else
+	{
+		for (int i = 0; i < file->getChannelCount(); ++i)
+		{
+			stringstream ss;
+			ss << "out = in(" << i << ");";
+			rows.push_back(ss.str());
+		}
+	}
+	/*Montage**/ montage = new Montage(rows, clContext);
 
 	filterProcessor = new FilterProcessor(M, blockSize + offset, file->getChannelCount(), clContext);
 	montageProcessor = new MontageProcessor(offset, blockSize);
