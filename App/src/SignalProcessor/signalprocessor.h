@@ -91,7 +91,7 @@ private:
 	unsigned int processorOutputBlockSize;
 
 	std::condition_variable processorInCV;
-	std::vector<cl_command_queue> commandQueues;
+	cl_command_queue commandQueue;
 	cl_mem processorTmpBuffer;
 	cl_mem processorOutputBuffer;
 	GLuint processorVertexArray;

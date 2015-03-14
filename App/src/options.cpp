@@ -36,7 +36,6 @@ Options::Options(int ac, char** av)
 	("powerFrequency", value<double>()->default_value(50), "frequency used to filter power interference with the signal")
 	("onlineFilter", value<bool>()->default_value(false), "should the signal be filtered everytime before it is rendered")
 	("prepareFrames", value<unsigned int>()->default_value(2), "how many frames should be prepared in memory")
-	("commandQueues", value<unsigned int>()->default_value(7), "the number of parallel command queues minus one used in signal processor to compute montages")
 
 	("lowpass", value<double>()->default_value(1000*1000*1000), "lowpass filter frequency")
 	("highpass", value<double>()->default_value(-1), "highpass filter frequency")

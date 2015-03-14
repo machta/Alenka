@@ -20,17 +20,17 @@ public:
 		return sources.size();
 	}
 	static std::string test(const std::string& source, OpenCLContext* context);
-	OpenCLProgram* getProgram()
+	cl_kernel getKernel()
 	{
-		return new OpenCLProgram(buildSource(sources), context);
+		return program->createKernel("montage");
 	}
 
 private:
 	std::vector<std::string> sources;
-	OpenCLContext* context;
+	OpenCLProgram* program;
 
 	static std::string buildSource(const std::vector<std::string>& sources);
-	static std::string montage(unsigned int row, const std::string& code);
+	static std::string montageRow(unsigned int row, const std::string& code);
 };
 
 #endif // MONTAGE_H

@@ -16,32 +16,28 @@ public:
 	~MontageProcessor();
 
 	void change(Montage* montage);
-	void process(cl_mem inBuffer, cl_mem outBuffer, const std::vector<cl_command_queue>& queues);
+	void process(cl_mem inBuffer, cl_mem outBuffer, cl_command_queue queue);
 	unsigned int getNumberOfRows() const
 	{
-		return montageKernels.size();
+		return numberOfRows;
 	}
 
 private:
 	cl_int inputRowLength;
 	cl_int inputRowOffset;
 	cl_int outputRowLength;
-	OpenCLProgram* montageProgram = nullptr;
-	std::vector<cl_kernel> montageKernels;
+	cl_kernel montageKernel = nullptr;
+	unsigned int numberOfRows;
 
 	void releaseMontage()
 	{
 		cl_int err;
 
-		delete montageProgram;
-
-		for (const auto& e : montageKernels)
+		if (montageKernel != nullptr)
 		{
-			err = clReleaseKernel(e);
+			err = clReleaseKernel(montageKernel);
 			checkErrorCode(err, CL_SUCCESS, "clReleaseKernel()");
 		}
-
-		montageKernels.clear();
 	}
 };
 

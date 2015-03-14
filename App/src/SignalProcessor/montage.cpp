@@ -5,14 +5,14 @@
 
 using namespace std;
 
-Montage::Montage(const vector<string>& sources, OpenCLContext* context)
-	: sources(sources), context(context)
+Montage::Montage(const vector<string>& sources, OpenCLContext* context) : sources(sources)
 {
-
+	program = new OpenCLProgram(buildSource(sources), context);
 }
 
 Montage::~Montage()
 {
+	delete program;
 }
 
 string Montage::test(const string& source, OpenCLContext* context)
@@ -42,24 +42,26 @@ string Montage::buildSource(const vector<string>& sources)
 		src.push_back(fs.get());
 	}
 
+	src += "\n__kernel void montage(__global float4* input, __global float4* output, int inputRowLength, int inputRowOffset, int outputRowLength)\n{\n";
+
 	for (unsigned int i = 0; i < sources.size(); ++i)
 	{
-		src += montage(i, sources[i]);
-		src += "\n";
+		src += montageRow(i, sources[i]);
 	}
+
+	src += "\n}\n";
 
 	return src;
 }
 
-string Montage::montage(unsigned int row, const string& code)
+string Montage::montageRow(unsigned int row, const string& code)
 {
 	stringstream ss;
 
-	ss << "__kernel void montage" << row << "(__global float4* input, __global float4* output, int inputRowLength, int inputRowOffset, int outputOffset)" << endl;
 	ss << "{" << endl;
 	ss << "float4 out = 0;" << endl;
 	ss << code << endl;
-	ss << "output[outputOffset + get_global_id(0)] = out;" << endl;
+	ss << "output[outputRowLength*" << row << " + get_global_id(0)] = out;" << endl;
 	ss << "}" << endl;
 
 	return ss.str();

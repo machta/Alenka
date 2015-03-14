@@ -63,7 +63,7 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFi
 	delete filter;
 
 	changeMontage(montage);
-	delete montage;
+	//delete montage; // Bug somewhere down here.
 
 	// Construct the cache.
 	unsigned int blockCount = memory/cacheBlockSize/sizeof(float);
@@ -79,11 +79,7 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFi
 	// Construct processor.
 	processorOutputBlockSize = blockSize*montage->getNumberOfRows();
 
-	for (int i = PROGRAM_OPTIONS["commandQueues"].as<unsigned int>(); i >= 0; --i)
-	{
-		commandQueues.push_back(clCreateCommandQueue(clContext->getCLContext(), clContext->getCLDevice(), 0, &err));
-		checkErrorCode(err, CL_SUCCESS, "clCreateCommandQueue()");
-	}
+	commandQueue = clCreateCommandQueue(clContext->getCLContext(), clContext->getCLDevice(), 0, &err);
 
 	GLuint buffer;
 
@@ -131,11 +127,8 @@ SignalProcessor::~SignalProcessor()
 	delete filterProcessor;
 	delete montageProcessor;
 
-	for (const auto& e : commandQueues)
-	{
-		err = clReleaseCommandQueue(e);
-		checkErrorCode(err, CL_SUCCESS, "clReleaseCommandQueue()");
-	}
+	err = clReleaseCommandQueue(commandQueue);
+	checkErrorCode(err, CL_SUCCESS, "clReleaseCommandQueue()");
 
 	err = clReleaseMemObject(processorTmpBuffer);
 	checkErrorCode(err, CL_SUCCESS, "clReleaseMemObject()");
@@ -158,10 +151,10 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 	checkErrorCode(err, CL_SUCCESS, "clCreateUserEvent()");
 
 #if CL_VERSION_1_2
-	err = clEnqueueBarrierWithWaitList(commandQueues[0], 1, &readyEvent, nullptr);
+	err = clEnqueueBarrierWithWaitList(commandQueue, 1, &readyEvent, nullptr);
 	checkErrorCode(err, CL_SUCCESS, "clEnqueueBarrierWithWaitList()");
 #else
-	err = clEnqueueWaitForEvents(commandQueues[0], 1, &readyEvent);
+	err = clEnqueueWaitForEvents(commandQueue, 1, &readyEvent);
 	checkErrorCode(err, CL_SUCCESS, "clEnqueueWaitForEvents()");
 #endif
 
@@ -170,60 +163,32 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 
 	int index = cache->getAny(indexSet, processorTmpBuffer, readyEvent);
 
-	printBuffer("after_getAny.txt", processorTmpBuffer, commandQueues[0]);
+	printBuffer("after_getAny.txt", processorTmpBuffer, commandQueue);
 
 	if (onlineFilter)
 	{
-		filterProcessor->process(processorTmpBuffer, commandQueues[0]);
+		filterProcessor->process(processorTmpBuffer, commandQueue);
 
-		printBuffer("after_filter.txt", processorTmpBuffer, commandQueues[0]);
+		printBuffer("after_filter.txt", processorTmpBuffer, commandQueue);
 
-		err = clFlush(commandQueues[0]);
+		err = clFlush(commandQueue);
 		checkErrorCode(err, CL_SUCCESS, "clFlush()");
 	}
 
-	cl_event event;
-
-#if CL_VERSION_1_2
-	err = clEnqueueMarkerWithWaitList(commandQueues[0], 0, nullptr, &event);
-	checkErrorCode(err, CL_SUCCESS, "clEnqueueMarkerWithWaitList()");
-
-	for (const auto& e : commandQueues)
-	{
-		err = clEnqueueBarrierWithWaitList(e, 1, &event, nullptr);
-		checkErrorCode(err, CL_SUCCESS, "clEnqueueBarrierWithWaitList()");
-	}
-#else
-	err = clEnqueueMarker(commandQueues[0], &event);
-	checkErrorCode(err, CL_SUCCESS, "clEnqueueMarker()");
-
-	for (const auto& e : commandQueues)
-	{
-		err = clEnqueueWaitForEvents(e, 1, &event);
-		checkErrorCode(err, CL_SUCCESS, "clEnqueueWaitForEvents()");
-	}
-#endif
-
-	err = clReleaseEvent(event);
-	checkErrorCode(err, CL_SUCCESS, "clReleaseEvent()");
-
 	gl()->glFinish();
 
-	err = clEnqueueAcquireGLObjects(commandQueues[0], 1, &processorOutputBuffer, 0, nullptr, nullptr);
+	err = clEnqueueAcquireGLObjects(commandQueue, 1, &processorOutputBuffer, 0, nullptr, nullptr);
 	checkErrorCode(err, CL_SUCCESS, "clEnqueueAcquireGLObjects()");
 
-	montageProcessor->process(processorTmpBuffer, processorOutputBuffer, commandQueues);
+	montageProcessor->process(processorTmpBuffer, processorOutputBuffer, commandQueue);
 
-	printBuffer("after_montage.txt", processorOutputBuffer, commandQueues[0]);
+	printBuffer("after_montage.txt", processorOutputBuffer, commandQueue);
 
-	for (const auto& e : commandQueues)
-	{
-		err = clFinish(e);
-		checkErrorCode(err, CL_SUCCESS, "clFinish()");
-	}
-
-	err = clEnqueueReleaseGLObjects(commandQueues[0], 1, &processorOutputBuffer, 0, nullptr, nullptr);
+	err = clEnqueueReleaseGLObjects(commandQueue, 1, &processorOutputBuffer, 0, nullptr, nullptr);
 	checkErrorCode(err, CL_SUCCESS, "clEnqueueReleaseGLObjects()");
+
+	err = clFinish(commandQueue);
+	checkErrorCode(err, CL_SUCCESS, "clFinish()");
 
 	auto fromTo = DataFile::getBlockBoundaries(index, getBlockSize());
 	return SignalBlock(index, montageProcessor->getNumberOfRows(), fromTo.first, fromTo.second, processorVertexArray);
