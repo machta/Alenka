@@ -80,13 +80,10 @@ private:
 	bool onlineFilter;
 	MontageProcessor* montageProcessor;
 	GPUCache* cache;
-	Filter* filter;
-	Montage* montage;
 
 	int M;
 	int offset;
 	int delay;
-	int padding;
 
 	unsigned int blockSize;
 	unsigned int cacheBlockSize;
@@ -94,7 +91,7 @@ private:
 	unsigned int processorOutputBlockSize;
 
 	std::condition_variable processorInCV;
-	cl_command_queue commandQueue;
+	std::vector<cl_command_queue> commandQueues;
 	cl_mem processorTmpBuffer;
 	cl_mem processorOutputBuffer;
 	GLuint processorVertexArray;

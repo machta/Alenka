@@ -161,11 +161,6 @@ case a_:\
 		b_ tmp = *reinterpret_cast<b_*>(sample);\
 		return static_cast<double>(tmp);\
 	};\
-	convertSampleToFloat = [] (void* sample) -> float\
-	{\
-		b_ tmp = *reinterpret_cast<b_*>(sample);\
-		return static_cast<float>(tmp);\
-	};\
 	break;
 
 	switch (vh.typeOfData[0])
@@ -330,36 +325,28 @@ void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSampl
 		{
 			for (int i = 0; i < samplesToRead; ++i)
 			{
-				// Copy a sample from the rocord.
-				T tmp;
+				// Copy a sample from the record.
+				double tmp;
 				char rawTmp[8];
 
 				memcpy(rawTmp, record->data() + (channelI*samplesPerRecord + recordOffset + i)*dataTypeSize, dataTypeSize);
 
-				// Convert the value to either float or double.
-				if (is_same<T, float>::value)
-				{
-					tmp = convertSampleToFloat(rawTmp);
-				}
-				else
-				{
-					tmp = convertSampleToDouble(rawTmp);
-				}
+				tmp = convertSampleToDouble(rawTmp);
 
 				// Calibration.
 				if (uncalibrated == false)
 				{
-					tmp -= static_cast<T>(vh.digitalMinimum[channelI]);
-					tmp /= static_cast<T>(scale[channelI]);
-					tmp += static_cast<T>(vh.physicalMinimum[channelI]);
+					tmp -= vh.digitalMinimum[channelI];
+					tmp /= scale[channelI];
+					tmp += vh.physicalMinimum[channelI];
 				}
 
 				int64_t index = channelI*rowLen + dataOffset + dataIndex + i;
 
 #ifdef NDEBUG
-				data->operator [](index) = tmp;
+				data->operator [](index) = static_cast<T>(tmp);
 #else
-				data->at(index) = tmp;
+				data->at(index) = static_cast<T>(tmp);
 #endif
 			}
 		}

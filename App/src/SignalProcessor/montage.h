@@ -17,20 +17,20 @@ public:
 
 	unsigned int getNumberOfRows() const
 	{
-		return numberOfRows;
+		return sources.size();
 	}
 	static std::string test(const std::string& source, OpenCLContext* context);
-	cl_kernel getKernel() const
+	OpenCLProgram* getProgram()
 	{
-		return kernel;
+		return new OpenCLProgram(buildSource(sources), context);
 	}
 
 private:
-	unsigned int numberOfRows;
-	OpenCLProgram* program;
-	cl_kernel kernel;
+	std::vector<std::string> sources;
+	OpenCLContext* context;
 
 	static std::string buildSource(const std::vector<std::string>& sources);
+	static std::string montage(unsigned int row, const std::string& code);
 };
 
 #endif // MONTAGE_H

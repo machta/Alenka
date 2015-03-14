@@ -50,7 +50,7 @@ void Canvas::initializeGL()
 		exit(EXIT_SUCCESS);
 	}
 
-	dataFile = new GDF2(PROGRAM_OPTIONS["file"].as<string>().c_str());
+	dataFile = new GDF2(PROGRAM_OPTIONS["file"].as<string>());
 
 	signalProcessor = new SignalProcessor(dataFile);
 
@@ -116,6 +116,7 @@ void Canvas::paintGL()
 
 	if (signalProcessor->getCapacity() > indexSetSize)
 	{
+		// Enqueue all blocks.
 		//prepareBlocks(firstIndex, lastIndex);
 	}
 
@@ -130,15 +131,17 @@ void Canvas::paintGL()
 
 		indexSet.erase(block.getIndex());
 
-		cerr << "Block " << block.getIndex() << " painted." << endl;
+		//cerr << "Block " << block.getIndex() << " painted." << endl;
 	}
 
 	// Finish rendering.
 	gl()->glFlush();
 	//fun()->glFinish();
 
-	// Prepare some blocks for next frame.
-	//prepare(indexSetSize, 0, static_cast<int>(ceil(parent->getVirtualWidth()*ratio)), firstIndex - indexSetSize, lastIndex + indexSetSize, min(4*indexSetSize, signalProcessor->getCapacity() - indexSetSize));
+	// Prepare some blocks for the next frame.
+	int cap = min(PROGRAM_OPTIONS["prepareFrames"].as<unsigned int>()*indexSetSize, signalProcessor->getCapacity() - indexSetSize);
+
+	prepare(indexSetSize, 0, static_cast<int>(ceil(parent->getVirtualWidth()*ratio)), firstIndex - indexSetSize, lastIndex + indexSetSize, cap);
 
 	gl()->glBindVertexArray(0);
 

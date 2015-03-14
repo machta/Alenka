@@ -47,7 +47,6 @@ private:
 	double* scale;
 	int dataTypeSize;
 	double (* convertSampleToDouble)(void* sample);
-	float (* convertSampleToFloat)(void* sample);
 	int version;
 	bool uncalibrated;
 	QCache<unsigned int, std::vector<char>>* cache = nullptr;

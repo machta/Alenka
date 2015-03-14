@@ -98,6 +98,12 @@ int GPUCache::getAny(const set<int>& indexSet, cl_mem buffer, cl_event readyEven
 	return index;
 }
 
+// AMD_BUG specific parts work around a bug in clEnqueueWriteBufferRect() when using some versions of AMD drivers.
+// As a result of this bug, clEnqueueWriteBufferRect() copies only a part of the data to the buffer.
+// The bug is reported here:
+// http://devgurus.amd.com/thread/169828
+// http://devgurus.amd.com/thread/160312
+
 void GPUCache::loaderThreadFunction()
 {
 	cl_int err;
