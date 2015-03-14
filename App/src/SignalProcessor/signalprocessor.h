@@ -77,6 +77,7 @@ public:
 private:
 	OpenCLContext* clContext;
 	FilterProcessor* filterProcessor;
+	bool onlineFilter;
 	MontageProcessor* montageProcessor;
 	GPUCache* cache;
 	Filter* filter;
@@ -93,7 +94,7 @@ private:
 	unsigned int processorOutputBlockSize;
 
 	std::condition_variable processorInCV;
-	cl_command_queue processorQueue;
+	cl_command_queue commandQueue;
 	cl_mem processorTmpBuffer;
 	cl_mem processorOutputBuffer;
 	GLuint processorVertexArray;

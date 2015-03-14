@@ -6,8 +6,8 @@
 
 using namespace std;
 
-GPUCache::GPUCache(unsigned int blockSize, int offset, int delay, unsigned int capacity, DataFile* file, OpenCLContext* context)
-	: blockSize(blockSize), offset(offset), delay(delay), capacity(capacity), file(file)
+GPUCache::GPUCache(unsigned int blockSize, int offset, int delay, unsigned int capacity, DataFile* file, OpenCLContext* context, FilterProcessor* filterProcessor)
+	: blockSize(blockSize), offset(offset), delay(delay), capacity(capacity), file(file), filterProcessor(filterProcessor)
 {
 	cl_int err;
 
@@ -20,7 +20,7 @@ GPUCache::GPUCache(unsigned int blockSize, int offset, int delay, unsigned int c
 #endif
 #endif
 
-		buffers.push_back(clCreateBuffer(context->getCLContext(), flags, (blockSize + offset)*file->getChannelCount()*sizeof(float), nullptr, &err));
+		buffers.push_back(clCreateBuffer(context->getCLContext(), flags, (blockSize + offset + 4)*file->getChannelCount()*sizeof(float), nullptr, &err));
 		checkErrorCode(err, CL_SUCCESS, "clCreateBuffer()");
 
 		lastUsed.push_back(0);
@@ -61,8 +61,6 @@ int GPUCache::getAny(const set<int>& indexSet, cl_mem buffer, cl_event readyEven
 
 	if (findCommon(indexMap, indexSet, &index, &cacheIndex))
 	{
-		//lock_guard<mutex> lock(loaderThreadMutex);
-
 		enqueuCopy(buffers[cacheIndex], buffer, readyEvent);
 	}
 	else
@@ -106,7 +104,12 @@ void GPUCache::loaderThreadFunction()
 
 	try
 	{
-		vector<float> tmpBuffer((blockSize + offset)*file->getChannelCount());
+		int size = (blockSize + offset)*file->getChannelCount();
+#ifdef AMD_BUG
+		size += 4*file->getChannelCount();
+#endif
+
+		vector<float> tmpBuffer(size);
 
 		while (loaderThreadStop.load() == false)
 		{
@@ -126,14 +129,34 @@ void GPUCache::loaderThreadFunction()
 				lock.unlock();
 
 				auto fromTo = file->getBlockBoundaries(index, blockSize);
+#ifdef AMD_BUG
+				fromTo.second += 4;
+#endif
+
 				file->readData(&tmpBuffer, fromTo.first - offset + delay, fromTo.second + delay);
 
 				printBuffer("after_readData.txt", tmpBuffer.data(), tmpBuffer.size());
 
-				cl_int err = clEnqueueWriteBuffer(commandQueue, buffers[cacheIndex], CL_FALSE, 0, (blockSize + offset)*file->getChannelCount()*sizeof(float), tmpBuffer.data(), 0, nullptr, nullptr);
+				size_t origin[] = {0, 0, 0};
+				size_t rowLen = (blockSize + offset)*sizeof(float);
+				size_t region[] = {rowLen, file->getChannelCount(), 1};
+
+#ifdef AMD_BUG
+				err = clEnqueueWriteBuffer(commandQueue, buffers[cacheIndex], CL_TRUE, 0, (blockSize + offset + 4)*file->getChannelCount()*sizeof(float), tmpBuffer.data(), 0, nullptr, nullptr);
 				checkErrorCode(err, CL_SUCCESS, "clEnqueueWriteBuffer()");
+#else
+				err = clEnqueueWriteBufferRect(commandQueue, buffers[cacheIndex], CL_TRUE, origin, origin, region, rowLen + 4*sizeof(float), 0, 0, 0, tmpBuffer.data(), 0, nullptr, nullptr);
+				checkErrorCode(err, CL_SUCCESS, "clEnqueueWriteBufferRect()");
+#endif
 
 				printBuffer("after_writeBuffer.txt", buffers[cacheIndex], commandQueue);
+
+				if (filterProcessor != nullptr)
+				{
+					filterProcessor->process(buffers[cacheIndex], commandQueue);
+
+					printBuffer("after_filter.txt", buffers[cacheIndex], commandQueue);
+				}
 
 				enqueuCopy(buffers[cacheIndex], buffer, readyEvent);
 			}
@@ -144,7 +167,7 @@ void GPUCache::loaderThreadFunction()
 		}
 
 		err = clReleaseCommandQueue(commandQueue);
-		checkErrorCode(err, CL_SUCCESS, "clFlush()");
+		checkErrorCode(err, CL_SUCCESS, "clReleaseCommandQueue()");
 	}
 	catch (exception& e)
 	{
@@ -159,12 +182,9 @@ void GPUCache::enqueuCopy(cl_mem source, cl_mem destination, cl_event readyEvent
 	{
 		cl_int err;
 		cl_event event;
-		size_t origin[] = {0, 0, 0};
-		size_t rowLen = (blockSize + offset)*sizeof(float);
-		size_t region[] = {rowLen, file->getChannelCount(), 1};
 
-		err = clEnqueueCopyBufferRect(commandQueue, source, destination, origin, origin, region, rowLen, 0, rowLen + 4*sizeof(float), 0, 0, nullptr, &event);
-		checkErrorCode(err, CL_SUCCESS, "clEnqueueCopyBufferRect()");
+		err = clEnqueueCopyBuffer(commandQueue, source, destination, 0, 0, (blockSize + offset + 4)*file->getChannelCount()*sizeof(float), 0, nullptr, &event);
+		checkErrorCode(err, CL_SUCCESS, "clEnqueueCopyBuffer()");
 
 		err = clSetEventCallback(event, CL_COMPLETE, &signalEventCallback, readyEvent);
 		checkErrorCode(err, CL_SUCCESS, "clSetEventCallback()");

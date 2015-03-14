@@ -4,6 +4,7 @@
 #include "../DataFile/datafile.h"
 #include "../error.h"
 #include "../openclcontext.h"
+#include "filterprocessor.h"
 
 #include <CL/cl_gl.h>
 
@@ -21,7 +22,7 @@
 class GPUCache
 {
 public:
-	GPUCache(unsigned int blockSize, int offset, int delay, unsigned int capacity, DataFile* file, OpenCLContext* context);
+	GPUCache(unsigned int blockSize, int offset, int delay, unsigned int capacity, DataFile* file, OpenCLContext* context, FilterProcessor* filterProcessor);
 	~GPUCache();
 
 	int getAny(const std::set<int> &indexSet, cl_mem buffer, cl_event readyEvent);
@@ -41,6 +42,7 @@ private:
 	int delay;
 	unsigned int capacity;
 	DataFile* file;
+	FilterProcessor* filterProcessor;
 	cl_command_queue commandQueue;
 	std::vector<cl_mem> buffers;
 	std::vector<unsigned int> lastUsed;

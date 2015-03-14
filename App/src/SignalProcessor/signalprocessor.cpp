@@ -70,12 +70,14 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFi
 		throw runtime_error("Not enough memory for the gpu cache.");
 	}
 
-	cache = new GPUCache(blockSize, offset, delay, blockCount, file, clContext);
+	onlineFilter = PROGRAM_OPTIONS["onlineFilter"].as<bool>();
+
+	cache = new GPUCache(blockSize, offset, delay, blockCount, file, clContext, onlineFilter ? nullptr : filterProcessor);
 
 	// Construct processor.
 	processorOutputBlockSize = blockSize*montage->getNumberOfRows();
 
-	processorQueue = clCreateCommandQueue(clContext->getCLContext(), clContext->getCLDevice(), 0, &err);
+	commandQueue = clCreateCommandQueue(clContext->getCLContext(), clContext->getCLDevice(), 0, &err);
 	checkErrorCode(err, CL_SUCCESS, "clCreateCommandQueue()");
 
 	GLuint buffer;
@@ -127,7 +129,7 @@ SignalProcessor::~SignalProcessor()
 	delete filter;
 	delete montage;
 
-	err = clReleaseCommandQueue(processorQueue);
+	err = clReleaseCommandQueue(commandQueue);
 	checkErrorCode(err, CL_SUCCESS, "clReleaseCommandQueue()");
 
 	err = clReleaseMemObject(processorTmpBuffer);
@@ -151,11 +153,11 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 	checkErrorCode(err, CL_SUCCESS, "clCreateUserEvent()");
 
 #if CL_VERSION_1_2
-	err = clEnqueueBarrierWithWaitList(processorQueue, 1, &readyEvent, nullptr);
+	err = clEnqueueBarrierWithWaitList(commandQueue, 1, &readyEvent, nullptr);
 	checkErrorCode(err, CL_SUCCESS, "clEnqueueBarrierWithWaitList()");
 #else
 	err = clEnqueueWaitForEvents(processorQueue, 1, &readyEvent);
-	checkErrorCode(err, CL_SUCCESS, "clEnqueueBarrierWithWaitList()");
+	checkErrorCode(err, CL_SUCCESS, "clEnqueueWaitForEvents()");
 #endif
 
 	err = clReleaseEvent(readyEvent);
@@ -163,28 +165,31 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 
 	int index = cache->getAny(indexSet, processorTmpBuffer, readyEvent);
 
-	printBuffer("after_getAny.txt", processorTmpBuffer, processorQueue);
+	printBuffer("after_getAny.txt", processorTmpBuffer, commandQueue);
 
-	filterProcessor->process(processorTmpBuffer, processorQueue);
+	if (onlineFilter)
+	{
+		filterProcessor->process(processorTmpBuffer, commandQueue);
 
-	printBuffer("after_filter.txt", processorTmpBuffer, processorQueue);
+		printBuffer("after_filter.txt", processorTmpBuffer, commandQueue);
 
-	err = clFlush(processorQueue);
-	checkErrorCode(err, CL_SUCCESS, "clFlush()");
+		err = clFlush(commandQueue);
+		checkErrorCode(err, CL_SUCCESS, "clFlush()");
+	}
 
 	gl()->glFinish();
 
-	err = clEnqueueAcquireGLObjects(processorQueue, 1, &processorOutputBuffer, 0, nullptr, nullptr);
+	err = clEnqueueAcquireGLObjects(commandQueue, 1, &processorOutputBuffer, 0, nullptr, nullptr);
 	checkErrorCode(err, CL_SUCCESS, "clEnqueueAcquireGLObjects()");
 
-	montageProcessor->process(processorTmpBuffer, processorOutputBuffer, processorQueue);
+	montageProcessor->process(processorTmpBuffer, processorOutputBuffer, commandQueue);
 
-	printBuffer("after_montage.txt", processorOutputBuffer, processorQueue);
+	printBuffer("after_montage.txt", processorOutputBuffer, commandQueue);
 
-	err = clEnqueueReleaseGLObjects(processorQueue, 1, &processorOutputBuffer, 0, nullptr, nullptr);
+	err = clEnqueueReleaseGLObjects(commandQueue, 1, &processorOutputBuffer, 0, nullptr, nullptr);
 	checkErrorCode(err, CL_SUCCESS, "clEnqueueReleaseGLObjects()");
 
-	err = clFinish(processorQueue);
+	err = clFinish(commandQueue);
 	checkErrorCode(err, CL_SUCCESS, "clFinish()");
 
 	auto fromTo = DataFile::getBlockBoundaries(index, getBlockSize());
