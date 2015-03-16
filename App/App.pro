@@ -49,4 +49,5 @@ FORMS += \
 DISTFILES += \
     shader.vert \
     shader.frag \
-    kernels.cl
+    kernels.cl \
+    montageHeader.cl

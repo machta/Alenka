@@ -34,7 +34,7 @@ private:
 	{
 		for (const auto& m : log()->loggedMessages())
 		{
-			std::cerr << "OpenGL message: " << m.message().toStdString() << std::endl;
+			logToFile("OpenGL message: " << m.message().toStdString());
 		}
 	}
 	void prepareBlocks(int from, int to)

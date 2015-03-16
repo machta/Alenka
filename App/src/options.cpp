@@ -1,5 +1,7 @@
 #include "options.h"
 
+#include "error.h"
+
 #include <iostream>
 #include <fstream>
 
@@ -36,6 +38,7 @@ Options::Options(int ac, char** av)
 	("powerFrequency", value<double>()->default_value(50), "frequency used to filter power interference with the signal")
 	("onlineFilter", value<bool>()->default_value(false), "should the signal be filtered everytime before it is rendered")
 	("prepareFrames", value<unsigned int>()->default_value(2), "how many frames should be prepared in memory")
+	("logFileName", value<string>()->default_value("%Y-%m-%d--%H-%M-%S.log"), "string passed to strftime() to create the file name")
 
 	("lowpass", value<double>()->default_value(1000*1000*1000), "lowpass filter frequency")
 	("highpass", value<double>()->default_value(-1), "highpass filter frequency")
@@ -58,7 +61,7 @@ Options::Options(int ac, char** av)
 	}
 	else
 	{
-		cerr << "Config file '" << vm["config"].as<string>() << "' not found." << endl;
+		logToBoth("Config file '" << vm["config"].as<string>() << "' not found.");
 	}
 
 	desc.add(all);

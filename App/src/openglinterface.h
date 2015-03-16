@@ -87,11 +87,10 @@ private:
 		{
 			errorDetected = true;
 
-			cerr << "OpenGL error: " << err << "(0x" << hex << err << dec << ")";
+			logToBoth("OpenGL error: " << err << "(0x" << hex << err << dec << ")");
 #ifndef NDEBUG
-			cerr << " last call from " << lastCallFile << ":" << lastCallLine;
+			logToBoth("OpenGL error: " << err << "(0x" << hex << err << dec << ")" << " last call from " << lastCallFile << ":" << lastCallLine);
 #endif
-			cerr << endl;
 		}
 
 		if (errorDetected)

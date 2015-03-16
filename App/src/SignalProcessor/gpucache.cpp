@@ -128,7 +128,7 @@ void GPUCache::loaderThreadFunction()
 				cl_event readyEvent = get<2>(queue.front());
 				cl_mem buffer = get<3>(queue.front());
 
-				cerr << "Loading block " << index << "." << endl;
+				logToFile("Loading block " << index << ".");
 
 				queue.pop();
 
@@ -177,7 +177,7 @@ void GPUCache::loaderThreadFunction()
 	}
 	catch (exception& e)
 	{
-		cerr << "Exception caught in loaderThreadFunction(): " << e.what() << endl;
+		logToBoth("Exception caught: " << e.what());
 		abort();
 	}
 }
@@ -219,7 +219,7 @@ void GPUCache::signalEventCallback(cl_event callbackEvent, cl_int status, void* 
 	}
 	catch (exception& e)
 	{
-		cerr << "Exception caught in signalEventCallback(): " << e.what() << endl;
+		logToBoth("Exception caught: " << e.what());
 		abort();
 	}
 }
