@@ -36,7 +36,7 @@ string Montage::buildSource(const vector<string>& sources)
 {
 	string src;
 
-	ifstream fs("montageHeader.txt");
+	ifstream fs("montageHeader.cl");
 	while (fs.peek() != EOF)
 	{
 		src.push_back(fs.get());
