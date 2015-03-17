@@ -151,14 +151,14 @@ void GPUCache::loaderThreadFunction()
 
 				printBuffer("after_readData.txt", tmpBuffer.data(), tmpBuffer.size());
 
-				size_t origin[] = {0, 0, 0};
-				size_t rowLen = (blockSize + offset)*sizeof(float);
-				size_t region[] = {rowLen, file->getChannelCount(), 1};
-
 #ifdef AMD_BUG
 				err = clEnqueueWriteBuffer(commandQueue, buffers[cacheIndex], CL_TRUE, 0, (blockSize + offset + 4)*file->getChannelCount()*sizeof(float), tmpBuffer.data(), 0, nullptr, nullptr);
 				checkErrorCode(err, CL_SUCCESS, "clEnqueueWriteBuffer()");
 #else
+				size_t origin[] = {0, 0, 0};
+				size_t rowLen = (blockSize + offset)*sizeof(float);
+				size_t region[] = {rowLen, file->getChannelCount(), 1};
+
 				err = clEnqueueWriteBufferRect(commandQueue, buffers[cacheIndex], CL_TRUE, origin, origin, region, rowLen + 4*sizeof(float), 0, 0, 0, tmpBuffer.data(), 0, nullptr, nullptr);
 				checkErrorCode(err, CL_SUCCESS, "clEnqueueWriteBufferRect()");
 #endif

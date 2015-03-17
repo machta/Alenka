@@ -1,12 +1,13 @@
 LIBS += /LIBPATH:C:\boost_1_57_0\static_64\lib \
-	"C:/Program Files (x86)/AMD APP SDK/2.9-1/lib/x86_64/OpenCL.lib" \
 	"C:/Program Files/clFFT-2.2.0-Windows-x64/lib64/import/clFFT.lib"
 
 INCLUDEPATH += C:/boost_1_57_0 \
-	"C:/Program Files (x86)/AMD APP SDK/2.9-1/include" \
 	"C:/Program Files/clFFT-2.2.0-Windows-x64/include"
 
 DEFINES += WIN_BUILD \
 	_USE_MATH_DEFINES \
 	AMD_BUG \
 	_CRT_SECURE_NO_WARNINGS
+
+QMAKE_CXXFLAGS_RELEASE += -Ox -Ob2 -Oi -Ot # optimization
+QMAKE_CXXFLAGS_RELEASE += -GL -GT # code generation
