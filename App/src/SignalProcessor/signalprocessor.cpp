@@ -30,6 +30,39 @@ SignalProcessor::SignalProcessor(DataFile* file)
 
 	montageProcessor = new MontageProcessor(offset, blockSize);
 
+	// Construct the cache.
+	onlineFilter = PROGRAM_OPTIONS["onlineFilter"].as<bool>();
+
+	int64_t memory = PROGRAM_OPTIONS["gpuMemorySize"].as<int64_t>();
+
+	if (memory <= 0)
+	{
+		cl_ulong size;
+
+		err = clGetDeviceInfo(context->getCLDevice(), CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &size, nullptr);
+		checkErrorCode(err, CL_SUCCESS, "clGetDeviceInfo()");
+
+		memory += size;
+	}
+
+	memory -= tmpBlockSize + blockSize*sizeof(float)*200; // substract the sizes of the tmp buffer and the output buffer (for a realistically big montage)
+
+	cache = new GPUCache(blockSize, offset, delay, memory, file, context, onlineFilter ? nullptr : filterProcessor);
+
+	// Construct processor.
+	commandQueue = clCreateCommandQueue(context->getCLContext(), context->getCLDevice(), 0, &err);
+	checkErrorCode(err, CL_SUCCESS, "clCreateCommandQueue()");
+
+	cl_mem_flags flags = CL_MEM_READ_WRITE;
+#ifdef NDEBUG
+#if CL_VERSION_1_2
+	flags |= CL_MEM_HOST_NO_ACCESS;
+#endif
+#endif
+
+	processorTmpBuffer = clCreateBuffer(context->getCLContext(), flags, tmpBlockSize*sizeof(float), nullptr, &err);
+	checkErrorCode(err, CL_SUCCESS, "clCreateBuffer()");
+
 	// Default filter and montage.
 	double Fs = file->getSamplingFrequency();
 	Filter* filter = new Filter(M, Fs);
@@ -65,39 +98,6 @@ SignalProcessor::SignalProcessor(DataFile* file)
 
 	changeMontage(montage);
 	delete montage;
-
-	// Construct the cache.
-	onlineFilter = PROGRAM_OPTIONS["onlineFilter"].as<bool>();
-
-	int64_t memory = PROGRAM_OPTIONS["gpuMemorySize"].as<int64_t>();
-
-	if (memory <= 0)
-	{
-		cl_ulong size;
-
-		err = clGetDeviceInfo(context->getCLDevice(), CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &size, nullptr);
-		checkErrorCode(err, CL_SUCCESS, "clGetDeviceInfo()");
-
-		memory += size;
-	}
-
-	memory -= tmpBlockSize + blockSize*sizeof(float)*200; // substract the sizes of the tmp buffer and the output buffer (for a realistically big montage)
-
-	cache = new GPUCache(blockSize, offset, delay, memory, file, context, onlineFilter ? nullptr : filterProcessor);
-
-	// Construct processor.
-	commandQueue = clCreateCommandQueue(context->getCLContext(), context->getCLDevice(), 0, &err);
-	checkErrorCode(err, CL_SUCCESS, "clCreateCommandQueue()");
-
-	cl_mem_flags flags = CL_MEM_READ_WRITE;
-#ifdef NDEBUG
-#if CL_VERSION_1_2
-	flags |= CL_MEM_HOST_NO_ACCESS;
-#endif
-#endif
-
-	processorTmpBuffer = clCreateBuffer(context->getCLContext(), flags, tmpBlockSize*sizeof(float), nullptr, &err);
-	checkErrorCode(err, CL_SUCCESS, "clCreateBuffer()");
 }
 
 SignalProcessor::~SignalProcessor()
