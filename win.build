@@ -6,8 +6,5 @@ INCLUDEPATH += C:/boost_1_57_0 \
 
 DEFINES += WIN_BUILD \
 	_USE_MATH_DEFINES \
-	AMD_BUG \
 	_CRT_SECURE_NO_WARNINGS
 
-QMAKE_CXXFLAGS_RELEASE += -Ox -Ob2 -Oi -Ot # optimization
-QMAKE_CXXFLAGS_RELEASE += -GL -GT # code generation
