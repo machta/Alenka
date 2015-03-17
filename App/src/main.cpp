@@ -7,13 +7,6 @@
 #include <QSurfaceFormat>
 #include <clFFT.h>
 
-#include <boost/log/utility/setup/file.hpp>
-#include <boost/log/utility/setup/common_attributes.hpp>
-#include <boost/log/expressions/formatters/named_scope.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/support/date_time.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
-
 #include <iostream>
 #include <stdexcept>
 #include <ctime>
@@ -41,24 +34,8 @@ int main(int ac, char** av)
 		size_t len = strftime(logFileName, 500, PROGRAM_OPTIONS["logFileName"].as<string>().c_str(), localtime(&now));
 		logFileName[len] = 0;
 
-		boost::log::add_file_log
-		(
-			boost::log::keywords::file_name = logFileName,
-			boost::log::keywords::format =
-			(
-				boost::log::expressions::stream
-				<< "["
-				<< boost::log::expressions::attr<boost::log::attributes::local_clock::value_type>("TimeStamp")
-				<< " "
-				<< boost::log::expressions::attr<boost::log::attributes::current_thread_id::value_type>("ThreadID")
-				<< "] "
-				<< boost::log::expressions::smessage
-				<< " "
-				<< boost::log::expressions::format_named_scope("Scope", boost::log::keywords::format = "[in %c():%F:%l]")
-			)
-		);
-		boost::log::add_common_attributes();
-		boost::log::core::get()->add_global_attribute("Scope", boost::log::attributes::named_scope());
+		LOG_FILE.open(logFileName);
+		checkErrorCode(LOG_FILE.good(), true, "Could not open log file for writing.");
 
 		// Set up the clFFT library.
 		clfftSetupData setupData;

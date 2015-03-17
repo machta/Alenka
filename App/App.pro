@@ -41,7 +41,8 @@ SOURCES += \
     src/SignalProcessor/filterprocessor.cpp \
     src/SignalProcessor/montageprocessor.cpp \
     src/SignalProcessor/montage.cpp \
-    src/SignalProcessor/gpucache.cpp
+    src/SignalProcessor/gpucache.cpp \
+    src/error.cpp
 
 FORMS += \
     src/testwindow.ui

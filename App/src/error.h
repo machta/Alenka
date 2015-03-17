@@ -4,16 +4,16 @@
 #include "options.h"
 
 #include <CL/cl_gl.h>
-#include <boost/log/sources/logger.hpp>
-#include <boost/log/sources/global_logger_storage.hpp>
-#include <boost/log/attributes/named_scope.hpp>
-#include <boost/log/sources/record_ostream.hpp>
 
 #include <sstream>
 #include <stdexcept>
 #include <cstdio>
 #include <cassert>
 #include <iostream>
+#include <fstream>
+#include <thread>
+#include <mutex>
+#include <ctime>
 
 namespace
 {
@@ -51,6 +51,18 @@ void CNEC(T val, std::string message, const char* file, int line)
 	ss << message << " " << file << ":" << line;
 
 	throw std::runtime_error(ss.str());
+}
+
+const char* getTimeString(std::time_t t)
+{
+	using namespace std;
+
+	string tmp = asctime(localtime(&t));
+	if (tmp.back() == '\n')
+	{
+		tmp.pop_back();
+	}
+	return tmp.c_str();
 }
 }
 
@@ -161,8 +173,10 @@ inline void printBuffer(const std::string& filePath, cl_mem buffer, cl_command_q
 #endif
 }
 
-BOOST_LOG_INLINE_GLOBAL_LOGGER_DEFAULT(GLOBAL_LOGGER, boost::log::sources::logger_mt)
-#define logToFile(a_) BOOST_LOG_FUNCTION(); BOOST_LOG(GLOBAL_LOGGER::get()) << a_
-#define logToBoth(a_) logToFile(a_); std::cerr << a_ << " [in " << __FILE__ << ":" << __LINE__ << "]"
+extern std::ofstream LOG_FILE;
+extern std::mutex LOG_FILE_MUTEX;
+#define logToStream(a_, b_) b_ << "[" << getTimeString(time(nullptr)) << " T" << std::this_thread::get_id() << "] " << a_ << " [in " << __FILE__ << ":" << __LINE__ << "]" << std::endl
+#define logToFile(a_) { std::lock_guard<std::mutex> lock(LOG_FILE_MUTEX); logToStream(a_, LOG_FILE); }
+#define logToBoth(a_) logToFile(a_); logToStream(a_, std::cerr)
 
 #endif // ERROR_H

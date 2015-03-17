@@ -12,7 +12,8 @@ SOURCES += \
     ../App/src/openclcontext.cpp \
     ../App/src/openclprogram.cpp \
     ../App/src/options.cpp \
-    src/test.cpp
+    src/test.cpp \
+    ../App/src/error.cpp
 
 DISTFILES += \
     data/gdf/t00.gdf \

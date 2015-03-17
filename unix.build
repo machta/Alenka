@@ -1,6 +1,6 @@
 LIBS += -lboost_program_options \
-    -lclFFT \
-    -lOpenCL
+	-lclFFT \
+	-lOpenCL
 
 QMAKE_CXXFLAGS += -std=c++11
 
