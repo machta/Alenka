@@ -50,7 +50,7 @@ private:
 	double highpass;
 	bool notch;
 
-	OpenCLContext clContext;
+	OpenCLContext context;
 	cl_command_queue queue;
 	clfftPlanHandle plan;
 	double* coefficients;

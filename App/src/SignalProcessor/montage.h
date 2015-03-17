@@ -3,6 +3,7 @@
 
 #include "../openclcontext.h"
 #include "../openclprogram.h"
+#include "../error.h"
 
 #include <CL/cl_gl.h>
 

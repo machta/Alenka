@@ -20,7 +20,18 @@ public:
 
 	static std::pair<std::int64_t, std::int64_t> getBlockBoundaries(int index, unsigned int blockSize)
 	{
-		return std::pair<std::int64_t, std::int64_t>(index*blockSize, (index + 1)*blockSize - 1);
+		using namespace std;
+
+		int64_t from = index*blockSize,
+				to = (index + 1)*blockSize - 1;
+
+		if (index > 0)
+		{
+			--from;
+			--to;
+		}
+
+		return make_pair(from, to);
 	}
 
 protected:

@@ -22,7 +22,7 @@
 class GPUCache
 {
 public:
-	GPUCache(unsigned int blockSize, int offset, int delay, unsigned int capacity, DataFile* file, OpenCLContext* context, FilterProcessor* filterProcessor);
+	GPUCache(unsigned int blockSize, int offset, int delay, int64_t availableMemory, DataFile* file, OpenCLContext* context, FilterProcessor* filterProcessor);
 	~GPUCache();
 
 	int getAny(const std::set<int> &indexSet, cl_mem buffer, cl_event readyEvent);
@@ -30,11 +30,11 @@ public:
 	{
 		return capacity;
 	}
-//	void clear()
-//	{
-//		indexMap.clear();
-//		reverseIndexMap.clear();
-//	}
+	void clear()
+	{
+		indexMap.clear();
+		reverseIndexMap.clear();
+	}
 
 private:
 	unsigned int blockSize;

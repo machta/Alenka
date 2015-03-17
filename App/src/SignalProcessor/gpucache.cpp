@@ -6,21 +6,29 @@
 
 using namespace std;
 
-GPUCache::GPUCache(unsigned int blockSize, int offset, int delay, unsigned int capacity, DataFile* file, OpenCLContext* context, FilterProcessor* filterProcessor)
-	: blockSize(blockSize), offset(offset), delay(delay), capacity(capacity), file(file), filterProcessor(filterProcessor)
+GPUCache::GPUCache(unsigned int blockSize, int offset, int delay, int64_t availableMemory, DataFile* file, OpenCLContext* context, FilterProcessor* filterProcessor)
+	: blockSize(blockSize), offset(offset), delay(delay), file(file), filterProcessor(filterProcessor)
 {
 	cl_int err;
 
-	for (unsigned int i = 0; i < capacity; ++i)
+	unsigned int bytesPerBlock = (blockSize + offset + 4)*file->getChannelCount()*sizeof(float);
+	capacity = availableMemory/bytesPerBlock;
+
+	if (capacity == 0)
 	{
-		cl_mem_flags flags = CL_MEM_READ_WRITE;
+		throw runtime_error("Not enough memory for the gpu cache.");
+	}
+
+	cl_mem_flags flags = CL_MEM_READ_WRITE;
 #ifdef NDEBUG
 #if CL_VERSION_1_2
-		flags |= CL_MEM_HOST_WRITE_ONLY;
+	flags |= CL_MEM_HOST_WRITE_ONLY;
 #endif
 #endif
 
-		buffers.push_back(clCreateBuffer(context->getCLContext(), flags, (blockSize + offset + 4)*file->getChannelCount()*sizeof(float), nullptr, &err));
+	for (unsigned int i = 0; i < capacity; ++i)
+	{
+		buffers.push_back(clCreateBuffer(context->getCLContext(), flags, bytesPerBlock, nullptr, &err));
 		checkErrorCode(err, CL_SUCCESS, "clCreateBuffer()");
 
 		lastUsed.push_back(0);

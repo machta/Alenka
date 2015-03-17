@@ -201,10 +201,10 @@ case a_:\
 	samplingFrequency = vh.samplesPerRecord[0]/duration;
 
 	// Construct the cache.
-	unsigned int memoryAvailable = PROGRAM_OPTIONS["dataFileCacheSize"].as<unsigned int>();
+	int64_t memoryAvailable = PROGRAM_OPTIONS["dataFileCacheSize"].as<int64_t>();
 	if (memoryAvailable > 0)
 	{
-		cache = new QCache<unsigned int, std::vector<char>>(max(static_cast<unsigned int>(1), memoryAvailable/(vh.samplesPerRecord[0]*getChannelCount()*dataTypeSize)));
+		cache = new QCache<unsigned int, std::vector<char>>(max(1, static_cast<int>(memoryAvailable/(vh.samplesPerRecord[0]*getChannelCount()*dataTypeSize))));
 	}
 }
 

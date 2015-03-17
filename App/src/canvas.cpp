@@ -74,16 +74,13 @@ void Canvas::initializeGL()
 
 void Canvas::resizeGL(int /*w*/, int /*h*/)
 {
-	int dummy = 5;
-	(void)dummy;
-
-	//const SignalViewer* parent = reinterpret_cast<SignalViewer*>(parentWidget());
-
-	checkGLMessages();
+	//checkGLMessages();
 }
 
 void Canvas::paintGL()
 {
+	logToFile("Painting started.");
+
 	gl()->glClear(GL_COLOR_BUFFER_BIT);
 
 	// Calculate the transformMatrix.
@@ -131,12 +128,11 @@ void Canvas::paintGL()
 
 		indexSet.erase(block.getIndex());
 
-		logToFile("Block " << block.getIndex() << " painted.");
+		//logToFile("Block " << block.getIndex() << " painted.");
 	}
 
 	// Finish rendering.
 	gl()->glFlush();
-	//fun()->glFinish();
 
 	// Prepare some blocks for the next frame.
 	int cap = min(PROGRAM_OPTIONS["prepareFrames"].as<unsigned int>()*indexSetSize, signalProcessor->getCapacity() - indexSetSize);
@@ -146,6 +142,8 @@ void Canvas::paintGL()
 	gl()->glBindVertexArray(0);
 
 	checkGLMessages();
+
+	logToFile("Painting finished.");
 }
 
 double Canvas::samplePixelRatio()
@@ -188,7 +186,5 @@ void Canvas::paintChannel(unsigned int channel, const SignalBlock& block)
 	gl()->glUniform1i(location, block.getFirstSample() - first);
 
 	// Draw onto the screen.
-	gl();
 	gl()->glDrawArrays(GL_LINE_STRIP, first, size);
-	gl();
 }

@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <cstdint>
 
 using namespace std;
 using namespace boost::program_options;
@@ -27,8 +28,8 @@ Options::Options(int ac, char** av)
 	("clDevice", value<int>()->default_value(0), "OpenCL device id to be used in SignalProcessor")
 	("window", value<string>(), "window function to be used on FIR coefficients (hamming | blackman)")
 	("blockSize", value<unsigned int>()->default_value(32*1024), "size of one block of signal data")
-	("gpuMemorySize", value<unsigned int>()->default_value(100*1000*1000), "total size of the GPU memory used in bytes")
-	("dataFileCacheSize", value<unsigned int>()->default_value(0), "maximum total memory used by the data file cache; zero means don't use cache")
+	("gpuMemorySize", value<int64_t>()->default_value(0), "the maximum amount of GPU memory used; if <= 0 then the value is relative to the implementation defined maximum, otherwise it is absolute")
+	("dataFileCacheSize", value<int64_t>()->default_value(0), "maximum total memory used by the data file cache; zero means don't use cache")
 	("file,f", value<string>(), "data file")
 	("vert", value<string>()->default_value("shader.vert"), "vertex shader source file")
 	("frag", value<string>()->default_value("shader.frag"), "fragment shader source file")

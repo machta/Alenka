@@ -18,17 +18,20 @@ Montage::~Montage()
 string Montage::test(const string& source, OpenCLContext* context)
 {
 	// Use the OpenCL compiler to test the source.
-	OpenCLProgram prog(buildSource(vector<string> {source}), context);
+	OpenCLProgram program(buildSource(vector<string> {source}), context);
 
-	if (prog.compilationSuccessful())
+	if (program.compilationSuccessful())
 	{
-		prog.createKernel("montage0");
+		cl_kernel kernel = program.createKernel("montage0");
 
-		return ""; // Empty string means test was successful.
+		cl_int err = clReleaseKernel(kernel);
+		checkErrorCode(err, CL_SUCCESS, "clReleaseKernel()");
+
+		return ""; // Empty string means that the test was successful.
 	}
 	else
 	{
-		return "Compilation failed:\n" + prog.getCompilationLog();
+		return "Compilation failed:\n" + program.getCompilationLog();
 	}
 }
 

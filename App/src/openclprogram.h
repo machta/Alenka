@@ -13,7 +13,7 @@
 class OpenCLProgram
 {
 public:
-	OpenCLProgram(FILE* source, OpenCLContext* context) : clContext(context)
+	OpenCLProgram(FILE* source, OpenCLContext* context) : context(context)
 	{
 		fseek(source, 0, SEEK_END);
 		size_t size = ftell(source);
@@ -28,7 +28,7 @@ public:
 
 		delete[] tmp;
 	}
-	OpenCLProgram(std::string source, OpenCLContext* context) : clContext(context)
+	OpenCLProgram(std::string source, OpenCLContext* context) : context(context)
 	{
 		construct(source);
 	}
@@ -58,7 +58,7 @@ private:
 	cl_program program;
 
 	bool invalid;
-	OpenCLContext* clContext;
+	OpenCLContext* context;
 
 	void construct(const std::string& source);
 };

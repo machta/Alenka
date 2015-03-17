@@ -46,7 +46,7 @@ Thumbs.db
 # Qt build folders
 build-*
 
-# platform specific config file
+# platform specific build file
 build
 
 # config file

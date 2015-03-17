@@ -7,16 +7,15 @@
 
 using namespace std;
 
-SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFile(file)
+SignalProcessor::SignalProcessor(DataFile* file)
 {
 	cl_int err;
 
-	M = file->getSamplingFrequency();
-	offset = M;
-	delay = M/2 - 1;
+	int M = file->getSamplingFrequency();
+	int offset = M;
+	int delay = M/2 - 1;
 	blockSize = PROGRAM_OPTIONS["blockSize"].as<unsigned int>() - offset;
-	cacheBlockSize = (blockSize + offset)*file->getChannelCount();
-	processorTmpBlockSize = (blockSize + offset + 4)*file->getChannelCount();
+	unsigned int tmpBlockSize = (blockSize + offset + 4)*file->getChannelCount();
 
 	// Check block sizes.
 	if (M%4 || (blockSize + offset)%4)
@@ -24,9 +23,14 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFi
 		throw runtime_error("SignalProcessor requires both the filter length and block length to be multiples of 4");
 	}
 
-	clContext = new OpenCLContext(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS, QOpenGLContext::currentContext());
+	context = new OpenCLContext(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS, QOpenGLContext::currentContext());
 
-	// Filter and motage stuff.
+	// Create filter and montage processors.
+	filterProcessor = new FilterProcessor(M, blockSize + offset, file->getChannelCount(), context);
+
+	montageProcessor = new MontageProcessor(offset, blockSize);
+
+	// Default filter and montage.
 	double Fs = file->getSamplingFrequency();
 	Filter* filter = new Filter(M, Fs);
 	filter->setHighpass(PROGRAM_OPTIONS["highpass"].as<double>());
@@ -47,39 +51,113 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFi
 	}
 	else
 	{
-		for (int i = 0; i < file->getChannelCount(); ++i)
+		for (unsigned int i = 0; i < file->getChannelCount(); ++i)
 		{
 			stringstream ss;
 			ss << "out = in(" << i << ");";
 			rows.push_back(ss.str());
 		}
 	}
-	Montage* montage = new Montage(rows, clContext);
-
-	filterProcessor = new FilterProcessor(M, blockSize + offset, file->getChannelCount(), clContext);
-	montageProcessor = new MontageProcessor(offset, blockSize);
+	Montage* montage = new Montage(rows, context);
 
 	changeFilter(filter);
 	delete filter;
 
 	changeMontage(montage);
-	//delete montage; // Bug somewhere down here.
+	delete montage;
 
 	// Construct the cache.
-	unsigned int blockCount = memory/cacheBlockSize/sizeof(float);
-	if (blockCount == 0)
-	{
-		throw runtime_error("Not enough memory for the gpu cache.");
-	}
-
 	onlineFilter = PROGRAM_OPTIONS["onlineFilter"].as<bool>();
 
-	cache = new GPUCache(blockSize, offset, delay, blockCount, file, clContext, onlineFilter ? nullptr : filterProcessor);
+	int64_t memory = PROGRAM_OPTIONS["gpuMemorySize"].as<int64_t>();
+
+	if (memory <= 0)
+	{
+		cl_ulong size;
+
+		err = clGetDeviceInfo(context->getCLDevice(), CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &size, nullptr);
+		checkErrorCode(err, CL_SUCCESS, "clGetDeviceInfo()");
+
+		memory += size;
+	}
+
+	memory -= tmpBlockSize + blockSize*sizeof(float)*200; // substract the sizes of the tmp buffer and the output buffer (for a realistically big montage)
+
+	cache = new GPUCache(blockSize, offset, delay, memory, file, context, onlineFilter ? nullptr : filterProcessor);
 
 	// Construct processor.
-	processorOutputBlockSize = blockSize*montage->getNumberOfRows();
+	commandQueue = clCreateCommandQueue(context->getCLContext(), context->getCLDevice(), 0, &err);
+	checkErrorCode(err, CL_SUCCESS, "clCreateCommandQueue()");
 
-	commandQueue = clCreateCommandQueue(clContext->getCLContext(), clContext->getCLDevice(), 0, &err);
+	cl_mem_flags flags = CL_MEM_READ_WRITE;
+#ifdef NDEBUG
+#if CL_VERSION_1_2
+	flags |= CL_MEM_HOST_NO_ACCESS;
+#endif
+#endif
+
+	processorTmpBuffer = clCreateBuffer(context->getCLContext(), flags, tmpBlockSize*sizeof(float), nullptr, &err);
+	checkErrorCode(err, CL_SUCCESS, "clCreateBuffer()");
+}
+
+SignalProcessor::~SignalProcessor()
+{
+	cl_int err;
+
+	delete context;
+	delete filterProcessor;
+	delete montageProcessor;
+	delete cache;
+
+	err = clReleaseCommandQueue(commandQueue);
+	checkErrorCode(err, CL_SUCCESS, "clReleaseCommandQueue()");
+
+	err = clReleaseMemObject(processorTmpBuffer);
+	checkErrorCode(err, CL_SUCCESS, "clReleaseMemObject()");
+
+	deleteOutputBuffer();
+
+	gl();
+}
+
+void SignalProcessor::changeFilter(Filter* filter)
+{
+	using namespace std;
+
+	if (PROGRAM_OPTIONS.isSet("printFilter"))
+	{
+		if (PROGRAM_OPTIONS.isSet("printFilterFile"))
+		{
+			FILE* file = fopen(PROGRAM_OPTIONS["printFilterFile"].as<string>().c_str(), "w");
+			checkNotErrorCode(file, nullptr, "File '" << PROGRAM_OPTIONS["printFilterFile"].as<string>() << "' could not be opened for wtiting.");
+
+			filter->printCoefficients(file);
+
+			fclose(file);
+		}
+		else
+		{
+			filter->printCoefficients(stderr);
+		}
+	}
+
+	filterProcessor->change(filter);
+
+	if (onlineFilter == false)
+	{
+		cache->clear();
+	}
+}
+
+void SignalProcessor::changeMontage(Montage* montage)
+{
+	cl_int err;
+
+	montageProcessor->change(montage);
+
+	deleteOutputBuffer();
+
+	unsigned int outputBlockSize = blockSize*montage->getNumberOfRows();
 
 	GLuint buffer;
 
@@ -90,19 +168,9 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFi
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, buffer);
 	gl()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(0));
 	gl()->glEnableVertexAttribArray(0);
-	gl()->glBufferData(GL_ARRAY_BUFFER, processorOutputBlockSize*sizeof(float), nullptr, GL_STATIC_DRAW);
+	gl()->glBufferData(GL_ARRAY_BUFFER, outputBlockSize*sizeof(float), nullptr, GL_STATIC_DRAW);
 
 	cl_mem_flags flags = CL_MEM_READ_WRITE;
-#ifdef NDEBUG
-#if CL_VERSION_1_2
-	flags |= CL_MEM_HOST_NO_ACCESS;
-#endif
-#endif
-
-	processorTmpBuffer = clCreateBuffer(clContext->getCLContext(), flags, processorTmpBlockSize*sizeof(float), nullptr, &err);
-	checkErrorCode(err, CL_SUCCESS, "clCreateBuffer()");
-
-	flags = CL_MEM_READ_WRITE;
 #ifdef NDEBUG
 	flags = CL_MEM_WRITE_ONLY;
 #if CL_VERSION_1_2
@@ -110,35 +178,12 @@ SignalProcessor::SignalProcessor(DataFile* file, unsigned int memory)// : dataFi
 #endif
 #endif
 
-	processorOutputBuffer = clCreateFromGLBuffer(clContext->getCLContext(), flags, buffer, &err);
+	processorOutputBuffer = clCreateFromGLBuffer(context->getCLContext(), flags, buffer, &err);
 	checkErrorCode(err, CL_SUCCESS, "clCreateFromGLBuffer()");
 
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 	gl()->glBindVertexArray(0);
 	gl()->glDeleteBuffers(1, &buffer);
-}
-
-SignalProcessor::~SignalProcessor()
-{
-	cl_int err;
-
-	delete clContext;
-
-	delete filterProcessor;
-	delete montageProcessor;
-
-	err = clReleaseCommandQueue(commandQueue);
-	checkErrorCode(err, CL_SUCCESS, "clReleaseCommandQueue()");
-
-	err = clReleaseMemObject(processorTmpBuffer);
-	checkErrorCode(err, CL_SUCCESS, "clReleaseMemObject()");
-
-	err = clReleaseMemObject(processorOutputBuffer);
-	checkErrorCode(err, CL_SUCCESS, "clReleaseMemObject()");
-
-	gl()->glDeleteVertexArrays(1, &processorVertexArray);
-
-	gl();
 }
 
 SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
@@ -147,7 +192,7 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 
 	cl_int err;
 
-	cl_event readyEvent = clCreateUserEvent(clContext->getCLContext(), &err);
+	cl_event readyEvent = clCreateUserEvent(context->getCLContext(), &err);
 	checkErrorCode(err, CL_SUCCESS, "clCreateUserEvent()");
 
 #if CL_VERSION_1_2
@@ -175,7 +220,7 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 		checkErrorCode(err, CL_SUCCESS, "clFlush()");
 	}
 
-	gl()->glFinish();
+	gl()->glFinish(); // Could be replaced by a fence.
 
 	err = clEnqueueAcquireGLObjects(commandQueue, 1, &processorOutputBuffer, 0, nullptr, nullptr);
 	checkErrorCode(err, CL_SUCCESS, "clEnqueueAcquireGLObjects()");
@@ -184,11 +229,11 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 
 	printBuffer("after_montage.txt", processorOutputBuffer, commandQueue);
 
-	err = clEnqueueReleaseGLObjects(commandQueue, 1, &processorOutputBuffer, 0, nullptr, nullptr);
-	checkErrorCode(err, CL_SUCCESS, "clEnqueueReleaseGLObjects()");
-
 	err = clFinish(commandQueue);
 	checkErrorCode(err, CL_SUCCESS, "clFinish()");
+
+	err = clEnqueueReleaseGLObjects(commandQueue, 1, &processorOutputBuffer, 0, nullptr, nullptr);
+	checkErrorCode(err, CL_SUCCESS, "clEnqueueReleaseGLObjects()");
 
 	auto fromTo = DataFile::getBlockBoundaries(index, getBlockSize());
 	return SignalBlock(index, montageProcessor->getNumberOfRows(), fromTo.first, fromTo.second, processorVertexArray);
