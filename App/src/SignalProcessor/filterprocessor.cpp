@@ -105,22 +105,23 @@ void FilterProcessor::process(cl_mem buffer, cl_command_queue queue)
 
 	if (coefficientsChanged)
 	{
+		// Update values in the filterBuffer.
 		coefficientsChanged = false;
 
-		// Update values in the filterBuffer.
-#if CL_VERSION_1_2
-		float zero = 0;
-		err = clEnqueueFillBuffer(queue, filterBuffer, &zero, sizeof(zero), 0, width + 4, 0, nullptr, nullptr);
-		checkErrorCode(err, CL_SUCCESS, "clEnqueueFillBuffer()");
-#else
+		// This section is disabled because a bug in implementation of clEnqueueFillBuffer().
+//#if CL_VERSION_1_2
+//		float zero = 0;
+//		err = clEnqueueFillBuffer(queue, filterBuffer, &zero, sizeof(zero), 0, width + 4, 0, nullptr, nullptr);
+//		checkErrorCode(err, CL_SUCCESS, "clEnqueueFillBuffer()");
+//#else
 		err = clSetKernelArg(zeroKernel, 0, sizeof(cl_mem), &filterBuffer);
 		checkErrorCode(err, CL_SUCCESS, "clSetKernelArg()");
 
 		size_t globalWorkSize = (width + 4)/4;
-
-		err = clEnqueueNDRangeKernel(queue, zeroKernel, 1, nullptr, &globalWorkSize, nullptr, 0, nullptr, nullptr);
+		size_t globalWorkOffset = M/4;
+		err = clEnqueueNDRangeKernel(queue, zeroKernel, 1, &globalWorkOffset, &globalWorkSize, nullptr, 0, nullptr, nullptr);
 		checkErrorCode(err, CL_SUCCESS, "clEnqueueNDRangeKernel()");
-#endif
+//#endif
 
 		err = clEnqueueWriteBuffer(queue, filterBuffer, CL_FALSE, 0, M*sizeof(float), coefficients, 0, nullptr, nullptr);
 		checkErrorCode(err, CL_SUCCESS, "clEnqueueWriteBuffer()");

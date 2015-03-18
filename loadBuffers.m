@@ -13,10 +13,3 @@ ret.after_montage = readBuffer('after_montage.txt', montC);
 
 end
 
-function [ data ] = readBuffer( filePath, channels )
-
-data = importdata(filePath);
-data = reshape(data, length(data)/channels, channels);
-data = data';
- 
-end
