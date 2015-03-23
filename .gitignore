@@ -57,3 +57,7 @@ excludes.txt
 
 # log files
 App/*.log
+
+# mont and info files
+*.mont
+*.info

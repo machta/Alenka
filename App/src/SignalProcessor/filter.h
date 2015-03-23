@@ -5,6 +5,7 @@
 
 #include <cstdio>
 #include <cmath>
+#include <vector>
 
 #include <CL/cl_gl.h>
 #include <clFFT.h>
@@ -16,7 +17,7 @@ public:
 	~Filter();
 
 	void printCoefficients(FILE* file);
-	double* computeCoefficients();
+	std::vector<double> computeCoefficients();
 
 	double getLowpass() const
 	{

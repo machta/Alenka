@@ -28,8 +28,6 @@ Filter::Filter(unsigned int M, double Fs) : M(M), Fs(Fs), lowpass(2), highpass(-
 
 	errFFT = clfftBakePlan(plan, 1, &queue, nullptr, nullptr);
 	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftBakePlan()");
-
-	coefficients = new double[2*(1 + M/2)];
 }
 
 Filter::~Filter()
@@ -39,12 +37,12 @@ Filter::~Filter()
 	clfftStatus errFFT;
 	errFFT = clfftDestroyPlan(&plan);
 	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
-
-	delete[] coefficients;
 }
 
-double* Filter::computeCoefficients()
+vector<double> Filter::computeCoefficients()
 {
+	vector<double> coefficients(2*(1 + M/2));
+
 	int cM = 1 + M/2;
 
 	// Initialize cofficients with the values of Hr.
@@ -91,13 +89,13 @@ double* Filter::computeCoefficients()
 
 	// Compute the iFFT of H to make the FIR filter coefficients h. (eq. 10.2.33)
 	cl_int errCL;
-	cl_mem buffer = clCreateBuffer(context.getCLContext(), CL_MEM_USE_HOST_PTR, 2*cM*sizeof(double), coefficients, &errCL);
+	cl_mem buffer = clCreateBuffer(context.getCLContext(), CL_MEM_USE_HOST_PTR, 2*cM*sizeof(double), coefficients.data(), &errCL);
 	checkErrorCode(errCL, CL_SUCCESS, "clCreateBuffer()");
 
 	clfftStatus errFFT = clfftEnqueueTransform(plan, CLFFT_BACKWARD, 1, &queue, 0, nullptr, nullptr, &buffer, nullptr, nullptr);
 	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftEnqueueTransform()");
 
-	errCL = clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, 2*cM*sizeof(double), coefficients, 0, nullptr, nullptr);
+	errCL = clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, 2*cM*sizeof(double), coefficients.data(), 0, nullptr, nullptr);
 	checkErrorCode(errCL, CL_SUCCESS, "clEnqueueReadBuffer()");
 
 	// Try to improve filter characteristics by applying a window function.
@@ -126,7 +124,7 @@ double* Filter::computeCoefficients()
 
 void Filter::printCoefficients(FILE* file)
 {
-	double* tmp = computeCoefficients();
+	auto tmp = computeCoefficients();
 
 	fprintf(file, "%lf\n%lf\n%lf\n", Fs, getLowpass(), getHighpass());
 	for (unsigned int i = 0; i < M; ++i)

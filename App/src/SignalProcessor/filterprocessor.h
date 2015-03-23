@@ -7,6 +7,8 @@
 
 #include <clFFT.h>
 
+#include <vector>
+
 class FilterProcessor
 {
 public:
@@ -25,7 +27,7 @@ private:
 	cl_kernel zeroKernel;
 	cl_mem filterBuffer;
 	bool coefficientsChanged = false;
-	float* coefficients;
+	std::vector<float> coefficients;
 	clfftPlanHandle fftPlan;
 	clfftPlanHandle fftPlanBatch;
 	clfftPlanHandle ifftPlanBatch;

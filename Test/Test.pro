@@ -4,16 +4,23 @@ INCLUDEPATH +=../App/src
 
 HEADERS += \
     src/filter_test.h \
-    src/gdf2_test.h
+    src/gdf2_test.h \
+    ../App/src/DataFile/eventtable.h \
+    ../App/src/DataFile/eventtypetable.h \
+    ../App/src/DataFile/montagetable.h
 
 SOURCES += \
-    ../App/src/DataFile/gdf2.cpp \
+	src/test.cpp\
+	../App/src/DataFile/gdf2.cpp \
 	../App/src/SignalProcessor/filter.cpp \
-    ../App/src/openclcontext.cpp \
-    ../App/src/openclprogram.cpp \
-    ../App/src/options.cpp \
-    src/test.cpp \
-    ../App/src/error.cpp
+	../App/src/openclcontext.cpp \
+	../App/src/openclprogram.cpp \
+	../App/src/options.cpp \
+	../App/src/error.cpp \
+	../App/src/DataFile/datafile.cpp \
+	../App/src/DataFile/eventtable.cpp \
+	../App/src/DataFile/eventtypetable.cpp \
+	../App/src/DataFile/montagetable.cpp
 
 DISTFILES += \
     data/gdf/t00.gdf \

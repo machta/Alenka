@@ -34,8 +34,6 @@ FilterProcessor::FilterProcessor(unsigned int M, unsigned int blockWidth, unsign
 	filterBuffer = clCreateBuffer(context->getCLContext(), flags, (width + 4)*sizeof(float), nullptr, &err);
 	checkErrorCode(err, CL_SUCCESS, "clCreateBuffer");
 
-	coefficients = new float[M];
-
 	// Construct the fft plans.
 	size_t size = width;
 	size_t bufferDistance = size + 4;
@@ -66,8 +64,6 @@ FilterProcessor::~FilterProcessor()
 {
 	cl_int err;
 
-	delete[] coefficients;
-
 	err = clReleaseKernel(filterKernel);
 	checkErrorCode(err, CL_SUCCESS, "clReleaseKernel()");
 
@@ -88,11 +84,11 @@ FilterProcessor::~FilterProcessor()
 
 void FilterProcessor::change(Filter* filter)
 {
-	double* tmp = filter->computeCoefficients();
+	auto tmp = filter->computeCoefficients();
 
 	for (unsigned int i = 0; i < M; ++i)
 	{
-		coefficients[i] = static_cast<float>(tmp[i]);
+		coefficients.push_back(static_cast<float>(tmp[i]));
 	}
 
 	coefficientsChanged = true;
@@ -123,7 +119,7 @@ void FilterProcessor::process(cl_mem buffer, cl_command_queue queue)
 		checkErrorCode(err, CL_SUCCESS, "clEnqueueNDRangeKernel()");
 //#endif
 
-		err = clEnqueueWriteBuffer(queue, filterBuffer, CL_FALSE, 0, M*sizeof(float), coefficients, 0, nullptr, nullptr);
+		err = clEnqueueWriteBuffer(queue, filterBuffer, CL_FALSE, 0, M*sizeof(float), coefficients.data(), 0, nullptr, nullptr);
 		checkErrorCode(err, CL_SUCCESS, "clEnqueueWriteBuffer()");
 
 		errFFT = clfftEnqueueTransform(fftPlan, CLFFT_FORWARD, 1, &queue, 0, nullptr, nullptr, &filterBuffer, nullptr, nullptr);

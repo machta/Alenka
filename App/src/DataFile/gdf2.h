@@ -28,6 +28,10 @@ public:
 	{
 		return samplesRecorded;
 	}
+	virtual void save()
+	{
+		DataFile::save();
+	}
 	virtual void readData(std::vector<float>* data, int64_t firstSample, int64_t lastSample)
 	{
 		readDataLocal(data, firstSample, lastSample);

@@ -9,7 +9,7 @@ BOOST_AUTO_TEST_CASE(simple)
 	filter.setLowpass(50);
 	filter.setHighpass(-1);
 	filter.setNotch(false);
-	double* res = filter.computeCoefficients();
+	auto res = filter.computeCoefficients();
 	for (int i = 0; i < 8; ++i)
 	{
 		BOOST_CHECK_CLOSE(res[i], answerLowpass[i], 0.00001);

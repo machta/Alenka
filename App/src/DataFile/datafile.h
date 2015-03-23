@@ -1,20 +1,29 @@
 #ifndef DATAFILE_H
 #define DATAFILE_H
 
+#include "montagetable.h"
+#include "eventtypetable.h"
+
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
+
 #include <cstdint>
 #include <cassert>
 #include <algorithm>
 #include <vector>
 #include <utility>
+#include <string>
 
 class DataFile
 {
 public:
-	virtual ~DataFile() {}
+	DataFile(const std::string& filePath);
+	virtual ~DataFile();
 
 	virtual double getSamplingFrequency() const = 0;
 	virtual unsigned int getChannelCount() const = 0;
 	virtual uint64_t getSamplesRecorded() const = 0;
+	virtual void save();
 	virtual void readData(std::vector<float>* data, int64_t firstSample, int64_t lastSample) = 0;
 	virtual void readData(std::vector<double>* data, int64_t firstSample, int64_t lastSample) = 0;
 
@@ -35,6 +44,10 @@ public:
 	}
 
 protected:
+	std::string filePath;
+	std::vector<MontageTable*> montageTables;
+	EventTypeTable eventTypeTable;
+
 	bool testLittleEndian() const
 	{
 		unsigned int number = 1;

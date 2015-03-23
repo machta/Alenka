@@ -10,12 +10,14 @@
 
 using namespace std;
 
-GDF2::GDF2(const string& filePath)
+GDF2::GDF2(const string& filePath) : DataFile(filePath)
 {
 	isLittleEndian = testLittleEndian();
 
-	file = fopen(filePath.c_str(), "r+b");
-	checkNotErrorCode(file, nullptr, "File '" << filePath << "' not found.");
+	string fp = filePath + ".gdf";
+
+	file = fopen(fp.c_str(), "r+b");
+	checkNotErrorCode(file, nullptr, "File '" << fp << "' not found.");
 
 	// Load fixed header.
 	seekFile(0, true);
@@ -230,6 +232,8 @@ GDF2::~GDF2()
 	delete[] vh.typeOfData;
 	delete[] vh.sensorPosition;
 	delete[] vh.sensorInfo;
+
+	save(); // TODO: remove this
 }
 
 template<typename T>

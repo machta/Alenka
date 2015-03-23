@@ -15,10 +15,8 @@ const char* files[FN] = {"data/gdf/t00", "data/gdf/t01"};
 
 void dataTest(int fi)
 {
-	string fileName(files[fi]);
-
-	GDF2 gdf((fileName + ".gdf").c_str());
-	FILE* file = fopen((fileName + "_values.txt").c_str(), "r");
+	GDF2 gdf(files[fi]);
+	FILE* file = fopen((string(files[fi]) + "_values.txt").c_str(), "r");
 
 	int n;
 	fscanf(file, "%d", &n);
@@ -57,30 +55,28 @@ BOOST_AUTO_TEST_CASE(construction)
 {
 	for (int i = 0; i < FN; ++i)
 	{
-		string fileName(files[i]);
-		fileName += ".gdf";
-		BOOST_CHECK_NO_THROW(GDF2 file(fileName.c_str()););
+		BOOST_CHECK_NO_THROW(GDF2 file(files[i]););
 	}
 }
 
 BOOST_AUTO_TEST_CASE(exceptions)
 {
 	BOOST_CHECK_THROW(GDF2 file("blabla"); , runtime_error);
-	BOOST_CHECK_THROW(GDF2 file("data/gdf/empty.gdf"); , runtime_error);
-	BOOST_CHECK_THROW(GDF2 file("data/gdf/headerOnly.gdf"); , runtime_error);
-	BOOST_CHECK_THROW(GDF2 file("data/gdf/badType.gdf"); , runtime_error);
-	BOOST_CHECK_THROW(GDF2 file("data/gdf/badFile.gdf"); , runtime_error);
+	BOOST_CHECK_THROW(GDF2 file("data/gdf/empty"); , runtime_error);
+	BOOST_CHECK_THROW(GDF2 file("data/gdf/headerOnly"); , runtime_error);
+	BOOST_CHECK_THROW(GDF2 file("data/gdf/badType"); , runtime_error);
+	BOOST_CHECK_THROW(GDF2 file("data/gdf/badFile"); , runtime_error);
 
 	GDF2* file;
 
 	vector<double> data;
 	data.insert(data.begin(), 100000, 0);
 
-	BOOST_REQUIRE_NO_THROW(file = new GDF2("data/gdf/fullHeaderOnly.gdf"));
+	BOOST_REQUIRE_NO_THROW(file = new GDF2("data/gdf/fullHeaderOnly"));
 	BOOST_CHECK_THROW(file->readData(&data, 0, 99); , runtime_error);
 	delete file;
 
-	BOOST_REQUIRE_NO_THROW(file = new GDF2("data/gdf/t00.gdf"));
+	BOOST_REQUIRE_NO_THROW(file = new GDF2("data/gdf/t00"));
 	BOOST_CHECK_THROW(file->readData(&data, 100, 50); , invalid_argument);
 	delete file;
 }
@@ -89,9 +85,8 @@ BOOST_AUTO_TEST_CASE(metaInfo)
 {
 	for (int i = 0; i < FN; ++i)
 	{
-		string fileName(files[i]);
-		GDF2 gdf((fileName + ".gdf").c_str());
-		FILE* file = fopen((fileName + "_info.txt").c_str(), "r");
+		GDF2 gdf(files[i]);
+		FILE* file = fopen((string(files[i]) + "_info.txt").c_str(), "r");
 
 		double sr;
 		int channels, len;
@@ -117,7 +112,7 @@ BOOST_AUTO_TEST_CASE(data_t01)
 
 BOOST_AUTO_TEST_CASE(outOfBounds)
 {
-	GDF2 file("data/gdf/t00.gdf");
+	GDF2 file("data/gdf/t00");
 	int n = 100;
 
 	vector<double> a;

@@ -22,7 +22,10 @@ HEADERS += \
     src/SignalProcessor/filterprocessor.h \
     src/SignalProcessor/montageprocessor.h \
     src/SignalProcessor/montage.h \
-    src/SignalProcessor/gpucache.h
+    src/SignalProcessor/gpucache.h \
+    src/DataFile/eventtypetable.h \
+    src/DataFile/eventtable.h \
+    src/DataFile/montagetable.h
 
 SOURCES += \
     src/DataFile/gdf2.cpp \
@@ -42,7 +45,11 @@ SOURCES += \
     src/SignalProcessor/montageprocessor.cpp \
     src/SignalProcessor/montage.cpp \
     src/SignalProcessor/gpucache.cpp \
-    src/error.cpp
+    src/error.cpp \
+    src/DataFile/eventtypetable.cpp \
+    src/DataFile/eventtable.cpp \
+    src/DataFile/montagetable.cpp \
+    src/DataFile/datafile.cpp
 
 FORMS += \
     src/testwindow.ui
