@@ -25,7 +25,8 @@ HEADERS += \
     src/SignalProcessor/gpucache.h \
     src/DataFile/eventtypetable.h \
     src/DataFile/eventtable.h \
-    src/DataFile/montagetable.h
+    src/DataFile/montagetable.h \
+    src/eventtypemanager.h
 
 SOURCES += \
     src/DataFile/gdf2.cpp \
@@ -49,10 +50,12 @@ SOURCES += \
     src/DataFile/eventtypetable.cpp \
     src/DataFile/eventtable.cpp \
     src/DataFile/montagetable.cpp \
-    src/DataFile/datafile.cpp
+    src/DataFile/datafile.cpp \
+    src/eventtypemanager.cpp
 
 FORMS += \
-    src/testwindow.ui
+    src/testwindow.ui \
+    src/eventtypemanager.ui
 
 DISTFILES += \
     shader.vert \

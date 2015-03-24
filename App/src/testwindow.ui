@@ -97,7 +97,10 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionOpenFile"/>
+   <addaction name="actionCloseFile"/>
    <addaction name="actionUpdate"/>
+   <addaction name="actionEventTypeManager"/>
   </widget>
   <action name="actionUpdate">
    <property name="checkable">
@@ -111,6 +114,21 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+U</string>
+   </property>
+  </action>
+  <action name="actionEventTypeManager">
+   <property name="text">
+    <string>EventTypeManager</string>
+   </property>
+  </action>
+  <action name="actionOpenFile">
+   <property name="text">
+    <string>OpenFile</string>
+   </property>
+  </action>
+  <action name="actionCloseFile">
+   <property name="text">
+    <string>CloseFile</string>
    </property>
   </action>
  </widget>

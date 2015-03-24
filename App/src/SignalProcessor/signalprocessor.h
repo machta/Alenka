@@ -18,11 +18,12 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include <cassert>
 
 class SignalProcessor : public OpenGLInterface
 {
 public:
-	SignalProcessor(DataFile* file);
+	SignalProcessor();
 	~SignalProcessor();
 
 	int64_t getBlockSize() const
@@ -33,11 +34,18 @@ public:
 	void changeMontage(Montage* montage);
 	unsigned int getCapacity() const
 	{
+		if (noFile)
+		{
+			return -1;
+		}
+
 		return cache->getCapacity();
 	}
 	SignalBlock getAnyBlock(const std::set<int>& indexSet);
 	void prepareBlock(int index)
 	{
+		assert(noFile == false);
+
 		cl_int err;
 
 		cl_event readyEvent = clCreateUserEvent(context->getCLContext(), &err);
@@ -48,8 +56,14 @@ public:
 		err = clReleaseEvent(readyEvent);
 		checkErrorCode(err, CL_SUCCESS, "clReleaseEvent()");
 	}
+	void changeFile(DataFile* file);
+	bool ready()
+	{
+		return !noFile;
+	}
 
 private:
+	bool noFile = true;
 	OpenCLContext* context;
 	FilterProcessor* filterProcessor;
 	MontageProcessor* montageProcessor;
@@ -64,6 +78,7 @@ private:
 	cl_mem processorOutputBuffer = nullptr;
 	GLuint processorVertexArray;
 
+	void destroy();
 	std::string indexSetToString(const std::set<int>& indexSet)
 	{
 		std::stringstream ss;

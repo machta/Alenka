@@ -7,7 +7,7 @@
 
 #include "canvas.h"
 #include "SignalProcessor/signalprocessor.h"
-#include "DataFile/gdf2.h"
+#include "DataFile/datafile.h"
 
 #include <algorithm>
 
@@ -75,6 +75,10 @@ public slots:
 			updateSignalViewer();
 			emit positionChanged(position);
 		}
+	}
+	void changeFile(DataFile* file)
+	{
+		canvas->changeFile(file);
 	}
 };
 

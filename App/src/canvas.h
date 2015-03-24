@@ -6,8 +6,10 @@
 
 #include "SignalProcessor/signalprocessor.h"
 #include "openglprogram.h"
+#include "DataFile/datafile.h"
 
 #include <algorithm>
+#include <cassert>
 
 class Canvas : public QOpenGLWidget, public OpenGLInterface
 {
@@ -17,6 +19,22 @@ public:
 	explicit Canvas(QWidget* parent = 0);
 	~Canvas();
 
+	void changeFile(DataFile* file)
+	{
+		makeCurrent();
+
+		assert(signalProcessor != nullptr);
+
+		signalProcessor->changeFile(file);
+
+		if (file != nullptr)
+		{
+			samplesRecorded = file->getSamplesRecorded();
+		}
+
+		doneCurrent();
+	}
+
 protected:
 	virtual void initializeGL();
 	virtual void resizeGL(int w, int h);
@@ -25,7 +43,7 @@ protected:
 private:
 	SignalProcessor* signalProcessor = nullptr;
 	OpenGLProgram* program = nullptr;
-	DataFile* dataFile = nullptr;
+	double samplesRecorded = 1;
 
 	double samplePixelRatio();
 	void paintBlock(const SignalBlock& block);

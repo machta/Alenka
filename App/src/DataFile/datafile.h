@@ -26,6 +26,14 @@ public:
 	virtual void save();
 	virtual void readData(std::vector<float>* data, int64_t firstSample, int64_t lastSample) = 0;
 	virtual void readData(std::vector<double>* data, int64_t firstSample, int64_t lastSample) = 0;
+	EventTypeTable* getEventTypeTable()
+	{
+		return &eventTypeTable;
+	}
+	std::vector<MontageTable*> getMontageTables()
+	{
+		return montageTables;
+	}
 
 	static std::pair<std::int64_t, std::int64_t> getBlockBoundaries(int index, unsigned int blockSize)
 	{

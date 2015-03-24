@@ -57,7 +57,7 @@ public:
 	{
 		if (index.isValid() && index.row() < rowCount() && index.column() < columnCount())
 		{
-			if (role == Qt::DisplayRole)
+			if (role == Qt::DisplayRole || role == Qt::EditRole)
 			{
 				switch (index.column())
 				{
@@ -81,7 +81,7 @@ public:
 	{
 		if (index.isValid())
 		{
-			if (role == Qt::DisplayRole)
+			if (role == Qt::EditRole)
 			{
 				switch (index.column())
 				{

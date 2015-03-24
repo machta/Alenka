@@ -37,13 +37,13 @@ public:
 			switch (section)
 			{
 			case 0:
-				return "Name";
+				return QString("Name");
 			case 1:
-				return "Opacity";
+				return QString("Opacity");
 			case 2:
-				return "Color";
+				return QString("Color");
 			case 3:
-				return "Hidden";
+				return QString("Hidden");
 			}
 		}
 
@@ -53,7 +53,7 @@ public:
 	{
 		if (index.isValid() && index.row() < rowCount() && index.column() < columnCount())
 		{
-			if (role == Qt::DisplayRole)
+			if (role == Qt::DisplayRole || role == Qt::EditRole)
 			{
 				switch (index.column())
 				{
@@ -75,7 +75,7 @@ public:
 	{
 		if (index.isValid())
 		{
-			if (role == Qt::DisplayRole)
+			if (role == Qt::EditRole)
 			{
 				switch (index.column())
 				{
