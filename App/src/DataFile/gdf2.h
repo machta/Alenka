@@ -16,27 +16,27 @@ public:
 	GDF2(const std::string& filePath);
 	virtual ~GDF2();
 
-	virtual double getSamplingFrequency() const
+	virtual double getSamplingFrequency() const override
 	{
 		return samplingFrequency;
 	}
-	virtual unsigned int getChannelCount() const
+	virtual unsigned int getChannelCount() const override
 	{
 		return fh.numberOfChannels;
 	}
-	virtual uint64_t getSamplesRecorded() const
+	virtual uint64_t getSamplesRecorded() const override
 	{
 		return samplesRecorded;
 	}
-	virtual void save()
+	virtual void save() override
 	{
 		DataFile::save();
 	}
-	virtual void readData(std::vector<float>* data, int64_t firstSample, int64_t lastSample)
+	virtual void readData(std::vector<float>* data, int64_t firstSample, int64_t lastSample) override
 	{
 		readDataLocal(data, firstSample, lastSample);
 	}
-	virtual void readData(std::vector<double>* data, int64_t firstSample, int64_t lastSample)
+	virtual void readData(std::vector<double>* data, int64_t firstSample, int64_t lastSample) override
 	{
 		readDataLocal(data, firstSample, lastSample);
 	}

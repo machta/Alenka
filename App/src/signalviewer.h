@@ -29,7 +29,7 @@ public:
 	}
 
 protected:
-	virtual void resizeEvent(QResizeEvent*)
+	virtual void resizeEvent(QResizeEvent*) override
 	{
 		updateSignalViewer();
 	}

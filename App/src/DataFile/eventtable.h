@@ -22,22 +22,22 @@ public:
 
 	void write(QXmlStreamWriter* xml) const;
 	void read(QXmlStreamReader* xml);
-	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const
+	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override
 	{
 		(void)parent;
 
 		return label.size();
 	}
-	virtual int columnCount(const QModelIndex& parent = QModelIndex()) const
+	virtual int columnCount(const QModelIndex& parent = QModelIndex()) const override
 	{
 		(void)parent;
 
 		return 6;
 	}
-	virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
-	virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const;
-	virtual bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::DisplayRole);
-	virtual Qt::ItemFlags flags(const QModelIndex& index) const
+	virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+	virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+	virtual bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::DisplayRole) override;
+	virtual Qt::ItemFlags flags(const QModelIndex& index) const override
 	{
 		if (!index.isValid())
 		{
@@ -46,8 +46,8 @@ public:
 
 		return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
 	}
-	virtual bool insertRows(int row, int count, const QModelIndex& parent = QModelIndex());
-	virtual bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex());
+	virtual bool insertRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
+	virtual bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
 
 private:
 	std::vector<std::string> label;
