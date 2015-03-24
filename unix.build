@@ -2,7 +2,7 @@ LIBS += -lboost_program_options \
 	-lclFFT \
 	-lOpenCL
 
-QMAKE_CXXFLAGS += -std=c++11
+QMAKE_CXXFLAGS += -std=c++11 -pedantic
 
 QMAKE_CXXFLAGS_RELEASE += -O3
 
