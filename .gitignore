@@ -50,7 +50,7 @@ build-*
 build
 
 # config file
-*/options.cfg
+*/options*.cfg
 
 # local excludes file
 excludes.txt

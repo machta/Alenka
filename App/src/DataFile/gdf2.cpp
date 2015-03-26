@@ -204,9 +204,10 @@ case a_:\
 
 	// Construct the cache.
 	int64_t memoryAvailable = PROGRAM_OPTIONS["dataFileCacheSize"].as<int64_t>();
-	if (memoryAvailable > 0)
+	int cacheBlocks = memoryAvailable/(vh.samplesPerRecord[0]*getChannelCount()*dataTypeSize);
+	if (cacheBlocks > 0)
 	{
-		cache = new QCache<unsigned int, std::vector<char>>(max(1, static_cast<int>(memoryAvailable/(vh.samplesPerRecord[0]*getChannelCount()*dataTypeSize))));
+		cache = new QCache<unsigned int, std::vector<char>>(cacheBlocks);
 	}
 }
 
@@ -242,7 +243,9 @@ void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSampl
 	lock_guard<mutex> lock(mtx);
 
 #ifndef NDEBUG
-	int64_t originalFS = firstSample, originalLS = lastSample; (void)originalFS; (void)originalLS;
+	int64_t originalFS = firstSample, originalLS = lastSample;
+	(void)originalFS;
+	(void)originalLS;
 #endif
 
 	if (lastSample < firstSample)
@@ -345,7 +348,13 @@ void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSampl
 					tmp += vh.physicalMinimum[channelI];
 				}
 
-				(*data)[channelI*rowLen + dataOffset + dataIndex + i] = static_cast<T>(tmp);
+				size_t index = channelI*rowLen + dataOffset + dataIndex + i;
+#ifndef NDEBUG
+				(*data).at(index)
+#else
+				(*data)[index]
+#endif
+				= static_cast<T>(tmp);
 			}
 		}
 
