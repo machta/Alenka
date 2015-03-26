@@ -20,12 +20,12 @@ SignalProcessor::~SignalProcessor()
 {
 	cl_int err;
 
+	destroy();
+
 	delete context;
 
 	err = clReleaseCommandQueue(commandQueue);
 	checkErrorCode(err, CL_SUCCESS, "clReleaseCommandQueue()");
-
-	destroy();
 
 	gl();
 }
@@ -268,9 +268,9 @@ void SignalProcessor::destroy()
 	{
 		cl_int err;
 
+		delete cache;
 		delete filterProcessor;
 		delete montageProcessor;
-		delete cache;
 
 		err = clReleaseMemObject(processorTmpBuffer);
 		checkErrorCode(err, CL_SUCCESS, "clReleaseMemObject()");

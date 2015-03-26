@@ -98,10 +98,12 @@ private:
 	{
 		if (processorOutputBuffer != nullptr)
 		{
+			gl()->glDeleteVertexArrays(1, &processorVertexArray);
+
 			cl_int err = clReleaseMemObject(processorOutputBuffer);
 			checkErrorCode(err, CL_SUCCESS, "clReleaseMemObject()");
 
-			gl()->glDeleteVertexArrays(1, &processorVertexArray);
+			processorOutputBuffer = nullptr;
 		}
 	}
 };
