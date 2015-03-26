@@ -345,13 +345,7 @@ void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSampl
 					tmp += vh.physicalMinimum[channelI];
 				}
 
-				int64_t index = channelI*rowLen + dataOffset + dataIndex + i;
-
-#ifdef NDEBUG
-				data->operator [](index) = static_cast<T>(tmp);
-#else
-				data->at(index) = static_cast<T>(tmp);
-#endif
+				(*data)[channelI*rowLen + dataOffset + dataIndex + i] = static_cast<T>(tmp);
 			}
 		}
 

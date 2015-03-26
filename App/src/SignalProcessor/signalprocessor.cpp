@@ -20,7 +20,7 @@ SignalProcessor::~SignalProcessor()
 {
 	cl_int err;
 
-	destroy();
+	destroyFileRelated();
 
 	delete context;
 
@@ -165,13 +165,9 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 
 void SignalProcessor::changeFile(DataFile* file)
 {
-	destroy();
+	destroyFileRelated();
 
-	if (file == nullptr)
-	{
-		noFile = true;
-	}
-	else
+	if (file != nullptr)
 	{
 		noFile = false;
 
@@ -262,10 +258,12 @@ void SignalProcessor::changeFile(DataFile* file)
 	}
 }
 
-void SignalProcessor::destroy()
+void SignalProcessor::destroyFileRelated()
 {
 	if (noFile == false)
 	{
+		noFile = true;
+
 		cl_int err;
 
 		delete cache;

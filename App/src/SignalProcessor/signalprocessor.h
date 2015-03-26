@@ -78,7 +78,7 @@ private:
 	cl_mem processorOutputBuffer = nullptr;
 	GLuint processorVertexArray;
 
-	void destroy();
+	void destroyFileRelated();
 	std::string indexSetToString(const std::set<int>& indexSet)
 	{
 		std::stringstream ss;
