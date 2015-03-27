@@ -72,10 +72,6 @@ BOOST_AUTO_TEST_CASE(exceptions)
 	vector<double> data;
 	data.insert(data.begin(), 100000, 0);
 
-	BOOST_REQUIRE_NO_THROW(file = new GDF2("data/gdf/fullHeaderOnly"));
-	BOOST_CHECK_THROW(file->readData(&data, 0, 99); , runtime_error);
-	delete file;
-
 	BOOST_REQUIRE_NO_THROW(file = new GDF2("data/gdf/t00"));
 	BOOST_CHECK_THROW(file->readData(&data, 100, 50); , invalid_argument);
 	delete file;
