@@ -6,12 +6,10 @@ using namespace std;
 
 EventTable::EventTable(QObject* parent) : QAbstractTableModel(parent)
 {
-
 }
 
 EventTable::~EventTable()
 {
-
 }
 
 void EventTable::write(QXmlStreamWriter* xml) const
@@ -154,7 +152,7 @@ bool EventTable::insertRows(int row, int count, const QModelIndex& /*parent*/)
 	for (int i = 0; i < count; ++i)
 	{
 		std::stringstream ss;
-		ss << "Event " << row;
+		ss << "Event " << row + i;
 
 		label.insert(label.begin() + row + i, ss.str());
 		type.insert(type.begin() + row + i, 0); // TODO: load current selected type

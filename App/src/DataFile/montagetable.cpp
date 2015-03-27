@@ -6,12 +6,10 @@ using namespace std;
 
 MontageTable::MontageTable(QObject* parent) : QAbstractTableModel(parent)
 {
-
 }
 
 MontageTable::~MontageTable()
 {
-
 }
 
 void MontageTable::write(QXmlStreamWriter* xml) const
@@ -93,7 +91,7 @@ QVariant MontageTable::headerData(int section, Qt::Orientation orientation, int 
 	return QVariant();
 }
 
-QVariant MontageTable::data(const QModelIndex &index, int role) const
+QVariant MontageTable::data(const QModelIndex& index, int role) const
 {
 	if (index.isValid() && index.row() < rowCount() && index.column() < columnCount())
 	{
@@ -118,7 +116,7 @@ QVariant MontageTable::data(const QModelIndex &index, int role) const
 	return QVariant();
 }
 
-bool MontageTable::setData(const QModelIndex &index, const QVariant &value, int role)
+bool MontageTable::setData(const QModelIndex& index, const QVariant &value, int role)
 {
 	if (index.isValid())
 	{
@@ -158,8 +156,8 @@ bool MontageTable::insertRows(int row, int count, const QModelIndex& /*parent*/)
 	for (int i = 0; i < count; ++i)
 	{
 		std::stringstream ssLabel, ssCode;
-		ssLabel << "Type " << row;
-		ssCode << "out = in(" << row << ");";
+		ssLabel << "Track " << row + i;
+		ssCode << "out = in(" << row + i << ");";
 
 		label.insert(label.begin() + row + i, ssLabel.str());
 		code.insert(code.begin() + row + i, ssCode.str());

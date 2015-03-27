@@ -30,9 +30,13 @@ public:
 	{
 		return &eventTypeTable;
 	}
-	std::vector<MontageTable*> getMontageTables()
+	std::vector<MontageTable*>* getMontageTables()
 	{
-		return montageTables;
+		return &montageTables;
+	}
+	std::string getFilePath() const
+	{
+		return filePath;
 	}
 
 	static std::pair<std::int64_t, std::int64_t> getBlockBoundaries(int index, unsigned int blockSize)
@@ -52,23 +56,20 @@ public:
 	}
 
 protected:
-	std::string filePath;
-	std::vector<MontageTable*> montageTables;
-	EventTypeTable eventTypeTable;
-
+	virtual bool loadMontFile();
 	bool testLittleEndian() const
 	{
 		unsigned int number = 1;
 		char* bytes = reinterpret_cast<char*>(&number);
 		return *bytes == 1;
 	}
-	void changeEndianness(char* data, int n) const
+	void changeEndianness(char* data, int size) const
 	{
-		assert(n%2 == 0);
+		//assert(size%2 == 0);
 
-		for (int i = 0, nHalf = n/2; i < nHalf; ++i)
+		for (int i = 0, sizeHalf = size/2; i < sizeHalf; ++i)
 		{
-			std::swap(data[i], data[n - i - 1]);
+			std::swap(data[i], data[size - i - 1]);
 		}
 	}
 	template<typename T>
@@ -76,6 +77,11 @@ protected:
 	{
 		changeEndianness(reinterpret_cast<char*>(val), sizeof(T));
 	}
+
+private:
+	std::string filePath;
+	std::vector<MontageTable*> montageTables;
+	EventTypeTable eventTypeTable;
 };
 
 #endif // DATAFILE_H

@@ -7,6 +7,7 @@
 #include <cassert>
 #include <iostream>
 #include <cstring>
+#include <set>
 
 using namespace std;
 
@@ -201,14 +202,20 @@ case a_:\
 	}
 
 	samplingFrequency = vh.samplesPerRecord[0]/duration;
+	
+	int64_t dataRecordBytes = vh.samplesPerRecord[0]*getChannelCount()*dataTypeSize;
+	startOfEventTable = startOfData + dataRecordBytes*fh.numberOfDataRecords;
 
 	// Construct the cache.
 	int64_t memoryAvailable = PROGRAM_OPTIONS["dataFileCacheSize"].as<int64_t>();
-	int cacheBlocks = memoryAvailable/(vh.samplesPerRecord[0]*getChannelCount()*dataTypeSize);
+	int cacheBlocks = memoryAvailable/dataRecordBytes;
 	if (cacheBlocks > 0)
 	{
 		cache = new QCache<unsigned int, std::vector<char>>(cacheBlocks);
 	}
+
+	// Load montages and events.
+	loadMontFile();
 }
 
 GDF2::~GDF2()
@@ -235,6 +242,87 @@ GDF2::~GDF2()
 	delete[] vh.sensorInfo;
 
 	save(); // TODO: remove this
+}
+
+bool GDF2::loadMontFile()
+{
+	if (DataFile::loadMontFile() == false)
+	{
+		set<int> eventTypesUsed;
+
+		// Load event table info.
+		seekFile(startOfEventTable, true);
+		
+		readFile(&eventTableMode);
+		
+		uint8_t nev[3];
+		readFile(nev, 3);
+		if (isLittleEndian == false)
+		{
+			changeEndianness(reinterpret_cast<char*>(nev), 3);
+		}
+		numberOfEvents = nev[0] + nev[1]*256 + nev[2]*256*256;
+		
+		seekFile(4);
+		
+		// Add a default montage and put the events there.
+		getMontageTables()->push_back(new MontageTable);
+
+		MontageTable* defaultMontage = getMontageTables()->back();
+		EventTable* defaultEventTable = defaultMontage->getEventTable();
+
+		defaultMontage->insertRows(0, getChannelCount());
+		defaultEventTable->insertRows(0, numberOfEvents);
+			
+		for (int i = 0; i < numberOfEvents; ++i)
+		{
+			uint32_t position;
+			readFile(&position);
+			defaultEventTable->setData(defaultEventTable->index(i, 2), position);
+		}
+
+		for (int i = 0; i < numberOfEvents; ++i)
+		{
+			uint16_t type;
+			readFile(&type);
+			eventTypesUsed.insert(type);
+			defaultEventTable->setData(defaultEventTable->index(i, 1), type);
+		}
+
+		if (eventTableMode & 0x02)
+		{
+			for (int i = 0; i < numberOfEvents; ++i)
+			{
+				uint16_t channel;
+				readFile(&channel);
+				int channelInt = channel - 1;
+				defaultEventTable->setData(defaultEventTable->index(i, 4), channelInt);
+			}
+
+			for (int i = 0; i < numberOfEvents; ++i)
+			{
+				uint32_t duration;
+				readFile(&duration);
+				defaultEventTable->setData(defaultEventTable->index(i, 3), duration);
+			}
+		}
+
+		// Add all event types used in the event table.
+		for (const auto& e : eventTypesUsed)
+		{
+			int row = getEventTypeTable()->rowCount();
+
+			getEventTypeTable()->insertRow(row);
+
+			std::stringstream ss;
+			ss << "Type " << e;
+
+			getEventTypeTable()->setData(getEventTypeTable()->index(row, 0), e);
+			getEventTypeTable()->setData(getEventTypeTable()->index(row, 1), QString::fromStdString(ss.str()));
+		}
+	}
+
+	return true;
 }
 
 template<typename T>

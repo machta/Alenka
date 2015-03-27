@@ -38,7 +38,7 @@ public:
 	}
 	virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 	virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
-	virtual bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::DisplayRole) override;
+	virtual bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
 	virtual Qt::ItemFlags flags(const QModelIndex& index) const override
 	{
 		if (!index.isValid())
@@ -50,6 +50,10 @@ public:
 	}
 	virtual bool insertRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
 	virtual bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
+	EventTable* getEventTable()
+	{
+		return &eventTable;
+	}
 
 private:
 	std::vector<std::string> label;

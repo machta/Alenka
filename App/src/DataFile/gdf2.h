@@ -41,12 +41,18 @@ public:
 		readDataLocal(data, firstSample, lastSample);
 	}
 
+protected:
+	virtual bool loadMontFile() override;
+
 private:
 	std::mutex mtx;
 	FILE* file;
 	double samplingFrequency;
 	uint64_t samplesRecorded;
 	int startOfData;
+	int startOfEventTable;
+	uint8_t eventTableMode;
+	int numberOfEvents;
 	bool isLittleEndian;
 	double* scale;
 	int dataTypeSize;
