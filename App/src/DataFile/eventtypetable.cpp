@@ -106,7 +106,7 @@ bool EventTypeTable::setData(const QModelIndex &index, const QVariant& value, in
 			switch (index.column())
 			{
 			case 0:
-				id[index.row()] = value.toInt();
+				id[index.row()] = value.value<decltype(id)::value_type>();
 				break;
 			case 1:
 				name[index.row()] = value.toString().toStdString();
@@ -167,4 +167,3 @@ bool EventTypeTable::removeRows(int row, int count, const QModelIndex& /*parent*
 
 	return true;
 }
-

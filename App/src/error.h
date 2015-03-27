@@ -76,19 +76,32 @@ inline std::size_t freadChecked(void* data, std::size_t size, std::size_t n, FIL
 	size_t elementsRead = fread(data, size, n, file);
 	if (elementsRead != n)
 	{
-		stringstream ss;
+		const char* message;
+
 		if (feof(file))
 		{
-			ss << "EOF reached prematurely.";
+			message = "EOF reached prematurely.";
 		}
 		else
 		{
 			assert(ferror(file));
-			ss << "Error while reading data from file.";
+			message = "Error while reading data from file.";
 		}
-		throw runtime_error(ss.str());
+		throw runtime_error(message);
 	}
 	return elementsRead;
+}
+
+inline std::size_t fwriteChecked(void* data, std::size_t size, std::size_t n, FILE* file)
+{
+	using namespace std;
+
+	size_t elementsWritten = fwrite(data, size, n, file);
+	if (elementsWritten != n)
+	{
+		throw runtime_error("Error while reading data from file.");
+	}
+	return elementsWritten;
 }
 
 inline void printBuffer(FILE* file, float* data, int n)

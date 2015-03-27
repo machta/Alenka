@@ -121,16 +121,16 @@ bool EventTable::setData(const QModelIndex &index, const QVariant &value, int ro
 				label[index.row()] = value.toString().toStdString();
 				break;
 			case 1:
-				type[index.row()] = value.toInt();
+				type[index.row()] = value.value<decltype(type)::value_type>();
 				break;
 			case 2:
-				position[index.row()] = value.toDouble();
+				position[index.row()] = value.value<decltype(position)::value_type>();
 				break;
 			case 3:
-				duration[index.row()] = value.toDouble();
+				duration[index.row()] = value.value<decltype(duration)::value_type>();
 				break;
 			case 4:
-				channel[index.row()] = value.toInt();
+				channel[index.row()] = value.value<decltype(channel)::value_type>();
 				break;
 			case 5:
 				description[index.row()] = value.toString().toStdString();

@@ -220,6 +220,8 @@ case a_:\
 
 GDF2::~GDF2()
 {
+	save(); // TODO: remove this
+
 	fclose(file);
 	delete[] scale;
 	delete cache;
@@ -240,19 +242,75 @@ GDF2::~GDF2()
 	delete[] vh.typeOfData;
 	delete[] vh.sensorPosition;
 	delete[] vh.sensorInfo;
+}
 
-	save(); // TODO: remove this
+void GDF2::save()
+{
+	lock_guard<mutex> lock(fileMutex);
+
+	DataFile::save();
+
+	// Save some events in the "event table" part of the gdf file.
+	EventTable* eventTable = getMontageTables()->front()->getEventTable();
+
+	seekFile(startOfEventTable, true);
+
+	uint8_t eventTableMode = 3;
+	writeFile(&eventTableMode);
+
+	int numberOfEvents = eventTable->rowCount();
+	uint8_t nev[3];
+	int tmp = numberOfEvents;
+	nev[0] = static_cast<uint8_t>(tmp%256);
+	tmp >>= 8;
+	nev[1] = static_cast<uint8_t>(tmp%256);
+	tmp >>= 8;
+	nev[2] = static_cast<uint8_t>(tmp%256);
+	if (isLittleEndian == false)
+	{
+		changeEndianness(reinterpret_cast<char*>(nev), 3);
+	}
+	writeFile(nev, 3);
+
+	seekFile(4);
+
+	for (int i = 0; i < numberOfEvents; ++i)
+	{
+		uint32_t position = eventTable->data(eventTable->index(i, 2)).value<int>();
+		writeFile(&position);
+	}
+
+	for (int i = 0; i < numberOfEvents; ++i)
+	{
+		uint16_t type = eventTable->data(eventTable->index(i, 1)).value<int>();
+		writeFile(&type);
+	}
+
+	for (int i = 0; i < numberOfEvents; ++i)
+	{
+		uint16_t channel = max(0, eventTable->data(eventTable->index(i, 4)).value<int>() + 1);
+		writeFile(&channel);
+	}
+
+	for (int i = 0; i < numberOfEvents; ++i)
+	{
+		uint32_t duration = eventTable->data(eventTable->index(i, 3)).value<int>();
+		writeFile(&duration);
+	}
 }
 
 bool GDF2::loadMontFile()
 {
 	if (DataFile::loadMontFile() == false)
 	{
+		lock_guard<mutex> lock(fileMutex);
+
 		set<int> eventTypesUsed;
 
 		// Load event table info.
 		seekFile(startOfEventTable, true);
 		
+		uint8_t eventTableMode;
 		readFile(&eventTableMode);
 		
 		uint8_t nev[3];
@@ -261,7 +319,7 @@ bool GDF2::loadMontFile()
 		{
 			changeEndianness(reinterpret_cast<char*>(nev), 3);
 		}
-		numberOfEvents = nev[0] + nev[1]*256 + nev[2]*256*256;
+		int numberOfEvents = nev[0] + nev[1]*256 + nev[2]*256*256;
 		
 		seekFile(4);
 		
@@ -328,7 +386,7 @@ bool GDF2::loadMontFile()
 template<typename T>
 void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSample)
 {
-	lock_guard<mutex> lock(mtx);
+	lock_guard<mutex> lock(fileMutex);
 
 #ifndef NDEBUG
 	int64_t originalFS = firstSample, originalLS = lastSample;

@@ -28,10 +28,7 @@ public:
 	{
 		return samplesRecorded;
 	}
-	virtual void save() override
-	{
-		DataFile::save();
-	}
+	virtual void save() override;
 	virtual void readData(std::vector<float>* data, int64_t firstSample, int64_t lastSample) override
 	{
 		readDataLocal(data, firstSample, lastSample);
@@ -45,14 +42,12 @@ protected:
 	virtual bool loadMontFile() override;
 
 private:
-	std::mutex mtx;
+	std::mutex fileMutex;
 	FILE* file;
 	double samplingFrequency;
 	uint64_t samplesRecorded;
 	int startOfData;
 	int startOfEventTable;
-	uint8_t eventTableMode;
-	int numberOfEvents;
 	bool isLittleEndian;
 	double* scale;
 	int dataTypeSize;
@@ -127,6 +122,23 @@ private:
 	{
 		int res = std::fseek(file, static_cast<long>(offset), fromStart ? SEEK_SET : SEEK_CUR);
 		checkErrorCode(res, 0, "seekFile(" << offset << ", " << fromStart << ") failed.");
+	}
+	template<typename T>
+	void writeFile(const T* val, int elements = 1)
+	{
+		if (isLittleEndian == false)
+		{
+			for (int i = 0; i < elements; ++i)
+			{
+				T tmp = val[i];
+				changeEndianness(&tmp);
+				fwriteChecked(&tmp, sizeof(T), 1, file);
+			}
+		}
+		else
+		{
+			fwriteChecked(const_cast<T*>(val), sizeof(T), elements, file);
+		}
 	}
 };
 

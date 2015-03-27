@@ -52,8 +52,8 @@ public:
 private:
 	std::vector<std::string> label;
 	std::vector<int> type;
-	std::vector<qlonglong> position;
-	std::vector<qlonglong> duration;
+	std::vector<int> position;
+	std::vector<int> duration;
 	std::vector<int> channel;
 	std::vector<std::string> description;
 };
