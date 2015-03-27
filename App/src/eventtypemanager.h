@@ -15,8 +15,10 @@ class EventTypeManager : public QDialog
 	Q_OBJECT
 
 public:
-	explicit EventTypeManager(EventTypeTable* model, QWidget* parent = 0);
+	explicit EventTypeManager(QWidget* parent = 0);
 	~EventTypeManager();
+
+	void setModel(EventTypeTable* model);
 
 private:
 	Ui::EventTypeManager* ui;

@@ -26,7 +26,9 @@ HEADERS += \
     src/DataFile/eventtypetable.h \
     src/DataFile/eventtable.h \
     src/DataFile/montagetable.h \
-    src/eventtypemanager.h
+    src/eventtypemanager.h \
+    src/eventmanager.h \
+    src/montagemanager.h
 
 SOURCES += \
     src/DataFile/gdf2.cpp \
@@ -51,11 +53,15 @@ SOURCES += \
     src/DataFile/eventtable.cpp \
     src/DataFile/montagetable.cpp \
     src/DataFile/datafile.cpp \
-    src/eventtypemanager.cpp
+    src/eventtypemanager.cpp \
+    src/eventmanager.cpp \
+    src/montagemanager.cpp
 
 FORMS += \
     src/testwindow.ui \
-    src/eventtypemanager.ui
+    src/eventtypemanager.ui \
+    src/eventmanager.ui \
+    src/montagemanager.ui
 
 DISTFILES += \
     shader.vert \

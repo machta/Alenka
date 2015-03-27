@@ -100,6 +100,8 @@
    <addaction name="actionOpenFile"/>
    <addaction name="actionCloseFile"/>
    <addaction name="actionUpdate"/>
+   <addaction name="actionMontageManager"/>
+   <addaction name="actionEventManager"/>
    <addaction name="actionEventTypeManager"/>
   </widget>
   <action name="actionUpdate">
@@ -129,6 +131,16 @@
   <action name="actionCloseFile">
    <property name="text">
     <string>CloseFile</string>
+   </property>
+  </action>
+  <action name="actionEventManager">
+   <property name="text">
+    <string>EventManager</string>
+   </property>
+  </action>
+  <action name="actionMontageManager">
+   <property name="text">
+    <string>MontageManager</string>
    </property>
   </action>
  </widget>

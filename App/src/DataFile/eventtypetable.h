@@ -44,7 +44,14 @@ public:
 			return Qt::ItemIsEnabled;
 		}
 
-		return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
+		Qt::ItemFlags f = QAbstractTableModel::flags(index);
+
+		if (index.column() != 0)
+		{
+			f |= Qt::ItemIsEditable;
+		}
+
+		return f;
 	}
 	virtual bool insertRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
 	virtual bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
