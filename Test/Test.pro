@@ -32,7 +32,4 @@ DISTFILES += \
     data/gdf/empty.gdf \
     data/gdf/badType.gdf \
     data/gdf/headerOnly.gdf \
-    data/gdf/badFile.gdf
-
-
-
+	data/gdf/badFile.gdf
