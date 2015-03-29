@@ -14,6 +14,8 @@
 #include <thread>
 #include <mutex>
 #include <ctime>
+#include <string>
+#include <sstream>
 
 namespace
 {
@@ -102,6 +104,25 @@ inline std::size_t fwriteChecked(void* data, std::size_t size, std::size_t n, FI
 		throw runtime_error("Error while reading data from file.");
 	}
 	return elementsWritten;
+}
+
+inline std::string readWholeTextFile(FILE* file)
+{
+	using namespace std;
+
+	int err = fseek(file, 0, SEEK_END);
+	checkErrorCode(err, 0, "fseek() in readWholeTextFile()");
+
+	size_t size = ftell(file);
+	char* tmp = new char[size + 1];
+	tmp[size] = 0;
+
+	rewind(file);
+	freadChecked(tmp, sizeof(char), size, file);
+
+	string str(tmp);
+	delete[] tmp;
+	return str;
 }
 
 inline void printBuffer(FILE* file, float* data, int n)

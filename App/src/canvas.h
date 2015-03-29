@@ -19,21 +19,7 @@ public:
 	explicit Canvas(QWidget* parent = 0);
 	~Canvas();
 
-	void changeFile(DataFile* file)
-	{
-		makeCurrent();
-
-		assert(signalProcessor != nullptr);
-
-		signalProcessor->changeFile(file);
-
-		if (file != nullptr)
-		{
-			samplesRecorded = file->getSamplesRecorded();
-		}
-
-		doneCurrent();
-	}
+	void changeFile(DataFile* file);
 
 protected:
 	virtual void initializeGL() override;
@@ -41,13 +27,17 @@ protected:
 	virtual void paintGL() override;
 
 private:
+	DataFile* file;
+	MontageTable* montageTable;
+	EventTable* eventTable;
+	EventTypeTable* eventTypeTable;
 	SignalProcessor* signalProcessor = nullptr;
 	OpenGLProgram* program = nullptr;
 	double samplesRecorded = 1;
 
-	double samplePixelRatio();
-	void paintBlock(const SignalBlock& block);
-	void paintChannel(unsigned int channel, const SignalBlock& block);
+	void drawBlock(const SignalBlock& block);
+	void setUniformChannel(int channel, const SignalBlock& block);
+	void setUniformColor(const QColor& color, float opacity);
 	void checkGLMessages()
 	{
 		for (const auto& m : log()->loggedMessages())

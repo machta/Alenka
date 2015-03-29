@@ -1,15 +1,17 @@
 #version 410 core
-
 layout(location = 0) in float sampleValue;
 
 uniform mat4 transformMatrix;
 uniform float y0;
 uniform int bufferOffset;
 uniform float yScale;
+uniform float eventWidth;
 
 void main()
 {
-	vec4 tmp = vec4(bufferOffset + gl_VertexID, y0 + yScale*sampleValue, 0, 1);
+	float x = bufferOffset + gl_VertexID;
 
-	gl_Position	= transformMatrix*tmp;
+	float y = y0 + yScale*sampleValue + eventWidth*(1 - 2*(gl_VertexID & 1));
+
+	gl_Position = transformMatrix*vec4(x, y, 0, 1);
 }

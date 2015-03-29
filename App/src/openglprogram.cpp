@@ -1,33 +1,8 @@
 #include "openglprogram.h"
 
-#include "error.h"
-
 #include <cstdio>
 
 using namespace std;
-
-OpenGLProgram::OpenGLProgram(FILE* vertSource, FILE* fragSource)
-{
-	char* tmp[2];
-	FILE* file[] = {vertSource, fragSource};
-
-	for (int i = 0; i < 2; ++i)
-	{
-		fseek(file[i], 0, SEEK_END);
-		size_t size = ftell(file[i]);
-
-		tmp[i] = new char[size + 1];
-		tmp[i][size] = 0;
-
-		rewind(file[i]);
-		freadChecked(tmp[i], sizeof(char), size, file[i]);
-	}
-
-	construct(tmp[0], tmp[1]);
-
-	delete[] tmp[0];
-	delete[] tmp[1];
-}
 
 OpenGLProgram::~OpenGLProgram()
 {
@@ -36,7 +11,7 @@ OpenGLProgram::~OpenGLProgram()
 	gl();
 }
 
-void OpenGLProgram::construct(const char* vertSource, const char* fragSource)
+void OpenGLProgram::construct(const string& vertSource, const string& fragSource)
 {
 	program = gl()->glCreateProgram();
 
@@ -57,20 +32,21 @@ void OpenGLProgram::construct(const char* vertSource, const char* fragSource)
 		char* log = new char[logLength];
 		gl()->glGetProgramInfoLog(program, logLength, &logLength, log);
 
-		logToBoth("OpenGLProgram ('" << vertSource << "', '" << fragSource << "') link log:" << endl << log);
+		logToBoth("OpenGLProgram link log:" << endl << log);
 
 		delete log;
 	}
 #endif
 
-	checkNotErrorCode(linkStatus, GL_FALSE, "OpenGLProgram ('" << vertSource << "', '" << fragSource << "') link failed.");
+	checkNotErrorCode(linkStatus, GL_FALSE, "OpenGLProgram link failed.");
 }
 
-void OpenGLProgram::addShader(GLuint program, const char* sourceText, GLenum type)
+void OpenGLProgram::addShader(GLuint program, const string& sourceText, GLenum type)
 {
 	GLuint shader = gl()->glCreateShader(type);
 
-	gl()->glShaderSource(shader, 1, &sourceText, nullptr);
+	const char* source = sourceText.c_str();
+	gl()->glShaderSource(shader, 1, &source, nullptr);
 
 	gl()->glCompileShader(shader);
 

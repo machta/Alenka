@@ -3,15 +3,20 @@
 
 #include "openglinterface.h"
 
+#include "error.h"
+
 #include <string>
 
 class OpenGLProgram : public OpenGLInterface
 {
 public:
-	OpenGLProgram(FILE* vertSource, FILE* fragSource);
+	OpenGLProgram(FILE* vertSource, FILE* fragSource)
+	{
+		construct(readWholeTextFile(vertSource), readWholeTextFile(fragSource));
+	}
 	OpenGLProgram(const std::string& vertSource, const std::string& fragSource)
 	{
-		construct(vertSource.c_str(), fragSource.c_str());
+		construct(vertSource, fragSource);
 	}
 	~OpenGLProgram();
 
@@ -23,8 +28,8 @@ public:
 private:
 	GLuint program;
 
-	void construct(const char* vertSource, const char* fragSource);
-	void addShader(GLuint program, const char* sourceText, GLenum type);
+	void construct(const std::string& vertSource, const std::string& fragSource);
+	void addShader(GLuint program, const std::string& sourceText, GLenum type);
 };
 
 #endif // OPENGLPROGRAM_H

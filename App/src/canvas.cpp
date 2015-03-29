@@ -24,6 +24,28 @@ Canvas::~Canvas()
 	gl();
 }
 
+void Canvas::changeFile(DataFile* file)
+{
+	makeCurrent();
+
+	assert(signalProcessor != nullptr);
+
+	signalProcessor->changeFile(file);
+
+	if (file != nullptr)
+	{
+		samplesRecorded = file->getSamplesRecorded();
+
+		montageTable = file->getMontageTables()->front();
+		eventTable = montageTable->getEventTable();
+		eventTypeTable = file->getEventTypeTable();
+	}
+
+	this->file = file;
+
+	doneCurrent();
+}
+
 void Canvas::initializeGL()
 {
 	if (PROGRAM_OPTIONS.isSet("glInfo"))
@@ -61,7 +83,10 @@ void Canvas::initializeGL()
 
 	gl()->glUseProgram(program->getGLProgram());
 
-	gl()->glClearColor(1, 1, 1, 1);
+	gl()->glEnable(GL_BLEND);
+	gl()->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	gl()->glClearColor(1, 1, 1, 0);
 
 	checkGLMessages();
 }
@@ -81,7 +106,7 @@ void Canvas::paintGL()
 	{
 		// Calculate the transformMatrix.
 		const SignalViewer* parent = reinterpret_cast<SignalViewer*>(parentWidget());
-		double ratio = samplePixelRatio();
+		double ratio = samplesRecorded/parent->getVirtualWidth();
 
 		QRectF rect(parent->getPosition()*ratio, 0, width()*ratio, height());
 
@@ -93,8 +118,8 @@ void Canvas::paintGL()
 		gl()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
 
 		// Create the data block range needed.
-		int firstIndex = static_cast<unsigned int>(floor(parent->getPosition()*ratio)),
-				lastIndex = static_cast<unsigned int>(ceil((parent->getPosition()+width())*ratio));
+		int firstIndex = static_cast<unsigned int>(floor(parent->getPosition()*ratio));
+		int lastIndex = static_cast<unsigned int>(ceil((parent->getPosition()+width())*ratio));
 
 		firstIndex /= signalProcessor->getBlockSize();
 		lastIndex /= signalProcessor->getBlockSize();
@@ -118,7 +143,7 @@ void Canvas::paintGL()
 		{
 			SignalBlock block = signalProcessor->getAnyBlock(indexSet);
 
-			paintBlock(block);
+			drawBlock(block);
 
 			gl()->glFlush();
 
@@ -143,41 +168,79 @@ void Canvas::paintGL()
 	logToFile("Painting finished.");
 }
 
-double Canvas::samplePixelRatio()
-{
-	const SignalViewer* parent = reinterpret_cast<SignalViewer*>(parentWidget());
-	return samplesRecorded/parent->getVirtualWidth();
-}
-
-void Canvas::paintBlock(const SignalBlock& block)
+void Canvas::drawBlock(const SignalBlock& block)
 {
 	gl()->glBindVertexArray(block.getGLVertexArray());
 
-	for (unsigned int i = 0; i < block.getchannelCount(); ++i)
+	// Paint events.
+	GLuint location = gl()->glGetUniformLocation(program->getGLProgram(), "eventWidth");
+	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
+	gl()->glUniform1f(location, 1*height()/signalProcessor->getTrackCount());
+
+	// TODO: Build a tree structure from the events to avoid the expensive enner loop.
+	for (int type = 0; type < eventTypeTable->rowCount(); ++type)
 	{
-		paintChannel(i, block);
+		setUniformColor(eventTypeTable->data(eventTypeTable->index(type, 3)).value<QColor>(), eventTypeTable->data(eventTypeTable->index(type, 2)).toDouble());
+
+		for (int channel = 0; channel < signalProcessor->getTrackCount(); ++channel)
+		{
+			setUniformChannel(channel, block);
+
+			for (int event = 0; event < eventTable->rowCount(); ++event)
+			{
+				int from = eventTable->data(eventTable->index(event, 2)).toInt() - block.getFirstSample();
+
+				if (type == eventTable->data(eventTable->index(event, 1)).toInt()
+					&& channel == eventTable->data(eventTable->index(event, 4)).toInt()
+					&& from >= 0 && from < signalProcessor->getBlockSize())
+				{
+					int length = eventTable->data(eventTable->index(event, 3)).toInt();
+					length = max(0, min<int>(signalProcessor->getBlockSize() - from, length));
+
+					gl()->glDrawArrays(GL_TRIANGLE_STRIP, channel*signalProcessor->getBlockSize() + from, length);
+				}
+			}
+		}
+	}
+
+	// Paint signals.
+	location = gl()->glGetUniformLocation(program->getGLProgram(), "eventWidth");
+	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
+	gl()->glUniform1f(location, 0);
+
+	for (unsigned int i = 0; i < signalProcessor->getTrackCount(); ++i)
+	{
+		setUniformChannel(i, block);
+		setUniformColor(montageTable->data(montageTable->index(i, 3)).value<QColor>(), 1);
+
+		gl()->glDrawArrays(GL_LINE_STRIP, i*signalProcessor->getBlockSize(), signalProcessor->getBlockSize());
 	}
 }
 
-void Canvas::paintChannel(unsigned int channel, const SignalBlock& block)
+void Canvas::setUniformChannel(int channel, const SignalBlock& block)
 {
-	// Set the uniform variables specific for every channel. (This could be moved to paintGL(), calculate all values at once and here update only index to arrays.)
 	GLuint location = gl()->glGetUniformLocation(program->getGLProgram(), "y0");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-	float y0 = (channel + 0.5f)*height()/block.getchannelCount();
+	float y0 = (channel + 0.5f)*height()/signalProcessor->getTrackCount();
 	gl()->glUniform1f(location, y0);
 
 	location = gl()->glGetUniformLocation(program->getGLProgram(), "yScale");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-	gl()->glUniform1f(location, -0.000008f*height());
-
-	GLint size = block.getLastSample() - block.getFirstSample() + 1;
-	GLint first = channel*size;
+	float yScale = montageTable->data(montageTable->index(channel, 3)).toDouble();
+	gl()->glUniform1f(location, yScale*height());
 
 	location = gl()->glGetUniformLocation(program->getGLProgram(), "bufferOffset");
 	checkNotErrorCode(location,static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-	gl()->glUniform1i(location, block.getFirstSample() - first);
+	gl()->glUniform1i(location, block.getFirstSample() - channel*signalProcessor->getBlockSize());
+}
 
-	// Draw onto the screen.
-	gl()->glDrawArrays(GL_LINE_STRIP, first, size);
+void Canvas::setUniformColor(const QColor& color, float opacity)
+{
+	double r, g, b, a;
+	color.getRgbF(&r, &g, &b, &a);
+	a = opacity;
+
+	GLuint location = gl()->glGetUniformLocation(program->getGLProgram(), "color");
+	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
+	gl()->glUniform4f(location, r, g, b, a);
 }

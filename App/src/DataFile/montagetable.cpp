@@ -50,7 +50,7 @@ void MontageTable::read(QXmlStreamReader* xml)
 			label.push_back(xml->attributes().value("label").toString().toStdString());
 			color.push_back(QColor(xml->attributes().value("color").toString()));
 			amplitude.push_back(xml->attributes().value("amplitude").toDouble());
-			hidden.push_back(xml->attributes().value("hidden") == "0" ? true : false);
+			hidden.push_back(xml->attributes().value("hidden") == "0" ? false : true);
 
 			xml->readNextStartElement();
 			assert(xml->name() == "code");
@@ -151,40 +151,54 @@ bool MontageTable::setData(const QModelIndex& index, const QVariant &value, int 
 
 bool MontageTable::insertRows(int row, int count, const QModelIndex& /*parent*/)
 {
-	beginInsertRows(QModelIndex(), row, row + count - 1);
-
-	for (int i = 0; i < count; ++i)
+	if (count > 0)
 	{
-		std::stringstream ssLabel, ssCode;
-		ssLabel << "Track " << row + i;
-		ssCode << "out = in(" << row + i << ");";
+		beginInsertRows(QModelIndex(), row, row + count - 1);
 
-		label.insert(label.begin() + row + i, ssLabel.str());
-		code.insert(code.begin() + row + i, ssCode.str());
-		color.insert(color.begin() + row + i, QColor(Qt::black));
-		amplitude.insert(amplitude.begin() + row + i, 1); // TODO: load global amplitude
-		hidden.insert(hidden.begin() + row + i, false);
+		for (int i = 0; i < count; ++i)
+		{
+			std::stringstream ssLabel, ssCode;
+			ssLabel << "Track " << row + i;
+			ssCode << "out = in(" << row + i << ");";
+
+			label.insert(label.begin() + row + i, ssLabel.str());
+			code.insert(code.begin() + row + i, ssCode.str());
+			color.insert(color.begin() + row + i, QColor(Qt::black));
+			amplitude.insert(amplitude.begin() + row + i, -0.000008); // TODO: load global amplitude
+			hidden.insert(hidden.begin() + row + i, false);
+		}
+
+		endInsertRows();
+
+		return true;
 	}
-
-	endInsertRows();
-
-	return true;
+	else
+	{
+		return false;
+	}
 }
 
 bool MontageTable::removeRows(int row, int count, const QModelIndex& /*parent*/)
 {
-	beginRemoveRows(QModelIndex(), row, row + count - 1);
+	if (count > 0)
+	{
+		beginRemoveRows(QModelIndex(), row, row + count - 1);
 
-	int end = row + count;
+		int end = row + count;
 
-	label.erase(label.begin() + row, label.begin() + end);
-	code.erase(code.begin() + row, code.begin() + end);
-	color.erase(color.begin() + row, color.begin() + end);
-	amplitude.erase(amplitude.begin() + row, amplitude.begin() + end);
-	hidden.erase(hidden.begin() + row, hidden.begin() + end);
+		label.erase(label.begin() + row, label.begin() + end);
+		code.erase(code.begin() + row, code.begin() + end);
+		color.erase(color.begin() + row, color.begin() + end);
+		amplitude.erase(amplitude.begin() + row, amplitude.begin() + end);
+		hidden.erase(hidden.begin() + row, hidden.begin() + end);
 
-	endRemoveRows();
+		endRemoveRows();
 
-	return true;
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 

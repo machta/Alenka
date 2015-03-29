@@ -17,3 +17,17 @@ void EventManager::setModel(EventTable *model)
 {
 	ui->eventTableView->setModel(model);
 }
+
+void EventManager::on_addRowButton_clicked()
+{
+	ui->eventTableView->model()->insertRow(ui->eventTableView->model()->rowCount());
+}
+
+void EventManager::on_removeRowButton_clicked()
+{
+	QModelIndex currentIndex = ui->eventTableView->selectionModel()->currentIndex();
+	if (currentIndex.isValid())
+	{
+		ui->eventTableView->model()->removeRow(currentIndex.row());
+	}
+}

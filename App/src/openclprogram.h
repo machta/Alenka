@@ -15,18 +15,7 @@ class OpenCLProgram
 public:
 	OpenCLProgram(FILE* source, OpenCLContext* context) : context(context)
 	{
-		fseek(source, 0, SEEK_END);
-		size_t size = ftell(source);
-
-		char* tmp = new char[size + 1];
-		tmp[size] = 0;
-
-		rewind(source);
-		freadChecked(tmp, sizeof(char), size, source);
-
-		construct(tmp);
-
-		delete[] tmp;
+		construct(readWholeTextFile(source));
 	}
 	OpenCLProgram(std::string source, OpenCLContext* context) : context(context)
 	{

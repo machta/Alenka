@@ -472,7 +472,7 @@ void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSampl
 		}
 
 		int recordOffset = static_cast<int>((firstSample + dataIndex)%samplesPerRecord);
-		int samplesToRead = static_cast<int>(min(static_cast<int64_t>(samplesPerRecord - recordOffset), n - dataIndex));
+		int samplesToRead = static_cast<int>(min<int64_t>(samplesPerRecord - recordOffset, n - dataIndex));
 
 		for (unsigned int channelI = 0; channelI < getChannelCount(); ++channelI)
 		{

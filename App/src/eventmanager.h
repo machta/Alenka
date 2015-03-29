@@ -20,6 +20,11 @@ public:
 
 	void setModel(EventTable* model);
 
+private slots:
+	void on_addRowButton_clicked();
+
+	void on_removeRowButton_clicked();
+
 private:
 	Ui::EventManager* ui;
 };

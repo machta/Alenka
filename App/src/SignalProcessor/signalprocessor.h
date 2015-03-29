@@ -26,9 +26,13 @@ public:
 	SignalProcessor();
 	~SignalProcessor();
 
-	int64_t getBlockSize() const
+	unsigned int getBlockSize() const
 	{
 		return blockSize;
+	}
+	int getTrackCount() const
+	{
+		return trackCount;
 	}
 	void changeFilter(Filter* filter);
 	void changeMontage(Montage* montage);
@@ -71,6 +75,7 @@ private:
 
 	bool onlineFilter;
 	unsigned int blockSize;
+	int trackCount;
 
 	std::condition_variable processorInCV;
 	cl_command_queue commandQueue;

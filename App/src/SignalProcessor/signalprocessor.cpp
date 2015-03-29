@@ -77,7 +77,8 @@ void SignalProcessor::changeMontage(Montage* montage)
 
 	deleteOutputBuffer();
 
-	unsigned int outputBlockSize = blockSize*montage->getNumberOfRows();
+	trackCount = montage->getNumberOfRows();
+	unsigned int outputBlockSize = blockSize*trackCount;
 
 	GLuint buffer;
 

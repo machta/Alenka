@@ -147,40 +147,54 @@ bool EventTable::setData(const QModelIndex &index, const QVariant &value, int ro
 
 bool EventTable::insertRows(int row, int count, const QModelIndex& /*parent*/)
 {
-	beginInsertRows(QModelIndex(), row, row + count - 1);
-
-	for (int i = 0; i < count; ++i)
+	if (count > 0)
 	{
-		std::stringstream ss;
-		ss << "Event " << row + i;
+		beginInsertRows(QModelIndex(), row, row + count - 1);
 
-		label.insert(label.begin() + row + i, ss.str());
-		type.insert(type.begin() + row + i, 0); // TODO: load current selected type
-		position.insert(position.begin() + row + i, 0);
-		duration.insert(duration.begin() + row + i, 1);
-		channel.insert(channel.begin() + row + i, -1);
-		description.insert(description.begin() + row + i, "");
+		for (int i = 0; i < count; ++i)
+		{
+			std::stringstream ss;
+			ss << "Event " << row + i;
+
+			label.insert(label.begin() + row + i, ss.str());
+			type.insert(type.begin() + row + i, 0); // TODO: load current selected type
+			position.insert(position.begin() + row + i, 0);
+			duration.insert(duration.begin() + row + i, 1);
+			channel.insert(channel.begin() + row + i, -1);
+			description.insert(description.begin() + row + i, "");
+		}
+
+		endInsertRows();
+
+		return true;
 	}
-
-	endInsertRows();
-
-	return true;
+	else
+	{
+		return false;
+	}
 }
 
 bool EventTable::removeRows(int row, int count, const QModelIndex& /*parent*/)
 {
-	beginRemoveRows(QModelIndex(), row, row + count - 1);
+	if (count > 0)
+	{
+		beginRemoveRows(QModelIndex(), row, row + count - 1);
 
-	int end = row + count;
+		int end = row + count;
 
-	label.erase(label.begin() + row, label.begin() + end);
-	type.erase(type.begin() + row, type.begin() + end);
-	position.erase(position.begin() + row, position.begin() + end);
-	duration.erase(duration.begin() + row, duration.begin() + end);
-	channel.erase(channel.begin() + row, channel.begin() + end);
-	description.erase(description.begin() + row, description.begin() + end);
+		label.erase(label.begin() + row, label.begin() + end);
+		type.erase(type.begin() + row, type.begin() + end);
+		position.erase(position.begin() + row, position.begin() + end);
+		duration.erase(duration.begin() + row, duration.begin() + end);
+		channel.erase(channel.begin() + row, channel.begin() + end);
+		description.erase(description.begin() + row, description.begin() + end);
 
-	endRemoveRows();
+		endRemoveRows();
 
-	return true;
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }

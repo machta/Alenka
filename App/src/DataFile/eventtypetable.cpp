@@ -44,7 +44,7 @@ void EventTypeTable::read(QXmlStreamReader* xml)
 		name.push_back(xml->attributes().value("name").toString().toStdString());
 		opacity.push_back(xml->attributes().value("opacity").toDouble());
 		color.push_back(QColor(xml->attributes().value("color").toString()));
-		hidden.push_back(xml->attributes().value("hidden") == "0" ? true : false);
+		hidden.push_back(xml->attributes().value("hidden") == "0" ? false : true);
 
 		xml->skipCurrentElement();
 	}
@@ -132,38 +132,52 @@ bool EventTypeTable::setData(const QModelIndex &index, const QVariant& value, in
 
 bool EventTypeTable::insertRows(int row, int count, const QModelIndex& /*parent*/)
 {
-	beginInsertRows(QModelIndex(), row, row + count - 1);
-
-	for (int i = 0; i < count; ++i)
+	if (count > 0)
 	{
-		std::stringstream ss;
-		ss << "Type " << row;
+		beginInsertRows(QModelIndex(), row, row + count - 1);
 
-		id.insert(id.begin() + row + i, row + 256*256);
-		name.insert(name.begin() + row + i, ss.str());
-		opacity.insert(opacity.begin() + row + i, 0.25);
-		color.insert(color.begin() + row + i, QColor(Qt::red));
-		hidden.insert(hidden.begin() + row + i, false);
+		for (int i = 0; i < count; ++i)
+		{
+			std::stringstream ss;
+			ss << "Type " << row;
+
+			id.insert(id.begin() + row + i, row + 256*256);
+			name.insert(name.begin() + row + i, ss.str());
+			opacity.insert(opacity.begin() + row + i, 0.25);
+			color.insert(color.begin() + row + i, QColor(Qt::red));
+			hidden.insert(hidden.begin() + row + i, false);
+		}
+
+		endInsertRows();
+
+		return true;
 	}
-
-	endInsertRows();
-
-	return true;
+	else
+	{
+		return false;
+	}
 }
 
 bool EventTypeTable::removeRows(int row, int count, const QModelIndex& /*parent*/)
 {
-	beginRemoveRows(QModelIndex(), row, row + count - 1);
+	if (count > 0)
+	{
+		beginRemoveRows(QModelIndex(), row, row + count - 1);
 
-	int end = row + count;
+		int end = row + count;
 
-	id.erase(id.begin() + row, id.begin() + end);
-	name.erase(name.begin() + row, name.begin() + end);
-	opacity.erase(opacity.begin() + row, opacity.begin() + end);
-	color.erase(color.begin() + row, color.begin() + end);
-	hidden.erase(hidden.begin() + row, hidden.begin() + end);
+		id.erase(id.begin() + row, id.begin() + end);
+		name.erase(name.begin() + row, name.begin() + end);
+		opacity.erase(opacity.begin() + row, opacity.begin() + end);
+		color.erase(color.begin() + row, color.begin() + end);
+		hidden.erase(hidden.begin() + row, hidden.begin() + end);
 
-	endRemoveRows();
+		endRemoveRows();
 
-	return true;
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
