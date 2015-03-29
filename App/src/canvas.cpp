@@ -19,9 +19,17 @@ Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent)
 Canvas::~Canvas()
 {
 	delete signalProcessor;
-	delete program;
+	delete signalProgram;
+	delete eventProgram;
+
+	makeCurrent();
+
+	gl()->glDeleteVertexArrays(1, &rectangleArray);
+	gl()->glDeleteBuffers(1, &rectangleBuffer);
 
 	gl();
+
+	doneCurrent();
 }
 
 void Canvas::changeFile(DataFile* file)
@@ -70,23 +78,37 @@ void Canvas::initializeGL()
 
 	signalProcessor = new SignalProcessor;
 
-	FILE* file1 = fopen(PROGRAM_OPTIONS["vert"].as<string>().c_str(), "rb");
-	checkNotErrorCode(file1, nullptr, "File '" << PROGRAM_OPTIONS["vert"].as<string>() << "' could not be opened.");
+	FILE* signalVert = fopen("signal.vert", "rb");
+	checkNotErrorCode(signalVert, nullptr, "File 'signal.vert' could not be opened.");
 
-	FILE* file2 = fopen(PROGRAM_OPTIONS["frag"].as<string>().c_str(), "rb");
-	checkNotErrorCode(file2, nullptr, "File '" << PROGRAM_OPTIONS["frag"].as<string>() << "' could not be opened.");
+	FILE* eventVert = fopen("event.vert", "rb");
+	checkNotErrorCode(eventVert, nullptr, "File 'event.vert' could not be opened.");
 
-	program = new OpenGLProgram(file1, file2);
+	FILE* colorFrag = fopen("color.frag", "rb");
+	checkNotErrorCode(colorFrag, nullptr, "File 'color.frag could' not be opened.");
 
-	fclose(file1);
-	fclose(file2);
+	signalProgram = new OpenGLProgram(signalVert, colorFrag);
+	eventProgram = new OpenGLProgram(eventVert, colorFrag);
 
-	gl()->glUseProgram(program->getGLProgram());
+	fclose(signalVert);
+	fclose(eventVert);
+	fclose(colorFrag);
 
 	gl()->glEnable(GL_BLEND);
 	gl()->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	gl()->glClearColor(1, 1, 1, 0);
+
+	gl()->glGenVertexArrays(1, &rectangleArray);
+	gl()->glGenBuffers(1, &rectangleBuffer);
+
+	gl()->glBindVertexArray(rectangleArray);
+	gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleBuffer);
+	gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(0));
+	gl()->glEnableVertexAttribArray(0);
+
+	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
+	gl()->glBindVertexArray(0);
 
 	checkGLMessages();
 }
@@ -113,16 +135,24 @@ void Canvas::paintGL()
 		QMatrix4x4 matrix;
 		matrix.ortho(rect);
 
-		GLuint location = gl()->glGetUniformLocation(program->getGLProgram(), "transformMatrix");
+		gl()->glUseProgram(signalProgram->getGLProgram());
+
+		GLuint location = gl()->glGetUniformLocation(signalProgram->getGLProgram(), "transformMatrix");
+		checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
+		gl()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
+
+		gl()->glUseProgram(eventProgram->getGLProgram());
+
+		location = gl()->glGetUniformLocation(eventProgram->getGLProgram(), "transformMatrix");
 		checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
 		gl()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
 
 		// Create the data block range needed.
-		int firstIndex = static_cast<unsigned int>(floor(parent->getPosition()*ratio));
-		int lastIndex = static_cast<unsigned int>(ceil((parent->getPosition()+width())*ratio));
+		int firstSample = static_cast<unsigned int>(floor(parent->getPosition()*ratio));
+		int lastSample = static_cast<unsigned int>(ceil((parent->getPosition()+width())*ratio));
 
-		firstIndex /= signalProcessor->getBlockSize();
-		lastIndex /= signalProcessor->getBlockSize();
+		int firstIndex = firstSample / signalProcessor->getBlockSize();
+		int lastIndex = lastSample / signalProcessor->getBlockSize();
 
 		set<int> indexSet;
 
@@ -138,7 +168,34 @@ void Canvas::paintGL()
 			//prepareBlocks(firstIndex, lastIndex);
 		}
 
-		// Render one block at a time.
+		// Draw all channel events.
+		gl()->glUseProgram(eventProgram->getGLProgram());
+
+		for (int type = 0; type < eventTypeTable->rowCount(); ++type)
+		{
+			setUniformColor(eventProgram->getGLProgram(), eventTypeTable->data(eventTypeTable->index(type, 3)).value<QColor>(), eventTypeTable->data(eventTypeTable->index(type, 2)).toDouble());
+
+			for (int event = 0; event < eventTable->rowCount(); ++event)
+			{
+				int from = eventTable->data(eventTable->index(event, 2)).toInt();
+				int to = from + eventTable->data(eventTable->index(event, 3)).toInt() - 1;
+
+				if (type == eventTable->data(eventTable->index(event, 1)).toInt()
+					&& eventTable->data(eventTable->index(event, 4)).toInt() < 0
+					&& from <= lastSample && firstIndex <= to)
+				{
+					float data[8] = {from, 0, to, 0, from, height(), to, height()};
+					gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleBuffer);
+					gl()->glBufferData(GL_ARRAY_BUFFER, 8*sizeof(float), data, GL_STATIC_DRAW);
+					gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+					gl()->glBindVertexArray(rectangleArray);
+					gl()->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+				}
+			}
+		}
+
+		// Draw one block at a time.
 		while (indexSet.empty() == false)
 		{
 			SignalBlock block = signalProcessor->getAnyBlock(indexSet);
@@ -152,15 +209,13 @@ void Canvas::paintGL()
 			//logToFile("Block " << block.getIndex() << " painted.");
 		}
 
-		// Finish rendering.
 		gl()->glFlush();
+		gl()->glBindVertexArray(0);
 
 		// Prepare some blocks for the next frame.
 		int cap = min(PROGRAM_OPTIONS["prepareFrames"].as<unsigned int>()*indexSetSize, signalProcessor->getCapacity() - indexSetSize);
 
-		prepare(indexSetSize, 0, static_cast<int>(ceil(parent->getVirtualWidth()*ratio)), firstIndex - indexSetSize, lastIndex + indexSetSize, cap);
-
-		gl()->glBindVertexArray(0);
+		prepare(indexSetSize, 0, static_cast<int>(ceil(parent->getVirtualWidth()*ratio)), firstIndex - indexSetSize, lastIndex + indexSetSize, cap);		
 	}
 
 	checkGLMessages();
@@ -171,20 +226,21 @@ void Canvas::paintGL()
 void Canvas::drawBlock(const SignalBlock& block)
 {
 	gl()->glBindVertexArray(block.getGLVertexArray());
+	gl()->glUseProgram(signalProgram->getGLProgram());
 
-	// Paint events.
-	GLuint location = gl()->glGetUniformLocation(program->getGLProgram(), "eventWidth");
+	// Draw single channel events.
+	GLuint location = gl()->glGetUniformLocation(signalProgram->getGLProgram(), "eventWidth");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-	gl()->glUniform1f(location, 1*height()/signalProcessor->getTrackCount());
+	gl()->glUniform1f(location, 0.45*height()/signalProcessor->getTrackCount());
 
 	// TODO: Build a tree structure from the events to avoid the expensive enner loop.
 	for (int type = 0; type < eventTypeTable->rowCount(); ++type)
 	{
-		setUniformColor(eventTypeTable->data(eventTypeTable->index(type, 3)).value<QColor>(), eventTypeTable->data(eventTypeTable->index(type, 2)).toDouble());
+		setUniformColor(signalProgram->getGLProgram(), eventTypeTable->data(eventTypeTable->index(type, 3)).value<QColor>(), eventTypeTable->data(eventTypeTable->index(type, 2)).toDouble());
 
 		for (int channel = 0; channel < signalProcessor->getTrackCount(); ++channel)
 		{
-			setUniformChannel(channel, block);
+			setUniformChannel(signalProgram->getGLProgram(), channel, block);
 
 			for (int event = 0; event < eventTable->rowCount(); ++event)
 			{
@@ -203,44 +259,44 @@ void Canvas::drawBlock(const SignalBlock& block)
 		}
 	}
 
-	// Paint signals.
-	location = gl()->glGetUniformLocation(program->getGLProgram(), "eventWidth");
+	// Draw signal tracks.
+	location = gl()->glGetUniformLocation(signalProgram->getGLProgram(), "eventWidth");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
 	gl()->glUniform1f(location, 0);
 
 	for (unsigned int i = 0; i < signalProcessor->getTrackCount(); ++i)
 	{
-		setUniformChannel(i, block);
-		setUniformColor(montageTable->data(montageTable->index(i, 3)).value<QColor>(), 1);
+		setUniformChannel(signalProgram->getGLProgram(), i, block);
+		setUniformColor(signalProgram->getGLProgram(), montageTable->data(montageTable->index(i, 3)).value<QColor>(), 1);
 
 		gl()->glDrawArrays(GL_LINE_STRIP, i*signalProcessor->getBlockSize(), signalProcessor->getBlockSize());
 	}
 }
 
-void Canvas::setUniformChannel(int channel, const SignalBlock& block)
+void Canvas::setUniformChannel(GLuint program, int channel, const SignalBlock& block)
 {
-	GLuint location = gl()->glGetUniformLocation(program->getGLProgram(), "y0");
+	GLuint location = gl()->glGetUniformLocation(program, "y0");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
 	float y0 = (channel + 0.5f)*height()/signalProcessor->getTrackCount();
 	gl()->glUniform1f(location, y0);
 
-	location = gl()->glGetUniformLocation(program->getGLProgram(), "yScale");
+	location = gl()->glGetUniformLocation(program, "yScale");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
 	float yScale = montageTable->data(montageTable->index(channel, 3)).toDouble();
 	gl()->glUniform1f(location, yScale*height());
 
-	location = gl()->glGetUniformLocation(program->getGLProgram(), "bufferOffset");
+	location = gl()->glGetUniformLocation(program, "bufferOffset");
 	checkNotErrorCode(location,static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
 	gl()->glUniform1i(location, block.getFirstSample() - channel*signalProcessor->getBlockSize());
 }
 
-void Canvas::setUniformColor(const QColor& color, float opacity)
+void Canvas::setUniformColor(GLuint program, const QColor& color, float opacity)
 {
 	double r, g, b, a;
 	color.getRgbF(&r, &g, &b, &a);
 	a = opacity;
 
-	GLuint location = gl()->glGetUniformLocation(program->getGLProgram(), "color");
+	GLuint location = gl()->glGetUniformLocation(program, "color");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
 	gl()->glUniform4f(location, r, g, b, a);
 }

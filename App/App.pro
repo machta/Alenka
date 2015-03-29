@@ -64,7 +64,8 @@ FORMS += \
     src/montagemanager.ui
 
 DISTFILES += \
-    shader.vert \
-    shader.frag \
     kernels.cl \
-    montageHeader.cl
+    montageHeader.cl \
+    color.frag \
+    event.vert \
+    signal.vert

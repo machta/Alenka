@@ -32,12 +32,15 @@ private:
 	EventTable* eventTable;
 	EventTypeTable* eventTypeTable;
 	SignalProcessor* signalProcessor = nullptr;
-	OpenGLProgram* program = nullptr;
+	OpenGLProgram* signalProgram = nullptr;
+	OpenGLProgram* eventProgram = nullptr;
 	double samplesRecorded = 1;
+	GLuint rectangleArray;
+	GLuint rectangleBuffer;
 
 	void drawBlock(const SignalBlock& block);
-	void setUniformChannel(int channel, const SignalBlock& block);
-	void setUniformColor(const QColor& color, float opacity);
+	void setUniformChannel(GLuint program, int channel, const SignalBlock& block);
+	void setUniformColor(GLuint program, const QColor& color, float opacity);
 	void checkGLMessages()
 	{
 		for (const auto& m : log()->loggedMessages())
