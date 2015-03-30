@@ -11,6 +11,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <tuple>
 
 class EventTable : public QAbstractTableModel
 {
@@ -22,6 +23,7 @@ public:
 
 	void write(QXmlStreamWriter* xml) const;
 	void read(QXmlStreamReader* xml);
+	void getEventsForRendering(int firstSample, int lastSample, std::vector<std::tuple<int, int, int>>* allChannelEvents, std::vector<std::tuple<int, int, int, int>>* singleChannelEvents);
 	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override
 	{
 		(void)parent;

@@ -10,6 +10,8 @@
 
 #include <algorithm>
 #include <cassert>
+#include <vector>
+#include <tuple>
 
 class Canvas : public QOpenGLWidget, public OpenGLInterface
 {
@@ -38,7 +40,7 @@ private:
 	GLuint rectangleArray;
 	GLuint rectangleBuffer;
 
-	void drawBlock(const SignalBlock& block);
+	void drawBlock(const SignalBlock& block, const std::vector<std::tuple<int, int, int, int>>& singleChannelEvents);
 	void setUniformChannel(GLuint program, int channel, const SignalBlock& block);
 	void setUniformColor(GLuint program, const QColor& color, float opacity);
 	void checkGLMessages()

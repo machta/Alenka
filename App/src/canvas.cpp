@@ -168,30 +168,36 @@ void Canvas::paintGL()
 			//prepareBlocks(firstIndex, lastIndex);
 		}
 
+		// Get events.
+		vector<tuple<int, int, int>> allChannelEvents;
+		vector<tuple<int, int, int, int>> singleChannelEvents;
+
+		eventTable->getEventsForRendering(firstSample, lastSample, &allChannelEvents, &singleChannelEvents);
+
 		// Draw all channel events.
 		gl()->glUseProgram(eventProgram->getGLProgram());
+		gl()->glBindVertexArray(rectangleArray);
+		gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleBuffer);
 
-		for (int type = 0; type < eventTypeTable->rowCount(); ++type)
+		int event = 0, type = -1;
+		while (event < allChannelEvents.size())
 		{
-			setUniformColor(eventProgram->getGLProgram(), eventTypeTable->data(eventTypeTable->index(type, 3)).value<QColor>(), eventTypeTable->data(eventTypeTable->index(type, 2)).toDouble());
-
-			for (int event = 0; event < eventTable->rowCount(); ++event)
+			if (type == get<0>(allChannelEvents[event]))
 			{
-				int from = eventTable->data(eventTable->index(event, 2)).toInt();
-				int to = from + eventTable->data(eventTable->index(event, 3)).toInt() - 1;
+				int from = get<1>(allChannelEvents[event]);
+				int to = from + get<2>(allChannelEvents[event]) - 1;
 
-				if (type == eventTable->data(eventTable->index(event, 1)).toInt()
-					&& eventTable->data(eventTable->index(event, 4)).toInt() < 0
-					&& from <= lastSample && firstIndex <= to)
-				{
-					float data[8] = {from, 0, to, 0, from, height(), to, height()};
-					gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleBuffer);
-					gl()->glBufferData(GL_ARRAY_BUFFER, 8*sizeof(float), data, GL_STATIC_DRAW);
-					gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
+				float data[8] = {from, 0, to, 0, from, height(), to, height()};
+				gl()->glBufferData(GL_ARRAY_BUFFER, 8*sizeof(float), data, GL_STATIC_DRAW);
 
-					gl()->glBindVertexArray(rectangleArray);
-					gl()->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-				}
+				gl()->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+				++event;
+			}
+			else
+			{
+				type = get<0>(allChannelEvents[event]);
+				setUniformColor(eventProgram->getGLProgram(), eventTypeTable->data(eventTypeTable->index(type, 3)).value<QColor>(), eventTypeTable->data(eventTypeTable->index(type, 2)).toDouble());
 			}
 		}
 
@@ -200,7 +206,7 @@ void Canvas::paintGL()
 		{
 			SignalBlock block = signalProcessor->getAnyBlock(indexSet);
 
-			drawBlock(block);
+			drawBlock(block, singleChannelEvents);
 
 			gl()->glFlush();
 
@@ -209,21 +215,22 @@ void Canvas::paintGL()
 			//logToFile("Block " << block.getIndex() << " painted.");
 		}
 
-		gl()->glFlush();
 		gl()->glBindVertexArray(0);
 
 		// Prepare some blocks for the next frame.
 		int cap = min(PROGRAM_OPTIONS["prepareFrames"].as<unsigned int>()*indexSetSize, signalProcessor->getCapacity() - indexSetSize);
 
-		prepare(indexSetSize, 0, static_cast<int>(ceil(parent->getVirtualWidth()*ratio)), firstIndex - indexSetSize, lastIndex + indexSetSize, cap);		
+		prepare(indexSetSize, 0, static_cast<int>(ceil(parent->getVirtualWidth()*ratio)), firstIndex - indexSetSize, lastIndex + indexSetSize, cap);
 	}
+
+	gl()->glFinish();
 
 	checkGLMessages();
 
 	logToFile("Painting finished.");
 }
 
-void Canvas::drawBlock(const SignalBlock& block)
+void Canvas::drawBlock(const SignalBlock& block, const vector<tuple<int, int, int, int>>& singleChannelEvents)
 {
 	gl()->glBindVertexArray(block.getGLVertexArray());
 	gl()->glUseProgram(signalProgram->getGLProgram());
@@ -233,29 +240,36 @@ void Canvas::drawBlock(const SignalBlock& block)
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
 	gl()->glUniform1f(location, 0.45*height()/signalProcessor->getTrackCount());
 
-	// TODO: Build a tree structure from the events to avoid the expensive enner loop.
-	for (int type = 0; type < eventTypeTable->rowCount(); ++type)
+	int event = 0, type = -1, channel = signalProcessor->getTrackCount();
+	while (event < singleChannelEvents.size())
 	{
-		setUniformColor(signalProgram->getGLProgram(), eventTypeTable->data(eventTypeTable->index(type, 3)).value<QColor>(), eventTypeTable->data(eventTypeTable->index(type, 2)).toDouble());
-
-		for (int channel = 0; channel < signalProcessor->getTrackCount(); ++channel)
+		if (type == get<0>(singleChannelEvents[event]))
 		{
-			setUniformChannel(signalProgram->getGLProgram(), channel, block);
-
-			for (int event = 0; event < eventTable->rowCount(); ++event)
+			if (channel == get<1>(singleChannelEvents[event]))
 			{
-				int from = eventTable->data(eventTable->index(event, 2)).toInt() - block.getFirstSample();
+				int from = get<2>(singleChannelEvents[event]);
+				int to = from + get<3>(singleChannelEvents[event]) - 1;
 
-				if (type == eventTable->data(eventTable->index(event, 1)).toInt()
-					&& channel == eventTable->data(eventTable->index(event, 4)).toInt()
-					&& from >= 0 && from < signalProcessor->getBlockSize())
+				if (from <= block.getLastSample() && block.getFirstSample() <= to)
 				{
-					int length = eventTable->data(eventTable->index(event, 3)).toInt();
-					length = max(0, min<int>(signalProcessor->getBlockSize() - from, length));
+					from = max<int>(block.getFirstSample(), from);
+					to = min<int>(block.getLastSample(), to);
 
-					gl()->glDrawArrays(GL_TRIANGLE_STRIP, channel*signalProcessor->getBlockSize() + from, length);
+					gl()->glDrawArrays(GL_TRIANGLE_STRIP, channel*signalProcessor->getBlockSize() + from - block.getFirstSample(), to - from + 1);
 				}
+
+				++event;
 			}
+			else
+			{
+				channel = get<1>(singleChannelEvents[event]);
+				setUniformChannel(signalProgram->getGLProgram(), channel, block);
+			}
+		}
+		else
+		{
+			type = get<0>(singleChannelEvents[event]);
+			setUniformColor(signalProgram->getGLProgram(), eventTypeTable->data(eventTypeTable->index(type, 3)).value<QColor>(), eventTypeTable->data(eventTypeTable->index(type, 2)).toDouble());
 		}
 	}
 

@@ -58,6 +58,29 @@ void EventTable::read(QXmlStreamReader* xml)
 	}
 }
 
+void EventTable::getEventsForRendering(int firstSample, int lastSample, vector<tuple<int, int, int>>* allChannelEvents, vector<tuple<int, int, int, int>>* singleChannelEvents)
+{
+	for (int i = 0; i < rowCount(); ++i)
+	{
+		if (position[i] <= lastSample && firstSample <= position[i] + duration[i] - 1)
+		{
+			if (channel[i] < 0)
+			{
+				allChannelEvents->emplace_back(type[i], position[i], duration[i]);
+			}
+			else
+			{
+				singleChannelEvents->emplace_back(type[i], channel[i], position[i], duration[i]);
+			}
+		}
+	}
+
+	std::sort(allChannelEvents->begin(), allChannelEvents->end(), [] (tuple<int, int, int> a, tuple<int, int, int> b) { return get<0>(a) < get<0>(b); });
+
+	stable_sort(singleChannelEvents->begin(), singleChannelEvents->end(), [] (tuple<int, int, int, int> a, tuple<int, int, int, int> b) { return get<1>(a) < get<1>(b); });
+	stable_sort(singleChannelEvents->begin(), singleChannelEvents->end(), [] (tuple<int, int, int, int> a, tuple<int, int, int, int> b) { return get<0>(a) < get<0>(b); });
+}
+
 QVariant EventTable::headerData(int section, Qt::Orientation orientation, int role) const
 {
 	if (role == Qt::DisplayRole && orientation == Qt::Horizontal)
