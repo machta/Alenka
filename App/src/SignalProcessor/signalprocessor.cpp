@@ -14,6 +14,28 @@ SignalProcessor::SignalProcessor()
 
 	commandQueue = clCreateCommandQueue(context->getCLContext(), context->getCLDevice(), 0, &err);
 	checkErrorCode(err, CL_SUCCESS, "clCreateCommandQueue()");
+
+	gl()->glGenBuffers(1, &glBuffer);
+	gl()->glGenVertexArrays(2, vertexArrays);
+
+	gl()->glBindBuffer(GL_ARRAY_BUFFER, glBuffer);
+
+	GLsizei stride = 0;
+	if (PROGRAM_OPTIONS["fastEvents"].as<bool>() == false)
+	{
+		stride = 2*sizeof(float);
+	}
+
+	gl()->glBindVertexArray(vertexArrays[0]);
+	gl()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<void*>(0));
+	gl()->glEnableVertexAttribArray(0);
+
+	gl()->glBindVertexArray(vertexArrays[1]);
+	gl()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(0));
+	gl()->glEnableVertexAttribArray(0);
+
+	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
+	gl()->glBindVertexArray(0);
 }
 
 SignalProcessor::~SignalProcessor()
@@ -26,6 +48,9 @@ SignalProcessor::~SignalProcessor()
 
 	err = clReleaseCommandQueue(commandQueue);
 	checkErrorCode(err, CL_SUCCESS, "clReleaseCommandQueue()");
+
+	gl()->glDeleteBuffers(1, &glBuffer);
+	gl()->glDeleteVertexArrays(2, vertexArrays);
 
 	gl();
 }
@@ -65,30 +90,26 @@ void SignalProcessor::changeFilter(Filter* filter)
 }
 
 void SignalProcessor::changeMontage(Montage* montage)
-{
+{	
 	if (noFile)
 	{
 		return;
 	}
 
-	cl_int err;
-
 	montageProcessor->change(montage);
 
-	deleteOutputBuffer();
+	releaseOutputBuffer();
+
+	gl()->glBindBuffer(GL_ARRAY_BUFFER, glBuffer);
 
 	trackCount = montage->getNumberOfRows();
 	unsigned int outputBlockSize = blockSize*trackCount;
 
-	GLuint buffer;
+	if (PROGRAM_OPTIONS["fastEvents"].as<bool>() == false)
+	{
+		outputBlockSize *= 2;
+	}
 
-	gl()->glGenBuffers(1, &buffer);
-	gl()->glGenVertexArrays(1, &processorVertexArray);
-
-	gl()->glBindVertexArray(processorVertexArray);
-	gl()->glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	gl()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(0));
-	gl()->glEnableVertexAttribArray(0);
 	gl()->glBufferData(GL_ARRAY_BUFFER, outputBlockSize*sizeof(float), nullptr, GL_STATIC_DRAW);
 
 	cl_mem_flags flags = CL_MEM_READ_WRITE;
@@ -99,12 +120,12 @@ void SignalProcessor::changeMontage(Montage* montage)
 #endif
 #endif
 
-	processorOutputBuffer = clCreateFromGLBuffer(context->getCLContext(), flags, buffer, &err);
+	cl_int err;
+
+	processorOutputBuffer = clCreateFromGLBuffer(context->getCLContext(), flags, glBuffer, &err);
 	checkErrorCode(err, CL_SUCCESS, "clCreateFromGLBuffer()");
 
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
-	gl()->glBindVertexArray(0);
-	gl()->glDeleteBuffers(1, &buffer);
 }
 
 SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
@@ -161,7 +182,7 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 	checkErrorCode(err, CL_SUCCESS, "clFinish()");
 
 	auto fromTo = DataFile::getBlockBoundaries(index, getBlockSize());
-	return SignalBlock(index, montageProcessor->getNumberOfRows(), fromTo.first, fromTo.second, processorVertexArray);
+	return SignalBlock(index, montageProcessor->getNumberOfRows(), fromTo.first, fromTo.second, vertexArrays);
 }
 
 void SignalProcessor::changeFile(DataFile* file)
@@ -265,15 +286,13 @@ void SignalProcessor::destroyFileRelated()
 	{
 		noFile = true;
 
-		cl_int err;
-
 		delete cache;
 		delete filterProcessor;
 		delete montageProcessor;
 
-		err = clReleaseMemObject(processorTmpBuffer);
+		cl_int err = clReleaseMemObject(processorTmpBuffer);
 		checkErrorCode(err, CL_SUCCESS, "clReleaseMemObject()");
 
-		deleteOutputBuffer();
+		releaseOutputBuffer();
 	}
 }

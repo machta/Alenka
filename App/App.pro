@@ -68,4 +68,5 @@ DISTFILES += \
     montageHeader.cl \
     color.frag \
     event.vert \
-    signal.vert
+    signal.vert \
+    rectangle.vert

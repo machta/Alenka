@@ -81,7 +81,8 @@ private:
 	cl_command_queue commandQueue;
 	cl_mem processorTmpBuffer;
 	cl_mem processorOutputBuffer = nullptr;
-	GLuint processorVertexArray;
+	GLuint vertexArrays[2];
+	GLuint glBuffer;
 
 	void destroyFileRelated();
 	std::string indexSetToString(const std::set<int>& indexSet)
@@ -99,12 +100,10 @@ private:
 
 		return ss.str();
 	}
-	void deleteOutputBuffer()
+	void releaseOutputBuffer()
 	{
 		if (processorOutputBuffer != nullptr)
 		{
-			gl()->glDeleteVertexArrays(1, &processorVertexArray);
-
 			cl_int err = clReleaseMemObject(processorOutputBuffer);
 			checkErrorCode(err, CL_SUCCESS, "clReleaseMemObject()");
 

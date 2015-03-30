@@ -36,9 +36,11 @@ private:
 	SignalProcessor* signalProcessor = nullptr;
 	OpenGLProgram* signalProgram = nullptr;
 	OpenGLProgram* eventProgram = nullptr;
+	OpenGLProgram* rectangleProgram = nullptr;
 	double samplesRecorded = 1;
 	GLuint rectangleArray;
 	GLuint rectangleBuffer;
+	bool fastEvents = PROGRAM_OPTIONS["fastEvents"].as<bool>();
 
 	void drawBlock(const SignalBlock& block, const std::vector<std::tuple<int, int, int, int>>& singleChannelEvents);
 	void setUniformChannel(GLuint program, int channel, const SignalBlock& block);

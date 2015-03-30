@@ -21,6 +21,7 @@ Canvas::~Canvas()
 	delete signalProcessor;
 	delete signalProgram;
 	delete eventProgram;
+	delete rectangleProgram;
 
 	makeCurrent();
 
@@ -34,9 +35,9 @@ Canvas::~Canvas()
 
 void Canvas::changeFile(DataFile* file)
 {
-	makeCurrent();
-
 	assert(signalProcessor != nullptr);
+
+	makeCurrent();
 
 	signalProcessor->changeFile(file);
 
@@ -84,14 +85,19 @@ void Canvas::initializeGL()
 	FILE* eventVert = fopen("event.vert", "rb");
 	checkNotErrorCode(eventVert, nullptr, "File 'event.vert' could not be opened.");
 
+	FILE* rectangleVert = fopen("rectangle.vert", "rb");
+	checkNotErrorCode(rectangleVert, nullptr, "File 'rectangle.vert' could not be opened.");
+
 	FILE* colorFrag = fopen("color.frag", "rb");
 	checkNotErrorCode(colorFrag, nullptr, "File 'color.frag could' not be opened.");
 
 	signalProgram = new OpenGLProgram(signalVert, colorFrag);
 	eventProgram = new OpenGLProgram(eventVert, colorFrag);
+	rectangleProgram = new OpenGLProgram(rectangleVert, colorFrag);
 
 	fclose(signalVert);
 	fclose(eventVert);
+	fclose(rectangleVert);
 	fclose(colorFrag);
 
 	gl()->glEnable(GL_BLEND);
@@ -130,10 +136,8 @@ void Canvas::paintGL()
 		const SignalViewer* parent = reinterpret_cast<SignalViewer*>(parentWidget());
 		double ratio = samplesRecorded/parent->getVirtualWidth();
 
-		QRectF rect(parent->getPosition()*ratio, 0, width()*ratio, height());
-
 		QMatrix4x4 matrix;
-		matrix.ortho(rect);
+		matrix.ortho(QRectF(parent->getPosition()*ratio, 0, width()*ratio, height()));
 
 		gl()->glUseProgram(signalProgram->getGLProgram());
 
@@ -146,6 +150,21 @@ void Canvas::paintGL()
 		location = gl()->glGetUniformLocation(eventProgram->getGLProgram(), "transformMatrix");
 		checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
 		gl()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
+
+		location = gl()->glGetUniformLocation(eventProgram->getGLProgram(), "divideBy");
+		checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
+		gl()->glUniform1i(location, fastEvents ? 1 : 2);
+
+		location = gl()->glGetUniformLocation(eventProgram->getGLProgram(), "eventWidth");
+		checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
+		gl()->glUniform1f(location, 0.45*height()/signalProcessor->getTrackCount());
+
+		gl()->glUseProgram(rectangleProgram->getGLProgram());
+
+		location = gl()->glGetUniformLocation(rectangleProgram->getGLProgram(), "transformMatrix");
+		checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
+		gl()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
+
 
 		// Create the data block range needed.
 		int firstSample = static_cast<unsigned int>(floor(parent->getPosition()*ratio));
@@ -174,8 +193,8 @@ void Canvas::paintGL()
 
 		eventTable->getEventsForRendering(firstSample, lastSample, &allChannelEvents, &singleChannelEvents);
 
-		// Draw all channel events.
-		gl()->glUseProgram(eventProgram->getGLProgram());
+		// Draw all-channel events.
+		gl()->glUseProgram(rectangleProgram->getGLProgram());
 		gl()->glBindVertexArray(rectangleArray);
 		gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleBuffer);
 
@@ -197,7 +216,7 @@ void Canvas::paintGL()
 			else
 			{
 				type = get<0>(allChannelEvents[event]);
-				setUniformColor(eventProgram->getGLProgram(), eventTypeTable->data(eventTypeTable->index(type, 3)).value<QColor>(), eventTypeTable->data(eventTypeTable->index(type, 2)).toDouble());
+				setUniformColor(rectangleProgram->getGLProgram(), eventTypeTable->data(eventTypeTable->index(type, 3)).value<QColor>(), eventTypeTable->data(eventTypeTable->index(type, 2)).toDouble());
 			}
 		}
 
@@ -232,13 +251,17 @@ void Canvas::paintGL()
 
 void Canvas::drawBlock(const SignalBlock& block, const vector<tuple<int, int, int, int>>& singleChannelEvents)
 {
-	gl()->glBindVertexArray(block.getGLVertexArray());
-	gl()->glUseProgram(signalProgram->getGLProgram());
+	// Draw single-channel events.
+	gl()->glUseProgram(eventProgram->getGLProgram());
 
-	// Draw single channel events.
-	GLuint location = gl()->glGetUniformLocation(signalProgram->getGLProgram(), "eventWidth");
-	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-	gl()->glUniform1f(location, 0.45*height()/signalProcessor->getTrackCount());
+	if (fastEvents)
+	{
+		gl()->glBindVertexArray(block.getGLVertexArray());
+	}
+	else
+	{
+		gl()->glBindVertexArray(block.getGLVertexArrayDual());
+	}
 
 	int event = 0, type = -1, channel = signalProcessor->getTrackCount();
 	while (event < singleChannelEvents.size())
@@ -255,7 +278,14 @@ void Canvas::drawBlock(const SignalBlock& block, const vector<tuple<int, int, in
 					from = max<int>(block.getFirstSample(), from);
 					to = min<int>(block.getLastSample(), to);
 
-					gl()->glDrawArrays(GL_TRIANGLE_STRIP, channel*signalProcessor->getBlockSize() + from - block.getFirstSample(), to - from + 1);
+					if (fastEvents)
+					{
+						gl()->glDrawArrays(GL_TRIANGLE_STRIP, channel*signalProcessor->getBlockSize() + from - block.getFirstSample(), to - from + 1);
+					}
+					else
+					{
+						gl()->glDrawArrays(GL_TRIANGLE_STRIP, 2*(channel*signalProcessor->getBlockSize() + from - block.getFirstSample()), 2*(to - from + 1));
+					}
 				}
 
 				++event;
@@ -263,20 +293,20 @@ void Canvas::drawBlock(const SignalBlock& block, const vector<tuple<int, int, in
 			else
 			{
 				channel = get<1>(singleChannelEvents[event]);
-				setUniformChannel(signalProgram->getGLProgram(), channel, block);
+				setUniformChannel(eventProgram->getGLProgram(), channel, block);
 			}
 		}
 		else
 		{
 			type = get<0>(singleChannelEvents[event]);
-			setUniformColor(signalProgram->getGLProgram(), eventTypeTable->data(eventTypeTable->index(type, 3)).value<QColor>(), eventTypeTable->data(eventTypeTable->index(type, 2)).toDouble());
+			setUniformColor(eventProgram->getGLProgram(), eventTypeTable->data(eventTypeTable->index(type, 3)).value<QColor>(), eventTypeTable->data(eventTypeTable->index(type, 2)).toDouble());
 		}
 	}
 
-	// Draw signal tracks.
-	location = gl()->glGetUniformLocation(signalProgram->getGLProgram(), "eventWidth");
-	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-	gl()->glUniform1f(location, 0);
+	// Draw signal.
+	gl()->glUseProgram(signalProgram->getGLProgram());
+
+	gl()->glBindVertexArray(block.getGLVertexArray());
 
 	for (unsigned int i = 0; i < signalProcessor->getTrackCount(); ++i)
 	{

@@ -63,8 +63,23 @@ string Montage::montageRow(unsigned int row, const string& code)
 
 	ss << "{" << endl;
 	ss << "float4 out = 0;" << endl;
+	ss << "{" << endl;
 	ss << code << endl;
-	ss << "output[outputRowLength*" << row << " + get_global_id(0)] = out;" << endl;
+	ss << "}" << endl;
+
+	if (PROGRAM_OPTIONS["fastEvents"].as<bool>())
+	{
+		ss << "output[outputRowLength*" << row << " + get_global_id(0)] = out;" << endl;
+	}
+	else
+	{
+		ss << "float4 output1 = out.s0011;" << endl;
+		ss << "float4 output2 = out.s2233;" << endl;
+		ss << "int outputIndex = 2*(outputRowLength*" << row << " + get_global_id(0));" << endl;
+		ss << "output[outputIndex] = output1;" << endl;
+		ss << "output[outputIndex + 1] = output2;" << endl;
+	}
+
 	ss << "}" << endl;
 
 	return ss.str();
