@@ -19,7 +19,9 @@ void dataTest(int fi)
 	FILE* file = fopen((string(files[fi]) + "_values.txt").c_str(), "r");
 
 	int n;
-	fscanf(file, "%d", &n);
+
+	int ret = fscanf(file, "%d", &n);
+	BOOST_REQUIRE_EQUAL(ret, 1);
 
 	vector<double> dataD;
 	dataD.insert(dataD.begin(), n, 0);
@@ -33,7 +35,9 @@ void dataTest(int fi)
 	for (int i = 0; i < n; ++i)
 	{
 		double value;
-		fscanf(file, "%lf", &value);
+
+		int ret = fscanf(file, "%lf", &value);
+		BOOST_REQUIRE_EQUAL(ret, 1);
 
 		if (fabs(value) > 1)
 		{
@@ -67,7 +71,7 @@ BOOST_AUTO_TEST_CASE(exceptions)
 	BOOST_CHECK_THROW(GDF2 file("data/gdf/badType"); , runtime_error);
 	BOOST_CHECK_THROW(GDF2 file("data/gdf/badFile"); , runtime_error);
 
-	GDF2* file;
+	GDF2* file = nullptr;
 
 	vector<double> data;
 	data.insert(data.begin(), 100000, 0);
@@ -86,7 +90,9 @@ BOOST_AUTO_TEST_CASE(metaInfo)
 
 		double sr;
 		int channels, len;
-		fscanf(file, "%lf %d %d", &sr, &channels, &len);
+
+		int ret = fscanf(file, "%lf %d %d", &sr, &channels, &len);
+		BOOST_REQUIRE_EQUAL(ret, 3);
 
 		BOOST_CHECK_CLOSE(gdf.getSamplingFrequency(), sr, 0.00001);
 		BOOST_CHECK_EQUAL(gdf.getChannelCount(), channels);
@@ -156,4 +162,3 @@ BOOST_AUTO_TEST_CASE(outOfBounds)
 		}
 	}
 }
-

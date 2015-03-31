@@ -20,18 +20,12 @@ SignalProcessor::SignalProcessor()
 
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, glBuffer);
 
-	GLsizei stride = 0;
-	if (PROGRAM_OPTIONS["fastEvents"].as<bool>() == false)
-	{
-		stride = 2*sizeof(float);
-	}
-
 	gl()->glBindVertexArray(vertexArrays[0]);
-	gl()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<void*>(0));
+	gl()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(0));
 	gl()->glEnableVertexAttribArray(0);
 
 	gl()->glBindVertexArray(vertexArrays[1]);
-	gl()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(0));
+	gl()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 2*sizeof(float), reinterpret_cast<void*>(0));
 	gl()->glEnableVertexAttribArray(0);
 
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);

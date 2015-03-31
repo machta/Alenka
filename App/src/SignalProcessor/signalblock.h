@@ -5,7 +5,6 @@
 #include "CL/cl_gl.h"
 
 #include <cinttypes>
-#include <atomic>
 
 class SignalBlock
 {
@@ -18,11 +17,11 @@ public:
 	}
 	~SignalBlock() {}
 
-	GLuint getGLVertexArray() const
+	GLuint getArray() const
 	{
 		return vertexArrays[0];
 	}
-	GLuint getGLVertexArrayDual() const
+	GLuint getArrayStrideTwo() const
 	{
 		return vertexArrays[1];
 	}

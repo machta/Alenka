@@ -199,14 +199,14 @@ void Canvas::paintGL()
 		gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleBuffer);
 
 		int event = 0, type = -1;
-		while (event < allChannelEvents.size())
+		while (event < static_cast<int>(allChannelEvents.size()))
 		{
 			if (type == get<0>(allChannelEvents[event]))
 			{
 				int from = get<1>(allChannelEvents[event]);
 				int to = from + get<2>(allChannelEvents[event]) - 1;
 
-				float data[8] = {from, 0, to, 0, from, height(), to, height()};
+				float data[8] = {static_cast<float>(from), 0, static_cast<float>(to), 0, static_cast<float>(from), static_cast<float>(height()), static_cast<float>(to), static_cast<float>(height())};
 				gl()->glBufferData(GL_ARRAY_BUFFER, 8*sizeof(float), data, GL_STATIC_DRAW);
 
 				gl()->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -254,17 +254,10 @@ void Canvas::drawBlock(const SignalBlock& block, const vector<tuple<int, int, in
 	// Draw single-channel events.
 	gl()->glUseProgram(eventProgram->getGLProgram());
 
-	if (fastEvents)
-	{
-		gl()->glBindVertexArray(block.getGLVertexArray());
-	}
-	else
-	{
-		gl()->glBindVertexArray(block.getGLVertexArrayDual());
-	}
+	gl()->glBindVertexArray(block.getArray());
 
 	int event = 0, type = -1, channel = signalProcessor->getTrackCount();
-	while (event < singleChannelEvents.size())
+	while (event < static_cast<int>(singleChannelEvents.size()))
 	{
 		if (type == get<0>(singleChannelEvents[event]))
 		{
@@ -306,9 +299,16 @@ void Canvas::drawBlock(const SignalBlock& block, const vector<tuple<int, int, in
 	// Draw signal.
 	gl()->glUseProgram(signalProgram->getGLProgram());
 
-	gl()->glBindVertexArray(block.getGLVertexArray());
+	if (fastEvents)
+	{
+		gl()->glBindVertexArray(block.getArray());
+	}
+	else
+	{
+		gl()->glBindVertexArray(block.getArrayStrideTwo());
+	}
 
-	for (unsigned int i = 0; i < signalProcessor->getTrackCount(); ++i)
+	for (int i = 0; i < signalProcessor->getTrackCount(); ++i)
 	{
 		setUniformChannel(signalProgram->getGLProgram(), i, block);
 		setUniformColor(signalProgram->getGLProgram(), montageTable->data(montageTable->index(i, 3)).value<QColor>(), 1);
