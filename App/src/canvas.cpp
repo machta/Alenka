@@ -165,23 +165,20 @@ void Canvas::paintGL()
 		checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
 		gl()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
 
-
 		// Create the data block range needed.
 		int firstSample = static_cast<unsigned int>(floor(parent->getPosition()*ratio));
-		int lastSample = static_cast<unsigned int>(ceil((parent->getPosition()+width())*ratio));
+		int lastSample = static_cast<unsigned int>(ceil((parent->getPosition() + width())*ratio));
 
-		int firstIndex = firstSample / signalProcessor->getBlockSize();
-		int lastIndex = lastSample / signalProcessor->getBlockSize();
+		auto fromTo = DataFile::sampleRangeToBlockRange(make_pair(firstSample, lastSample), signalProcessor->getBlockSize());
 
 		set<int> indexSet;
 
-		unsigned int indexSetSize = lastIndex - firstIndex + 1;
-		for (unsigned int i = 0; i < indexSetSize; ++i)
+		for (int i = fromTo.first; i <= fromTo.second; ++i)
 		{
-			indexSet.insert(firstIndex + i);
+			indexSet.insert(i);
 		}
 
-		if (signalProcessor->getCapacity() > indexSetSize)
+		if (signalProcessor->getCapacity() > indexSet.size())
 		{
 			// Enqueue all blocks.
 			//prepareBlocks(firstIndex, lastIndex);
@@ -237,9 +234,9 @@ void Canvas::paintGL()
 		gl()->glBindVertexArray(0);
 
 		// Prepare some blocks for the next frame.
-		int cap = min(PROGRAM_OPTIONS["prepareFrames"].as<unsigned int>()*indexSetSize, signalProcessor->getCapacity() - indexSetSize);
+		int cap = min(PROGRAM_OPTIONS["prepareFrames"].as<unsigned int>()*indexSet.size(), signalProcessor->getCapacity() - indexSet.size());
 
-		prepare(indexSetSize, 0, static_cast<int>(ceil(parent->getVirtualWidth()*ratio)), firstIndex - indexSetSize, lastIndex + indexSetSize, cap);
+		prepare(indexSet.size(), 0, static_cast<int>(ceil(parent->getVirtualWidth()*ratio)), fromTo.first - indexSet.size(), fromTo.second + indexSet.size(), cap);
 	}
 
 	gl()->glFinish();

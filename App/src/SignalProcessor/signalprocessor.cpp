@@ -172,7 +172,7 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 	err = clFinish(commandQueue);
 	checkErrorCode(err, CL_SUCCESS, "clFinish()");
 
-	auto fromTo = DataFile::getBlockBoundaries(index, getBlockSize());
+	auto fromTo = DataFile::blockIndexToSampleRange(index, getBlockSize());
 	return SignalBlock(index, montageProcessor->getNumberOfRows(), fromTo.first, fromTo.second, vertexArrays);
 }
 

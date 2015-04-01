@@ -142,7 +142,7 @@ void GPUCache::loaderThreadFunction()
 
 				lock.unlock();
 
-				auto fromTo = file->getBlockBoundaries(index, blockSize);
+				auto fromTo = file->blockIndexToSampleRange(index, blockSize);
 #ifdef AMD_BUG
 				fromTo.second += 4;
 #endif

@@ -41,18 +41,27 @@ public:
 		return filePath;
 	}
 
-	static std::pair<std::int64_t, std::int64_t> getBlockBoundaries(int index, unsigned int blockSize)
+	static std::pair<std::int64_t, std::int64_t> blockIndexToSampleRange(int index, unsigned int blockSize)
 	{
 		using namespace std;
 
 		int64_t from = index*blockSize,
 				to = (index + 1)*blockSize - 1;
 
-		if (index > 0)
-		{
-			--from;
-			--to;
-		}
+		from -= index;
+		to -= index;
+
+		return make_pair(from, to);
+	}
+	static std::pair<std::int64_t, std::int64_t> sampleRangeToBlockRange(std::pair<std::int64_t, std::int64_t> range, unsigned int blockSize)
+	{
+		using namespace std;
+
+		int64_t from = range.first,
+				to = range.second;
+
+		from /= blockSize - 1;
+		to = (to - 1)/(blockSize - 1);
 
 		return make_pair(from, to);
 	}
@@ -68,8 +77,6 @@ protected:
 	}
 	void changeEndianness(char* data, int size) const
 	{
-		//assert(size%2 == 0);
-
 		for (int i = 0, sizeHalf = size/2; i < sizeHalf; ++i)
 		{
 			std::swap(data[i], data[size - i - 1]);
