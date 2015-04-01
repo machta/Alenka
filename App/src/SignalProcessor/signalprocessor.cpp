@@ -99,10 +99,7 @@ void SignalProcessor::changeMontage(Montage* montage)
 	trackCount = montage->getNumberOfRows();
 	unsigned int outputBlockSize = blockSize*trackCount;
 
-	if (PROGRAM_OPTIONS["fastEvents"].as<bool>() == false)
-	{
-		outputBlockSize *= 2;
-	}
+	outputBlockSize *= PROGRAM_OPTIONS["eventRenderMode"].as<int>();
 
 	gl()->glBufferData(GL_ARRAY_BUFFER, outputBlockSize*sizeof(float), nullptr, GL_STATIC_DRAW);
 

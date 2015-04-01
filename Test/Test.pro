@@ -7,7 +7,8 @@ HEADERS += \
     src/gdf2_test.h \
     ../App/src/DataFile/eventtable.h \
     ../App/src/DataFile/eventtypetable.h \
-    ../App/src/DataFile/montagetable.h
+    ../App/src/DataFile/montagetable.h \
+    ../App/src/DataFile/infotable.h
 
 SOURCES += \
 	src/test.cpp\
@@ -20,7 +21,8 @@ SOURCES += \
 	../App/src/DataFile/datafile.cpp \
 	../App/src/DataFile/eventtable.cpp \
 	../App/src/DataFile/eventtypetable.cpp \
-	../App/src/DataFile/montagetable.cpp
+	../App/src/DataFile/montagetable.cpp \
+    ../App/src/DataFile/infotable.cpp
 
 DISTFILES += \
     data/gdf/t00.gdf \

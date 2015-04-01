@@ -28,7 +28,8 @@ HEADERS += \
     src/DataFile/montagetable.h \
     src/eventtypemanager.h \
     src/eventmanager.h \
-    src/montagemanager.h
+    src/montagemanager.h \
+    src/DataFile/infotable.h
 
 SOURCES += \
     src/DataFile/gdf2.cpp \
@@ -55,7 +56,8 @@ SOURCES += \
     src/DataFile/datafile.cpp \
     src/eventtypemanager.cpp \
     src/eventmanager.cpp \
-    src/montagemanager.cpp
+    src/montagemanager.cpp \
+    src/DataFile/infotable.cpp
 
 FORMS += \
     src/testwindow.ui \

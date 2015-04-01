@@ -43,6 +43,8 @@ public:
 private:
 	boost::program_options::variables_map vm;
 	boost::program_options::options_description desc;
+
+	void validateValues();
 };
 
 extern const Options* PROGRAM_OPTIONS_POINTER;

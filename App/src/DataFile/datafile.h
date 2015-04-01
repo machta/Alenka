@@ -3,6 +3,7 @@
 
 #include "montagetable.h"
 #include "eventtypetable.h"
+#include "infotable.h"
 
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
@@ -13,6 +14,7 @@
 #include <vector>
 #include <utility>
 #include <string>
+#include <functional>
 
 class DataFile
 {
@@ -57,6 +59,7 @@ public:
 
 protected:
 	virtual bool loadMontFile();
+	virtual bool loadInfoFile();
 	bool testLittleEndian() const
 	{
 		unsigned int number = 1;
@@ -82,6 +85,10 @@ private:
 	std::string filePath;
 	std::vector<MontageTable*> montageTables;
 	EventTypeTable eventTypeTable;
+	InfoTable infoTable;
+
+	bool loadXMLFile(const std::string& extension, std::function<void (QXmlStreamReader*)> loadFunction);
+	void saveXMLFile(const std::string& extension, std::function<void (QXmlStreamWriter*)> saveFunction);
 };
 
 #endif // DATAFILE_H

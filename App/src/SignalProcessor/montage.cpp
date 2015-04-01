@@ -67,7 +67,7 @@ string Montage::montageRow(unsigned int row, const string& code)
 	ss << code << endl;
 	ss << "}" << endl;
 
-	if (PROGRAM_OPTIONS["fastEvents"].as<bool>())
+	if (PROGRAM_OPTIONS["eventRenderMode"].as<int>() == 1)
 	{
 		ss << "output[outputRowLength*" << row << " + get_global_id(0)] = out;" << endl;
 	}

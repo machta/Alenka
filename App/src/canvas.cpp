@@ -153,7 +153,7 @@ void Canvas::paintGL()
 
 		location = gl()->glGetUniformLocation(eventProgram->getGLProgram(), "divideBy");
 		checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-		gl()->glUniform1i(location, fastEvents ? 1 : 2);
+		gl()->glUniform1i(location, eventMode);
 
 		location = gl()->glGetUniformLocation(eventProgram->getGLProgram(), "eventWidth");
 		checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
@@ -271,7 +271,7 @@ void Canvas::drawBlock(const SignalBlock& block, const vector<tuple<int, int, in
 					from = max<int>(block.getFirstSample(), from);
 					to = min<int>(block.getLastSample(), to);
 
-					if (fastEvents)
+					if (eventMode == 1)
 					{
 						gl()->glDrawArrays(GL_TRIANGLE_STRIP, channel*signalProcessor->getBlockSize() + from - block.getFirstSample(), to - from + 1);
 					}
@@ -299,7 +299,7 @@ void Canvas::drawBlock(const SignalBlock& block, const vector<tuple<int, int, in
 	// Draw signal.
 	gl()->glUseProgram(signalProgram->getGLProgram());
 
-	if (fastEvents)
+	if (eventMode == 1)
 	{
 		gl()->glBindVertexArray(block.getArray());
 	}

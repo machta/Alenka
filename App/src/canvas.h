@@ -40,7 +40,7 @@ private:
 	double samplesRecorded = 1;
 	GLuint rectangleArray;
 	GLuint rectangleBuffer;
-	bool fastEvents = PROGRAM_OPTIONS["fastEvents"].as<bool>();
+	int eventMode = PROGRAM_OPTIONS["eventRenderMode"].as<int>();
 
 	void drawBlock(const SignalBlock& block, const std::vector<std::tuple<int, int, int, int>>& singleChannelEvents);
 	void setUniformChannel(GLuint program, int channel, const SignalBlock& block);

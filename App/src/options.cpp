@@ -11,6 +11,7 @@ using namespace boost::program_options;
 
 Options::Options(int ac, char** av)
 {
+	// Definition of the available options.
 	options_description commandLineOnly("Command line options");
 	commandLineOnly.add_options()
 	("help", "help message")
@@ -36,7 +37,7 @@ Options::Options(int ac, char** av)
 	("printBuffersFolder", value<string>()->default_value("."), "path to the folder to which the values will be saved (no end slash), only in debug build")
 	("powerFrequency", value<double>()->default_value(50), "frequency used to filter power interference with the signal")
 	("onlineFilter", value<bool>()->default_value(false), "should the signal be filtered everytime before it is rendered")
-	("fastEvents", value<bool>()->default_value(false), "allows simpler rendering of single-channel events")
+	("eventRenderMode", value<int>()->default_value(2), "controls rendering of single-channel events; accepted values (from simplest mode) are 1, 2")
 	("prepareFrames", value<unsigned int>()->default_value(2), "how many frames should be prepared in memory")
 	("logFileName", value<string>()->default_value("%Y-%m-%d--%H-%M-%S.log"), "string passed to strftime() to create the file name")
 
@@ -46,6 +47,7 @@ Options::Options(int ac, char** av)
 	("montageFile", value<string>(), "definition of the montage, one row per line")
 	;
 
+	// Parse the input.
 	options_description all("Alloved options");
 	all.add(commandLineOnly).add(other);
 
@@ -65,6 +67,20 @@ Options::Options(int ac, char** av)
 	}
 
 	desc.add(all);
+
+	validateValues();
+}
+
+void Options::validateValues()
+{
+	stringstream ss;
+
+	int mode = get("eventRenderMode").as<int>();
+	if (mode != 1 && mode != 2)
+	{
+		ss << mode;
+		throw validation_error(validation_error::invalid_option_value, "eventRenderMode", ss.str());
+	}
 }
 
 const Options* PROGRAM_OPTIONS_POINTER;
