@@ -3,11 +3,13 @@
 
 #include <QMainWindow>
 
-#include "signalviewer.h"
-#include "DataFile/gdf2.h"
-#include "montagemanager.h"
-#include "eventmanager.h"
-#include "eventtypemanager.h"
+class DataFile;
+class SignalViewer;
+class MontageManager;
+class EventManager;
+class EventTypeManager;
+class QComboBox;
+class QCheckBox;
 
 class SignalFileBrowserWindow : public QMainWindow
 {
@@ -21,19 +23,27 @@ signals:
 
 public slots:
 
-private slots:
-	void openFile();
-	void closeFile();
-	void showMontageManager();
-	void showEventManager();
-	void showEventTypeManager();
-
 private:
 	DataFile* file = nullptr;
 	SignalViewer* signalViewer;
 	MontageManager* montageManager;
 	EventManager* eventManager;
 	EventTypeManager* eventTypeManager;
+	QComboBox* lowpassComboBox;
+	QComboBox* highpassComboBox;
+	QCheckBox* notchCheckBox;
+
+private slots:
+	void openFile();
+	void closeFile();
+	void saveFile();
+	void showMontageManager(bool checked);
+	void showEventManager(bool checked);
+	void showEventTypeManager(bool checked);
+	void lowpassComboBoxUpdate(const QString& text);
+	void lowpassComboBoxUpdate(double value);
+	void highpassComboBoxUpdate(const QString& text);
+	void highpassComboBoxUpdate(double value);
 
 };
 

@@ -87,6 +87,12 @@ private:
 		prepareBlocks(max(lowIndex, minIndex), lowIndex + capacity/2);
 		prepareBlocks(highIndex, min(highIndex, maxIndex) + capacity/2);
 	}
+
+private slots:
+	void changeFilter()
+	{
+		signalProcessor->changeFilter();
+	}
 };
 
 #endif // CANVAS_H

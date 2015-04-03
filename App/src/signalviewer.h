@@ -34,10 +34,10 @@ public slots:
 		{
 			infoTable = file->getInfoTable();
 
-			connect(scrollBar, &QScrollBar::valueChanged, infoTable, &InfoTable::setPosition);
+			connect(scrollBar, SIGNAL(valueChanged(int)), infoTable, SLOT(setPosition(int)));
 
-			connect(infoTable, &InfoTable::virtualWidthChanged, this, &SignalViewer::setVirtualWidth);
-			connect(infoTable, &InfoTable::positionChanged, this, &SignalViewer::setPosition);
+			connect(infoTable, SIGNAL(virtualWidthChanged(int)), this, SLOT(setVirtualWidth(int)));
+			connect(infoTable, SIGNAL(positionChanged(int)), this, SLOT(setPosition(int)));
 		}
 		else
 		{
@@ -49,25 +49,6 @@ protected:
 	virtual void resizeEvent(QResizeEvent* /*event*/) override
 	{
 		resize(getInfoTable()->getVirtualWidth());
-	}
-
-private slots:
-	void setVirtualWidth(int value)
-	{
-		double relPosition = scrollBar->value();
-		relPosition /= (scrollBar->maximum() - scrollBar->minimum() + 1);
-
-		resize(value);
-
-		setPosition(static_cast<int>(std::round(relPosition*(scrollBar->maximum() - scrollBar->minimum() + 1))));
-
-		canvas->update();
-	}
-	void setPosition(int value)
-	{
-		scrollBar->setValue(value);
-
-		canvas->update();
 	}
 
 private:
@@ -94,6 +75,25 @@ private:
 		scrollBar->setRange(0, virtualWidth - page - 1);
 		scrollBar->setPageStep(page);
 		scrollBar->setSingleStep(std::max(1, page/20));
+	}
+
+private slots:
+	void setVirtualWidth(int value)
+	{
+		double relPosition = scrollBar->value();
+		relPosition /= (scrollBar->maximum() - scrollBar->minimum() + 1);
+
+		resize(value);
+
+		setPosition(static_cast<int>(std::round(relPosition*(scrollBar->maximum() - scrollBar->minimum() + 1))));
+
+		canvas->update();
+	}
+	void setPosition(int value)
+	{
+		scrollBar->setValue(value);
+
+		canvas->update();
 	}
 };
 

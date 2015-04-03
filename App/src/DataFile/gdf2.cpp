@@ -220,8 +220,6 @@ case a_:\
 
 GDF2::~GDF2()
 {
-	save(); // TODO: remove this
-
 	fclose(file);
 	delete[] scale;
 	delete cache;

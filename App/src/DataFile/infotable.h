@@ -25,10 +25,25 @@ public:
 	{
 		return position;
 	}
+	double getLowpassFrequency() const
+	{
+		return lowpassFrequency;
+	}
+	double getHighFrequency() const
+	{
+		return highPassFrequency;
+	}
+	bool getNotch() const
+	{
+		return notch;
+	}
 
 signals:
 	void virtualWidthChanged(int);
 	void positionChanged(int);
+	void lowpassFrequencyChanged(double);
+	void highpassFrequencyChanged(double);
+	void notchChanged(bool);
 
 public slots:
 	void setVirtualWidth(int value)
@@ -47,10 +62,37 @@ public slots:
 			emit positionChanged(position);
 		}
 	}
+	void setLowpassFrequency(double value)
+	{
+		if (value != lowpassFrequency)
+		{
+			lowpassFrequency = value;
+			emit lowpassFrequencyChanged(lowpassFrequency);
+		}
+	}
+	void setHighFrequency(double value)
+	{
+		if (value != highPassFrequency)
+		{
+			highPassFrequency = value;
+			emit highpassFrequencyChanged(highPassFrequency);
+		}
+	}
+	void setNotch(bool value)
+	{
+		if (value != notch)
+		{
+			notch = value;
+			emit notchChanged(notch);
+		}
+	}
 
 private:
 	int virtualWidth = 100000;
 	int position = 0;
+	double lowpassFrequency = 1000*1000*1000; // TODO: add on/off vars to avoid using these arbitrary values
+	double highPassFrequency = -1000*1000*1000;
+	bool notch = false;
 };
 
 #endif // INFOTABLE_H

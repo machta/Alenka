@@ -20,13 +20,13 @@ public:
 
 	void setModel(EventTable* model);
 
+private:
+	Ui::EventManager* ui;
+
 private slots:
 	void on_addRowButton_clicked();
 
 	void on_removeRowButton_clicked();
-
-private:
-	Ui::EventManager* ui;
 };
 
 #endif // EVENTMANAGER_H

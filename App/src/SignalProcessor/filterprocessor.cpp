@@ -84,6 +84,8 @@ FilterProcessor::~FilterProcessor()
 
 void FilterProcessor::change(Filter* filter)
 {
+	coefficients.clear();
+
 	auto tmp = filter->computeCoefficients();
 
 	for (unsigned int i = 0; i < M; ++i)
@@ -104,7 +106,7 @@ void FilterProcessor::process(cl_mem buffer, cl_command_queue queue)
 		// Update values in the filterBuffer.
 		coefficientsChanged = false;
 
-		// This section is disabled because a bug in implementation of clEnqueueFillBuffer().
+		// This section is disabled because a bug in the implementation of clEnqueueFillBuffer().
 //#if CL_VERSION_1_2
 //		float zero = 0;
 //		err = clEnqueueFillBuffer(queue, filterBuffer, &zero, sizeof(zero), 0, width + 4, 0, nullptr, nullptr);

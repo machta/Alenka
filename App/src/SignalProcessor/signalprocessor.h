@@ -34,11 +34,11 @@ public:
 	{
 		return trackCount;
 	}
-	void changeFilter(Filter* filter);
+	void changeFilter();
 	void changeMontage(Montage* montage);
 	unsigned int getCapacity() const
 	{
-		if (noFile)
+		if (ready() == false)
 		{
 			return -1;
 		}
@@ -48,7 +48,7 @@ public:
 	SignalBlock getAnyBlock(const std::set<int>& indexSet);
 	void prepareBlock(int index)
 	{
-		assert(noFile == false);
+		assert(ready());
 
 		cl_int err;
 
@@ -61,13 +61,15 @@ public:
 		checkErrorCode(err, CL_SUCCESS, "clReleaseEvent()");
 	}
 	void changeFile(DataFile* file);
-	bool ready()
+	bool ready() const
 	{
-		return !noFile;
+		return file != nullptr;
 	}
 
 private:
-	bool noFile = true;
+	InfoTable* infoTable = nullptr;
+	InfoTable defaultInfoTable;
+	DataFile* file = nullptr;
 	OpenCLContext* context;
 	FilterProcessor* filterProcessor;
 	MontageProcessor* montageProcessor;
@@ -84,6 +86,17 @@ private:
 	GLuint vertexArrays[2];
 	GLuint glBuffer;
 
+	InfoTable* getInfoTable()
+	{
+		if (infoTable != nullptr)
+		{
+			return infoTable;
+		}
+		else
+		{
+			return &defaultInfoTable;
+		}
+	}
 	void destroyFileRelated();
 	std::string indexSetToString(const std::set<int>& indexSet)
 	{

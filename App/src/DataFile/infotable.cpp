@@ -14,6 +14,9 @@ void InfoTable::write(QXmlStreamWriter* xml) const
 {
 	xml->writeTextElement("virtualWidth", QString::number(virtualWidth));
 	xml->writeTextElement("position", QString::number(position));
+	xml->writeTextElement("lowpassFrequency", QString::number(lowpassFrequency));
+	xml->writeTextElement("highPassFrequency", QString::number(highPassFrequency));
+	xml->writeTextElement("notch", notch ? "1" : "0");
 }
 
 #define readNumericElement(a_, b_)\
@@ -33,6 +36,14 @@ void InfoTable::read(QXmlStreamReader* xml)
 
 		readNumericElement(virtualWidth, toInt);
 		readNumericElement(position, toInt);
+		readNumericElement(lowpassFrequency, toDouble);
+		readNumericElement(highPassFrequency, toDouble);
+
+		if (name == "notch")
+		{
+			notch = xml->readElementText() == "0" ? false : true;
+			continue;
+		}
 
 		xml->skipCurrentElement();
 	}

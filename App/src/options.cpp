@@ -41,9 +41,6 @@ Options::Options(int ac, char** av)
 	("prepareFrames", value<unsigned int>()->default_value(2), "how many frames should be prepared in memory")
 	("logFileName", value<string>()->default_value("%Y-%m-%d--%H-%M-%S.log"), "string passed to strftime() to create the file name")
 
-	("lowpass", value<double>()->default_value(1000*1000*1000), "lowpass filter frequency")
-	("highpass", value<double>()->default_value(-1), "highpass filter frequency")
-	("notch", value<bool>()->default_value(false), "notch filter on or off")
 	("montageFile", value<string>(), "definition of the montage, one row per line")
 	;
 

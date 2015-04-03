@@ -2,6 +2,7 @@
 
 #include "options.h"
 #include "signalviewer.h"
+#include "SignalProcessor/filter.h"
 
 #include <QMatrix4x4>
 
@@ -41,7 +42,11 @@ void Canvas::changeFile(DataFile* file)
 
 	signalProcessor->changeFile(file);
 
-	if (file != nullptr)
+	if (file == nullptr)
+	{
+		infoTable = nullptr;
+	}
+	else
 	{
 		infoTable = file->getInfoTable();
 
@@ -50,10 +55,10 @@ void Canvas::changeFile(DataFile* file)
 		montageTable = file->getMontageTables()->front();
 		eventTable = montageTable->getEventTable();
 		eventTypeTable = file->getEventTypeTable();
-	}
-	else
-	{
-		infoTable = nullptr;
+
+		connect(infoTable, SIGNAL(lowpassFrequencyChanged(double)), this, SLOT(changeFilter()));
+		connect(infoTable, SIGNAL(highpassFrequencyChanged(double)), this, SLOT(changeFilter()));
+		connect(infoTable, SIGNAL(notchChanged(bool)), this, SLOT(changeFilter()));
 	}
 
 	doneCurrent();

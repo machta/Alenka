@@ -49,14 +49,19 @@ SignalProcessor::~SignalProcessor()
 	gl();
 }
 
-void SignalProcessor::changeFilter(Filter* filter)
+void SignalProcessor::changeFilter()
 {
-	if (noFile)
+	using namespace std;
+
+	if (ready() == false)
 	{
 		return;
 	}
 
-	using namespace std;
+	Filter filter(static_cast<unsigned int>(file->getSamplingFrequency()), file->getSamplingFrequency()); // Possibly could save this object so that it won't be created from scratch everytime.
+	filter.setLowpass(getInfoTable()->getLowpassFrequency());
+	filter.setHighpass(getInfoTable()->getHighFrequency());
+	filter.setNotch(getInfoTable()->getNotch());
 
 	if (PROGRAM_OPTIONS.isSet("printFilter"))
 	{
@@ -65,17 +70,17 @@ void SignalProcessor::changeFilter(Filter* filter)
 			FILE* file = fopen(PROGRAM_OPTIONS["printFilterFile"].as<string>().c_str(), "w");
 			checkNotErrorCode(file, nullptr, "File '" << PROGRAM_OPTIONS["printFilterFile"].as<string>() << "' could not be opened for wtiting.");
 
-			filter->printCoefficients(file);
+			filter.printCoefficients(file);
 
 			fclose(file);
 		}
 		else
 		{
-			filter->printCoefficients(stderr);
+			filter.printCoefficients(stderr);
 		}
 	}
 
-	filterProcessor->change(filter);
+	filterProcessor->change(&filter);
 
 	if (onlineFilter == false)
 	{
@@ -85,7 +90,7 @@ void SignalProcessor::changeFilter(Filter* filter)
 
 void SignalProcessor::changeMontage(Montage* montage)
 {	
-	if (noFile)
+	if (ready() == false)
 	{
 		return;
 	}
@@ -121,7 +126,7 @@ void SignalProcessor::changeMontage(Montage* montage)
 
 SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 {
-	assert(noFile == false);
+	assert(ready());
 	assert(indexSet.empty() == false);
 
 	cl_int err;
@@ -180,11 +185,15 @@ void SignalProcessor::changeFile(DataFile* file)
 {
 	destroyFileRelated();
 
-	if (file != nullptr)
-	{
-		noFile = false;
+	this->file = file;
 
-		cl_int err;
+	if (file == nullptr)
+	{
+		infoTable = nullptr;
+	}
+	else
+	{
+		infoTable = file->getInfoTable();
 
 		int M = file->getSamplingFrequency();
 		int offset = M;
@@ -207,6 +216,7 @@ void SignalProcessor::changeFile(DataFile* file)
 		onlineFilter = PROGRAM_OPTIONS["onlineFilter"].as<bool>();
 
 		int64_t memory = PROGRAM_OPTIONS["gpuMemorySize"].as<int64_t>();
+		cl_int err;
 
 		if (memory <= 0)
 		{
@@ -234,11 +244,7 @@ void SignalProcessor::changeFile(DataFile* file)
 		checkErrorCode(err, CL_SUCCESS, "clCreateBuffer()");
 
 		// Default filter and montage.
-		double Fs = file->getSamplingFrequency();
-		Filter* filter = new Filter(M, Fs);
-		filter->setHighpass(PROGRAM_OPTIONS["highpass"].as<double>());
-		filter->setLowpass(PROGRAM_OPTIONS["lowpass"].as<double>());
-		filter->setNotch(PROGRAM_OPTIONS["notch"].as<bool>());
+		changeFilter();
 
 		vector<string> rows;
 		if (PROGRAM_OPTIONS.isSet("montageFile"))
@@ -263,9 +269,6 @@ void SignalProcessor::changeFile(DataFile* file)
 		}
 		Montage* montage = new Montage(rows, context);
 
-		changeFilter(filter);
-		delete filter;
-
 		changeMontage(montage);
 		delete montage;
 	}
@@ -273,9 +276,9 @@ void SignalProcessor::changeFile(DataFile* file)
 
 void SignalProcessor::destroyFileRelated()
 {
-	if (noFile == false)
+	if (ready())
 	{
-		noFile = true;
+		file = nullptr;
 
 		delete cache;
 		delete filterProcessor;
