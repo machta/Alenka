@@ -36,19 +36,28 @@ void EventTypeTable::write(QXmlStreamWriter* xml) const
 	xml->writeEndElement();
 }
 
+#define readNumericAttribute(a_, b_)\
+	{\
+		bool ok;\
+		auto tmp = xml->attributes().value(#a_).b_(&ok);\
+		(a_).push_back(ok ? tmp : 0);\
+	}
+
 void EventTypeTable::read(QXmlStreamReader* xml)
 {
 	while (xml->readNextStartElement() && xml->name() == "eventType")
 	{
-		id.push_back(xml->attributes().value("id").toInt());
+		readNumericAttribute(id, toInt);
 		name.push_back(xml->attributes().value("name").toString().toStdString());
-		opacity.push_back(xml->attributes().value("opacity").toDouble());
+		readNumericAttribute(opacity, toDouble);
 		color.push_back(QColor(xml->attributes().value("color").toString()));
 		hidden.push_back(xml->attributes().value("hidden") == "0" ? false : true);
 
 		xml->skipCurrentElement();
 	}
 }
+
+#undef readNumericAttribute
 
 QVariant EventTypeTable::headerData(int section, Qt::Orientation orientation, int role) const
 {

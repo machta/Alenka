@@ -43,14 +43,18 @@ void Canvas::changeFile(DataFile* file)
 
 	if (file != nullptr)
 	{
+		infoTable = file->getInfoTable();
+
 		samplesRecorded = file->getSamplesRecorded();
 
 		montageTable = file->getMontageTables()->front();
 		eventTable = montageTable->getEventTable();
 		eventTypeTable = file->getEventTypeTable();
 	}
-
-	this->file = file;
+	else
+	{
+		infoTable = nullptr;
+	}
 
 	doneCurrent();
 }
@@ -133,11 +137,10 @@ void Canvas::paintGL()
 	if (signalProcessor->ready())
 	{
 		// Calculate the transformMatrix.
-		const SignalViewer* parent = reinterpret_cast<SignalViewer*>(parentWidget());
-		double ratio = samplesRecorded/parent->getVirtualWidth();
+		double ratio = samplesRecorded/getInfoTable()->getVirtualWidth();
 
 		QMatrix4x4 matrix;
-		matrix.ortho(QRectF(parent->getPosition()*ratio, 0, width()*ratio, height()));
+		matrix.ortho(QRectF(getInfoTable()->getPosition()*ratio, 0, width()*ratio, height()));
 
 		gl()->glUseProgram(signalProgram->getGLProgram());
 
@@ -166,8 +169,8 @@ void Canvas::paintGL()
 		gl()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
 
 		// Create the data block range needed.
-		int firstSample = static_cast<unsigned int>(floor(parent->getPosition()*ratio));
-		int lastSample = static_cast<unsigned int>(ceil((parent->getPosition() + width())*ratio));
+		int firstSample = static_cast<unsigned int>(floor(getInfoTable()->getPosition()*ratio));
+		int lastSample = static_cast<unsigned int>(ceil((getInfoTable()->getPosition() + width())*ratio));
 
 		auto fromTo = DataFile::sampleRangeToBlockRange(make_pair(firstSample, lastSample), signalProcessor->getBlockSize());
 
@@ -236,7 +239,7 @@ void Canvas::paintGL()
 		// Prepare some blocks for the next frame.
 		int cap = min(PROGRAM_OPTIONS["prepareFrames"].as<unsigned int>()*indexSet.size(), signalProcessor->getCapacity() - indexSet.size());
 
-		prepare(indexSet.size(), 0, static_cast<int>(ceil(parent->getVirtualWidth()*ratio)), fromTo.first - indexSet.size(), fromTo.second + indexSet.size(), cap);
+		prepare(indexSet.size(), 0, static_cast<int>(ceil(getInfoTable()->getVirtualWidth()*ratio)), fromTo.first - indexSet.size(), fromTo.second + indexSet.size(), cap);
 	}
 
 	gl()->glFinish();

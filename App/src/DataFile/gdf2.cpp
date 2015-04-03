@@ -202,7 +202,7 @@ case a_:\
 	}
 
 	samplingFrequency = vh.samplesPerRecord[0]/duration;
-	
+
 	int64_t dataRecordBytes = vh.samplesPerRecord[0]*getChannelCount()*dataTypeSize;
 	startOfEventTable = startOfData + dataRecordBytes*fh.numberOfDataRecords;
 
@@ -214,8 +214,8 @@ case a_:\
 		cache = new QCache<unsigned int, std::vector<char>>(cacheBlocks);
 	}
 
-	// Load montages and events.
-	loadMontFile();
+	// Load info from secondary files.
+	load();
 }
 
 GDF2::~GDF2()
@@ -299,9 +299,9 @@ void GDF2::save()
 	}
 }
 
-bool GDF2::loadMontFile()
+bool GDF2::load()
 {
-	if (DataFile::loadMontFile() == false)
+	if (DataFile::load() == false)
 	{
 		lock_guard<mutex> lock(fileMutex);
 
@@ -309,10 +309,10 @@ bool GDF2::loadMontFile()
 
 		// Load event table info.
 		seekFile(startOfEventTable, true);
-		
+
 		uint8_t eventTableMode;
 		readFile(&eventTableMode);
-		
+
 		uint8_t nev[3];
 		readFile(nev, 3);
 		if (isLittleEndian == false)
@@ -320,9 +320,9 @@ bool GDF2::loadMontFile()
 			changeEndianness(reinterpret_cast<char*>(nev), 3);
 		}
 		int numberOfEvents = nev[0] + nev[1]*256 + nev[2]*256*256;
-		
+
 		seekFile(4);
-		
+
 		// Add a default montage and put the events there.
 		getMontageTables()->push_back(new MontageTable);
 
@@ -331,7 +331,7 @@ bool GDF2::loadMontFile()
 
 		defaultMontage->insertRows(0, getChannelCount());
 		defaultEventTable->insertRows(0, numberOfEvents);
-			
+
 		for (int i = 0; i < numberOfEvents; ++i)
 		{
 			uint32_t position;

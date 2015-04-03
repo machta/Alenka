@@ -4,7 +4,8 @@ using namespace std;
 
 SignalViewer::SignalViewer(QWidget* parent) : QWidget(parent)
 {
-	box = new QVBoxLayout;
+	QVBoxLayout* box = new QVBoxLayout;
+	setLayout(box);
 	box->setContentsMargins(0, 0, 0, 0);
 	box->setSpacing(0);
 
@@ -16,14 +17,11 @@ SignalViewer::SignalViewer(QWidget* parent) : QWidget(parent)
 	box->addWidget(canvas);
 	box->addWidget(scrollBar);
 
-	setLayout(box);
-
-	connect(scrollBar, &QScrollBar::valueChanged, this, &SignalViewer::setPosition);
+	//setLayout(box);
 }
 
 SignalViewer::~SignalViewer()
 {
-
 }
 
 

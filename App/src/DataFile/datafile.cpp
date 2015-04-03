@@ -34,8 +34,13 @@ void DataFile::save()
 	});
 }
 
-bool DataFile::loadMontFile()
+bool DataFile::load()
 {
+	loadXMLFile(".info", [this] (QXmlStreamReader* xml)
+	{
+		infoTable.read(xml);
+	});
+
 	return loadXMLFile(".mont", [this] (QXmlStreamReader* xml)
 	{
 		while (xml->readNextStartElement())
@@ -55,15 +60,7 @@ bool DataFile::loadMontFile()
 				xml->skipCurrentElement();
 			}
 		}
-	});
-}
-
-bool DataFile::loadInfoFile()
-{
-	return loadXMLFile(".info", [this] (QXmlStreamReader* xml)
-	{
-		infoTable.read(xml);
-	});
+	});	
 }
 
 bool DataFile::loadXMLFile(const string& extension, function<void (QXmlStreamReader*)> loadFunction)

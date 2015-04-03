@@ -26,8 +26,6 @@ public:
 	virtual unsigned int getChannelCount() const = 0;
 	virtual uint64_t getSamplesRecorded() const = 0;
 	virtual void save();
-	virtual void readData(std::vector<float>* data, int64_t firstSample, int64_t lastSample) = 0;
-	virtual void readData(std::vector<double>* data, int64_t firstSample, int64_t lastSample) = 0;
 	EventTypeTable* getEventTypeTable()
 	{
 		return &eventTypeTable;
@@ -40,6 +38,12 @@ public:
 	{
 		return filePath;
 	}
+	InfoTable* getInfoTable()
+	{
+		return &infoTable;
+	}
+	virtual void readData(std::vector<float>* data, int64_t firstSample, int64_t lastSample) = 0;
+	virtual void readData(std::vector<double>* data, int64_t firstSample, int64_t lastSample) = 0;
 
 	static std::pair<std::int64_t, std::int64_t> blockIndexToSampleRange(int index, unsigned int blockSize)
 	{
@@ -67,8 +71,7 @@ public:
 	}
 
 protected:
-	virtual bool loadMontFile();
-	virtual bool loadInfoFile();
+	virtual bool load();
 	bool testLittleEndian() const
 	{
 		unsigned int number = 1;

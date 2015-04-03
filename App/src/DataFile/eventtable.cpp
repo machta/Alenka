@@ -32,7 +32,10 @@ void EventTable::write(QXmlStreamWriter* xml) const
 		xml->writeAttribute("duration", QString::number(duration[i]));
 		xml->writeAttribute("channel", QString::number(channel[i]));
 
-		xml->writeTextElement("description", QString::fromStdString(description[i]));
+		if (description[i].empty() == false)
+		{
+			xml->writeTextElement("description", QString::fromStdString(description[i]));
+		}
 
 		xml->writeEndElement();
 	}
@@ -40,23 +43,37 @@ void EventTable::write(QXmlStreamWriter* xml) const
 	xml->writeEndElement();
 }
 
+#define readNumericAttribute(a_, b_)\
+	{\
+		bool ok;\
+		auto tmp = xml->attributes().value(#a_).b_(&ok);\
+		(a_).push_back(ok ? tmp : 0);\
+	}
+
 void EventTable::read(QXmlStreamReader* xml)
 {
 	while (xml->readNextStartElement() && xml->name() == "event")
 	{
 		label.push_back(xml->attributes().value("label").toString().toStdString());
-		type.push_back(xml->attributes().value("type").toInt());
-		position.push_back(xml->attributes().value("position").toLongLong());
-		duration.push_back(xml->attributes().value("duration").toLongLong());
-		channel.push_back(xml->attributes().value("channel").toInt());
+		readNumericAttribute(type, toInt);
+		readNumericAttribute(position, toInt);
+		readNumericAttribute(duration, toInt);
+		readNumericAttribute(channel, toInt);
 
-		xml->readNextStartElement();
-		assert(xml->name() == "description");
-		description.push_back(xml->readElementText().toStdString());
-
-		xml->skipCurrentElement();
+		if (xml->readNextStartElement())
+		{
+			assert(xml->name() == "description");
+			description.push_back(xml->readElementText().toStdString());
+			xml->skipCurrentElement();
+		}
+		else
+		{
+			description.push_back("");
+		}
 	}
 }
+
+#undef readIntAttribute
 
 void EventTable::getEventsForRendering(int firstSample, int lastSample, vector<tuple<int, int, int>>* allChannelEvents, vector<tuple<int, int, int, int>>* singleChannelEvents)
 {

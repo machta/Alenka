@@ -30,7 +30,10 @@ void MontageTable::write(QXmlStreamWriter* xml) const
 		xml->writeAttribute("amplitude", QString::number(amplitude[i]));
 		xml->writeAttribute("hidden", hidden[i] ? "1" : "0");
 
-		xml->writeTextElement("code", QString::fromStdString(code[i]));
+		if (code[i].empty() == false)
+		{
+			xml->writeTextElement("code", QString::fromStdString(code[i]));
+		}
 
 		xml->writeEndElement();
 	}
@@ -39,6 +42,13 @@ void MontageTable::write(QXmlStreamWriter* xml) const
 
 	xml->writeEndElement();
 }
+
+#define readNumericAttribute(a_, b_)\
+	{\
+		bool ok;\
+		auto tmp = xml->attributes().value(#a_).b_(&ok);\
+		(a_).push_back(ok ? tmp : 0);\
+	}
 
 void MontageTable::read(QXmlStreamReader* xml)
 {
@@ -49,14 +59,19 @@ void MontageTable::read(QXmlStreamReader* xml)
 		{
 			label.push_back(xml->attributes().value("label").toString().toStdString());
 			color.push_back(QColor(xml->attributes().value("color").toString()));
-			amplitude.push_back(xml->attributes().value("amplitude").toDouble());
+			readNumericAttribute(amplitude, toDouble);
 			hidden.push_back(xml->attributes().value("hidden") == "0" ? false : true);
 
-			xml->readNextStartElement();
-			assert(xml->name() == "code");
-			code.push_back(xml->readElementText().toStdString());
-
-			xml->skipCurrentElement();
+			if (xml->readNextStartElement())
+			{
+				assert(xml->name() == "code");
+				code.push_back(xml->readElementText().toStdString());
+				xml->skipCurrentElement();
+			}
+			else
+			{
+				code.push_back("");
+			}
 		}
 		else if (xml->name() == "eventTable")
 		{
@@ -68,6 +83,8 @@ void MontageTable::read(QXmlStreamReader* xml)
 		}
 	}
 }
+
+#undef readNumericAttribute
 
 QVariant MontageTable::headerData(int section, Qt::Orientation orientation, int role) const
 {

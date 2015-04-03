@@ -29,7 +29,8 @@ protected:
 	virtual void paintGL() override;
 
 private:
-	DataFile* file;
+	InfoTable* infoTable = nullptr;
+	InfoTable defaultInfoTable;
 	MontageTable* montageTable;
 	EventTable* eventTable;
 	EventTypeTable* eventTypeTable;
@@ -42,6 +43,17 @@ private:
 	GLuint rectangleBuffer;
 	int eventMode = PROGRAM_OPTIONS["eventRenderMode"].as<int>();
 
+	InfoTable* getInfoTable()
+	{
+		if (infoTable != nullptr)
+		{
+			return infoTable;
+		}
+		else
+		{
+			return &defaultInfoTable;
+		}
+	}
 	void drawBlock(const SignalBlock& block, const std::vector<std::tuple<int, int, int, int>>& singleChannelEvents);
 	void setUniformChannel(GLuint program, int channel, const SignalBlock& block);
 	void setUniformColor(GLuint program, const QColor& color, float opacity);

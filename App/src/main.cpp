@@ -1,5 +1,5 @@
 #include "options.h"
-#include "testwindow.h"
+#include "signalfilebrowserwindow.h"
 #include "openclcontext.h"
 #include "error.h"
 
@@ -79,7 +79,7 @@ int main(int ac, char** av)
 			// Create application and show main window.
 			QApplication app(ac, av);
 
-			TestWindow window;
+			SignalFileBrowserWindow window;
 			window.show();
 
 			ret = app.exec();

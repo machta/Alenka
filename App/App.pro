@@ -9,7 +9,6 @@ HEADERS += \
     src/DataFile/gdf2.h \
     src/options.h \
     src/SignalProcessor/filter.h \
-    src/testwindow.h \
     src/canvas.h \
     src/openclcontext.h \
     src/openclprogram.h \
@@ -29,14 +28,14 @@ HEADERS += \
     src/eventtypemanager.h \
     src/eventmanager.h \
     src/montagemanager.h \
-    src/DataFile/infotable.h
+    src/DataFile/infotable.h \
+    src/signalfilebrowserwindow.h
 
 SOURCES += \
     src/DataFile/gdf2.cpp \
     src/options.cpp \
     src/main.cpp \
     src/SignalProcessor/filter.cpp \
-    src/testwindow.cpp \
     src/canvas.cpp \
     src/openclcontext.cpp \
     src/openclprogram.cpp \
@@ -57,10 +56,10 @@ SOURCES += \
     src/eventtypemanager.cpp \
     src/eventmanager.cpp \
     src/montagemanager.cpp \
-    src/DataFile/infotable.cpp
+    src/DataFile/infotable.cpp \
+    src/signalfilebrowserwindow.cpp
 
 FORMS += \
-    src/testwindow.ui \
     src/eventtypemanager.ui \
     src/eventmanager.ui \
     src/montagemanager.ui

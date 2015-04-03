@@ -39,7 +39,7 @@ public:
 	}
 
 protected:
-	virtual bool loadMontFile() override;
+	virtual bool load() override;
 
 private:
 	std::mutex fileMutex;
