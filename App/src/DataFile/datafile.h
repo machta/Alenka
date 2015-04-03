@@ -26,13 +26,13 @@ public:
 	virtual unsigned int getChannelCount() const = 0;
 	virtual uint64_t getSamplesRecorded() const = 0;
 	virtual void save();
+	MontageTable* getMontageTable()
+	{
+		return &montageTable;
+	}
 	EventTypeTable* getEventTypeTable()
 	{
 		return &eventTypeTable;
-	}
-	std::vector<MontageTable*>* getMontageTables()
-	{
-		return &montageTables;
 	}
 	std::string getFilePath() const
 	{
@@ -93,7 +93,7 @@ protected:
 
 private:
 	std::string filePath;
-	std::vector<MontageTable*> montageTables;
+	MontageTable montageTable;
 	EventTypeTable eventTypeTable;
 	InfoTable infoTable;
 

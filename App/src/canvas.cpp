@@ -52,8 +52,8 @@ void Canvas::changeFile(DataFile* file)
 
 		samplesRecorded = file->getSamplesRecorded();
 
-		montageTable = file->getMontageTables()->front();
-		eventTable = montageTable->getEventTable();
+		montageTable = file->getMontageTable()->getTrackTables()->front();
+		eventTable = file->getMontageTable()->getEventTables()->front();
 		eventTypeTable = file->getEventTypeTable();
 
 		connect(infoTable, SIGNAL(lowpassFrequencyChanged(double)), this, SLOT(changeFilter()));

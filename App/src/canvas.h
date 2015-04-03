@@ -31,7 +31,7 @@ protected:
 private:
 	InfoTable* infoTable = nullptr;
 	InfoTable defaultInfoTable;
-	MontageTable* montageTable;
+	TrackTable* montageTable;
 	EventTable* eventTable;
 	EventTypeTable* eventTypeTable;
 	SignalProcessor* signalProcessor = nullptr;

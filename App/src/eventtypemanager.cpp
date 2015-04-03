@@ -13,7 +13,7 @@ EventTypeManager::~EventTypeManager()
 	delete ui;
 }
 
-void EventTypeManager::setModel(EventTypeTable *model)
+void EventTypeManager::setModel(EventTypeTable* model)
 {
 	ui->eventTypeTableView->setModel(model);
 }

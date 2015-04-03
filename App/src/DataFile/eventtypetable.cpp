@@ -16,11 +16,13 @@ void EventTypeTable::write(QXmlStreamWriter* xml) const
 {
 	xml->writeStartElement("eventTypeTable");
 
-	assert(name.size() == opacity.size());
-	assert(name.size() == color.size());
-	assert(name.size() == hidden.size());
+	assert(rowCount() == name.size());
+	assert(rowCount() == id.size());
+	assert(rowCount() == opacity.size());
+	assert(rowCount() == color.size());
+	assert(rowCount() == hidden.size());
 
-	for (unsigned int i = 0; i < name.size(); ++i)
+	for (int i = 0; i < rowCount(); ++i)
 	{
 		xml->writeStartElement("eventType");
 
@@ -45,15 +47,22 @@ void EventTypeTable::write(QXmlStreamWriter* xml) const
 
 void EventTypeTable::read(QXmlStreamReader* xml)
 {
-	while (xml->readNextStartElement() && xml->name() == "eventType")
-	{
-		readNumericAttribute(id, toInt);
-		name.push_back(xml->attributes().value("name").toString().toStdString());
-		readNumericAttribute(opacity, toDouble);
-		color.push_back(QColor(xml->attributes().value("color").toString()));
-		hidden.push_back(xml->attributes().value("hidden") == "0" ? false : true);
+	assert(xml->name() == "eventTypeTable");
 
-		xml->skipCurrentElement();
+	while (xml->readNextStartElement())
+	{
+		if (xml->name() == "eventType")
+		{
+			readNumericAttribute(id, toInt);
+			name.push_back(xml->attributes().value("name").toString().toStdString());
+			readNumericAttribute(opacity, toDouble);
+			color.push_back(QColor(xml->attributes().value("color").toString()));
+			hidden.push_back(xml->attributes().value("hidden") == "0" ? false : true);
+		}
+		else
+		{
+			xml->skipCurrentElement();
+		}
 	}
 }
 

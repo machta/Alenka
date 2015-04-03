@@ -16,11 +16,12 @@ void EventTable::write(QXmlStreamWriter* xml) const
 {
 	xml->writeStartElement("eventTable");
 
-	assert(label.size() == type.size());
-	assert(label.size() == position.size());
-	assert(label.size() == duration.size());
-	assert(label.size() == channel.size());
-	assert(label.size() == description.size());
+	assert(rowCount() == label.size());
+	assert(rowCount() == type.size());
+	assert(rowCount() == position.size());
+	assert(rowCount() == duration.size());
+	assert(rowCount() == channel.size());
+	assert(rowCount() == description.size());
 
 	for (unsigned int i = 0; i < label.size(); ++i)
 	{
@@ -52,23 +53,34 @@ void EventTable::write(QXmlStreamWriter* xml) const
 
 void EventTable::read(QXmlStreamReader* xml)
 {
-	while (xml->readNextStartElement() && xml->name() == "event")
-	{
-		label.push_back(xml->attributes().value("label").toString().toStdString());
-		readNumericAttribute(type, toInt);
-		readNumericAttribute(position, toInt);
-		readNumericAttribute(duration, toInt);
-		readNumericAttribute(channel, toInt);
+	assert(xml->name() == "eventTable");
 
-		if (xml->readNextStartElement())
+	while (xml->readNextStartElement())
+	{
+		if (xml->name() == "event")
 		{
-			assert(xml->name() == "description");
-			description.push_back(xml->readElementText().toStdString());
-			xml->skipCurrentElement();
+			label.push_back(xml->attributes().value("label").toString().toStdString());
+			readNumericAttribute(type, toInt);
+			readNumericAttribute(position, toInt);
+			readNumericAttribute(duration, toInt);
+			readNumericAttribute(channel, toInt);
+
+			description.push_back("");
+			while (xml->readNextStartElement())
+			{
+				if (xml->name() == "description")
+				{
+					description.back() = xml->readElementText().toStdString();
+				}
+				else
+				{
+					xml->skipCurrentElement();
+				}
+			}
 		}
 		else
 		{
-			description.push_back("");
+			xml->skipCurrentElement();
 		}
 	}
 }

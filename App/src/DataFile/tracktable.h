@@ -1,10 +1,7 @@
-#ifndef MONTAGETABLE_H
-#define MONTAGETABLE_H
+#ifndef TRACKTABLE_H
+#define TRACKTABLE_H
 
 #include <QAbstractTableModel>
-
-#include "tracktable.h"
-#include "eventtable.h"
 
 #include <QObject>
 #include <QColor>
@@ -15,33 +12,27 @@
 #include <string>
 #include <sstream>
 
-class MontageTable : public QAbstractTableModel
+class TrackTable : public QAbstractTableModel
 {
+	Q_OBJECT
+
 public:
-	MontageTable(QObject* parent = 0);
-	~MontageTable();
+	TrackTable(QObject* parent = 0);
+	~TrackTable();
 
 	void write(QXmlStreamWriter* xml) const;
 	void read(QXmlStreamReader* xml);
-	std::vector<TrackTable*>* getTrackTables()
-	{
-		return &trackTables;
-	}
-	std::vector<EventTable*>* getEventTables()
-	{
-		return &eventTables;
-	}
 	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override
 	{
 		(void)parent;
 
-		return name.size();
+		return label.size();
 	}
 	virtual int columnCount(const QModelIndex& parent = QModelIndex()) const override
 	{
 		(void)parent;
 
-		return 2;
+		return 5;
 	}
 	virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 	virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
@@ -59,11 +50,12 @@ public:
 	virtual bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
 
 private:
-	std::vector<TrackTable*> trackTables;
-	std::vector<EventTable*> eventTables;
-
-	std::vector<std::string> name;
-	std::vector<bool> save;
+	std::vector<std::string> label;
+	std::vector<std::string> code;
+	std::vector<QColor> color;
+	std::vector<double> amplitude;
+	std::vector<bool> hidden;
 };
 
-#endif // MONTAGETABLE_H
+#endif // TRACKTABLE_H
+

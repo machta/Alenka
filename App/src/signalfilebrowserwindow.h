@@ -5,7 +5,7 @@
 
 class DataFile;
 class SignalViewer;
-class MontageManager;
+class TrackManager;
 class EventManager;
 class EventTypeManager;
 class QComboBox;
@@ -26,20 +26,21 @@ public slots:
 private:
 	DataFile* file = nullptr;
 	SignalViewer* signalViewer;
-	MontageManager* montageManager;
+	TrackManager* trackManager;
 	EventManager* eventManager;
 	EventTypeManager* eventTypeManager;
 	QComboBox* lowpassComboBox;
 	QComboBox* highpassComboBox;
 	QCheckBox* notchCheckBox;
+	QComboBox* montageComboBox;
 
 private slots:
 	void openFile();
 	void closeFile();
 	void saveFile();
-	void showMontageManager(bool checked);
-	void showEventManager(bool checked);
-	void showEventTypeManager(bool checked);
+	void showHideTrackManager(bool checked);
+	void showHideEventManager(bool checked);
+	void showHideEventTypeManager(bool checked);
 	void lowpassComboBoxUpdate(const QString& text);
 	void lowpassComboBoxUpdate(double value);
 	void highpassComboBoxUpdate(const QString& text);

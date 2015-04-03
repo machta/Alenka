@@ -2,43 +2,45 @@
 
 #include <cassert>
 
-using namespace std;
-
 MontageTable::MontageTable(QObject* parent) : QAbstractTableModel(parent)
 {
+
 }
 
 MontageTable::~MontageTable()
 {
+	for (const auto& e : trackTables)
+	{
+		delete e;
+	}
+
+	for (const auto& e : eventTables)
+	{
+		delete e;
+	}
 }
 
 void MontageTable::write(QXmlStreamWriter* xml) const
 {
+	assert(rowCount() == name.size());
+	assert(rowCount() == save.size());
+	assert(rowCount() == trackTables.size());
+	assert(rowCount() == eventTables.size());
+
 	xml->writeStartElement("montageTable");
 
-	assert(label.size() == code.size());
-	assert(label.size() == color.size());
-	assert(label.size() == amplitude.size());
-	assert(label.size() == hidden.size());
-
-	for (unsigned int i = 0; i < label.size(); ++i)
+	for (int i = 0; i < rowCount(); ++i)
 	{
-		xml->writeStartElement("track");
+		xml->writeStartElement("montage");
 
-		xml->writeAttribute("label", QString::fromStdString(label[i]));
-		xml->writeAttribute("color", color[i].name());
-		xml->writeAttribute("amplitude", QString::number(amplitude[i]));
-		xml->writeAttribute("hidden", hidden[i] ? "1" : "0");
+		xml->writeAttribute("name", QString::fromStdString(name[i]));
+		xml->writeAttribute("save", save[i] ? "1" : "0");
 
-		if (code[i].empty() == false)
-		{
-			xml->writeTextElement("code", QString::fromStdString(code[i]));
-		}
+		trackTables[i]->write(xml);
+		eventTables[i]->write(xml);
 
 		xml->writeEndElement();
 	}
-
-	eventTable.write(xml);
 
 	xml->writeEndElement();
 }
@@ -52,30 +54,33 @@ void MontageTable::write(QXmlStreamWriter* xml) const
 
 void MontageTable::read(QXmlStreamReader* xml)
 {
+	assert(xml->name() == "montageTable");
+
 	while (xml->readNextStartElement())
 	{
-		auto name = xml->name();
-		if (name == "track")
+		if (xml->name() == "montage")
 		{
-			label.push_back(xml->attributes().value("label").toString().toStdString());
-			color.push_back(QColor(xml->attributes().value("color").toString()));
-			readNumericAttribute(amplitude, toDouble);
-			hidden.push_back(xml->attributes().value("hidden") == "0" ? false : true);
+			name.push_back(xml->attributes().value("name").toString().toStdString());
+			save.push_back(xml->attributes().value("save") == "0" ? false : true);
 
-			if (xml->readNextStartElement())
+			trackTables.push_back(new TrackTable);
+			eventTables.push_back(new EventTable);
+
+			while (xml->readNextStartElement())
 			{
-				assert(xml->name() == "code");
-				code.push_back(xml->readElementText().toStdString());
-				xml->skipCurrentElement();
+				if (xml->name() == "trackTable")
+				{
+					trackTables.back()->read(xml);
+				}
+				else if (xml->name() == "eventTable")
+				{
+					eventTables.back()->read(xml);
+				}
+				else
+				{
+					xml->skipCurrentElement();
+				}
 			}
-			else
-			{
-				code.push_back("");
-			}
-		}
-		else if (xml->name() == "eventTable")
-		{
-			eventTable.read(xml);
 		}
 		else
 		{
@@ -93,15 +98,9 @@ QVariant MontageTable::headerData(int section, Qt::Orientation orientation, int 
 		switch (section)
 		{
 		case 0:
-			return "Label";
+			return "Name";
 		case 1:
-			return "Code";
-		case 2:
-			return "Color";
-		case 3:
-			return "Amplitude";
-		case 4:
-			return "Hidden";
+			return "Save";
 		}
 	}
 
@@ -117,15 +116,9 @@ QVariant MontageTable::data(const QModelIndex& index, int role) const
 			switch (index.column())
 			{
 			case 0:
-				return QString::fromStdString(label[index.row()]);
+				return QString::fromStdString(name[index.row()]);
 			case 1:
-				return QString::fromStdString(code[index.row()]);
-			case 2:
-				return color[index.row()];
-			case 3:
-				return amplitude[index.row()];
-			case 4:
-				return hidden[index.row()];
+				return save[index.row()];
 			}
 		}
 	}
@@ -133,7 +126,7 @@ QVariant MontageTable::data(const QModelIndex& index, int role) const
 	return QVariant();
 }
 
-bool MontageTable::setData(const QModelIndex& index, const QVariant &value, int role)
+bool MontageTable::setData(const QModelIndex& index, const QVariant& value, int role)
 {
 	if (index.isValid())
 	{
@@ -142,19 +135,10 @@ bool MontageTable::setData(const QModelIndex& index, const QVariant &value, int 
 			switch (index.column())
 			{
 			case 0:
-				label[index.row()] = value.toString().toStdString();
+				name[index.row()] = value.toString().toStdString();
 				break;
 			case 1:
-				code[index.row()] = value.toString().toStdString();
-				break;
-			case 2:
-				color[index.row()] = value.value<QColor>();
-				break;
-			case 3:
-				amplitude[index.row()] = value.toDouble();
-				break;
-			case 4:
-				hidden[index.row()] = value.toBool();
+				save[index.row()] = value.toBool();
 				break;
 			}
 
@@ -174,15 +158,11 @@ bool MontageTable::insertRows(int row, int count, const QModelIndex& /*parent*/)
 
 		for (int i = 0; i < count; ++i)
 		{
-			std::stringstream ssLabel, ssCode;
-			ssLabel << "Track " << row + i;
-			ssCode << "out = in(" << row + i << ");";
+			std::stringstream ss;
+			ss << "Montage " << row + i;
 
-			label.insert(label.begin() + row + i, ssLabel.str());
-			code.insert(code.begin() + row + i, ssCode.str());
-			color.insert(color.begin() + row + i, QColor(Qt::black));
-			amplitude.insert(amplitude.begin() + row + i, -0.000008); // TODO: load global amplitude
-			hidden.insert(hidden.begin() + row + i, false);
+			name.insert(name.begin() + row + i, ss.str());
+			save.insert(save.begin() + row + i, false);
 		}
 
 		endInsertRows();
@@ -203,11 +183,8 @@ bool MontageTable::removeRows(int row, int count, const QModelIndex& /*parent*/)
 
 		int end = row + count;
 
-		label.erase(label.begin() + row, label.begin() + end);
-		code.erase(code.begin() + row, code.begin() + end);
-		color.erase(color.begin() + row, color.begin() + end);
-		amplitude.erase(amplitude.begin() + row, amplitude.begin() + end);
-		hidden.erase(hidden.begin() + row, hidden.begin() + end);
+		name.erase(name.begin() + row, name.begin() + end);
+		save.erase(save.begin() + row, save.begin() + end);
 
 		endRemoveRows();
 
@@ -218,4 +195,3 @@ bool MontageTable::removeRows(int row, int count, const QModelIndex& /*parent*/)
 		return false;
 	}
 }
-

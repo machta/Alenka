@@ -37,6 +37,10 @@ public:
 	{
 		return notch;
 	}
+	int getSelectedMontage() const
+	{
+		return selectedMontage;
+	}
 
 signals:
 	void virtualWidthChanged(int);
@@ -44,6 +48,7 @@ signals:
 	void lowpassFrequencyChanged(double);
 	void highpassFrequencyChanged(double);
 	void notchChanged(bool);
+	void selectedMontageChanged(int);
 
 public slots:
 	void setVirtualWidth(int value)
@@ -51,7 +56,7 @@ public slots:
 		if (value != virtualWidth)
 		{
 			virtualWidth = value;
-			emit virtualWidthChanged(virtualWidth);
+			emit virtualWidthChanged(value);
 		}
 	}
 	void setPosition(int value)
@@ -59,7 +64,7 @@ public slots:
 		if (value != position)
 		{
 			position = value;
-			emit positionChanged(position);
+			emit positionChanged(value);
 		}
 	}
 	void setLowpassFrequency(double value)
@@ -67,7 +72,7 @@ public slots:
 		if (value != lowpassFrequency)
 		{
 			lowpassFrequency = value;
-			emit lowpassFrequencyChanged(lowpassFrequency);
+			emit lowpassFrequencyChanged(value);
 		}
 	}
 	void setHighFrequency(double value)
@@ -75,7 +80,7 @@ public slots:
 		if (value != highPassFrequency)
 		{
 			highPassFrequency = value;
-			emit highpassFrequencyChanged(highPassFrequency);
+			emit highpassFrequencyChanged(value);
 		}
 	}
 	void setNotch(bool value)
@@ -83,7 +88,15 @@ public slots:
 		if (value != notch)
 		{
 			notch = value;
-			emit notchChanged(notch);
+			emit notchChanged(value);
+		}
+	}
+	void setSelectedMontage(int value)
+	{
+		if (value != selectedMontage)
+		{
+			selectedMontage = value;
+			emit selectedMontageChanged(value);
 		}
 	}
 
@@ -93,6 +106,7 @@ private:
 	double lowpassFrequency = 1000*1000*1000; // TODO: add on/off vars to avoid using these arbitrary values
 	double highPassFrequency = -1000*1000*1000;
 	bool notch = false;
+	int selectedMontage = 0;
 };
 
 #endif // INFOTABLE_H

@@ -2,7 +2,7 @@
 
 #include "signalviewer.h"
 #include "DataFile/gdf2.h"
-#include "montagemanager.h"
+#include "trackmanager.h"
 #include "eventmanager.h"
 #include "eventtypemanager.h"
 
@@ -24,7 +24,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	signalViewer = new SignalViewer(this);
 	setCentralWidget(signalViewer);
 
-	montageManager = new MontageManager(this);
+	trackManager = new TrackManager(this);
 	eventManager = new EventManager(this);
 	eventTypeManager = new EventTypeManager(this);
 
@@ -45,20 +45,20 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	connect(saveFileAction, SIGNAL(triggered()), this, SLOT(saveFile()));
 
 	// Construct Window actions.
-	QAction* showMontageManagerAction = new QAction("Montage Manager", this);
-	showMontageManagerAction->setCheckable(true);
-	showMontageManagerAction->setToolTip("Show Montage Manager window.");
-	connect(showMontageManagerAction, SIGNAL(triggered(bool)), this, SLOT(showMontageManager(bool)));
+	QAction* showTrackManagerAction = new QAction("Track Manager", this);
+	showTrackManagerAction->setCheckable(true);
+	showTrackManagerAction->setToolTip("Show Track Manager window.");
+	connect(showTrackManagerAction, SIGNAL(triggered(bool)), this, SLOT(showHideTrackManager(bool)));
 
 	QAction* showEventManagerAction = new QAction("Event Manager", this);
 	showEventManagerAction->setCheckable(true);
 	showEventManagerAction->setToolTip("Show Event Manager window.");
-	connect(showEventManagerAction, SIGNAL(triggered(bool)), this, SLOT(showEventManager(bool)));
+	connect(showEventManagerAction, SIGNAL(triggered(bool)), this, SLOT(showHideEventManager(bool)));
 
 	QAction* showEventTypeManagerAction = new QAction("Event Type Manager", this);
 	showEventTypeManagerAction->setCheckable(true);
 	showEventTypeManagerAction->setToolTip("Show Event Type Manager window.");
-	connect(showEventTypeManagerAction, SIGNAL(triggered(bool)), this, SLOT(showEventTypeManager(bool)));
+	connect(showEventTypeManagerAction, SIGNAL(triggered(bool)), this, SLOT(showHideEventTypeManager(bool)));
 
 	// Construct File menu.
 	QMenu* fileMenu = menuBar()->addMenu("&File");
@@ -70,12 +70,16 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	// Construct Window menu.
 	QMenu* windowMenu = menuBar()->addMenu("&Window");
 
-	windowMenu->addAction(showMontageManagerAction);
+	windowMenu->addAction(showTrackManagerAction);
 	windowMenu->addAction(showEventManagerAction);
 	windowMenu->addAction(showEventTypeManagerAction);
 
+	// Toolbars.
+	const int spacing = 3;
+
 	// Construct File toolbar.
 	QToolBar* fileToolBar = addToolBar("File");
+	fileToolBar->layout()->setSpacing(spacing);
 
 	fileToolBar->addAction(openFileAction);
 	fileToolBar->addAction(closeFileAction);
@@ -83,23 +87,22 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 	// Construct Window toolbar.
 	QToolBar* windowToolBar = addToolBar("Window");
+	windowToolBar->layout()->setSpacing(spacing);
 
-	windowToolBar->addAction(showMontageManagerAction);
+	windowToolBar->addAction(showTrackManagerAction);
 	windowToolBar->addAction(showEventManagerAction);
 	windowToolBar->addAction(showEventTypeManagerAction);
 
 	// Construct Filter toolbar.
 	QToolBar* filterToolBar = addToolBar("Filter");
-	filterToolBar->layout()->setSpacing(3);
+	filterToolBar->layout()->setSpacing(spacing);
 
-	QLabel* label = new QLabel("LF:", this);
-	filterToolBar->addWidget(label);
+	filterToolBar->addWidget(new QLabel("LF:", this));
 	lowpassComboBox = new QComboBox(this);
 	lowpassComboBox->setEditable(true);
 	filterToolBar->addWidget(lowpassComboBox);
 
-	label = new QLabel("HF:", this);
-	filterToolBar->addWidget(label);
+	filterToolBar->addWidget(new QLabel("HF:", this));
 	highpassComboBox = new QComboBox(this);
 	highpassComboBox->setEditable(true);
 	filterToolBar->addWidget(highpassComboBox);
@@ -107,6 +110,14 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	notchCheckBox = new QCheckBox("Notch:", this);
 	notchCheckBox->setLayoutDirection(Qt::RightToLeft);
 	filterToolBar->addWidget(notchCheckBox);
+
+	// Construct Montage Toolbar.
+	QToolBar* montageToolBar = addToolBar("Filter");
+	montageToolBar->layout()->setSpacing(spacing);
+
+	montageToolBar->addWidget(new QLabel("Montage:", this));
+	montageComboBox = new QComboBox(this);
+	montageToolBar->addWidget(montageComboBox);
 }
 
 SignalFileBrowserWindow::~SignalFileBrowserWindow()
@@ -128,8 +139,8 @@ void SignalFileBrowserWindow::openFile()
 		signalViewer->changeFile(file);
 
 		// Update the managers.
-		montageManager->setModel(file->getMontageTables()->front());
-		eventManager->setModel(file->getMontageTables()->front()->getEventTable());
+		trackManager->setModel(file->getMontageTable()->getTrackTables()->front());
+		eventManager->setModel(file->getMontageTable()->getEventTables()->front());
 		eventTypeManager->setModel(file->getEventTypeTable());
 
 		InfoTable* it = file->getInfoTable();
@@ -180,19 +191,19 @@ void SignalFileBrowserWindow::saveFile()
 	}
 }
 
-void SignalFileBrowserWindow::showMontageManager(bool checked)
+void SignalFileBrowserWindow::showHideTrackManager(bool checked)
 {
 	if (checked)
 	{
-		montageManager->show();
+		trackManager->show();
 	}
 	else
 	{
-		montageManager->hide();
+		trackManager->hide();
 	}
 }
 
-void SignalFileBrowserWindow::showEventManager(bool checked)
+void SignalFileBrowserWindow::showHideEventManager(bool checked)
 {
 	if (checked)
 	{
@@ -204,7 +215,7 @@ void SignalFileBrowserWindow::showEventManager(bool checked)
 	}
 }
 
-void SignalFileBrowserWindow::showEventTypeManager(bool checked)
+void SignalFileBrowserWindow::showHideEventTypeManager(bool checked)
 {
 	if (checked)
 	{

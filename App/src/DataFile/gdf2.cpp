@@ -249,7 +249,7 @@ void GDF2::save()
 	DataFile::save();
 
 	// Save some events in the "event table" part of the gdf file.
-	EventTable* eventTable = getMontageTables()->front()->getEventTable();
+	EventTable* eventTable = getMontageTable()->getEventTables()->front();
 
 	seekFile(startOfEventTable, true);
 
@@ -322,19 +322,21 @@ bool GDF2::load()
 		seekFile(4);
 
 		// Add a default montage and put the events there.
-		getMontageTables()->push_back(new MontageTable);
+		getMontageTable()->insertRow(0);
 
-		MontageTable* defaultMontage = getMontageTables()->back();
-		EventTable* defaultEventTable = defaultMontage->getEventTable();
+		TrackTable* defaultTracks = new TrackTable;
+		defaultTracks->insertRows(0, getChannelCount());
+		getMontageTable()->getTrackTables()->push_back(defaultTracks);
 
-		defaultMontage->insertRows(0, getChannelCount());
-		defaultEventTable->insertRows(0, numberOfEvents);
+		EventTable* defaultEvents = new EventTable;
+		defaultEvents->insertRows(0, numberOfEvents);
+		getMontageTable()->getEventTables()->push_back(defaultEvents);
 
 		for (int i = 0; i < numberOfEvents; ++i)
 		{
 			uint32_t position;
 			readFile(&position);
-			defaultEventTable->setData(defaultEventTable->index(i, 2), position);
+			defaultEvents->setData(defaultEvents->index(i, 2), position);
 		}
 
 		for (int i = 0; i < numberOfEvents; ++i)
@@ -342,7 +344,7 @@ bool GDF2::load()
 			uint16_t type;
 			readFile(&type);
 			eventTypesUsed.insert(type);
-			defaultEventTable->setData(defaultEventTable->index(i, 1), type);
+			defaultEvents->setData(defaultEvents->index(i, 1), type);
 		}
 
 		if (eventTableMode & 0x02)
@@ -352,14 +354,14 @@ bool GDF2::load()
 				uint16_t channel;
 				readFile(&channel);
 				int channelInt = channel - 1;
-				defaultEventTable->setData(defaultEventTable->index(i, 4), channelInt);
+				defaultEvents->setData(defaultEvents->index(i, 4), channelInt);
 			}
 
 			for (int i = 0; i < numberOfEvents; ++i)
 			{
 				uint32_t duration;
 				readFile(&duration);
-				defaultEventTable->setData(defaultEventTable->index(i, 3), duration);
+				defaultEvents->setData(defaultEvents->index(i, 3), duration);
 			}
 		}
 

@@ -24,12 +24,13 @@ HEADERS += \
     src/SignalProcessor/gpucache.h \
     src/DataFile/eventtypetable.h \
     src/DataFile/eventtable.h \
-    src/DataFile/montagetable.h \
     src/eventtypemanager.h \
     src/eventmanager.h \
-    src/montagemanager.h \
     src/DataFile/infotable.h \
-    src/signalfilebrowserwindow.h
+    src/signalfilebrowserwindow.h \
+    src/DataFile/tracktable.h \
+    src/DataFile/montagetable.h \
+    src/trackmanager.h
 
 SOURCES += \
     src/DataFile/gdf2.cpp \
@@ -51,18 +52,19 @@ SOURCES += \
     src/error.cpp \
     src/DataFile/eventtypetable.cpp \
     src/DataFile/eventtable.cpp \
-    src/DataFile/montagetable.cpp \
     src/DataFile/datafile.cpp \
     src/eventtypemanager.cpp \
     src/eventmanager.cpp \
-    src/montagemanager.cpp \
     src/DataFile/infotable.cpp \
-    src/signalfilebrowserwindow.cpp
+    src/signalfilebrowserwindow.cpp \
+    src/DataFile/tracktable.cpp \
+    src/DataFile/montagetable.cpp \
+    src/trackmanager.cpp
 
 FORMS += \
     src/eventtypemanager.ui \
     src/eventmanager.ui \
-    src/montagemanager.ui
+    src/trackmanager.ui
 
 DISTFILES += \
     kernels.cl \

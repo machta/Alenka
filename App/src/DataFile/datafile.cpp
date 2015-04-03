@@ -14,22 +14,13 @@ DataFile::~DataFile()
 	{
 		infoTable.write(xml);
 	});
-
-	for (const auto& e : montageTables)
-	{
-		delete e;
-	}
 }
 
 void DataFile::save()
 {
 	saveXMLFile(".mont", [this] (QXmlStreamWriter* xml)
 	{
-		for (const auto& e : montageTables)
-		{
-			e->write(xml);
-		}
-
+		montageTable.write(xml);
 		eventTypeTable.write(xml);
 	});
 }
@@ -45,13 +36,11 @@ bool DataFile::load()
 	{
 		while (xml->readNextStartElement())
 		{
-			auto name = xml->name();
-			if (name == "montageTable")
+			if (xml->name() == "montageTable")
 			{
-				montageTables.push_back(new MontageTable);
-				montageTables.back()->read(xml);
+				montageTable.read(xml);
 			}
-			else if (name == "eventTypeTable")
+			else if (xml->name() == "eventTypeTable")
 			{
 				eventTypeTable.read(xml);
 			}
