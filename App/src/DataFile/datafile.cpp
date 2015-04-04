@@ -1,6 +1,8 @@
 #include "datafile.h"
 
-#include <qfile.h>
+#include "../error.h"
+
+#include <QFile>
 
 using namespace std;
 
@@ -67,6 +69,11 @@ bool DataFile::loadXMLFile(const string& extension, function<void (QXmlStreamRea
 
 		loadFunction(&xml);
 
+		if (xml.hasError())
+		{
+			logToBoth("XML error(" << xml.error() << ") while reading file '" << filePath + extension << "': " << xml.errorString().toStdString());
+		}
+
 		ret = true;
 	}
 	else
@@ -92,6 +99,11 @@ void DataFile::saveXMLFile(const string& extension, std::function<void (QXmlStre
 	saveFunction(&xml);
 
 	xml.writeEndDocument();
+
+	if (xml.hasError())
+	{
+		logToBoth("XML error occurred while writing to file '" << filePath + extension << "'");
+	}
 
 	xmlFile.close();
 }

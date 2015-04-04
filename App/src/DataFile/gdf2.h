@@ -6,6 +6,7 @@
 
 #include <cstdio>
 #include <mutex>
+#include <functional>
 
 #ifndef GDF2_H
 #define GDF2_H
@@ -51,7 +52,7 @@ private:
 	bool isLittleEndian;
 	double* scale;
 	int dataTypeSize;
-	double (* convertSampleToDouble)(void* sample);
+	std::function<double (void*)> convertSampleToDouble;
 	int version;
 	bool uncalibrated;
 	QCache<unsigned int, std::vector<char>>* cache = nullptr;
