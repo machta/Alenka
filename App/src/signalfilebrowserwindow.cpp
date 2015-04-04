@@ -25,8 +25,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	setCentralWidget(signalViewer);
 
 	// Construct dock widgets.
-	//setDockNestingEnabled(true);
-	//dockWidget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+	setDockNestingEnabled(true);
 
 	QDockWidget* dockWidget1 = new QDockWidget("Track Manager", this);
 	trackManager = new TrackManager(this);
