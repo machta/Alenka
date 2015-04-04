@@ -1,33 +1,50 @@
 #include "eventmanager.h"
-#include "ui_eventmanager.h"
 
-EventManager::EventManager(QWidget* parent) : QDialog(parent, Qt::Window), ui(new Ui::EventManager)
+#include "DataFile/eventtable.h"
+
+#include <QTableView>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+
+EventManager::EventManager(QWidget* parent) : QWidget(parent, Qt::Window)
 {
-	ui->setupUi(this);
+	tableView = new QTableView(this);
 
-	setWindowTitle("Event Manager");
+	QPushButton* addRowButton = new QPushButton("Add Row", this);
+	connect(addRowButton, SIGNAL(clicked()), this, SLOT(addRow()));
+
+	QPushButton* removeRowButton = new QPushButton("Remove Row", this);
+	connect(removeRowButton, SIGNAL(clicked()), this, SLOT(removeRow()));
+
+	QVBoxLayout* box1 = new QVBoxLayout;
+	QHBoxLayout* box2 = new QHBoxLayout;
+	box2->addWidget(addRowButton);
+	box2->addWidget(removeRowButton);
+	box1->addLayout(box2);
+	box1->addWidget(tableView);
+	setLayout(box1);
 }
 
 EventManager::~EventManager()
 {
-	delete ui;
 }
 
 void EventManager::setModel(EventTable* model)
 {
-	ui->eventTableView->setModel(model);
+	tableView->setModel(model);
 }
 
-void EventManager::on_addRowButton_clicked()
+void EventManager::addRow()
 {
-	ui->eventTableView->model()->insertRow(ui->eventTableView->model()->rowCount());
+	tableView->model()->insertRow(tableView->model()->rowCount());
 }
 
-void EventManager::on_removeRowButton_clicked()
+void EventManager::removeRow()
 {
-	QModelIndex currentIndex = ui->eventTableView->selectionModel()->currentIndex();
+	QModelIndex currentIndex = tableView->selectionModel()->currentIndex();
 	if (currentIndex.isValid())
 	{
-		ui->eventTableView->model()->removeRow(currentIndex.row());
+		tableView->model()->removeRow(currentIndex.row());
 	}
 }

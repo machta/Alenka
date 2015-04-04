@@ -1,27 +1,27 @@
 #ifndef EVENTTYPEMANAGER_H
 #define EVENTTYPEMANAGER_H
 
-#include <QDialog>
+#include <QWidget>
 
-#include "DataFile/eventtypetable.h"
+class QTableView;
+class EventTypeTable;
 
-namespace Ui
-{
-class EventTypeManager;
-}
-
-class EventTypeManager : public QDialog
+class EventTypeManager : public QWidget
 {
 	Q_OBJECT
 
 public:
-	explicit EventTypeManager(QWidget* parent = 0);
+	explicit EventTypeManager(QWidget* parent = nullptr);
 	~EventTypeManager();
 
 	void setModel(EventTypeTable* model);
 
 private:
-	Ui::EventTypeManager* ui;
+	QTableView* tableView;
+
+private slots:
+	void addRow();
+	void removeRow();
 };
 
 #endif // EVENTTYPEMANAGER_H

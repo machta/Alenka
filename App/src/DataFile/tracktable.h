@@ -17,7 +17,7 @@ class TrackTable : public QAbstractTableModel
 	Q_OBJECT
 
 public:
-	TrackTable(QObject* parent = 0);
+	TrackTable(QObject* parent = nullptr);
 	~TrackTable();
 
 	void write(QXmlStreamWriter* xml) const;

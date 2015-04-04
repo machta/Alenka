@@ -17,7 +17,7 @@ class EventTypeTable : public QAbstractTableModel
 	Q_OBJECT
 
 public:
-	EventTypeTable(QObject* parent = 0);
+	EventTypeTable(QObject* parent = nullptr);
 	~EventTypeTable();
 
 	void write(QXmlStreamWriter* xml) const;
@@ -44,14 +44,7 @@ public:
 			return Qt::ItemIsEnabled;
 		}
 
-		Qt::ItemFlags f = QAbstractTableModel::flags(index);
-
-		if (index.column() != 0)
-		{
-			f |= Qt::ItemIsEditable;
-		}
-
-		return f;
+		return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
 	}
 	virtual bool insertRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
 	virtual bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;

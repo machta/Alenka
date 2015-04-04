@@ -1,32 +1,27 @@
 #ifndef EVENTMANAGER_H
 #define EVENTMANAGER_H
 
-#include <QDialog>
+#include <QWidget>
 
-#include "DataFile/eventtable.h"
+class EventTable;
+class QTableView;
 
-namespace Ui
-{
-class EventManager;
-}
-
-class EventManager : public QDialog
+class EventManager : public QWidget
 {
 	Q_OBJECT
 
 public:
-	explicit EventManager(QWidget* parent = 0);
+	explicit EventManager(QWidget* parent = nullptr);
 	~EventManager();
 
 	void setModel(EventTable* model);
 
 private:
-	Ui::EventManager* ui;
+	QTableView* tableView;
 
 private slots:
-	void on_addRowButton_clicked();
-
-	void on_removeRowButton_clicked();
+	void addRow();
+	void removeRow();
 };
 
 #endif // EVENTMANAGER_H

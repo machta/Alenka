@@ -18,7 +18,7 @@
 class MontageTable : public QAbstractTableModel
 {
 public:
-	MontageTable(QObject* parent = 0);
+	MontageTable(QObject* parent = nullptr);
 	~MontageTable();
 
 	void write(QXmlStreamWriter* xml) const;

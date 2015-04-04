@@ -1,19 +1,50 @@
 #include "trackmanager.h"
-#include "ui_trackmanager.h"
 
-TrackManager::TrackManager(QWidget* parent) : QDialog(parent), ui(new Ui::TrackManager)
+#include "DataFile/tracktable.h"
+
+#include <QTableView>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+
+TrackManager::TrackManager(QWidget* parent) : QWidget(parent)
 {
-	ui->setupUi(this);
+	tableView = new QTableView(this);
 
-	setWindowTitle("Track Manager");
+	QPushButton* addRowButton = new QPushButton("Add Row", this);
+	connect(addRowButton, SIGNAL(clicked()), this, SLOT(addRow()));
+
+	QPushButton* removeRowButton = new QPushButton("Remove Row", this);
+	connect(removeRowButton, SIGNAL(clicked()), this, SLOT(removeRow()));
+
+	QVBoxLayout* box1 = new QVBoxLayout;
+	QHBoxLayout* box2 = new QHBoxLayout;
+	box2->addWidget(addRowButton);
+	box2->addWidget(removeRowButton);
+	box1->addLayout(box2);
+	box1->addWidget(tableView);
+	setLayout(box1);
 }
 
 TrackManager::~TrackManager()
 {
-	delete ui;
 }
 
 void TrackManager::setModel(TrackTable* model)
 {
-	ui->trackTableView->setModel(model);
+	tableView->setModel(model);
+}
+
+void TrackManager::addRow()
+{
+	tableView->model()->insertRow(tableView->model()->rowCount());
+}
+
+void TrackManager::removeRow()
+{
+	QModelIndex currentIndex = tableView->selectionModel()->currentIndex();
+	if (currentIndex.isValid())
+	{
+		tableView->model()->removeRow(currentIndex.row());
+	}
 }

@@ -18,7 +18,7 @@ class Canvas : public QOpenGLWidget, public OpenGLInterface
 	Q_OBJECT
 
 public:
-	explicit Canvas(QWidget* parent = 0);
+	explicit Canvas(QWidget* parent = nullptr);
 	~Canvas();
 
 	void changeFile(DataFile* file);

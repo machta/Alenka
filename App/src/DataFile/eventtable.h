@@ -18,7 +18,7 @@ class EventTable : public QAbstractTableModel
 	Q_OBJECT
 
 public:
-	EventTable(QObject* parent = 0);
+	EventTable(QObject* parent = nullptr);
 	~EventTable();
 
 	void write(QXmlStreamWriter* xml) const;

@@ -10,13 +10,14 @@ class EventManager;
 class EventTypeManager;
 class QComboBox;
 class QCheckBox;
+class QDockWidget;
 
 class SignalFileBrowserWindow : public QMainWindow
 {
 	Q_OBJECT
 
 public:
-	explicit SignalFileBrowserWindow(QWidget* parent = 0);
+	explicit SignalFileBrowserWindow(QWidget* parent = nullptr);
 	~SignalFileBrowserWindow();
 
 signals:
@@ -38,14 +39,10 @@ private slots:
 	void openFile();
 	void closeFile();
 	void saveFile();
-	void showHideTrackManager(bool checked);
-	void showHideEventManager(bool checked);
-	void showHideEventTypeManager(bool checked);
 	void lowpassComboBoxUpdate(const QString& text);
 	void lowpassComboBoxUpdate(double value);
 	void highpassComboBoxUpdate(const QString& text);
 	void highpassComboBoxUpdate(double value);
-
 };
 
 #endif // SIGNALFILEBROWSERWINDOW_H

@@ -18,7 +18,7 @@ class SignalViewer : public QWidget
 	Q_OBJECT
 
 public:
-	explicit SignalViewer(QWidget* parent = 0);
+	explicit SignalViewer(QWidget* parent = nullptr);
 	~SignalViewer();
 
 signals:

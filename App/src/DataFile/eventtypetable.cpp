@@ -59,10 +59,8 @@ void EventTypeTable::read(QXmlStreamReader* xml)
 			color.push_back(QColor(xml->attributes().value("color").toString()));
 			hidden.push_back(xml->attributes().value("hidden") == "0" ? false : true);
 		}
-		else
-		{
-			xml->skipCurrentElement();
-		}
+
+		xml->skipCurrentElement();
 	}
 }
 
@@ -159,7 +157,7 @@ bool EventTypeTable::insertRows(int row, int count, const QModelIndex& /*parent*
 			std::stringstream ss;
 			ss << "Type " << row;
 
-			id.insert(id.begin() + row + i, row + 256*256);
+			id.insert(id.begin() + row + i, row);
 			name.insert(name.begin() + row + i, ss.str());
 			opacity.insert(opacity.begin() + row + i, 0.25);
 			color.insert(color.begin() + row + i, QColor(Qt::red));

@@ -15,18 +15,34 @@
 #include <QLabel>
 #include <QComboBox>
 #include <QCheckBox>
+#include <QDockWidget>
 
 using namespace std;
 
 SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(parent)
 {
-	// Construct child widgets.
 	signalViewer = new SignalViewer(this);
 	setCentralWidget(signalViewer);
 
+	// Construct dock widgets.
+	//setDockNestingEnabled(true);
+	//dockWidget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+
+	QDockWidget* dockWidget1 = new QDockWidget("Track Manager", this);
 	trackManager = new TrackManager(this);
+	dockWidget1->setWidget(trackManager);
+
+	QDockWidget* dockWidget2 = new QDockWidget("Event Manager", this);
 	eventManager = new EventManager(this);
+	dockWidget2->setWidget(eventManager);
+
+	QDockWidget* dockWidget3 = new QDockWidget("EventType Manager", this);
 	eventTypeManager = new EventTypeManager(this);
+	dockWidget3->setWidget(eventTypeManager);
+
+	addDockWidget(Qt::RightDockWidgetArea, dockWidget1);
+	tabifyDockWidget(dockWidget1, dockWidget2);
+	tabifyDockWidget(dockWidget2, dockWidget3);
 
 	// Construct File actions.
 	QAction* openFileAction = new QAction("&Open File", this);
@@ -44,35 +60,12 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	saveFileAction->setToolTip("Save the currently opened file.");
 	connect(saveFileAction, SIGNAL(triggered()), this, SLOT(saveFile()));
 
-	// Construct Window actions.
-	QAction* showTrackManagerAction = new QAction("Track Manager", this);
-	showTrackManagerAction->setCheckable(true);
-	showTrackManagerAction->setToolTip("Show Track Manager window.");
-	connect(showTrackManagerAction, SIGNAL(triggered(bool)), this, SLOT(showHideTrackManager(bool)));
-
-	QAction* showEventManagerAction = new QAction("Event Manager", this);
-	showEventManagerAction->setCheckable(true);
-	showEventManagerAction->setToolTip("Show Event Manager window.");
-	connect(showEventManagerAction, SIGNAL(triggered(bool)), this, SLOT(showHideEventManager(bool)));
-
-	QAction* showEventTypeManagerAction = new QAction("Event Type Manager", this);
-	showEventTypeManagerAction->setCheckable(true);
-	showEventTypeManagerAction->setToolTip("Show Event Type Manager window.");
-	connect(showEventTypeManagerAction, SIGNAL(triggered(bool)), this, SLOT(showHideEventTypeManager(bool)));
-
 	// Construct File menu.
 	QMenu* fileMenu = menuBar()->addMenu("&File");
 
 	fileMenu->addAction(openFileAction);
 	fileMenu->addAction(closeFileAction);
 	fileMenu->addAction(saveFileAction);
-
-	// Construct Window menu.
-	QMenu* windowMenu = menuBar()->addMenu("&Window");
-
-	windowMenu->addAction(showTrackManagerAction);
-	windowMenu->addAction(showEventManagerAction);
-	windowMenu->addAction(showEventTypeManagerAction);
 
 	// Toolbars.
 	const int spacing = 3;
@@ -84,14 +77,6 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	fileToolBar->addAction(openFileAction);
 	fileToolBar->addAction(closeFileAction);
 	fileToolBar->addAction(saveFileAction);
-
-	// Construct Window toolbar.
-	QToolBar* windowToolBar = addToolBar("Window");
-	windowToolBar->layout()->setSpacing(spacing);
-
-	windowToolBar->addAction(showTrackManagerAction);
-	windowToolBar->addAction(showEventManagerAction);
-	windowToolBar->addAction(showEventTypeManagerAction);
 
 	// Construct Filter toolbar.
 	QToolBar* filterToolBar = addToolBar("Filter");
@@ -170,9 +155,6 @@ void SignalFileBrowserWindow::openFile()
 		connect(notchCheckBox, SIGNAL(toggled(bool)), it, SLOT(setNotch(bool)));
 		connect(it, SIGNAL(notchChanged(bool)), notchCheckBox, SLOT(setChecked(bool)));
 		emit it->notchChanged(it->getNotch());
-
-		//connect(, SIGNAL(), , SLOT());
-
 	}
 }
 
@@ -188,42 +170,6 @@ void SignalFileBrowserWindow::saveFile()
 	if (file != nullptr)
 	{
 		file->save();
-	}
-}
-
-void SignalFileBrowserWindow::showHideTrackManager(bool checked)
-{
-	if (checked)
-	{
-		trackManager->show();
-	}
-	else
-	{
-		trackManager->hide();
-	}
-}
-
-void SignalFileBrowserWindow::showHideEventManager(bool checked)
-{
-	if (checked)
-	{
-		eventManager->show();
-	}
-	else
-	{
-		eventManager->hide();
-	}
-}
-
-void SignalFileBrowserWindow::showHideEventTypeManager(bool checked)
-{
-	if (checked)
-	{
-		eventTypeManager->show();
-	}
-	else
-	{
-		eventTypeManager->hide();
 	}
 }
 
@@ -262,4 +208,3 @@ void SignalFileBrowserWindow::highpassComboBoxUpdate(double value)
 		highpassComboBox->setCurrentText(QString::number(value, 'f'));
 	}
 }
-

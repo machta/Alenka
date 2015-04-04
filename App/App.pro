@@ -61,11 +61,6 @@ SOURCES += \
     src/DataFile/montagetable.cpp \
     src/trackmanager.cpp
 
-FORMS += \
-    src/eventtypemanager.ui \
-    src/eventmanager.ui \
-    src/trackmanager.ui
-
 DISTFILES += \
     kernels.cl \
     montageHeader.cl \
