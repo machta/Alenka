@@ -1,6 +1,11 @@
 #include "eventtypetable.h"
 
-#include <cassert>
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
+
+#include <algorithm>
+#include <functional>
+#include <QCollator>
 
 using namespace std;
 
@@ -53,6 +58,8 @@ void EventTypeTable::read(QXmlStreamReader* xml)
 	{
 		if (xml->name() == "eventType")
 		{
+			order.push_back(order.size());
+
 			readNumericAttribute(id, toInt);
 			name.push_back(xml->attributes().value("name").toString().toStdString());
 			readNumericAttribute(opacity, toDouble);
@@ -92,20 +99,22 @@ QVariant EventTypeTable::data(const QModelIndex& index, int role) const
 {
 	if (index.isValid() && index.row() < rowCount() && index.column() < columnCount())
 	{
+		int row = order[index.row()];
+
 		if (role == Qt::DisplayRole || role == Qt::EditRole)
 		{
 			switch (index.column())
 			{
 			case 0:
-				return id[index.row()];
+				return id[row];
 			case 1:
-				return QString::fromStdString(name[index.row()]);
+				return QString::fromStdString(name[row]);
 			case 2:
-				return opacity[index.row()];
+				return opacity[row];
 			case 3:
-				return color[index.row()];
+				return color[row];
 			case 4:
-				return hidden[index.row()];
+				return hidden[row];
 			}
 		}
 	}
@@ -115,26 +124,28 @@ QVariant EventTypeTable::data(const QModelIndex& index, int role) const
 
 bool EventTypeTable::setData(const QModelIndex &index, const QVariant& value, int role)
 {
-	if (index.isValid())
+	if (index.isValid() && index.row() < rowCount() && index.column() < columnCount())
 	{
+		int row = order[index.row()];
+
 		if (role == Qt::EditRole)
 		{
 			switch (index.column())
 			{
 			case 0:
-				id[index.row()] = value.value<decltype(id)::value_type>();
+				id[row] = value.value<decltype(id)::value_type>();
 				break;
 			case 1:
-				name[index.row()] = value.toString().toStdString();
+				name[row] = value.toString().toStdString();
 				break;
 			case 2:
-				opacity[index.row()] = value.toDouble();
+				opacity[row] = value.toDouble();
 				break;
 			case 3:
-				color[index.row()] = value.value<QColor>();
+				color[row] = value.value<QColor>();
 				break;
 			case 4:
-				hidden[index.row()] = value.toBool();
+				hidden[row] = value.toBool();
 				break;
 			}
 
@@ -157,11 +168,13 @@ bool EventTypeTable::insertRows(int row, int count, const QModelIndex& /*parent*
 			std::stringstream ss;
 			ss << "Type " << row;
 
-			id.insert(id.begin() + row + i, row);
-			name.insert(name.begin() + row + i, ss.str());
-			opacity.insert(opacity.begin() + row + i, 0.25);
-			color.insert(color.begin() + row + i, QColor(Qt::red));
-			hidden.insert(hidden.begin() + row + i, false);
+			id.push_back(row);
+			name.push_back(ss.str());
+			opacity.push_back(0.25);
+			color.push_back(QColor(Qt::red));
+			hidden.push_back(false);
+
+			order.insert(order.begin() + row + i, order.size());
 		}
 
 		endInsertRows();
@@ -180,13 +193,26 @@ bool EventTypeTable::removeRows(int row, int count, const QModelIndex& /*parent*
 	{
 		beginRemoveRows(QModelIndex(), row, row + count - 1);
 
-		int end = row + count;
+		for (int i = 0; i < count; ++i)
+		{
+			int index = order[row + i];
 
-		id.erase(id.begin() + row, id.begin() + end);
-		name.erase(name.begin() + row, name.begin() + end);
-		opacity.erase(opacity.begin() + row, opacity.begin() + end);
-		color.erase(color.begin() + row, color.begin() + end);
-		hidden.erase(hidden.begin() + row, hidden.begin() + end);
+			id.erase(id.begin() + index);
+			name.erase(name.begin() + index);
+			opacity.erase(opacity.begin() + index);
+			color.erase(color.begin() + index);
+			hidden.erase(hidden.begin() + index);
+
+			order.erase(order.begin() + row + i);
+
+			for (auto& e : order)
+			{
+				if (e > index)
+				{
+					--e;
+				}
+			}
+		}
 
 		endRemoveRows();
 
@@ -196,4 +222,65 @@ bool EventTypeTable::removeRows(int row, int count, const QModelIndex& /*parent*
 	{
 		return false;
 	}
+}
+
+void EventTypeTable::sort(int column, Qt::SortOrder order)
+{
+	assert(0 <= column && column < columnCount());
+
+	QCollator collator;
+	collator.setNumericMode(true);
+
+	function<bool (int, int)> predicate;
+
+	if (order == Qt::AscendingOrder)
+	{
+		switch (column)
+		{
+		case 0:
+			predicate = [this] (int a, int b) { return id[a] < id[b]; };
+			break;
+		case 1:
+			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(name[a]), QString::fromStdString(name[b])) < 0; };
+			break;
+		case 2:
+			predicate = [this] (int a, int b) { return opacity[a] < opacity[b]; };
+			break;
+		case 3:
+			predicate = [this] (int a, int b) { return color[a].name() < color[b].name(); };
+			break;
+		case 4:
+			predicate = [this] (int a, int b) { return hidden[a] < hidden[b]; };
+			break;
+		default:
+			return;
+		}
+	}
+	else
+	{
+		switch (column)
+		{
+		case 0:
+			predicate = [this] (int a, int b) { return id[a] > id[b]; };
+			break;
+		case 1:
+			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(name[a]), QString::fromStdString(name[b])) > 0; };
+			break;
+		case 2:
+			predicate = [this] (int a, int b) { return opacity[a] > opacity[b]; };
+			break;
+		case 3:
+			predicate = [this] (int a, int b) { return color[a].name() > color[b].name(); };
+			break;
+		case 4:
+			predicate = [this] (int a, int b) { return hidden[a] > hidden[b]; };
+			break;
+		default:
+			return;
+		}
+	}
+
+	std::sort(this->order.begin(), this->order.end(), predicate);
+
+	emit dataChanged(index(0, 0), index(rowCount() - 1, columnCount() - 1));
 }

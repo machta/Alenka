@@ -6,10 +6,13 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QHeaderView>
 
 EventTypeManager::EventTypeManager(QWidget* parent) : QWidget(parent, Qt::Window)
 {
-	tableView = new QTableView(this);
+	tableView = new QTableView(this);	
+	tableView->setSortingEnabled(true);
+	tableView->sortByColumn(0, Qt::AscendingOrder);
 
 	QPushButton* addRowButton = new QPushButton("Add Row", this);
 	connect(addRowButton, SIGNAL(clicked()), this, SLOT(addRow()));
@@ -33,6 +36,8 @@ EventTypeManager::~EventTypeManager()
 void EventTypeManager::setModel(EventTypeTable* model)
 {
 	tableView->setModel(model);
+
+	tableView->sortByColumn(tableView->horizontalHeader()->sortIndicatorSection(), tableView->horizontalHeader()->sortIndicatorOrder());
 }
 
 void EventTypeManager::addRow()

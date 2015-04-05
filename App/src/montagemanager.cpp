@@ -1,6 +1,6 @@
-#include "trackmanager.h"
+#include "montagemanager.h"
 
-#include "DataFile/tracktable.h"
+#include "DataFile/montagetable.h"
 
 #include <QTableView>
 #include <QPushButton>
@@ -9,9 +9,9 @@
 
 #include <QHeaderView>
 
-TrackManager::TrackManager(QWidget* parent) : QWidget(parent)
+MontageManager::MontageManager(QWidget* parent) : QWidget(parent, Qt::Window)
 {
-	tableView = new QTableView(this);
+	tableView = new QTableView(this);	
 	tableView->setSortingEnabled(true);
 	tableView->sortByColumn(0, Qt::AscendingOrder);
 
@@ -30,23 +30,23 @@ TrackManager::TrackManager(QWidget* parent) : QWidget(parent)
 	setLayout(box1);
 }
 
-TrackManager::~TrackManager()
+MontageManager::~MontageManager()
 {
 }
 
-void TrackManager::setModel(TrackTable* model)
+void MontageManager::setModel(MontageTable* model)
 {
 	tableView->setModel(model);
 
 	tableView->sortByColumn(tableView->horizontalHeader()->sortIndicatorSection(), tableView->horizontalHeader()->sortIndicatorOrder());
 }
 
-void TrackManager::addRow()
+void MontageManager::addRow()
 {
 	tableView->model()->insertRow(tableView->model()->rowCount());
 }
 
-void TrackManager::removeRow()
+void MontageManager::removeRow()
 {
 	QModelIndex currentIndex = tableView->selectionModel()->currentIndex();
 	if (currentIndex.isValid())

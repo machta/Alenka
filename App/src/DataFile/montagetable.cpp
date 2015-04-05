@@ -1,6 +1,13 @@
 #include "montagetable.h"
 
-#include <cassert>
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
+
+#include <algorithm>
+#include <functional>
+#include <QCollator>
+
+using namespace std;
 
 MontageTable::MontageTable(QObject* parent) : QAbstractTableModel(parent)
 {
@@ -60,6 +67,8 @@ void MontageTable::read(QXmlStreamReader* xml)
 	{
 		if (xml->name() == "montage")
 		{
+			order.push_back(order.size());
+
 			name.push_back(xml->attributes().value("name").toString().toStdString());
 			save.push_back(xml->attributes().value("save") == "0" ? false : true);
 
@@ -111,14 +120,16 @@ QVariant MontageTable::data(const QModelIndex& index, int role) const
 {
 	if (index.isValid() && index.row() < rowCount() && index.column() < columnCount())
 	{
+		int row = order[index.row()];
+
 		if (role == Qt::DisplayRole || role == Qt::EditRole)
 		{
 			switch (index.column())
 			{
 			case 0:
-				return QString::fromStdString(name[index.row()]);
+				return QString::fromStdString(name[row]);
 			case 1:
-				return save[index.row()];
+				return save[row];
 			}
 		}
 	}
@@ -128,17 +139,19 @@ QVariant MontageTable::data(const QModelIndex& index, int role) const
 
 bool MontageTable::setData(const QModelIndex& index, const QVariant& value, int role)
 {
-	if (index.isValid())
+	if (index.isValid() && index.row() < rowCount() && index.column() < columnCount())
 	{
+		int row = order[index.row()];
+
 		if (role == Qt::EditRole)
 		{
 			switch (index.column())
 			{
 			case 0:
-				name[index.row()] = value.toString().toStdString();
+				name[row] = value.toString().toStdString();
 				break;
 			case 1:
-				save[index.row()] = value.toBool();
+				save[row] = value.toBool();
 				break;
 			}
 
@@ -161,8 +174,13 @@ bool MontageTable::insertRows(int row, int count, const QModelIndex& /*parent*/)
 			std::stringstream ss;
 			ss << "Montage " << row + i;
 
-			name.insert(name.begin() + row + i, ss.str());
-			save.insert(save.begin() + row + i, false);
+			name.push_back(ss.str());
+			save.push_back(false);
+
+			trackTables.push_back(new TrackTable);
+			eventTables.push_back(new EventTable);
+
+			order.insert(order.begin() + row + i, order.size());
 		}
 
 		endInsertRows();
@@ -181,10 +199,26 @@ bool MontageTable::removeRows(int row, int count, const QModelIndex& /*parent*/)
 	{
 		beginRemoveRows(QModelIndex(), row, row + count - 1);
 
-		int end = row + count;
+		for (int i = 0; i < count; ++i)
+		{
+			int index = order[row + i];
 
-		name.erase(name.begin() + row, name.begin() + end);
-		save.erase(save.begin() + row, save.begin() + end);
+			name.erase(name.begin() + index);
+			save.erase(save.begin() + index);
+
+			trackTables.erase(trackTables.begin() + index);
+			eventTables.erase(eventTables.begin() + index);
+
+			order.erase(order.begin() + row + i);
+
+			for (auto& e : order)
+			{
+				if (e > index)
+				{
+					--e;
+				}
+			}
+		}
 
 		endRemoveRows();
 
@@ -194,4 +228,47 @@ bool MontageTable::removeRows(int row, int count, const QModelIndex& /*parent*/)
 	{
 		return false;
 	}
+}
+
+void MontageTable::sort(int column, Qt::SortOrder order)
+{
+	assert(0 <= column && column < columnCount());
+
+	QCollator collator;
+	collator.setNumericMode(true);
+
+	function<bool (int, int)> predicate;
+
+	if (order == Qt::AscendingOrder)
+	{
+		switch (column)
+		{
+		case 0:
+			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(name[a]), QString::fromStdString(name[b])) < 0; };
+			break;
+		case 1:
+			predicate = [this] (int a, int b) { return save[a] < save[b]; };
+			break;
+		default:
+			return;
+		}
+	}
+	else
+	{
+		switch (column)
+		{
+		case 0:
+			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(name[a]), QString::fromStdString(name[b])) > 0; };
+			break;
+		case 1:
+			predicate = [this] (int a, int b) { return save[a] > save[b]; };
+			break;
+		default:
+			return;
+		}
+	}
+
+	std::sort(this->order.begin(), this->order.end(), predicate);
+
+	emit dataChanged(index(0, 0), index(rowCount() - 1, columnCount() - 1));
 }

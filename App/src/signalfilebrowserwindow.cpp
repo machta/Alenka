@@ -5,6 +5,7 @@
 #include "trackmanager.h"
 #include "eventmanager.h"
 #include "eventtypemanager.h"
+#include "montagemanager.h"
 
 #include <QAction>
 #include <QMenuBar>
@@ -27,6 +28,8 @@ QString settingsParameters[2] = {"Martin Bárta", "SignalFileBrowserWindow"};
 
 SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(parent)
 {
+	setWindowTitle("ZSBS: Signal File Browser");
+
 	signalViewer = new SignalViewer(this);
 	setCentralWidget(signalViewer);
 
@@ -48,9 +51,15 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	eventTypeManager = new EventTypeManager(this);
 	dockWidget3->setWidget(eventTypeManager);
 
+	QDockWidget* dockWidget4 = new QDockWidget("Montage Manager", this);
+	dockWidget4->setObjectName("Montage Manager QDockWidget");
+	montageManager = new MontageManager(this);
+	dockWidget4->setWidget(montageManager);
+
 	addDockWidget(Qt::RightDockWidgetArea, dockWidget1);
 	tabifyDockWidget(dockWidget1, dockWidget2);
 	tabifyDockWidget(dockWidget2, dockWidget3);
+	tabifyDockWidget(dockWidget3, dockWidget4);
 
 	// Construct File actions.
 	QAction* openFileAction = new QAction("&Open File", this);
@@ -141,14 +150,22 @@ void SignalFileBrowserWindow::openFile()
 
 	if (fileName.isNull() == false)
 	{
-		QFileInfo fi(fileName);
-
+		// Open the file.
 		delete file;
+
+		QFileInfo fi(fileName); //TODO: perhaps add additional error checking (exists(), canbeopen(), ...)
 		file = new GDF2((fi.path() + QDir::separator() + fi.completeBaseName()).toStdString());
 
-		signalViewer->changeFile(file);
-
 		InfoTable* it = file->getInfoTable();
+
+		// Check for any values in InfoTable that could make trouble.
+		if (it->getSelectedMontage() < 0 || it->getSelectedMontage() >= file->getMontageTable()->rowCount())
+		{
+			it->setSelectedMontage(0);
+		}
+
+		// Pass the file to the widget responsible for rendering.
+		signalViewer->changeFile(file);
 
 		// Update Filter toolbar.
 		QStringList comboOptions;
@@ -180,10 +197,11 @@ void SignalFileBrowserWindow::openFile()
 
 		// Update the managers.
 		eventTypeManager->setModel(file->getEventTypeTable());
+		montageManager->setModel(file->getMontageTable());
 
 		connect(it, SIGNAL(selectedMontageChanged(int)), this, SLOT(updateManagers(int)));
 
-		// Update initial state of all widgets.
+		// Emit all signals to ensure there are no uninitialized controls.
 		it->emitAllSignals();
 	}
 }

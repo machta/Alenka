@@ -3,8 +3,8 @@
 
 #include <QObject>
 
-#include <QXmlStreamReader>
-#include <QXmlStreamWriter>
+class QXmlStreamReader;
+class QXmlStreamWriter;
 
 class InfoTable : public QObject
 {

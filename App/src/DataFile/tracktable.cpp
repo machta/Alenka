@@ -1,6 +1,11 @@
 #include "tracktable.h"
 
-#include <cassert>
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
+
+#include <algorithm>
+#include <functional>
+#include <QCollator>
 
 using namespace std;
 
@@ -56,7 +61,9 @@ void TrackTable::read(QXmlStreamReader* xml)
 	while (xml->readNextStartElement())
 	{
 		if (xml->name() == "track")
-		{
+		{			
+			order.push_back(order.size());
+
 			label.push_back(xml->attributes().value("label").toString().toStdString());
 			color.push_back(QColor(xml->attributes().value("color").toString()));
 			readNumericAttribute(amplitude, toDouble);
@@ -110,20 +117,22 @@ QVariant TrackTable::data(const QModelIndex& index, int role) const
 {
 	if (index.isValid() && index.row() < rowCount() && index.column() < columnCount())
 	{
+		int row = order[index.row()];
+
 		if (role == Qt::DisplayRole || role == Qt::EditRole)
 		{
 			switch (index.column())
 			{
 			case 0:
-				return QString::fromStdString(label[index.row()]);
+				return QString::fromStdString(label[row]);
 			case 1:
-				return QString::fromStdString(code[index.row()]);
+				return QString::fromStdString(code[row]);
 			case 2:
-				return color[index.row()];
+				return color[row];
 			case 3:
-				return amplitude[index.row()];
+				return amplitude[row];
 			case 4:
-				return hidden[index.row()];
+				return hidden[row];
 			}
 		}
 	}
@@ -133,26 +142,28 @@ QVariant TrackTable::data(const QModelIndex& index, int role) const
 
 bool TrackTable::setData(const QModelIndex& index, const QVariant &value, int role)
 {
-	if (index.isValid())
+	if (index.isValid() && index.row() < rowCount() && index.column() < columnCount())
 	{
+		int row = order[index.row()];
+
 		if (role == Qt::EditRole)
 		{
 			switch (index.column())
 			{
 			case 0:
-				label[index.row()] = value.toString().toStdString();
+				label[row] = value.toString().toStdString();
 				break;
 			case 1:
-				code[index.row()] = value.toString().toStdString();
+				code[row] = value.toString().toStdString();
 				break;
 			case 2:
-				color[index.row()] = value.value<QColor>();
+				color[row] = value.value<QColor>();
 				break;
 			case 3:
-				amplitude[index.row()] = value.toDouble();
+				amplitude[row] = value.toDouble();
 				break;
 			case 4:
-				hidden[index.row()] = value.toBool();
+				hidden[row] = value.toBool();
 				break;
 			}
 
@@ -176,11 +187,13 @@ bool TrackTable::insertRows(int row, int count, const QModelIndex& /*parent*/)
 			ssLabel << "Track " << row + i;
 			ssCode << "out = in(" << row + i << ");";
 
-			label.insert(label.begin() + row + i, ssLabel.str());
-			code.insert(code.begin() + row + i, ssCode.str());
-			color.insert(color.begin() + row + i, QColor(Qt::black));
-			amplitude.insert(amplitude.begin() + row + i, -0.000008); // TODO: load global amplitude
-			hidden.insert(hidden.begin() + row + i, false);
+			label.push_back(ssLabel.str());
+			code.push_back(ssCode.str());
+			color.push_back(QColor(Qt::black));
+			amplitude.push_back(-0.000008); // TODO: load global amplitude
+			hidden.push_back(false);
+
+			order.insert(order.begin() + row + i, order.size());
 		}
 
 		endInsertRows();
@@ -199,13 +212,26 @@ bool TrackTable::removeRows(int row, int count, const QModelIndex& /*parent*/)
 	{
 		beginRemoveRows(QModelIndex(), row, row + count - 1);
 
-		int end = row + count;
+		for (int i = 0; i < count; ++i)
+		{
+			int index = order[row + i];
 
-		label.erase(label.begin() + row, label.begin() + end);
-		code.erase(code.begin() + row, code.begin() + end);
-		color.erase(color.begin() + row, color.begin() + end);
-		amplitude.erase(amplitude.begin() + row, amplitude.begin() + end);
-		hidden.erase(hidden.begin() + row, hidden.begin() + end);
+			label.erase(label.begin() + index);
+			code.erase(code.begin() + index);
+			color.erase(color.begin() + index);
+			amplitude.erase(amplitude.begin() + index);
+			hidden.erase(hidden.begin() + index);
+
+			order.erase(order.begin() + row + i);
+
+			for (auto& e : order)
+			{
+				if (e > index)
+				{
+					--e;
+				}
+			}
+		}
 
 		endRemoveRows();
 
@@ -217,3 +243,63 @@ bool TrackTable::removeRows(int row, int count, const QModelIndex& /*parent*/)
 	}
 }
 
+void TrackTable::sort(int column, Qt::SortOrder order)
+{
+	assert(0 <= column && column < columnCount());
+
+	QCollator collator;
+	collator.setNumericMode(true);
+
+	function<bool (int, int)> predicate;
+
+	if (order == Qt::AscendingOrder)
+	{
+		switch (column)
+		{
+		case 0:
+			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(label[a]), QString::fromStdString(label[b])) < 0; };
+			break;
+		case 1:
+			predicate = [this] (int a, int b) { return code[a] < code[b]; };
+			break;
+		case 2:
+			predicate = [this] (int a, int b) { return color[a].name() < color[b].name(); };
+			break;
+		case 3:
+			predicate = [this] (int a, int b) { return amplitude[a] < amplitude[b]; };
+			break;
+		case 4:
+			predicate = [this] (int a, int b) { return hidden[a] < hidden[b]; };
+			break;
+		default:
+			return;
+		}
+	}
+	else
+	{
+		switch (column)
+		{
+		case 0:
+			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(label[a]), QString::fromStdString(label[b])) > 0; };
+			break;
+		case 1:
+			predicate = [this] (int a, int b) { return code[a] > code[b]; };
+			break;
+		case 2:
+			predicate = [this] (int a, int b) { return color[a].name() > color[b].name(); };
+			break;
+		case 3:
+			predicate = [this] (int a, int b) { return amplitude[a] > amplitude[b]; };
+			break;
+		case 4:
+			predicate = [this] (int a, int b) { return hidden[a] > hidden[b]; };
+			break;
+		default:
+			return;
+		}
+	}
+
+	std::sort(this->order.begin(), this->order.end(), predicate);
+
+	emit dataChanged(index(0, 0), index(rowCount() - 1, columnCount() - 1));
+}

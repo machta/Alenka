@@ -30,7 +30,8 @@ HEADERS += \
     src/signalfilebrowserwindow.h \
     src/DataFile/tracktable.h \
     src/DataFile/montagetable.h \
-    src/trackmanager.h
+    src/trackmanager.h \
+    src/montagemanager.h
 
 SOURCES += \
     src/DataFile/gdf2.cpp \
@@ -59,7 +60,8 @@ SOURCES += \
     src/signalfilebrowserwindow.cpp \
     src/DataFile/tracktable.cpp \
     src/DataFile/montagetable.cpp \
-    src/trackmanager.cpp
+    src/trackmanager.cpp \
+    src/montagemanager.cpp
 
 DISTFILES += \
     kernels.cl \

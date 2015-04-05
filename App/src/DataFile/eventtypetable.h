@@ -3,14 +3,15 @@
 
 #include <QAbstractTableModel>
 
-#include <QObject>
 #include <QColor>
-#include <QXmlStreamReader>
-#include <QXmlStreamWriter>
 
 #include <vector>
 #include <string>
 #include <sstream>
+#include <cassert>
+
+class QXmlStreamReader;
+class QXmlStreamWriter;
 
 class EventTypeTable : public QAbstractTableModel
 {
@@ -48,6 +49,68 @@ public:
 	}
 	virtual bool insertRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
 	virtual bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
+	virtual void sort(int column, Qt::SortOrder order) override;
+
+	int getId(int i) const
+	{
+		assert(0 <= i && i < id.size());
+
+		return id[i];
+	}
+	void setId(int value, int i)
+	{
+		assert(0 <= i && i < id.size());
+
+		setData(index(order[i], 0), value);
+	}
+	std::string getName(int i) const
+	{
+		assert(0 <= i && i < name.size());
+
+		return name[i];
+	}
+	void setName(const std::string& value, int i)
+	{
+		assert(0 <= i && i < name.size());
+
+		setData(index(order[i], 1), QString::fromStdString(value));
+	}
+	double getOpacity(int i) const
+	{
+		assert(0 <= i && i < opacity.size());
+
+		return opacity[i];
+	}
+	void setOpacity(double value, int i)
+	{
+		assert(0 <= i && i < opacity.size());
+
+		setData(index(order[i], 2), value);
+	}
+	QColor getColor(int i) const
+	{
+		assert(0 <= i && i < color.size());
+
+		return color[i];
+	}
+	void setColor(QColor value, int i)
+	{
+		assert(0 <= i && i < color.size());
+
+		setData(index(order[i], 3), value);
+	}
+	bool getHidden(int i) const
+	{
+		assert(0 <= i && i < hidden.size());
+
+		return hidden[i];
+	}
+	void setHidden(bool value, int i)
+	{
+		assert(0 <= i && i < hidden.size());
+
+		setData(index(order[i], 4), value);
+	}
 
 private:
 	std::vector<int> id;
@@ -55,6 +118,8 @@ private:
 	std::vector<double> opacity;
 	std::vector<QColor> color;
 	std::vector<bool> hidden;
+
+	std::vector<int> order;
 };
 
 #endif // EVENTTYPETABLE_H

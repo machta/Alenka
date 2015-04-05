@@ -8,6 +8,7 @@ class SignalViewer;
 class TrackManager;
 class EventManager;
 class EventTypeManager;
+class MontageManager;
 class QComboBox;
 class QCheckBox;
 class QDockWidget;
@@ -33,6 +34,7 @@ private:
 	TrackManager* trackManager;
 	EventManager* eventManager;
 	EventTypeManager* eventTypeManager;
+	MontageManager* montageManager;
 	QComboBox* lowpassComboBox;
 	QComboBox* highpassComboBox;
 	QCheckBox* notchCheckBox;

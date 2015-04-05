@@ -67,7 +67,7 @@ private:
 	}
 	void drawBlock(const SignalBlock& block, const std::vector<std::tuple<int, int, int, int>>& singleChannelEvents);
 	void setUniformChannel(GLuint program, int channel, const SignalBlock& block);
-	void setUniformColor(GLuint program, const QColor& color, float opacity);
+	void setUniformColor(GLuint program, const QColor& color, double opacity);
 	void checkGLMessages()
 	{
 		for (const auto& m : log()->loggedMessages())

@@ -63,7 +63,7 @@ public:
 	void changeFile(DataFile* file);
 	bool ready() const
 	{
-		return file != nullptr;
+		return file != nullptr && trackCount > 0;
 	}
 
 private:
@@ -77,7 +77,7 @@ private:
 
 	bool onlineFilter;
 	unsigned int blockSize;
-	int trackCount;
+	int trackCount = 0;
 
 	std::condition_variable processorInCV;
 	cl_command_queue commandQueue;

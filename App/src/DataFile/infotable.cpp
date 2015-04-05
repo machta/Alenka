@@ -1,5 +1,8 @@
 #include "infotable.h"
 
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
+
 InfoTable::InfoTable()
 {
 

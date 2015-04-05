@@ -5,14 +5,15 @@
 
 #include "../SignalProcessor/montage.h"
 
-#include <QObject>
 #include <QColor>
-#include <QXmlStreamReader>
-#include <QXmlStreamWriter>
 
 #include <vector>
 #include <string>
 #include <sstream>
+#include <cassert>
+
+class QXmlStreamReader;
+class QXmlStreamWriter;
 
 class TrackTable : public QAbstractTableModel
 {
@@ -54,6 +55,68 @@ public:
 	}
 	virtual bool insertRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
 	virtual bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
+	virtual void sort(int column, Qt::SortOrder order) override;
+
+	std::string getLabel(int i) const
+	{
+		assert(0 <= i && i < label.size());
+
+		return label[i];
+	}
+	void setLabel(const std::string& value, int i)
+	{
+		assert(0 <= i && i < label.size());
+
+		setData(index(order[i], 0), QString::fromStdString(value));
+	}
+	std::string getCode(int i) const
+	{
+		assert(0 <= i && i < code.size());
+
+		return code[i];
+	}
+	void setCode(const std::string& value, int i)
+	{
+		assert(0 <= i && i < code.size());
+
+		setData(index(order[i], 1), QString::fromStdString(value));
+	}
+	QColor getColor(int i) const
+	{
+		assert(0 <= i && i < color.size());
+
+		return color[i];
+	}
+	void setColor(QColor value, int i)
+	{
+		assert(0 <= i && i < color.size());
+
+		setData(index(order[i], 2), value);
+	}
+	double getAmplitude(int i) const
+	{
+		assert(0 <= i && i < amplitude.size());
+
+		return amplitude[i];
+	}
+	void setAmplitude(double value, int i)
+	{
+		assert(0 <= i && i < amplitude.size());
+
+		setData(index(order[i], 3), value);
+	}
+	bool getHidden(int i) const
+	{
+		assert(0 <= i && i < hidden.size());
+
+		return hidden[i];
+	}
+	void setHidden(bool value, int i)
+	{
+		assert(0 <= i && i < hidden.size());
+
+		setData(index(order[i], 4), value);
+	}
 
 private:
 	std::vector<std::string> label;
@@ -61,7 +124,8 @@ private:
 	std::vector<QColor> color;
 	std::vector<double> amplitude;
 	std::vector<bool> hidden;
+
+	std::vector<int> order;
 };
 
 #endif // TRACKTABLE_H
-

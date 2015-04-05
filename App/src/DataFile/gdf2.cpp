@@ -274,25 +274,25 @@ void GDF2::save()
 
 	for (int i = 0; i < numberOfEvents; ++i)
 	{
-		uint32_t position = eventTable->data(eventTable->index(i, 2)).value<int>();
+		uint32_t position = eventTable->getPosition(i);
 		writeFile(&position);
 	}
 
 	for (int i = 0; i < numberOfEvents; ++i)
 	{
-		uint16_t type = eventTable->data(eventTable->index(i, 1)).value<int>();
+		uint16_t type = eventTable->getType(i);
 		writeFile(&type);
 	}
 
 	for (int i = 0; i < numberOfEvents; ++i)
 	{
-		uint16_t channel = max(0, eventTable->data(eventTable->index(i, 4)).value<int>() + 1);
+		uint16_t channel = max(0, eventTable->getChannel(i) + 1);
 		writeFile(&channel);
 	}
 
 	for (int i = 0; i < numberOfEvents; ++i)
 	{
-		uint32_t duration = eventTable->data(eventTable->index(i, 3)).value<int>();
+		uint32_t duration = eventTable->getDuration(i);
 		writeFile(&duration);
 	}
 }
@@ -336,7 +336,7 @@ bool GDF2::load()
 		{
 			uint32_t position;
 			readFile(&position);
-			defaultEvents->setData(defaultEvents->index(i, 2), position);
+			defaultEvents->setPosition(position, i);
 		}
 
 		for (int i = 0; i < numberOfEvents; ++i)
@@ -344,7 +344,7 @@ bool GDF2::load()
 			uint16_t type;
 			readFile(&type);
 			eventTypesUsed.insert(type);
-			defaultEvents->setData(defaultEvents->index(i, 1), type);
+			defaultEvents->setType(type, i);
 		}
 
 		if (eventTableMode & 0x02)
@@ -354,14 +354,14 @@ bool GDF2::load()
 				uint16_t channel;
 				readFile(&channel);
 				int channelInt = channel - 1;
-				defaultEvents->setData(defaultEvents->index(i, 4), channelInt);
+				defaultEvents->setChannel(channelInt, i);
 			}
 
 			for (int i = 0; i < numberOfEvents; ++i)
 			{
 				uint32_t duration;
 				readFile(&duration);
-				defaultEvents->setData(defaultEvents->index(i, 3), duration);
+				defaultEvents->setDuration(duration, i);
 			}
 		}
 
@@ -375,8 +375,8 @@ bool GDF2::load()
 			std::stringstream ss;
 			ss << "Type " << e;
 
-			getEventTypeTable()->setData(getEventTypeTable()->index(row, 0), e);
-			getEventTypeTable()->setData(getEventTypeTable()->index(row, 1), QString::fromStdString(ss.str()));
+			getEventTypeTable()->setId(e, row);
+			getEventTypeTable()->setName(ss.str(), row);
 		}
 	}
 

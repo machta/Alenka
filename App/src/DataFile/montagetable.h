@@ -6,14 +6,15 @@
 #include "tracktable.h"
 #include "eventtable.h"
 
-#include <QObject>
 #include <QColor>
-#include <QXmlStreamReader>
-#include <QXmlStreamWriter>
 
 #include <vector>
 #include <string>
 #include <sstream>
+#include <cassert>
+
+class QXmlStreamReader;
+class QXmlStreamWriter;
 
 class MontageTable : public QAbstractTableModel
 {
@@ -57,13 +58,41 @@ public:
 	}
 	virtual bool insertRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
 	virtual bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
+	virtual void sort(int column, Qt::SortOrder order) override;
+
+	std::string getName(int i) const
+	{
+		assert(0 <= i && i < name.size());
+
+		return name[i];
+	}
+	void setName(const std::string& value, int i)
+	{
+		assert(0 <= i && i < name.size());
+
+		setData(index(order[i], 0), QString::fromStdString(value));
+	}
+	bool getSave(int i) const
+	{
+		assert(0 <= i && i < save.size());
+
+		return save[i];
+	}
+	void setSave(bool value, int i)
+	{
+		assert(0 <= i && i < save.size());
+
+		setData(index(order[i], 1), value);
+	}
 
 private:
-	std::vector<TrackTable*> trackTables;
-	std::vector<EventTable*> eventTables;
-
 	std::vector<std::string> name;
 	std::vector<bool> save;
+
+	std::vector<int> order;
+
+	std::vector<TrackTable*> trackTables;
+	std::vector<EventTable*> eventTables;
 };
 
 #endif // MONTAGETABLE_H

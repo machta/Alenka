@@ -223,7 +223,7 @@ void Canvas::paintGL()
 			else
 			{
 				type = get<0>(allChannelEvents[event]);
-				setUniformColor(rectangleProgram->getGLProgram(), eventTypeTable->data(eventTypeTable->index(type, 3)).value<QColor>(), eventTypeTable->data(eventTypeTable->index(type, 2)).toDouble());
+				setUniformColor(rectangleProgram->getGLProgram(), eventTypeTable->getColor(type), eventTypeTable->getOpacity(type));
 			}
 		}
 
@@ -299,7 +299,7 @@ void Canvas::drawBlock(const SignalBlock& block, const vector<tuple<int, int, in
 		else
 		{
 			type = get<0>(singleChannelEvents[event]);
-			setUniformColor(eventProgram->getGLProgram(), eventTypeTable->data(eventTypeTable->index(type, 3)).value<QColor>(), eventTypeTable->data(eventTypeTable->index(type, 2)).toDouble());
+			setUniformColor(eventProgram->getGLProgram(), eventTypeTable->getColor(type), eventTypeTable->getOpacity(type));
 		}
 	}
 
@@ -318,7 +318,7 @@ void Canvas::drawBlock(const SignalBlock& block, const vector<tuple<int, int, in
 	for (int i = 0; i < signalProcessor->getTrackCount(); ++i)
 	{
 		setUniformChannel(signalProgram->getGLProgram(), i, block);
-		setUniformColor(signalProgram->getGLProgram(), currentTrackTable()->data(currentTrackTable()->index(i, 3)).value<QColor>(), 1);
+		setUniformColor(signalProgram->getGLProgram(), currentTrackTable()->getColor(i), 1);
 
 		gl()->glDrawArrays(GL_LINE_STRIP, i*signalProcessor->getBlockSize(), signalProcessor->getBlockSize());
 	}
@@ -333,7 +333,7 @@ void Canvas::setUniformChannel(GLuint program, int channel, const SignalBlock& b
 
 	location = gl()->glGetUniformLocation(program, "yScale");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-	float yScale = currentTrackTable()->data(currentTrackTable()->index(channel, 3)).toDouble();
+	float yScale = currentTrackTable()->getAmplitude(channel);
 	gl()->glUniform1f(location, yScale*height());
 
 	location = gl()->glGetUniformLocation(program, "bufferOffset");
@@ -341,7 +341,7 @@ void Canvas::setUniformChannel(GLuint program, int channel, const SignalBlock& b
 	gl()->glUniform1i(location, block.getFirstSample() - channel*signalProcessor->getBlockSize());
 }
 
-void Canvas::setUniformColor(GLuint program, const QColor& color, float opacity)
+void Canvas::setUniformColor(GLuint program, const QColor& color, double opacity)
 {
 	double r, g, b, a;
 	color.getRgbF(&r, &g, &b, &a);

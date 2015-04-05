@@ -53,7 +53,7 @@ void SignalProcessor::updateFilter()
 {
 	using namespace std;
 
-	if (ready() == false)
+	if (file == nullptr)
 	{
 		return;
 	}
@@ -90,13 +90,25 @@ void SignalProcessor::updateFilter()
 
 void SignalProcessor::updateMontage()
 {	
-	if (ready() == false)
+	if (file == nullptr)
 	{
 		return;
 	}
 
-	auto code = file->getMontageTable()->getTrackTables()->at(getInfoTable()->getSelectedMontage())->getCode();
+	TrackTable* tt = file->getMontageTable()->getTrackTables()->at(getInfoTable()->getSelectedMontage());
+
+	if ((trackCount = tt->rowCount()) == 0)
+	{
+		return;
+	}
+
+	assert(ready());
+
+	auto code = tt->getCode();
+
 	Montage montage(code, context);
+
+	assert(montage.getNumberOfRows() > 0);
 
 	montageProcessor->change(&montage);
 
@@ -104,9 +116,7 @@ void SignalProcessor::updateMontage()
 
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, glBuffer);
 
-	trackCount = montage.getNumberOfRows();
 	unsigned int outputBlockSize = blockSize*trackCount;
-
 	outputBlockSize *= PROGRAM_OPTIONS["eventRenderMode"].as<int>();
 
 	gl()->glBufferData(GL_ARRAY_BUFFER, outputBlockSize*sizeof(float), nullptr, GL_STATIC_DRAW);
@@ -255,7 +265,7 @@ void SignalProcessor::changeFile(DataFile* file)
 
 void SignalProcessor::destroyFileRelated()
 {
-	if (ready())
+	if (file != nullptr)
 	{
 		file = nullptr;
 
