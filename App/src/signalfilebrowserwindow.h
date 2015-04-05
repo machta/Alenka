@@ -24,6 +24,9 @@ signals:
 
 public slots:
 
+protected:
+	void closeEvent(QCloseEvent* event) override;
+
 private:
 	DataFile* file = nullptr;
 	SignalViewer* signalViewer;

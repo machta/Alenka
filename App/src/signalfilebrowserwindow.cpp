@@ -16,8 +16,14 @@
 #include <QComboBox>
 #include <QCheckBox>
 #include <QDockWidget>
+#include <QSettings>
 
 using namespace std;
+
+namespace
+{
+QString settingsParameters[2] = {"Martin Bárta", "SignalFileBrowserWindow"};
+}
 
 SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(parent)
 {
@@ -28,14 +34,17 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	setDockNestingEnabled(true);
 
 	QDockWidget* dockWidget1 = new QDockWidget("Track Manager", this);
+	dockWidget1->setObjectName("Track Manager QDockWidget");
 	trackManager = new TrackManager(this);
 	dockWidget1->setWidget(trackManager);
 
 	QDockWidget* dockWidget2 = new QDockWidget("Event Manager", this);
+	dockWidget2->setObjectName("Event Manager QDockWidget");
 	eventManager = new EventManager(this);
 	dockWidget2->setWidget(eventManager);
 
 	QDockWidget* dockWidget3 = new QDockWidget("EventType Manager", this);
+	dockWidget3->setObjectName("EventType Manager QDockWidget");
 	eventTypeManager = new EventTypeManager(this);
 	dockWidget3->setWidget(eventTypeManager);
 
@@ -71,6 +80,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 	// Construct File toolbar.
 	QToolBar* fileToolBar = addToolBar("File");
+	fileToolBar->setObjectName("File QToolBar");
 	fileToolBar->layout()->setSpacing(spacing);
 
 	fileToolBar->addAction(openFileAction);
@@ -79,6 +89,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 	// Construct Filter toolbar.
 	QToolBar* filterToolBar = addToolBar("Filter");
+	filterToolBar->setObjectName("Filter QToolBar");
 	filterToolBar->layout()->setSpacing(spacing);
 
 	filterToolBar->addWidget(new QLabel("LF:", this));
@@ -96,17 +107,32 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	filterToolBar->addWidget(notchCheckBox);
 
 	// Construct Montage Toolbar.
-	QToolBar* montageToolBar = addToolBar("Filter");
+	QToolBar* montageToolBar = addToolBar("Montage");
+	montageToolBar->setObjectName("Montage QToolBar");
 	montageToolBar->layout()->setSpacing(spacing);
 
 	montageToolBar->addWidget(new QLabel("Montage:", this));
 	montageComboBox = new QComboBox(this);
 	montageToolBar->addWidget(montageComboBox);
+
+	// Restore settings.
+	QSettings settings(settingsParameters[0], settingsParameters[1]);
+	restoreGeometry(settings.value("geometry").toByteArray());
+	restoreState(settings.value("state").toByteArray());
 }
 
 SignalFileBrowserWindow::~SignalFileBrowserWindow()
 {
 	delete file;
+}
+
+void SignalFileBrowserWindow::closeEvent(QCloseEvent* event)
+{
+	QSettings settings(settingsParameters[0], settingsParameters[1]);
+	settings.setValue("geometry", saveGeometry());
+	settings.setValue("state", saveState());
+
+	QMainWindow::closeEvent(event);
 }
 
 void SignalFileBrowserWindow::openFile()
