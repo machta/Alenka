@@ -3,6 +3,8 @@
 
 #include <QAbstractTableModel>
 
+#include "../SignalProcessor/montage.h"
+
 #include <QObject>
 #include <QColor>
 #include <QXmlStreamReader>
@@ -33,6 +35,10 @@ public:
 		(void)parent;
 
 		return 5;
+	}
+	const std::vector<std::string>& getCode() const
+	{
+		return code;
 	}
 	virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 	virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;

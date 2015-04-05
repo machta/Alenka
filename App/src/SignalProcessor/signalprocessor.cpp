@@ -49,7 +49,7 @@ SignalProcessor::~SignalProcessor()
 	gl();
 }
 
-void SignalProcessor::changeFilter()
+void SignalProcessor::updateFilter()
 {
 	using namespace std;
 
@@ -88,20 +88,23 @@ void SignalProcessor::changeFilter()
 	}
 }
 
-void SignalProcessor::changeMontage(Montage* montage)
+void SignalProcessor::updateMontage()
 {	
 	if (ready() == false)
 	{
 		return;
 	}
 
-	montageProcessor->change(montage);
+	auto code = file->getMontageTable()->getTrackTables()->at(getInfoTable()->getSelectedMontage())->getCode();
+	Montage montage(code, context);
+
+	montageProcessor->change(&montage);
 
 	releaseOutputBuffer();
 
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, glBuffer);
 
-	trackCount = montage->getNumberOfRows();
+	trackCount = montage.getNumberOfRows();
 	unsigned int outputBlockSize = blockSize*trackCount;
 
 	outputBlockSize *= PROGRAM_OPTIONS["eventRenderMode"].as<int>();
@@ -209,8 +212,10 @@ void SignalProcessor::changeFile(DataFile* file)
 
 		// Create filter and montage processors.
 		filterProcessor = new FilterProcessor(M, blockSize + offset, file->getChannelCount(), context);
+		updateFilter();
 
 		montageProcessor = new MontageProcessor(offset, blockSize);
+		updateMontage();
 
 		// Construct the cache.
 		onlineFilter = PROGRAM_OPTIONS["onlineFilter"].as<bool>();
@@ -242,35 +247,6 @@ void SignalProcessor::changeFile(DataFile* file)
 
 		processorTmpBuffer = clCreateBuffer(context->getCLContext(), flags, tmpBlockSize*sizeof(float), nullptr, &err);
 		checkErrorCode(err, CL_SUCCESS, "clCreateBuffer()");
-
-		// Default filter and montage.
-		changeFilter();
-
-		vector<string> rows;
-		if (PROGRAM_OPTIONS.isSet("montageFile"))
-		{
-			ifstream mf(PROGRAM_OPTIONS["montageFile"].as<string>());
-
-			while (mf.peek() != EOF)
-			{
-				string s;
-				getline(mf, s);
-				rows.push_back(s);
-			}
-		}
-		else
-		{
-			for (unsigned int i = 0; i < file->getChannelCount(); ++i)
-			{
-				stringstream ss;
-				ss << "out = in(" << i << ");";
-				rows.push_back(ss.str());
-			}
-		}
-		Montage* montage = new Montage(rows, context);
-
-		changeMontage(montage);
-		delete montage;
 	}
 }
 

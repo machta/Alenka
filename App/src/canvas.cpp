@@ -45,20 +45,22 @@ void Canvas::changeFile(DataFile* file)
 	if (file == nullptr)
 	{
 		infoTable = nullptr;
+		montageTable = nullptr;
+		eventTypeTable = nullptr;
 	}
 	else
 	{
 		infoTable = file->getInfoTable();
-
-		samplesRecorded = file->getSamplesRecorded();
-
-		montageTable = file->getMontageTable()->getTrackTables()->front();
-		eventTable = file->getMontageTable()->getEventTables()->front();
+		montageTable = file->getMontageTable();
 		eventTypeTable = file->getEventTypeTable();
 
-		connect(infoTable, SIGNAL(lowpassFrequencyChanged(double)), this, SLOT(changeFilter()));
-		connect(infoTable, SIGNAL(highpassFrequencyChanged(double)), this, SLOT(changeFilter()));
-		connect(infoTable, SIGNAL(notchChanged(bool)), this, SLOT(changeFilter()));
+		connect(infoTable, SIGNAL(lowpassFrequencyChanged(double)), this, SLOT(updateFilter()));
+		connect(infoTable, SIGNAL(highpassFrequencyChanged(double)), this, SLOT(updateFilter()));
+		connect(infoTable, SIGNAL(notchChanged(bool)), this, SLOT(updateFilter()));
+
+		connect(infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(selectMontage()));
+
+		samplesRecorded = file->getSamplesRecorded();
 	}
 
 	doneCurrent();
@@ -196,7 +198,7 @@ void Canvas::paintGL()
 		vector<tuple<int, int, int>> allChannelEvents;
 		vector<tuple<int, int, int, int>> singleChannelEvents;
 
-		eventTable->getEventsForRendering(firstSample, lastSample, &allChannelEvents, &singleChannelEvents);
+		currentEventTable()->getEventsForRendering(firstSample, lastSample, &allChannelEvents, &singleChannelEvents);
 
 		// Draw all-channel events.
 		gl()->glUseProgram(rectangleProgram->getGLProgram());
@@ -316,7 +318,7 @@ void Canvas::drawBlock(const SignalBlock& block, const vector<tuple<int, int, in
 	for (int i = 0; i < signalProcessor->getTrackCount(); ++i)
 	{
 		setUniformChannel(signalProgram->getGLProgram(), i, block);
-		setUniformColor(signalProgram->getGLProgram(), montageTable->data(montageTable->index(i, 3)).value<QColor>(), 1);
+		setUniformColor(signalProgram->getGLProgram(), currentTrackTable()->data(currentTrackTable()->index(i, 3)).value<QColor>(), 1);
 
 		gl()->glDrawArrays(GL_LINE_STRIP, i*signalProcessor->getBlockSize(), signalProcessor->getBlockSize());
 	}
@@ -331,7 +333,7 @@ void Canvas::setUniformChannel(GLuint program, int channel, const SignalBlock& b
 
 	location = gl()->glGetUniformLocation(program, "yScale");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-	float yScale = montageTable->data(montageTable->index(channel, 3)).toDouble();
+	float yScale = currentTrackTable()->data(currentTrackTable()->index(channel, 3)).toDouble();
 	gl()->glUniform1f(location, yScale*height());
 
 	location = gl()->glGetUniformLocation(program, "bufferOffset");

@@ -16,6 +16,15 @@ public:
 
 	void write(QXmlStreamWriter* xml) const;
 	void read(QXmlStreamReader* xml);
+	void emitAllSignals()
+	{
+		emit virtualWidthChanged(getVirtualWidth());
+		emit positionChanged(getPosition());
+		emit lowpassFrequencyChanged(getLowpassFrequency());
+		emit highpassFrequencyChanged(getHighFrequency());
+		emit notchChanged(getNotch());
+		emit selectedMontageChanged(getSelectedMontage());
+	}
 
 	int getVirtualWidth() const
 	{

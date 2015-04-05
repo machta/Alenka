@@ -18,16 +18,17 @@ public:
 
 	unsigned int getNumberOfRows() const
 	{
-		return sources.size();
+		return numberOfRows;
 	}
-	static std::string test(const std::string& source, OpenCLContext* context);
 	cl_kernel getKernel()
 	{
 		return program->createKernel("montage");
 	}
 
+	static std::string test(const std::string& source, OpenCLContext* context);
+
 private:
-	std::vector<std::string> sources;
+	unsigned int numberOfRows;
 	OpenCLProgram* program;
 
 	static std::string buildSource(const std::vector<std::string>& sources);

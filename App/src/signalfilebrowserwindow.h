@@ -43,6 +43,7 @@ private slots:
 	void lowpassComboBoxUpdate(double value);
 	void highpassComboBoxUpdate(const QString& text);
 	void highpassComboBoxUpdate(double value);
+	void updateManagers(int value);
 };
 
 #endif // SIGNALFILEBROWSERWINDOW_H

@@ -122,11 +122,6 @@ void SignalFileBrowserWindow::openFile()
 
 		signalViewer->changeFile(file);
 
-		// Update the managers.
-		trackManager->setModel(file->getMontageTable()->getTrackTables()->front());
-		eventManager->setModel(file->getMontageTable()->getEventTables()->front());
-		eventTypeManager->setModel(file->getEventTypeTable());
-
 		InfoTable* it = file->getInfoTable();
 
 		// Update Filter toolbar.
@@ -143,17 +138,27 @@ void SignalFileBrowserWindow::openFile()
 		lowpassComboBox->addItems(comboOptions);
 		connect(lowpassComboBox, SIGNAL(currentTextChanged(QString)), this, SLOT(lowpassComboBoxUpdate(QString)));
 		connect(it, SIGNAL(lowpassFrequencyChanged(double)), this, SLOT(lowpassComboBoxUpdate(double)));
-		emit it->lowpassFrequencyChanged(it->getLowpassFrequency());
 
 		highpassComboBox->clear();
 		highpassComboBox->addItems(comboOptions);
 		connect(highpassComboBox, SIGNAL(currentTextChanged(QString)), this, SLOT(highpassComboBoxUpdate(QString)));
 		connect(it, SIGNAL(highpassFrequencyChanged(double)), this, SLOT(highpassComboBoxUpdate(double)));
-		emit it->highpassFrequencyChanged(it->getHighFrequency());
 
 		connect(notchCheckBox, SIGNAL(toggled(bool)), it, SLOT(setNotch(bool)));
 		connect(it, SIGNAL(notchChanged(bool)), notchCheckBox, SLOT(setChecked(bool)));
-		emit it->notchChanged(it->getNotch());
+
+		// Update the Montage toolbar.
+		montageComboBox->setModel(file->getMontageTable());
+		connect(montageComboBox, SIGNAL(currentIndexChanged(int)), it, SLOT(setSelectedMontage(int)));
+		connect(it, SIGNAL(selectedMontageChanged(int)), montageComboBox, SLOT(setCurrentIndex(int)));
+
+		// Update the managers.
+		eventTypeManager->setModel(file->getEventTypeTable());
+
+		connect(it, SIGNAL(selectedMontageChanged(int)), this, SLOT(updateManagers(int)));
+
+		// Update initial state of all widgets.
+		it->emitAllSignals();
 	}
 }
 
@@ -206,4 +211,10 @@ void SignalFileBrowserWindow::highpassComboBoxUpdate(double value)
 	{
 		highpassComboBox->setCurrentText(QString::number(value, 'f'));
 	}
+}
+
+void SignalFileBrowserWindow::updateManagers(int value)
+{
+	trackManager->setModel(file->getMontageTable()->getTrackTables()->at(value));
+	eventManager->setModel(file->getMontageTable()->getEventTables()->at(value));
 }

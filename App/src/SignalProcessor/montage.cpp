@@ -5,7 +5,7 @@
 
 using namespace std;
 
-Montage::Montage(const vector<string>& sources, OpenCLContext* context) : sources(sources)
+Montage::Montage(const vector<string>& sources, OpenCLContext* context) : numberOfRows(sources.size())
 {
 	program = new OpenCLProgram(buildSource(sources), context);
 }
@@ -84,4 +84,3 @@ string Montage::montageRow(unsigned int row, const string& code)
 
 	return ss.str();
 }
-

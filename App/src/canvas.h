@@ -7,6 +7,10 @@
 #include "SignalProcessor/signalprocessor.h"
 #include "openglprogram.h"
 #include "DataFile/datafile.h"
+#include "DataFile/montagetable.h"
+#include "DataFile/eventtable.h"
+#include "DataFile/tracktable.h"
+#include "DataFile/eventtable.h"
 
 #include <algorithm>
 #include <cassert>
@@ -31,9 +35,8 @@ protected:
 private:
 	InfoTable* infoTable = nullptr;
 	InfoTable defaultInfoTable;
-	TrackTable* montageTable;
-	EventTable* eventTable;
-	EventTypeTable* eventTypeTable;
+	MontageTable* montageTable = nullptr;
+	EventTypeTable* eventTypeTable = nullptr;
 	SignalProcessor* signalProcessor = nullptr;
 	OpenGLProgram* signalProgram = nullptr;
 	OpenGLProgram* eventProgram = nullptr;
@@ -53,6 +56,14 @@ private:
 		{
 			return &defaultInfoTable;
 		}
+	}
+	EventTable* currentEventTable()
+	{
+		return montageTable->getEventTables()->at(getInfoTable()->getSelectedMontage());
+	}
+	TrackTable* currentTrackTable()
+	{
+		return montageTable->getTrackTables()->at(getInfoTable()->getSelectedMontage());
 	}
 	void drawBlock(const SignalBlock& block, const std::vector<std::tuple<int, int, int, int>>& singleChannelEvents);
 	void setUniformChannel(GLuint program, int channel, const SignalBlock& block);
@@ -89,9 +100,29 @@ private:
 	}
 
 private slots:
-	void changeFilter()
+	void updateFilter()
 	{
-		signalProcessor->changeFilter();
+		assert(signalProcessor != nullptr);
+
+		makeCurrent();
+		signalProcessor->updateFilter();
+		doneCurrent();
+	}
+	void selectMontage()
+	{
+		connect(currentTrackTable(), SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SLOT(updateMontage()));
+		connect(currentTrackTable(), SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(updateMontage()));
+		connect(currentTrackTable(), SIGNAL(rowsRemoved(QModelIndex, int, int)), this, SLOT(updateMontage()));
+
+		updateMontage();
+	}
+	void updateMontage()
+	{
+		assert(signalProcessor != nullptr);
+
+		makeCurrent();
+		signalProcessor->updateMontage();
+		doneCurrent();
 	}
 };
 

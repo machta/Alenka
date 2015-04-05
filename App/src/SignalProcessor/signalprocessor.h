@@ -34,8 +34,8 @@ public:
 	{
 		return trackCount;
 	}
-	void changeFilter();
-	void changeMontage(Montage* montage);
+	void updateFilter();
+	void updateMontage();
 	unsigned int getCapacity() const
 	{
 		if (ready() == false)
