@@ -16,11 +16,11 @@ void EventTypeTable::write(QXmlStreamWriter* xml) const
 {
 	xml->writeStartElement("eventTypeTable");
 
-	assert(rowCount() == name.size());
-	assert(rowCount() == id.size());
-	assert(rowCount() == opacity.size());
-	assert(rowCount() == color.size());
-	assert(rowCount() == hidden.size());
+	assert(static_cast<size_t>(rowCount()) == name.size());
+	assert(static_cast<size_t>(rowCount()) == id.size());
+	assert(static_cast<size_t>(rowCount()) == opacity.size());
+	assert(static_cast<size_t>(rowCount()) == color.size());
+	assert(static_cast<size_t>(rowCount()) == hidden.size());
 
 	for (int i = 0; i < rowCount(); ++i)
 	{

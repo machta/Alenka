@@ -16,12 +16,12 @@ void EventTable::write(QXmlStreamWriter* xml) const
 {
 	xml->writeStartElement("eventTable");
 
-	assert(rowCount() == label.size());
-	assert(rowCount() == type.size());
-	assert(rowCount() == position.size());
-	assert(rowCount() == duration.size());
-	assert(rowCount() == channel.size());
-	assert(rowCount() == description.size());
+	assert(static_cast<size_t>(rowCount()) == label.size());
+	assert(static_cast<size_t>(rowCount()) == type.size());
+	assert(static_cast<size_t>(rowCount()) == position.size());
+	assert(static_cast<size_t>(rowCount()) == duration.size());
+	assert(static_cast<size_t>(rowCount()) == channel.size());
+	assert(static_cast<size_t>(rowCount()) == description.size());
 
 	for (unsigned int i = 0; i < label.size(); ++i)
 	{

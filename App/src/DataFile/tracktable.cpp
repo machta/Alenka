@@ -16,11 +16,11 @@ void TrackTable::write(QXmlStreamWriter* xml) const
 {
 	xml->writeStartElement("trackTable");
 
-	assert(rowCount() == label.size());
-	assert(rowCount() == code.size());
-	assert(rowCount() == color.size());
-	assert(rowCount() == amplitude.size());
-	assert(rowCount() == hidden.size());
+	assert(static_cast<size_t>(rowCount()) == label.size());
+	assert(static_cast<size_t>(rowCount()) == code.size());
+	assert(static_cast<size_t>(rowCount()) == color.size());
+	assert(static_cast<size_t>(rowCount()) == amplitude.size());
+	assert(static_cast<size_t>(rowCount()) == hidden.size());
 
 	for (int i = 0; i < rowCount(); ++i)
 	{

@@ -22,10 +22,10 @@ MontageTable::~MontageTable()
 
 void MontageTable::write(QXmlStreamWriter* xml) const
 {
-	assert(rowCount() == name.size());
-	assert(rowCount() == save.size());
-	assert(rowCount() == trackTables.size());
-	assert(rowCount() == eventTables.size());
+	assert(static_cast<size_t>(rowCount()) == name.size());
+	assert(static_cast<size_t>(rowCount()) == save.size());
+	assert(static_cast<size_t>(rowCount()) == trackTables.size());
+	assert(static_cast<size_t>(rowCount()) == eventTables.size());
 
 	xml->writeStartElement("montageTable");
 
