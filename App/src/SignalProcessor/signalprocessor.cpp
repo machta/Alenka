@@ -210,12 +210,10 @@ void SignalProcessor::changeFile(DataFile* file)
 			throw runtime_error("SignalProcessor requires both the filter length and block length to be multiples of 4");
 		}
 
-		// Create filter and montage processors.
+		// Construct the filter and montage processors.
 		filterProcessor = new FilterProcessor(M, blockSize + offset, file->getChannelCount(), context);
-		updateFilter();
 
 		montageProcessor = new MontageProcessor(offset, blockSize);
-		updateMontage();
 
 		// Construct the cache.
 		onlineFilter = PROGRAM_OPTIONS["onlineFilter"].as<bool>();
@@ -247,6 +245,11 @@ void SignalProcessor::changeFile(DataFile* file)
 
 		processorTmpBuffer = clCreateBuffer(context->getCLContext(), flags, tmpBlockSize*sizeof(float), nullptr, &err);
 		checkErrorCode(err, CL_SUCCESS, "clCreateBuffer()");
+
+		// Default filter and montage.
+		updateFilter();
+
+		updateMontage();
 	}
 }
 
