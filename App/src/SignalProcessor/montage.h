@@ -25,7 +25,8 @@ public:
 		return program->createKernel("montage");
 	}
 
-	static std::string test(const std::string& source, OpenCLContext* context);
+	static bool test(const std::string& source, OpenCLContext* context, std::string* errorMessage = nullptr);
+	static std::string readHeader();
 
 private:
 	unsigned int numberOfRows;

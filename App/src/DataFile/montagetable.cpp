@@ -9,9 +9,9 @@
 
 using namespace std;
 
-MontageTable::MontageTable(QObject* parent) : QAbstractTableModel(parent)
+MontageTable::MontageTable(EventTypeTable* eventTypeTable, QObject* parent)
+	: QAbstractTableModel(parent), eventTypeTable(eventTypeTable)
 {
-
 }
 
 MontageTable::~MontageTable()
@@ -73,7 +73,7 @@ void MontageTable::read(QXmlStreamReader* xml)
 			save.push_back(xml->attributes().value("save") == "0" ? false : true);
 
 			trackTables.push_back(new TrackTable);
-			eventTables.push_back(new EventTable);
+			eventTables.push_back(new EventTable(eventTypeTable, trackTables.back()));
 
 			while (xml->readNextStartElement())
 			{
@@ -178,7 +178,7 @@ bool MontageTable::insertRows(int row, int count, const QModelIndex& /*parent*/)
 			save.push_back(false);
 
 			trackTables.push_back(new TrackTable);
-			eventTables.push_back(new EventTable);
+			eventTables.push_back(new EventTable(eventTypeTable, trackTables.back()));
 
 			order.insert(order.begin() + row + i, order.size());
 		}

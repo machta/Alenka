@@ -13,18 +13,28 @@
 
 class QXmlStreamReader;
 class QXmlStreamWriter;
+class EventTypeTable;
+class TrackTable;
 
 class EventTable : public QAbstractTableModel
 {
 	Q_OBJECT
 
 public:
-	EventTable(QObject* parent = nullptr);
+	EventTable(EventTypeTable* eventTypeTable, TrackTable* trackTable, QObject* parent = nullptr);
 	~EventTable();
 
 	void write(QXmlStreamWriter* xml) const;
 	void read(QXmlStreamReader* xml);	
 	void getEventsForRendering(int firstSample, int lastSample, std::vector<std::tuple<int, int, int>>* allChannelEvents, std::vector<std::tuple<int, int, int, int>>* singleChannelEvents);
+	const EventTypeTable* getEventTypeTable() const
+	{
+		return eventTypeTable;
+	}
+	const TrackTable* getTrackTable() const
+	{
+		return trackTable;
+	}
 
 	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override
 	{
@@ -135,6 +145,8 @@ private:
 	std::vector<int> channel;
 	std::vector<std::string> description;
 
+	EventTypeTable* eventTypeTable;
+	TrackTable* trackTable;
 	std::vector<int> order;
 };
 

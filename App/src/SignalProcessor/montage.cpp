@@ -15,35 +15,49 @@ Montage::~Montage()
 	delete program;
 }
 
-string Montage::test(const string& source, OpenCLContext* context)
+bool Montage::test(const string& source, OpenCLContext* context, string* errorMessage)
 {
 	// Use the OpenCL compiler to test the source.
 	OpenCLProgram program(buildSource(vector<string> {source}), context);
 
 	if (program.compilationSuccessful())
 	{
-		cl_kernel kernel = program.createKernel("montage0");
+		cl_kernel kernel = program.createKernel("montage");
 
 		cl_int err = clReleaseKernel(kernel);
 		checkErrorCode(err, CL_SUCCESS, "clReleaseKernel()");
 
-		return ""; // Empty string means that the test was successful.
+		return true;
 	}
 	else
 	{
-		return "Compilation failed:\n" + program.getCompilationLog();
+		if (errorMessage != nullptr)
+		{
+			*errorMessage = "Compilation failed:\n" + program.getCompilationLog();
+		}
+		return false;
 	}
+}
+
+string Montage::readHeader()
+{
+	string str;
+
+	ifstream fs("montageHeader.cl");
+
+	while (fs.peek() != EOF)
+	{
+		str.push_back(fs.get());
+	}
+
+	return str;
 }
 
 string Montage::buildSource(const vector<string>& sources)
 {
 	string src;
 
-	ifstream fs("montageHeader.cl");
-	while (fs.peek() != EOF)
-	{
-		src.push_back(fs.get());
-	}
+	src += readHeader();
 
 	src += "\n__kernel void montage(__global float4* input, __global float4* output, int inputRowLength, int inputRowOffset, int outputRowLength)\n{\n";
 

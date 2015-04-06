@@ -1,5 +1,8 @@
 #include "eventtable.h"
 
+#include "eventtypetable.h"
+#include "tracktable.h"
+
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
 
@@ -9,7 +12,8 @@
 
 using namespace std;
 
-EventTable::EventTable(QObject* parent) : QAbstractTableModel(parent)
+EventTable::EventTable(EventTypeTable* eventTypeTable, TrackTable* trackTable, QObject* parent)
+	: QAbstractTableModel(parent), eventTypeTable(eventTypeTable), trackTable(trackTable)
 {
 }
 
@@ -146,6 +150,21 @@ QVariant EventTable::data(const QModelIndex& index, int role) const
 	if (index.isValid() && index.row() < rowCount() && index.column() < columnCount())
 	{
 		int row = order[index.row()];
+
+		if (role == Qt::DisplayRole)
+		{
+			switch (index.column())
+			{
+			case 1:
+				return QString::fromStdString(eventTypeTable->getName(type[row]));
+			case 2:
+				return position[row]; // TODO
+			case 3:
+				return duration[row]; // TODO
+			case 4:
+				return channel[row] < 0 ? "All" : QString::fromStdString(trackTable->getLabel(channel[row]));
+			}
+		}
 
 		if (role == Qt::DisplayRole || role == Qt::EditRole)
 		{

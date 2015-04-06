@@ -119,6 +119,15 @@ QVariant TrackTable::data(const QModelIndex& index, int role) const
 	{
 		int row = order[index.row()];
 
+		if (role == Qt::DecorationRole)
+		{
+			switch (index.column())
+			{
+			case 2:
+				return color[row];
+			}
+		}
+
 		if (role == Qt::DisplayRole || role == Qt::EditRole)
 		{
 			switch (index.column())

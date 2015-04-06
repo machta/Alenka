@@ -1,6 +1,7 @@
 #include "trackmanager.h"
 
 #include "DataFile/tracktable.h"
+#include "trackmanagerdelegate.h"
 
 #include <QTableView>
 #include <QPushButton>
@@ -14,6 +15,7 @@ TrackManager::TrackManager(QWidget* parent) : QWidget(parent)
 	tableView = new QTableView(this);
 	tableView->setSortingEnabled(true);
 	tableView->sortByColumn(0, Qt::AscendingOrder);
+	tableView->setItemDelegate(new TrackManagerDelegate);
 
 	QPushButton* addRowButton = new QPushButton("Add Row", this);
 	connect(addRowButton, SIGNAL(clicked()), this, SLOT(addRow()));

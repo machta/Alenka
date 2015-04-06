@@ -328,7 +328,7 @@ bool GDF2::load()
 		defaultTracks->insertRows(0, getChannelCount());
 		getMontageTable()->getTrackTables()->push_back(defaultTracks);
 
-		EventTable* defaultEvents = new EventTable;
+		EventTable* defaultEvents = new EventTable(getEventTypeTable(), defaultTracks);
 		defaultEvents->insertRows(0, numberOfEvents);
 		getMontageTable()->getEventTables()->push_back(defaultEvents);
 

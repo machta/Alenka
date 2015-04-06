@@ -31,7 +31,11 @@ HEADERS += \
     src/DataFile/tracktable.h \
     src/DataFile/montagetable.h \
     src/trackmanager.h \
-    src/montagemanager.h
+    src/montagemanager.h \
+    src/eventmanagerdelegate.h \
+    src/eventtypemanagerdelegate.h \
+    src/trackmanagerdelegate.h \
+    src/codeeditdialog.h
 
 SOURCES += \
     src/DataFile/gdf2.cpp \
@@ -61,7 +65,11 @@ SOURCES += \
     src/DataFile/tracktable.cpp \
     src/DataFile/montagetable.cpp \
     src/trackmanager.cpp \
-    src/montagemanager.cpp
+    src/montagemanager.cpp \
+    src/eventmanagerdelegate.cpp \
+    src/eventtypemanagerdelegate.cpp \
+    src/trackmanagerdelegate.cpp \
+    src/codeeditdialog.cpp
 
 DISTFILES += \
     kernels.cl \

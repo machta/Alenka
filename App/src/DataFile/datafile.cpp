@@ -6,7 +6,8 @@
 
 using namespace std;
 
-DataFile::DataFile(const string& filePath) : filePath(filePath)
+DataFile::DataFile(const string& filePath)
+	: filePath(filePath), eventTypeTable(), montageTable(&eventTypeTable)
 {
 }
 

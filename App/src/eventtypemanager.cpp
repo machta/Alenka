@@ -1,6 +1,7 @@
 #include "eventtypemanager.h"
 
 #include "DataFile/eventtypetable.h"
+#include "eventtypemanagerdelegate.h"
 
 #include <QTableView>
 #include <QPushButton>
@@ -13,6 +14,7 @@ EventTypeManager::EventTypeManager(QWidget* parent) : QWidget(parent, Qt::Window
 	tableView = new QTableView(this);	
 	tableView->setSortingEnabled(true);
 	tableView->sortByColumn(0, Qt::AscendingOrder);
+	tableView->setItemDelegate(new EventTypeManagerDelegate);
 
 	QPushButton* addRowButton = new QPushButton("Add Row", this);
 	connect(addRowButton, SIGNAL(clicked()), this, SLOT(addRow()));

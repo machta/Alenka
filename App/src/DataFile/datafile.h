@@ -93,8 +93,8 @@ protected:
 
 private:
 	std::string filePath;
-	MontageTable montageTable;
 	EventTypeTable eventTypeTable;
+	MontageTable montageTable;
 	InfoTable infoTable;
 
 	bool loadXMLFile(const std::string& extension, std::function<void (QXmlStreamReader*)> loadFunction);

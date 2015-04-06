@@ -101,6 +101,24 @@ QVariant EventTypeTable::data(const QModelIndex& index, int role) const
 	{
 		int row = order[index.row()];
 
+		if (role == Qt::DecorationRole)
+		{
+			switch (index.column())
+			{
+			case 3:
+				return color[row];
+			}
+		}
+
+		if (role == Qt::DisplayRole)
+		{
+			switch (index.column())
+			{
+			case 2:
+				return QString::number(opacity[row]*100, 'f', 2) + "%";
+			}
+		}
+
 		if (role == Qt::DisplayRole || role == Qt::EditRole)
 		{
 			switch (index.column())
@@ -110,7 +128,7 @@ QVariant EventTypeTable::data(const QModelIndex& index, int role) const
 			case 1:
 				return QString::fromStdString(name[row]);
 			case 2:
-				return opacity[row];
+				return opacity[row]*100;
 			case 3:
 				return color[row];
 			case 4:
@@ -122,7 +140,7 @@ QVariant EventTypeTable::data(const QModelIndex& index, int role) const
 	return QVariant();
 }
 
-bool EventTypeTable::setData(const QModelIndex &index, const QVariant& value, int role)
+bool EventTypeTable::setData(const QModelIndex& index, const QVariant& value, int role)
 {
 	if (index.isValid() && index.row() < rowCount() && index.column() < columnCount())
 	{
@@ -139,7 +157,7 @@ bool EventTypeTable::setData(const QModelIndex &index, const QVariant& value, in
 				name[row] = value.toString().toStdString();
 				break;
 			case 2:
-				opacity[row] = value.toDouble();
+				opacity[row] = value.toDouble()/100;
 				break;
 			case 3:
 				color[row] = value.value<QColor>();

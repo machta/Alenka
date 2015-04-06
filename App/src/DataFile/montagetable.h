@@ -19,7 +19,7 @@ class QXmlStreamWriter;
 class MontageTable : public QAbstractTableModel
 {
 public:
-	MontageTable(QObject* parent = nullptr);
+	MontageTable(EventTypeTable* eventTypeTable, QObject* parent = nullptr);
 	~MontageTable();
 
 	void write(QXmlStreamWriter* xml) const;
@@ -89,8 +89,8 @@ private:
 	std::vector<std::string> name;
 	std::vector<bool> save;
 
+	EventTypeTable* eventTypeTable;
 	std::vector<int> order;
-
 	std::vector<TrackTable*> trackTables;
 	std::vector<EventTable*> eventTables;
 };
