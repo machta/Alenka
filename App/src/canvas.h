@@ -110,11 +110,18 @@ private slots:
 	}
 	void selectMontage()
 	{
-		connect(currentTrackTable(), SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SLOT(updateMontage()));
+		connect(currentTrackTable(), SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SLOT(updateMontage(QModelIndex, QModelIndex)));
 		connect(currentTrackTable(), SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(updateMontage()));
 		connect(currentTrackTable(), SIGNAL(rowsRemoved(QModelIndex, int, int)), this, SLOT(updateMontage()));
 
 		updateMontage();
+	}
+	void updateMontage(const QModelIndex& topLeft, const QModelIndex& bottomRight)
+	{
+		if (topLeft.column() <= 1 && 1 <= bottomRight.column() && bottomRight.row() - topLeft.row() >= 0)
+		{
+			updateMontage();
+		}
 	}
 	void updateMontage()
 	{
