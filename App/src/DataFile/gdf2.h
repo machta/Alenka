@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <mutex>
 #include <functional>
+#include <vector>
 
 #ifndef GDF2_H
 #define GDF2_H

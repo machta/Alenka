@@ -248,15 +248,35 @@ void GDF2::save()
 
 	DataFile::save();
 
-	// Save some events in the "event table" part of the gdf file.
-	EventTable* eventTable = getMontageTable()->getEventTables()->front();
+	// Collect events from montages marked 'save'.
+	vector<uint32_t> positions;
+	vector<uint16_t> types;
+	vector<uint16_t> channels;
+	vector<uint32_t> durations;
 
+	for (int i = 0; i < getMontageTable()->rowCount(); ++i)
+	{
+		if (getMontageTable()->getSave(i))
+		{
+			EventTable* et = getMontageTable()->getEventTables()->at(i);
+
+			for (int j = 0; j < et->rowCount(); ++j)
+			{
+				positions.push_back(et->getPosition(j) + 1);
+				types.push_back(getEventTypeTable()->getId(et->getType(j)));
+				channels.push_back(et->getChannel(j) + 1);
+				durations.push_back(et->getDuration(j));
+			}
+		}
+	}
+
+	// Write mode, NEV and SR.
 	seekFile(startOfEventTable, true);
 
 	uint8_t eventTableMode = 3;
 	writeFile(&eventTableMode);
 
-	int numberOfEvents = eventTable->rowCount();
+	int numberOfEvents = min<int>(positions.size(), 16777215); // 2^24 - 1 is the maximum length of the gdf event table
 	uint8_t nev[3];
 	int tmp = numberOfEvents;
 	nev[0] = static_cast<uint8_t>(tmp%256);
@@ -270,31 +290,14 @@ void GDF2::save()
 	}
 	writeFile(nev, 3);
 
-	seekFile(4);
+	float sr = getSamplingFrequency();
+	writeFile(&sr);
 
-	for (int i = 0; i < numberOfEvents; ++i)
-	{
-		uint32_t position = eventTable->getPosition(i);
-		writeFile(&position);
-	}
-
-	for (int i = 0; i < numberOfEvents; ++i)
-	{
-		uint16_t type = eventTable->getType(i);
-		writeFile(&type);
-	}
-
-	for (int i = 0; i < numberOfEvents; ++i)
-	{
-		uint16_t channel = max(0, eventTable->getChannel(i) + 1);
-		writeFile(&channel);
-	}
-
-	for (int i = 0; i < numberOfEvents; ++i)
-	{
-		uint32_t duration = eventTable->getDuration(i);
-		writeFile(&duration);
-	}
+	// Write the events to the gdf event table.
+	writeFile(positions.data(), numberOfEvents);
+	writeFile(types.data(), numberOfEvents);
+	writeFile(channels.data(), numberOfEvents);
+	writeFile(durations.data(), numberOfEvents);
 }
 
 bool GDF2::load()
@@ -302,8 +305,6 @@ bool GDF2::load()
 	if (DataFile::load() == false)
 	{
 		lock_guard<mutex> lock(fileMutex);
-
-		set<int> eventTypesUsed;
 
 		// Load event table info.
 		seekFile(startOfEventTable, true);
@@ -321,23 +322,32 @@ bool GDF2::load()
 
 		seekFile(4);
 
-		// Add a default montage and put the events there.
+		// Add a default montage.
+		// TODO: handle unexpected values in event table and strange track labels
 		getMontageTable()->insertRow(0);
 
-		TrackTable* defaultTracks = new TrackTable;
+		// Fill the track table of the default montage with channels from gdf.
+		TrackTable* defaultTracks = getMontageTable()->getTrackTables()->back();
 		defaultTracks->insertRows(0, getChannelCount());
-		getMontageTable()->getTrackTables()->push_back(defaultTracks);
 
-		EventTable* defaultEvents = new EventTable(getEventTypeTable(), defaultTracks);
+		for (int i = 0; i < defaultTracks->rowCount(); ++i)
+		{
+			defaultTracks->setLabel(vh.label[i], i);
+		}
+
+		// Fill the event table of the default montage with events from the event table in gdf.
+		EventTable* defaultEvents = getMontageTable()->getEventTables()->back();
 		defaultEvents->insertRows(0, numberOfEvents);
-		getMontageTable()->getEventTables()->push_back(defaultEvents);
 
 		for (int i = 0; i < numberOfEvents; ++i)
 		{
 			uint32_t position;
 			readFile(&position);
-			defaultEvents->setPosition(position, i);
+			int tmp = position - 1;
+			defaultEvents->setPosition(tmp, i);
 		}
+
+		set<int> eventTypesUsed;
 
 		for (int i = 0; i < numberOfEvents; ++i)
 		{
@@ -347,14 +357,23 @@ bool GDF2::load()
 			defaultEvents->setType(type, i);
 		}
 
+		for (int i = 0; i < numberOfEvents; ++i)
+		{
+			int type = defaultEvents->getType(i);
+
+			type = distance(eventTypesUsed.begin(), eventTypesUsed.find(type));
+
+			defaultEvents->setType(type, i);
+		}
+
 		if (eventTableMode & 0x02)
 		{
 			for (int i = 0; i < numberOfEvents; ++i)
 			{
 				uint16_t channel;
 				readFile(&channel);
-				int channelInt = channel - 1;
-				defaultEvents->setChannel(channelInt, i);
+				int tmp = channel - 1;
+				defaultEvents->setChannel(tmp, i);
 			}
 
 			for (int i = 0; i < numberOfEvents; ++i)
@@ -365,7 +384,7 @@ bool GDF2::load()
 			}
 		}
 
-		// Add all event types used in the event table.
+		// Add all event types used in the gdf event table.
 		for (const auto& e : eventTypesUsed)
 		{
 			int row = getEventTypeTable()->rowCount();
