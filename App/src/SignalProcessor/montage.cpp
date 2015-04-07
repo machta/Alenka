@@ -55,18 +55,26 @@ string Montage::readHeader()
 
 string Montage::buildSource(const vector<string>& sources)
 {
+	// TODO: add proper indentation
 	string src;
+
+	src += "#define PARA __global float4* _input_, int _inputRowLength_, int _inputRowOffset_\n"
+		   "#define PASS _input_, _inputRowLength_, _inputRowOffset_\n\n"
+		   "float4 in(int i, PARA) { return _input_[_inputRowLength_*i + _inputRowOffset_ + get_global_id(0)]; }\n"
+		   "#define in(a_) in(a_, PASS)\n\n";
 
 	src += readHeader();
 
-	src += "\n__kernel void montage(__global float4* input, __global float4* output, int inputRowLength, int inputRowOffset, int outputRowLength)\n{\n";
+	src += "\n\n__kernel void montage(__global float4* _input_, __global float4* _output_, int _inputRowLength_, int _inputRowOffset_, int _outputRowLength_)\n{\n\n";
 
 	for (unsigned int i = 0; i < sources.size(); ++i)
 	{
 		src += montageRow(i, sources[i]);
 	}
 
-	src += "\n}\n";
+	src += "}\n";
+
+	QString qsrc = QString::fromStdString(src);
 
 	return src;
 }
@@ -83,18 +91,18 @@ string Montage::montageRow(unsigned int row, const string& code)
 
 	if (PROGRAM_OPTIONS["eventRenderMode"].as<int>() == 1)
 	{
-		ss << "output[outputRowLength*" << row << " + get_global_id(0)] = out;" << endl;
+		ss << "_output_[_outputRowLength_*" << row << " + get_global_id(0)] = out;" << endl;
 	}
 	else
 	{
 		ss << "float4 output1 = out.s0011;" << endl;
 		ss << "float4 output2 = out.s2233;" << endl;
-		ss << "int outputIndex = 2*(outputRowLength*" << row << " + get_global_id(0));" << endl;
-		ss << "output[outputIndex] = output1;" << endl;
-		ss << "output[outputIndex + 1] = output2;" << endl;
+		ss << "int outputIndex = 2*(_outputRowLength_*" << row << " + get_global_id(0));" << endl;
+		ss << "_output_[outputIndex] = output1;" << endl;
+		ss << "_output_[outputIndex + 1] = output2;" << endl;
 	}
 
-	ss << "}" << endl;
+	ss << "}" << endl << endl;
 
 	return ss.str();
 }
