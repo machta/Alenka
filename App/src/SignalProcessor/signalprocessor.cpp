@@ -97,14 +97,14 @@ void SignalProcessor::updateMontage()
 
 	TrackTable* tt = file->getMontageTable()->getTrackTables()->at(getInfoTable()->getSelectedMontage());
 
-	if ((trackCount = tt->rowCount()) == 0)
+	auto code = tt->getCode();
+
+	if ((trackCount = code.size()) == 0)
 	{
 		return;
 	}
 
 	assert(ready());
-
-	auto code = tt->getCode();
 
 	Montage montage(code, context);
 

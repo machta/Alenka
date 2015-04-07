@@ -93,7 +93,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	verticalZoomInAction->setToolTip("Zoom in amplitudes of signals.");
 	connect(verticalZoomInAction, SIGNAL(triggered()), this, SLOT(verticalZoomIn()));
 
-	QAction* verticalZoomOutAction = new QAction("Bertical Zoom Out", this);
+	QAction* verticalZoomOutAction = new QAction("Vertical Zoom Out", this);
 	verticalZoomOutAction->setToolTip("Zoom out amplitudes of signals.");
 	connect(verticalZoomOutAction, SIGNAL(triggered()), this, SLOT(verticalZoomOut()));
 

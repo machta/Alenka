@@ -65,8 +65,10 @@ private:
 	{
 		return montageTable->getTrackTables()->at(getInfoTable()->getSelectedMontage());
 	}
-	void drawBlock(const SignalBlock& block, const std::vector<std::tuple<int, int, int, int>>& singleChannelEvents);
-	void setUniformChannel(GLuint program, int channel, const SignalBlock& block);
+	void drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& events);
+	void drawSingleChannelEvents(const SignalBlock& block, const std::vector<std::tuple<int, int, int, int>>& events);
+	void drawSignal(const SignalBlock& block);
+	void setUniformTrack(GLuint program, int track, int hidden, const SignalBlock& block);
 	void setUniformColor(GLuint program, const QColor& color, double opacity);
 	void checkGLMessages()
 	{
@@ -118,9 +120,16 @@ private slots:
 	}
 	void updateMontage(const QModelIndex& topLeft, const QModelIndex& bottomRight)
 	{
-		if (topLeft.column() <= 1 && 1 <= bottomRight.column() && bottomRight.row() - topLeft.row() >= 0)
+		if (bottomRight.row() - topLeft.row() >= 0)
 		{
-			updateMontage();
+			if (topLeft.column() <= 1 && 1 <= bottomRight.column())
+			{
+				updateMontage();
+			}
+			else if (topLeft.column() <= 4 && 4 <= bottomRight.column())
+			{
+				updateMontage();
+			}
 		}
 	}
 	void updateMontage()

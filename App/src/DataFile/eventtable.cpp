@@ -102,7 +102,7 @@ void EventTable::getEventsForRendering(int firstSample, int lastSample, vector<t
 {
 	for (int i = 0; i < rowCount(); ++i)
 	{
-		if (position[i] <= lastSample && firstSample <= position[i] + duration[i] - 1)
+		if (position[i] <= lastSample && firstSample <= position[i] + duration[i] - 1 && getEventTypeTable()->getHidden(type[i]) == false)
 		{
 			if (channel[i] < 0)
 			{
@@ -110,7 +110,10 @@ void EventTable::getEventsForRendering(int firstSample, int lastSample, vector<t
 			}
 			else
 			{
-				singleChannelEvents->emplace_back(type[i], channel[i], position[i], duration[i]);
+				if (getTrackTable()->getHidden(channel[i]) == false)
+				{
+					singleChannelEvents->emplace_back(type[i], channel[i], position[i], duration[i]);
+				}
 			}
 		}
 	}

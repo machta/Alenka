@@ -91,6 +91,19 @@ void TrackTable::read(QXmlStreamReader* xml)
 
 #undef readNumericAttribute
 
+vector<string> TrackTable::getCode() const
+{
+	vector<string> newCode;
+	for (int i = 0; i < code.size(); ++i)
+	{
+		if (hidden[i] == false)
+		{
+			newCode.push_back(code[i]);
+		}
+	}
+	return newCode;
+}
+
 QVariant TrackTable::headerData(int section, Qt::Orientation orientation, int role) const
 {
 	if (role == Qt::DisplayRole && orientation == Qt::Horizontal)

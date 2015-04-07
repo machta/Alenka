@@ -200,39 +200,15 @@ void Canvas::paintGL()
 
 		currentEventTable()->getEventsForRendering(firstSample, lastSample, &allChannelEvents, &singleChannelEvents);
 
-		// Draw all-channel events.
-		gl()->glUseProgram(rectangleProgram->getGLProgram());
-		gl()->glBindVertexArray(rectangleArray);
-		gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleBuffer);
-
-		int event = 0, type = -1;
-		while (event < static_cast<int>(allChannelEvents.size()))
-		{
-			if (type == get<0>(allChannelEvents[event]))
-			{
-				int from = get<1>(allChannelEvents[event]);
-				int to = from + get<2>(allChannelEvents[event]) - 1;
-
-				float data[8] = {static_cast<float>(from), 0, static_cast<float>(to), 0, static_cast<float>(from), static_cast<float>(height()), static_cast<float>(to), static_cast<float>(height())};
-				gl()->glBufferData(GL_ARRAY_BUFFER, 8*sizeof(float), data, GL_STATIC_DRAW);
-
-				gl()->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-				++event;
-			}
-			else
-			{
-				type = get<0>(allChannelEvents[event]);
-				setUniformColor(rectangleProgram->getGLProgram(), eventTypeTable->getColor(type), eventTypeTable->getOpacity(type));
-			}
-		}
+		drawAllChannelEvents(allChannelEvents);
 
 		// Draw one block at a time.
 		while (indexSet.empty() == false)
 		{
 			SignalBlock block = signalProcessor->getAnyBlock(indexSet);
 
-			drawBlock(block, singleChannelEvents);
+			drawSingleChannelEvents(block, singleChannelEvents);
+			drawSignal(block);
 
 			gl()->glFlush();
 
@@ -256,22 +232,50 @@ void Canvas::paintGL()
 	logToFile("Painting finished.");
 }
 
-void Canvas::drawBlock(const SignalBlock& block, const vector<tuple<int, int, int, int>>& singleChannelEvents)
+void Canvas::drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& eventVector)
 {
-	// Draw single-channel events.
+	gl()->glUseProgram(rectangleProgram->getGLProgram());
+	gl()->glBindVertexArray(rectangleArray);
+	gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleBuffer);
+
+	int event = 0, type = -1;
+	while (event < static_cast<int>(eventVector.size()))
+	{
+		if (type == get<0>(eventVector[event]))
+		{
+			int from = get<1>(eventVector[event]);
+			int to = from + get<2>(eventVector[event]) - 1;
+
+			float data[8] = {static_cast<float>(from), 0, static_cast<float>(to), 0, static_cast<float>(from), static_cast<float>(height()), static_cast<float>(to), static_cast<float>(height())};
+			gl()->glBufferData(GL_ARRAY_BUFFER, 8*sizeof(float), data, GL_STATIC_DRAW);
+
+			gl()->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+			++event;
+		}
+		else
+		{
+			type = get<0>(eventVector[event]);
+			setUniformColor(rectangleProgram->getGLProgram(), eventTypeTable->getColor(type), eventTypeTable->getOpacity(type));
+		}
+	}
+}
+
+void Canvas::drawSingleChannelEvents(const SignalBlock& block, const vector<tuple<int, int, int, int>>& eventVector)
+{
 	gl()->glUseProgram(eventProgram->getGLProgram());
 
 	gl()->glBindVertexArray(block.getArray());
 
-	int event = 0, type = -1, channel = signalProcessor->getTrackCount();
-	while (event < static_cast<int>(singleChannelEvents.size()))
+	int event = 0, type = -1, track = -1, hidden = 0;
+	while (event < static_cast<int>(eventVector.size()))
 	{
-		if (type == get<0>(singleChannelEvents[event]))
+		if (type == get<0>(eventVector[event]))
 		{
-			if (channel == get<1>(singleChannelEvents[event]))
+			if (track == get<1>(eventVector[event]))
 			{
-				int from = get<2>(singleChannelEvents[event]);
-				int to = from + get<3>(singleChannelEvents[event]) - 1;
+				int from = get<2>(eventVector[event]);
+				int to = from + get<3>(eventVector[event]) - 1;
 
 				if (from <= block.getLastSample() && block.getFirstSample() <= to)
 				{
@@ -280,11 +284,11 @@ void Canvas::drawBlock(const SignalBlock& block, const vector<tuple<int, int, in
 
 					if (eventMode == 1)
 					{
-						gl()->glDrawArrays(GL_TRIANGLE_STRIP, channel*signalProcessor->getBlockSize() + from - block.getFirstSample(), to - from + 1);
+						gl()->glDrawArrays(GL_TRIANGLE_STRIP, (track - hidden)*signalProcessor->getBlockSize() + from - block.getFirstSample(), to - from + 1);
 					}
 					else
 					{
-						gl()->glDrawArrays(GL_TRIANGLE_STRIP, 2*(channel*signalProcessor->getBlockSize() + from - block.getFirstSample()), 2*(to - from + 1));
+						gl()->glDrawArrays(GL_TRIANGLE_STRIP, 2*((track - hidden)*signalProcessor->getBlockSize() + from - block.getFirstSample()), 2*(to - from + 1));
 					}
 				}
 
@@ -292,18 +296,31 @@ void Canvas::drawBlock(const SignalBlock& block, const vector<tuple<int, int, in
 			}
 			else
 			{
-				channel = get<1>(singleChannelEvents[event]);
-				setUniformChannel(eventProgram->getGLProgram(), channel, block);
+				track = get<1>(eventVector[event]);
+				assert(currentTrackTable()->getHidden(track) == false);
+
+				hidden = 0;
+				for (int i = 0; i < track; ++i)
+				{
+					if (currentTrackTable()->getHidden(i))
+					{
+						++hidden;
+					}
+				}
+
+				setUniformTrack(eventProgram->getGLProgram(), track, hidden, block);
 			}
 		}
 		else
 		{
-			type = get<0>(singleChannelEvents[event]);
+			type = get<0>(eventVector[event]);
 			setUniformColor(eventProgram->getGLProgram(), eventTypeTable->getColor(type), eventTypeTable->getOpacity(type));
 		}
 	}
+}
 
-	// Draw signal.
+void Canvas::drawSignal(const SignalBlock& block)
+{
 	gl()->glUseProgram(signalProgram->getGLProgram());
 
 	if (eventMode == 1)
@@ -315,30 +332,38 @@ void Canvas::drawBlock(const SignalBlock& block, const vector<tuple<int, int, in
 		gl()->glBindVertexArray(block.getArrayStrideTwo());
 	}
 
-	for (int i = 0; i < signalProcessor->getTrackCount(); ++i)
+	int hidden = 0;
+	for (int track = 0; track < currentTrackTable()->rowCount(); ++track)
 	{
-		setUniformChannel(signalProgram->getGLProgram(), i, block);
-		setUniformColor(signalProgram->getGLProgram(), currentTrackTable()->getColor(i), 1);
+		if (currentTrackTable()->getHidden(track))
+		{
+			++hidden;
+		}
+		else
+		{
+			setUniformTrack(signalProgram->getGLProgram(), track, hidden, block);
+			setUniformColor(signalProgram->getGLProgram(), currentTrackTable()->getColor(track), 1);
 
-		gl()->glDrawArrays(GL_LINE_STRIP, i*signalProcessor->getBlockSize(), signalProcessor->getBlockSize());
+			gl()->glDrawArrays(GL_LINE_STRIP, (track - hidden)*signalProcessor->getBlockSize(), signalProcessor->getBlockSize());
+		}
 	}
 }
 
-void Canvas::setUniformChannel(GLuint program, int channel, const SignalBlock& block)
+void Canvas::setUniformTrack(GLuint program, int track, int hidden, const SignalBlock& block)
 {
 	GLuint location = gl()->glGetUniformLocation(program, "y0");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-	float y0 = (channel + 0.5f)*height()/signalProcessor->getTrackCount();
+	float y0 = (track - hidden + 0.5f)*height()/signalProcessor->getTrackCount();
 	gl()->glUniform1f(location, y0);
 
 	location = gl()->glGetUniformLocation(program, "yScale");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-	float yScale = currentTrackTable()->getAmplitude(channel);
+	float yScale = currentTrackTable()->getAmplitude(track);
 	gl()->glUniform1f(location, yScale*height());
 
 	location = gl()->glGetUniformLocation(program, "bufferOffset");
 	checkNotErrorCode(location,static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-	gl()->glUniform1i(location, block.getFirstSample() - channel*signalProcessor->getBlockSize());
+	gl()->glUniform1i(location, block.getFirstSample() - (track - hidden)*signalProcessor->getBlockSize());
 }
 
 void Canvas::setUniformColor(GLuint program, const QColor& color, double opacity)
