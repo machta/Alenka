@@ -24,6 +24,9 @@ using namespace std;
 namespace
 {
 QString settingsParameters[2] = {"Martin Bárta", "SignalFileBrowserWindow"};
+
+const double horizontalZoomFactor = 1.3;
+const double verticalZoomFactor = 1.3;
 }
 
 SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(parent)
@@ -77,12 +80,37 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	saveFileAction->setToolTip("Save the currently opened file.");
 	connect(saveFileAction, SIGNAL(triggered()), this, SLOT(saveFile()));
 
+	// Construct Zoom actions.
+	QAction* horizontalZoomInAction = new QAction("Horizontal Zoom In", this);
+	horizontalZoomInAction->setToolTip("Zoom in timeline.");
+	connect(horizontalZoomInAction, SIGNAL(triggered()), this, SLOT(horizontalZoomIn()));
+
+	QAction* horizontalZoomOutAction = new QAction("Horizontal Zoom Out", this);
+	horizontalZoomOutAction->setToolTip("Zoom out timeline.");
+	connect(horizontalZoomOutAction, SIGNAL(triggered()), this, SLOT(horizontalZoomOut()));
+
+	QAction* verticalZoomInAction = new QAction("Vertical Zoom In", this);
+	verticalZoomInAction->setToolTip("Zoom in amplitudes of signals.");
+	connect(verticalZoomInAction, SIGNAL(triggered()), this, SLOT(verticalZoomIn()));
+
+	QAction* verticalZoomOutAction = new QAction("Bertical Zoom Out", this);
+	verticalZoomOutAction->setToolTip("Zoom out amplitudes of signals.");
+	connect(verticalZoomOutAction, SIGNAL(triggered()), this, SLOT(verticalZoomOut()));
+
 	// Construct File menu.
 	QMenu* fileMenu = menuBar()->addMenu("&File");
 
 	fileMenu->addAction(openFileAction);
 	fileMenu->addAction(closeFileAction);
 	fileMenu->addAction(saveFileAction);
+
+	// Construct Zoom menu.
+	QMenu* zoomMenu = menuBar()->addMenu("&Zoom");
+
+	zoomMenu->addAction(horizontalZoomInAction);
+	zoomMenu->addAction(horizontalZoomOutAction);
+	zoomMenu->addAction(verticalZoomInAction);
+	zoomMenu->addAction(verticalZoomOutAction);
 
 	// Toolbars.
 	const int spacing = 3;
@@ -115,7 +143,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	notchCheckBox->setLayoutDirection(Qt::RightToLeft);
 	filterToolBar->addWidget(notchCheckBox);
 
-	// Construct Montage Toolbar.
+	// Construct Montage toolbar.
 	QToolBar* montageToolBar = addToolBar("Montage");
 	montageToolBar->setObjectName("Montage QToolBar");
 	montageToolBar->layout()->setSpacing(spacing);
@@ -123,6 +151,16 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	montageToolBar->addWidget(new QLabel("Montage:", this));
 	montageComboBox = new QComboBox(this);
 	montageToolBar->addWidget(montageComboBox);
+
+	// Construct Zoom toolbar.
+	QToolBar* zoomToolBar = addToolBar("Zoom");
+	zoomToolBar->setObjectName("Zoom QToolBar");
+	zoomToolBar->layout()->setSpacing(spacing);
+
+	zoomToolBar->addAction(horizontalZoomInAction);
+	zoomToolBar->addAction(horizontalZoomOutAction);
+	zoomToolBar->addAction(verticalZoomInAction);
+	zoomToolBar->addAction(verticalZoomOutAction);
 
 	// Restore settings.
 	QSettings settings(settingsParameters[0], settingsParameters[1]);
@@ -149,6 +187,28 @@ void SignalFileBrowserWindow::connectModelToUpdate(QAbstractTableModel* model)
 	connect(model, SIGNAL(dataChanged(QModelIndex, QModelIndex)), signalViewer, SLOT(update()));
 	connect(model, SIGNAL(rowsInserted(QModelIndex, int, int)), signalViewer, SLOT(update()));
 	connect(model, SIGNAL(rowsRemoved(QModelIndex, int, int)), signalViewer, SLOT(update()));
+}
+
+void SignalFileBrowserWindow::horizontalZoom(double factor)
+{
+	if (file != nullptr)
+	{
+		InfoTable* it = file->getInfoTable();
+		it->setVirtualWidth(it->getVirtualWidth()*factor);
+	}
+}
+
+void SignalFileBrowserWindow::verticalZoom(double factor)
+{
+	if (file != nullptr)
+	{
+		TrackTable* tt = file->getMontageTable()->getTrackTables()->at(file->getInfoTable()->getSelectedMontage());
+
+		for (int i = 0; i < tt->rowCount(); ++i)
+		{
+			tt->setAmplitude(tt->getAmplitude(i)*factor, i);
+		}
+	}
 }
 
 void SignalFileBrowserWindow::openFile()
@@ -286,4 +346,24 @@ void SignalFileBrowserWindow::updateManagers(int value)
 	EventTable* et = file->getMontageTable()->getEventTables()->at(value);
 	eventManager->setModel(et);
 	connectModelToUpdate(et);
+}
+
+void SignalFileBrowserWindow::horizontalZoomIn()
+{
+	horizontalZoom(horizontalZoomFactor);
+}
+
+void SignalFileBrowserWindow::horizontalZoomOut()
+{
+	horizontalZoom(1/horizontalZoomFactor);
+}
+
+void SignalFileBrowserWindow::verticalZoomIn()
+{
+	verticalZoom(verticalZoomFactor);
+}
+
+void SignalFileBrowserWindow::verticalZoomOut()
+{
+	verticalZoom(1/verticalZoomFactor);
 }

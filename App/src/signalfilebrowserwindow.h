@@ -42,6 +42,8 @@ private:
 	QComboBox* montageComboBox;
 
 	void connectModelToUpdate(QAbstractTableModel* model);
+	void horizontalZoom(double factor);
+	void verticalZoom(double factor);
 
 private slots:
 	void openFile();
@@ -52,6 +54,10 @@ private slots:
 	void highpassComboBoxUpdate(const QString& text);
 	void highpassComboBoxUpdate(double value);
 	void updateManagers(int value);
+	void horizontalZoomIn();
+	void horizontalZoomOut();
+	void verticalZoomIn();
+	void verticalZoomOut();
 };
 
 #endif // SIGNALFILEBROWSERWINDOW_H
