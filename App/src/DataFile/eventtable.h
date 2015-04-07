@@ -66,73 +66,73 @@ public:
 
 	std::string getLabel(int i) const
 	{
-		assert(0 <= i && i < label.size());
+		assert(0 <= i && i < static_cast<int>(label.size()));
 
 		return label[i];
 	}
 	void setLabel(const std::string& value, int i)
 	{
-		assert(0 <= i && i < label.size());
+		assert(0 <= i && i < static_cast<int>(label.size()));
 
 		setData(index(order[i], 0), QString::fromStdString(value));
 	}
 	int getType(int i) const
 	{
-		assert(0 <= i && i < type.size());
+		assert(0 <= i && i < static_cast<int>(type.size()));
 
 		return type[i];
 	}
 	void setType(int value, int i)
 	{
-		assert(0 <= i && i < type.size());
+		assert(0 <= i && i < static_cast<int>(type.size()));
 
 		setData(index(order[i], 1), value);
 	}
 	int getPosition(int i) const
 	{
-		assert(0 <= i && i < position.size());
+		assert(0 <= i && i < static_cast<int>(position.size()));
 
 		return position[i];
 	}
 	void setPosition(int value, int i)
 	{
-		assert(0 <= i && i < position.size());
+		assert(0 <= i && i < static_cast<int>(position.size()));
 
 		setData(index(order[i], 2), value);
 	}
 	int getDuration(int i) const
 	{
-		assert(0 <= i && i < duration.size());
+		assert(0 <= i && i < static_cast<int>(duration.size()));
 
 		return duration[i];
 	}
 	void setDuration(int value, int i)
 	{
-		assert(0 <= i && i < duration.size());
+		assert(0 <= i && i < static_cast<int>(duration.size()));
 
 		setData(index(order[i], 3), value);
 	}
 	int getChannel(int i) const
 	{
-		assert(0 <= i && i < channel.size());
+		assert(0 <= i && i < static_cast<int>(channel.size()));
 
 		return channel[i];
 	}
 	void setChannel(int value, int i)
 	{
-		assert(0 <= i && i < channel.size());
+		assert(0 <= i && i < static_cast<int>(channel.size()));
 
 		setData(index(order[i], 4), value);
 	}
 	std::string getDescription(int i) const
 	{
-		assert(0 <= i && i < description.size());
+		assert(0 <= i && i < static_cast<int>(description.size()));
 
 		return description[i];
 	}
 	void setDescription(const std::string& value, int i)
 	{
-		assert(0 <= i && i < description.size());
+		assert(0 <= i && i < static_cast<int>(description.size()));
 
 		setData(index(order[i], 5), QString::fromStdString(value));
 	}

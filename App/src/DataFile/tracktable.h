@@ -59,61 +59,61 @@ public:
 
 	std::string getLabel(int i) const
 	{
-		assert(0 <= i && i < label.size());
+		assert(0 <= i && i < static_cast<int>(label.size()));
 
 		return label[i];
 	}
 	void setLabel(const std::string& value, int i)
 	{
-		assert(0 <= i && i < label.size());
+		assert(0 <= i && i < static_cast<int>(label.size()));
 
 		setData(index(order[i], 0), QString::fromStdString(value));
 	}
 	std::string getCode(int i) const
 	{
-		assert(0 <= i && i < code.size());
+		assert(0 <= i && i < static_cast<int>(code.size()));
 
 		return code[i];
 	}
 	void setCode(const std::string& value, int i)
 	{
-		assert(0 <= i && i < code.size());
+		assert(0 <= i && i < static_cast<int>(code.size()));
 
 		setData(index(order[i], 1), QString::fromStdString(value));
 	}
 	QColor getColor(int i) const
 	{
-		assert(0 <= i && i < color.size());
+		assert(0 <= i && i < static_cast<int>(color.size()));
 
 		return color[i];
 	}
 	void setColor(QColor value, int i)
 	{
-		assert(0 <= i && i < color.size());
+		assert(0 <= i && i < static_cast<int>(color.size()));
 
 		setData(index(order[i], 2), value);
 	}
 	double getAmplitude(int i) const
 	{
-		assert(0 <= i && i < amplitude.size());
+		assert(0 <= i && i < static_cast<int>(amplitude.size()));
 
 		return amplitude[i];
 	}
 	void setAmplitude(double value, int i)
 	{
-		assert(0 <= i && i < amplitude.size());
+		assert(0 <= i && i < static_cast<int>(amplitude.size()));
 
 		setData(index(order[i], 3), value);
 	}
 	bool getHidden(int i) const
 	{
-		assert(0 <= i && i < hidden.size());
+		assert(0 <= i && i < static_cast<int>(hidden.size()));
 
 		return hidden[i];
 	}
 	void setHidden(bool value, int i)
 	{
-		assert(0 <= i && i < hidden.size());
+		assert(0 <= i && i < static_cast<int>(hidden.size()));
 
 		setData(index(order[i], 4), value);
 	}

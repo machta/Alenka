@@ -53,61 +53,61 @@ public:
 
 	int getId(int i) const
 	{
-		assert(0 <= i && i < id.size());
+		assert(0 <= i && i < static_cast<int>(id.size()));
 
 		return id[i];
 	}
 	void setId(int value, int i)
 	{
-		assert(0 <= i && i < id.size());
+		assert(0 <= i && i < static_cast<int>(id.size()));
 
 		setData(index(order[i], 0), value);
 	}
 	std::string getName(int i) const
 	{
-		assert(0 <= i && i < name.size());
+		assert(0 <= i && i < static_cast<int>(name.size()));
 
 		return name[i];
 	}
 	void setName(const std::string& value, int i)
 	{
-		assert(0 <= i && i < name.size());
+		assert(0 <= i && i < static_cast<int>(name.size()));
 
 		setData(index(order[i], 1), QString::fromStdString(value));
 	}
 	double getOpacity(int i) const
 	{
-		assert(0 <= i && i < opacity.size());
+		assert(0 <= i && i < static_cast<int>(opacity.size()));
 
 		return opacity[i];
 	}
 	void setOpacity(double value, int i)
 	{
-		assert(0 <= i && i < opacity.size());
+		assert(0 <= i && i < static_cast<int>(opacity.size()));
 
 		setData(index(order[i], 2), value);
 	}
 	QColor getColor(int i) const
 	{
-		assert(0 <= i && i < color.size());
+		assert(0 <= i && i < static_cast<int>(color.size()));
 
 		return color[i];
 	}
 	void setColor(QColor value, int i)
 	{
-		assert(0 <= i && i < color.size());
+		assert(0 <= i && i < static_cast<int>(color.size()));
 
 		setData(index(order[i], 3), value);
 	}
 	bool getHidden(int i) const
 	{
-		assert(0 <= i && i < hidden.size());
+		assert(0 <= i && i < static_cast<int>(hidden.size()));
 
 		return hidden[i];
 	}
 	void setHidden(bool value, int i)
 	{
-		assert(0 <= i && i < hidden.size());
+		assert(0 <= i && i < static_cast<int>(hidden.size()));
 
 		setData(index(order[i], 4), value);
 	}

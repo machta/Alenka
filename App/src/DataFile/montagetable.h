@@ -62,25 +62,25 @@ public:
 
 	std::string getName(int i) const
 	{
-		assert(0 <= i && i < name.size());
+		assert(0 <= i && i < static_cast<int>(name.size()));
 
 		return name[i];
 	}
 	void setName(const std::string& value, int i)
 	{
-		assert(0 <= i && i < name.size());
+		assert(0 <= i && i < static_cast<int>(name.size()));
 
 		setData(index(order[i], 0), QString::fromStdString(value));
 	}
 	bool getSave(int i) const
 	{
-		assert(0 <= i && i < save.size());
+		assert(0 <= i && i < static_cast<int>(save.size()));
 
 		return save[i];
 	}
 	void setSave(bool value, int i)
 	{
-		assert(0 <= i && i < save.size());
+		assert(0 <= i && i < static_cast<int>(save.size()));
 
 		setData(index(order[i], 1), value);
 	}
