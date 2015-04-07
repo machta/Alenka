@@ -12,6 +12,7 @@ class MontageManager;
 class QComboBox;
 class QCheckBox;
 class QDockWidget;
+class QAbstractTableModel;
 
 class SignalFileBrowserWindow : public QMainWindow
 {
@@ -39,6 +40,8 @@ private:
 	QComboBox* highpassComboBox;
 	QCheckBox* notchCheckBox;
 	QComboBox* montageComboBox;
+
+	void connectModelToUpdate(QAbstractTableModel* model);
 
 private slots:
 	void openFile();

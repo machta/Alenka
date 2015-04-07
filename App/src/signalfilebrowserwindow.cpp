@@ -144,6 +144,13 @@ void SignalFileBrowserWindow::closeEvent(QCloseEvent* event)
 	QMainWindow::closeEvent(event);
 }
 
+void SignalFileBrowserWindow::connectModelToUpdate(QAbstractTableModel* model)
+{
+	connect(model, SIGNAL(dataChanged(QModelIndex, QModelIndex)), signalViewer, SLOT(update()));
+	connect(model, SIGNAL(rowsInserted(QModelIndex, int, int)), signalViewer, SLOT(update()));
+	connect(model, SIGNAL(rowsRemoved(QModelIndex, int, int)), signalViewer, SLOT(update()));
+}
+
 void SignalFileBrowserWindow::openFile()
 {
 	QString fileName = QFileDialog::getOpenFileName(this, "Open File", "", "GDF file (*.gdf)");
@@ -201,6 +208,17 @@ void SignalFileBrowserWindow::openFile()
 
 		connect(it, SIGNAL(selectedMontageChanged(int)), this, SLOT(updateManagers(int)));
 
+		// Connect slot SignalViewer::update() to make sure that the SignalViewer gets updated when needed.
+		connect(it, SIGNAL(highpassFrequencyChanged(double)), signalViewer, SLOT(update()));
+		connect(it, SIGNAL(lowpassFrequencyChanged(double)), signalViewer, SLOT(update()));
+		connect(it, SIGNAL(notchChanged(bool)), signalViewer, SLOT(update()));
+		connect(it, SIGNAL(positionChanged(int)), signalViewer, SLOT(update()));
+		connect(it, SIGNAL(selectedMontageChanged(int)), signalViewer, SLOT(update()));
+		connect(it, SIGNAL(virtualWidthChanged(int)), signalViewer, SLOT(update()));
+
+		connectModelToUpdate(file->getMontageTable());
+		connectModelToUpdate(file->getEventTypeTable());
+
 		// Emit all signals to ensure there are no uninitialized controls.
 		it->emitAllSignals();
 	}
@@ -211,6 +229,8 @@ void SignalFileBrowserWindow::closeFile()
 	delete file;
 	file = nullptr;
 	signalViewer->changeFile(nullptr);
+
+	signalViewer->update();
 }
 
 void SignalFileBrowserWindow::saveFile()
@@ -259,6 +279,11 @@ void SignalFileBrowserWindow::highpassComboBoxUpdate(double value)
 
 void SignalFileBrowserWindow::updateManagers(int value)
 {
-	trackManager->setModel(file->getMontageTable()->getTrackTables()->at(value));
-	eventManager->setModel(file->getMontageTable()->getEventTables()->at(value));
+	TrackTable* tt = file->getMontageTable()->getTrackTables()->at(value);
+	trackManager->setModel(tt);
+	connectModelToUpdate(tt);
+
+	EventTable* et = file->getMontageTable()->getEventTables()->at(value);
+	eventManager->setModel(et);
+	connectModelToUpdate(et);
 }
