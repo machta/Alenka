@@ -94,7 +94,7 @@ void TrackTable::read(QXmlStreamReader* xml)
 vector<string> TrackTable::getCode() const
 {
 	vector<string> newCode;
-	for (int i = 0; i < code.size(); ++i)
+	for (unsigned int i = 0; i < code.size(); ++i)
 	{
 		if (hidden[i] == false)
 		{
