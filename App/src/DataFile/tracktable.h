@@ -4,6 +4,7 @@
 #include <QAbstractTableModel>
 
 #include "../SignalProcessor/montage.h"
+#include "trackcodevalidator.h"
 
 #include <QColor>
 
@@ -38,6 +39,10 @@ public:
 		return 5;
 	}
 	std::vector<std::string> getCode() const;
+	bool validateTrackCode(const QString& code, QString* message = nullptr)
+	{
+		return validator.validate(code, message);
+	}
 	virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 	virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
 	virtual bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
@@ -123,6 +128,7 @@ private:
 	std::vector<bool> hidden;
 
 	std::vector<int> order;
+	TrackCodeValidator validator;
 };
 
 #endif // TRACKTABLE_H

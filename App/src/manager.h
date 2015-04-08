@@ -41,6 +41,7 @@ private slots:
 	void removeRow();
 	void copy();
 	void copyHtml();
+	void paste();
 };
 
 #endif // MANAGER_H

@@ -24,7 +24,9 @@ SOURCES += \
 	../App/src/DataFile/eventtypetable.cpp \
     ../App/src/DataFile/infotable.cpp \
     ../App/src/DataFile/tracktable.cpp \
-    ../App/src/DataFile/montagetable.cpp
+    ../App/src/DataFile/montagetable.cpp \
+    ../App/src/DataFile/trackcodevalidator.cpp \
+    ../App/src/SignalProcessor/montage.cpp
 
 DISTFILES += \
     data/gdf/t00.gdf \

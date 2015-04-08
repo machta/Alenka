@@ -10,6 +10,8 @@
 #include <QClipboard>
 #include <QTextDocumentFragment>
 
+#include <sstream>
+
 using namespace std;
 
 Manager::Manager(QWidget* parent) : QWidget(parent, Qt::Window)
@@ -33,6 +35,12 @@ Manager::Manager(QWidget* parent) : QWidget(parent, Qt::Window)
 	copyHtmlAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
 	connect(copyHtmlAction, SIGNAL(triggered()), this, SLOT(copyHtml()));
 	tableView->addAction(copyHtmlAction);
+
+	QAction* pasteAction = new QAction("Paste", this);
+	pasteAction->setShortcut(QKeySequence::Paste);
+	pasteAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+	connect(pasteAction, SIGNAL(triggered()), this, SLOT(paste()));
+	tableView->addAction(pasteAction);
 
 	// Construct other.
 	QPushButton* addRowButton = new QPushButton("Add Row", this);
@@ -166,4 +174,54 @@ void Manager::copyHtml()
 	text += "</table>";
 
 	QApplication::clipboard()->setText(text);
+}
+
+void Manager::paste()
+{
+	QAbstractItemModel* model = tableView->model();
+
+	int row, startColumn;
+
+	auto index = tableView->selectionModel()->currentIndex();
+	if (index.isValid())
+	{
+		row = index.row();
+		startColumn = index.column();
+	}
+	else
+	{
+		row = startColumn = 0;
+	}
+
+	stringstream textStream(QApplication::clipboard()->text().toStdString());
+
+	while (textStream.good())
+	{
+		if (row >= model->rowCount())
+		{
+			model->insertRow(row);
+		}
+
+		string line;
+		getline(textStream, line);
+
+		stringstream lineStream(line);
+
+		int column = 0;
+
+		while (lineStream.good())
+		{
+			string cell;
+			getline(lineStream, cell, '\t');
+
+			if (startColumn + column < model->columnCount())
+			{
+				model->setData(model->index(row, startColumn + column), QVariant(QString::fromStdString(cell)));
+			}
+
+			++column;
+		}
+
+		++row;
+	}
 }

@@ -1,6 +1,8 @@
 #include "trackmanagerdelegate.h"
 
 #include "codeeditdialog.h"
+#include "DataFile/tracktable.h"
+#include "DataFile/trackcodevalidator.h"
 
 #include <QColorDialog>
 #include <QLineEdit>
@@ -105,14 +107,14 @@ void TrackManagerDelegate::setModelData(QWidget* editor, QAbstractItemModel* mod
 		QLineEdit* lineEdit = reinterpret_cast<QLineEdit*>(editor);
 		QString message;
 
-		CodeEditDialog::Validator validator;
-		if (validator.validate(lineEdit->text(), &message))
+		TrackTable* tt = reinterpret_cast<TrackTable*>(model);
+		if (tt->validateTrackCode(lineEdit->text(), &message))
 		{
 			break;
 		}
 		else
 		{
-			validator.errorMessageDialog(message, editor);
+			CodeEditDialog::errorMessageDialog(message, editor);
 			return;
 		}
 	}

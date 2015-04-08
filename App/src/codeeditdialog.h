@@ -2,10 +2,10 @@
 #define CODEEDITDIALOG_H
 
 #include <QDialog>
-#include <QValidator>
+
+#include "DataFile/trackcodevalidator.h"
 
 class OpenCLContext;
-class Validator;
 class QTextEdit;
 
 class CodeEditDialog : public QDialog
@@ -16,19 +16,7 @@ public:
 
 	QString getText() const;
 
-	class Validator
-	{
-	public:
-		Validator();
-		~Validator();
-
-		bool validate(const QString& input, QString* errorMessage);
-
-		static void errorMessageDialog(const QString& message, QWidget* parent = nullptr);
-
-	private:
-		OpenCLContext* context;
-	};
+	static void errorMessageDialog(const QString& message, QWidget* parent = nullptr);
 
 public slots:
 	void setText(const QString& text);
@@ -36,7 +24,7 @@ public slots:
 
 private:
 	QTextEdit* editor;
-	Validator validator;
+	TrackCodeValidator validator;
 };
 
 #endif // CODEEDITDIALOG_H

@@ -176,8 +176,14 @@ bool TrackTable::setData(const QModelIndex& index, const QVariant &value, int ro
 				label[row] = value.toString().toStdString();
 				break;
 			case 1:
-				code[row] = value.toString().toStdString();
+			{
+				QString c = value.toString();
+				if (validateTrackCode(c))
+				{
+					code[row] = c.toStdString();
+				}
 				break;
+			}
 			case 2:
 				color[row] = value.value<QColor>();
 				break;

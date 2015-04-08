@@ -36,7 +36,8 @@ HEADERS += \
     src/eventtypemanagerdelegate.h \
     src/trackmanagerdelegate.h \
     src/codeeditdialog.h \
-    src/manager.h
+    src/manager.h \
+    src/DataFile/trackcodevalidator.h
 
 SOURCES += \
     src/DataFile/gdf2.cpp \
@@ -71,7 +72,8 @@ SOURCES += \
     src/eventtypemanagerdelegate.cpp \
     src/trackmanagerdelegate.cpp \
     src/codeeditdialog.cpp \
-    src/manager.cpp
+    src/manager.cpp \
+    src/DataFile/trackcodevalidator.cpp
 
 DISTFILES += \
     kernels.cl \

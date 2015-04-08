@@ -1,18 +1,12 @@
 #include "codeeditdialog.h"
 
-#include "openclcontext.h"
-#include "options.h"
-#include "SignalProcessor/montage.h"
-
 #include <QDialogButtonBox>
 #include <QVBoxLayout>
 #include <QTextEdit>
 #include <QLabel>
 #include <QMessageBox>
 
-#include <string>
-
-using namespace std;
+#include "SignalProcessor/montage.h"
 
 CodeEditDialog::CodeEditDialog(QWidget* parent) : QDialog(parent)
 {
@@ -51,6 +45,17 @@ QString CodeEditDialog::getText() const
 	return editor->toPlainText();
 }
 
+void CodeEditDialog::errorMessageDialog(const QString &message, QWidget *parent)
+{
+	// TODO: Make a better error dialog.
+	QMessageBox messageBox(parent);
+	messageBox.setWindowTitle("Compilation Error");
+	messageBox.setText("The code entered is not valid." + QString(200, ' '));
+	messageBox.setDetailedText(message);
+	messageBox.setIcon(QMessageBox::Critical);
+	messageBox.exec();
+}
+
 void CodeEditDialog::setText(const QString& text)
 {
 	editor->setPlainText(text);
@@ -68,43 +73,11 @@ void CodeEditDialog::done(int r)
 		}
 		else
 		{
-			validator.errorMessageDialog(message, this);
+			errorMessageDialog(message, this);
 		}
 	}
 	else
 	{
 		QDialog::done(r);
 	}
-}
-
-CodeEditDialog::Validator::Validator()
-{
-	context = new OpenCLContext(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS);
-}
-
-CodeEditDialog::Validator::~Validator()
-{
-	delete context;
-}
-
-bool CodeEditDialog::Validator::validate(const QString& input, QString* errorMessage)
-{
-	string message;
-
-	bool result = Montage::test(input.toStdString(), context, &message);
-
-	*errorMessage = QString::fromStdString(message);
-
-	return result;
-}
-
-void CodeEditDialog::Validator::errorMessageDialog(const QString& message, QWidget* parent)
-{
-	// TODO: Make a better error dialog.
-	QMessageBox messageBox(parent);
-	messageBox.setWindowTitle("Compilation Error");
-	messageBox.setText("The code entered is not valid." + QString(200, ' '));
-	messageBox.setDetailedText(message);
-	messageBox.setIcon(QMessageBox::Critical);
-	messageBox.exec();
 }
