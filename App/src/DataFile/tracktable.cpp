@@ -269,6 +269,7 @@ void TrackTable::sort(int column, Qt::SortOrder order)
 {
 	assert(0 <= column && column < columnCount());
 
+	// Build an object for sorting according to the appropriate column.
 	QCollator collator;
 	collator.setNumericMode(true);
 
@@ -321,7 +322,12 @@ void TrackTable::sort(int column, Qt::SortOrder order)
 		}
 	}
 
+	// Update the table.
+	emit layoutAboutToBeChanged();
+
 	std::sort(this->order.begin(), this->order.end(), predicate);
 
-	emit dataChanged(index(0, 0), index(rowCount() - 1, columnCount() - 1));
+	changePersistentIndex(index(0, 0), index(rowCount() - 1, columnCount() - 1));
+
+	emit layoutChanged();
 }
