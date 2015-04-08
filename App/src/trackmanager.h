@@ -1,27 +1,15 @@
 #ifndef TRACKMANAGER_H
 #define TRACKMANAGER_H
 
-#include <QWidget>
+#include "manager.h"
 
-class QTableView;
-class TrackTable;
-
-class TrackManager : public QWidget
+class TrackManager : public Manager
 {
 	Q_OBJECT
 
 public:
 	explicit TrackManager(QWidget* parent = nullptr);
-	~TrackManager();
-
-	void setModel(TrackTable* model);
-
-private:
-	QTableView* tableView;
-
-private slots:
-	void addRow();
-	void removeRow();
+	virtual ~TrackManager();
 };
 
 #endif // TRACKMANAGER_H

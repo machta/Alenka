@@ -1,27 +1,15 @@
 #ifndef EVENTMANAGER_H
 #define EVENTMANAGER_H
 
-#include <QWidget>
+#include "manager.h"
 
-class EventTable;
-class QTableView;
-
-class EventManager : public QWidget
+class EventManager : public Manager
 {
 	Q_OBJECT
 
 public:
 	explicit EventManager(QWidget* parent = nullptr);
-	~EventManager();
-
-	void setModel(EventTable* model);
-
-private:
-	QTableView* tableView;
-
-private slots:
-	void addRow();
-	void removeRow();
+	virtual ~EventManager();
 };
 
 #endif // EVENTMANAGER_H

@@ -1,27 +1,15 @@
 #ifndef MONTAGEMANAGER_H
 #define MONTAGEMANAGER_H
 
-#include <QWidget>
+#include "manager.h"
 
-class QTableView;
-class MontageTable;
-
-class MontageManager : public QWidget
+class MontageManager : public Manager
 {
 	Q_OBJECT
 
 public:
 	explicit MontageManager(QWidget* parent = nullptr);
-	~MontageManager();
-
-	void setModel(MontageTable* model);
-
-private:
-	QTableView* tableView;
-
-private slots:
-	void addRow();
-	void removeRow();
+	virtual ~MontageManager();
 };
 
 #endif // MONTAGEMANAGER_H
