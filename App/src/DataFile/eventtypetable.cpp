@@ -88,9 +88,9 @@ bool EventTypeTable::insertRowsBack(int count)
 	for (int i = 0; i < count; ++i)
 	{
 		std::stringstream ss;
-		ss << "Type " << row + i;
+		ss << "Type " << row + i + 1;
 
-		id.push_back(row + i);
+		id.push_back(row + i + 1);
 		name.push_back(ss.str());
 		opacity.push_back(0.25);
 		color.push_back(QColor(Qt::red));

@@ -262,10 +262,13 @@ void GDF2::save()
 
 			for (int j = 0; j < et->rowCount(); ++j)
 			{
-				positions.push_back(et->getPosition(j) + 1);
-				types.push_back(getEventTypeTable()->getId(et->getType(j)));
-				channels.push_back(et->getChannel(j) + 1);
-				durations.push_back(et->getDuration(j));
+				if (et->getChannel(j) >= -1 && et->getType(j) >= 0)
+				{
+					positions.push_back(et->getPosition(j) + 1);
+					types.push_back(getEventTypeTable()->getId(et->getType(j)));
+					channels.push_back(et->getChannel(j) + 1);
+					durations.push_back(et->getDuration(j));
+				}
 			}
 		}
 	}
@@ -276,7 +279,7 @@ void GDF2::save()
 	uint8_t eventTableMode = 3;
 	writeFile(&eventTableMode);
 
-	int numberOfEvents = min<int>(positions.size(), 16777215); // 2^24 - 1 is the maximum length of the gdf event table
+	int numberOfEvents = min<int>(positions.size(), (1 << 24) - 1); // 2^24 - 1 is the maximum length of the gdf event table
 	uint8_t nev[3];
 	int tmp = numberOfEvents;
 	nev[0] = static_cast<uint8_t>(tmp%256);
