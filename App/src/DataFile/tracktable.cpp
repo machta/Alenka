@@ -1,11 +1,14 @@
 #include "tracktable.h"
 
+#include "eventtable.h"
+
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
 
 #include <algorithm>
 #include <functional>
 #include <QCollator>
+#include <vector>
 
 using namespace std;
 
@@ -91,6 +94,34 @@ void TrackTable::read(QXmlStreamReader* xml)
 
 #undef readNumericAttribute
 
+bool TrackTable::insertRowsBack(int count)
+{
+	assert(count >= 1);
+
+	int row = rowCount();
+
+	beginInsertRows(QModelIndex(), row, row + count - 1);
+
+	for (int i = 0; i < count; ++i)
+	{
+		std::stringstream ssLabel, ssCode;
+		ssLabel << "Track " << row + i;
+		ssCode << "out = in(" << row + i << ");";
+
+		label.push_back(ssLabel.str());
+		code.push_back(ssCode.str());
+		color.push_back(QColor(Qt::black));
+		amplitude.push_back(-0.000008); // TODO: load global amplitude
+		hidden.push_back(false);
+
+		order.push_back(order.size());
+	}
+
+	endInsertRows();
+
+	return true;
+}
+
 vector<string> TrackTable::getCode() const
 {
 	vector<string> newCode;
@@ -110,15 +141,15 @@ QVariant TrackTable::headerData(int section, Qt::Orientation orientation, int ro
 	{
 		switch (section)
 		{
-		case 0:
+		case Collumn::label:
 			return "Label";
-		case 1:
+		case Collumn::code:
 			return "Code";
-		case 2:
+		case Collumn::color:
 			return "Color";
-		case 3:
+		case Collumn::amplitude:
 			return "Amplitude";
-		case 4:
+		case Collumn::hidden:
 			return "Hidden";
 		}
 	}
@@ -136,7 +167,7 @@ QVariant TrackTable::data(const QModelIndex& index, int role) const
 		{
 			switch (index.column())
 			{
-			case 2:
+			case Collumn::color:
 				return color[row];
 			}
 		}
@@ -145,15 +176,15 @@ QVariant TrackTable::data(const QModelIndex& index, int role) const
 		{
 			switch (index.column())
 			{
-			case 0:
+			case Collumn::label:
 				return QString::fromStdString(label[row]);
-			case 1:
+			case Collumn::code:
 				return QString::fromStdString(code[row]);
-			case 2:
+			case Collumn::color:
 				return color[row];
-			case 3:
+			case Collumn::amplitude:
 				return amplitude[row];
-			case 4:
+			case Collumn::hidden:
 				return hidden[row];
 			}
 		}
@@ -172,10 +203,10 @@ bool TrackTable::setData(const QModelIndex& index, const QVariant &value, int ro
 		{
 			switch (index.column())
 			{
-			case 0:
+			case Collumn::label:
 				label[row] = value.toString().toStdString();
 				break;
-			case 1:
+			case Collumn::code:
 			{
 				QString c = value.toString();
 				if (validateTrackCode(c))
@@ -184,13 +215,13 @@ bool TrackTable::setData(const QModelIndex& index, const QVariant &value, int ro
 				}
 				break;
 			}
-			case 2:
+			case Collumn::color:
 				color[row] = value.value<QColor>();
 				break;
-			case 3:
+			case Collumn::amplitude:
 				amplitude[row] = value.toDouble();
 				break;
-			case 4:
+			case Collumn::hidden:
 				hidden[row] = value.toBool();
 				break;
 			}
@@ -205,27 +236,9 @@ bool TrackTable::setData(const QModelIndex& index, const QVariant &value, int ro
 
 bool TrackTable::insertRows(int row, int count, const QModelIndex& /*parent*/)
 {
-	if (count > 0)
+	if (count >= 1 && row == rowCount())
 	{
-		beginInsertRows(QModelIndex(), row, row + count - 1);
-
-		for (int i = 0; i < count; ++i)
-		{
-			std::stringstream ssLabel, ssCode;
-			ssLabel << "Track " << row + i;
-			ssCode << "out = in(" << row + i << ");";
-
-			label.push_back(ssLabel.str());
-			code.push_back(ssCode.str());
-			color.push_back(QColor(Qt::black));
-			amplitude.push_back(-0.000008); // TODO: load global amplitude
-			hidden.push_back(false);
-
-			order.insert(order.begin() + row + i, order.size());
-		}
-
-		endInsertRows();
-
+		insertRowsBack(count);
 		return true;
 	}
 	else
@@ -238,11 +251,50 @@ bool TrackTable::removeRows(int row, int count, const QModelIndex& /*parent*/)
 {
 	if (count > 0)
 	{
-		beginRemoveRows(QModelIndex(), row, row + count - 1);
+		int rowLast = row + count - 1;
+
+		// Update the channels of events to point to correct tracks after the rows are removed.
+		vector<int> indexesToBeRemoved;
+		for (int i = row; i <= rowLast; ++i)
+		{
+			indexesToBeRemoved.push_back(order[i]);
+		}
+		std::sort(indexesToBeRemoved.begin(), indexesToBeRemoved.end());
+
+		bool changed = false;
+
+		for (int j = 0; j < eventTable->rowCount(); ++j)
+		{
+			int channel = eventTable->getChannel(j);
+
+			if (channel >= 0)
+			{
+				auto it = lower_bound(indexesToBeRemoved.begin(), indexesToBeRemoved.end(), channel);
+
+				if (it != indexesToBeRemoved.end() && *it == channel)
+				{
+					eventTable->setChannel(-2, j);
+					changed = true;
+				}
+				else
+				{
+					channel -= distance(indexesToBeRemoved.begin(), it);
+					eventTable->setChannel(channel, j);
+				}
+			}
+		}
+
+		if (changed)
+		{
+			eventTable->dataChanged(eventTable->index(0, static_cast<int>(EventTable::Collumn::channel)), eventTable->index(eventTable->rowCount() - 1, static_cast<int>(EventTable::Collumn::channel)));
+		}
+
+		// Remove rows.
+		beginRemoveRows(QModelIndex(), row, rowLast);
 
 		for (int i = 0; i < count; ++i)
 		{
-			int index = order[row + i];
+			int index = order[row];
 
 			label.erase(label.begin() + index);
 			code.erase(code.begin() + index);
@@ -250,7 +302,7 @@ bool TrackTable::removeRows(int row, int count, const QModelIndex& /*parent*/)
 			amplitude.erase(amplitude.begin() + index);
 			hidden.erase(hidden.begin() + index);
 
-			order.erase(order.begin() + row + i);
+			order.erase(order.begin() + row);
 
 			for (auto& e : order)
 			{
@@ -285,19 +337,19 @@ void TrackTable::sort(int column, Qt::SortOrder order)
 	{
 		switch (column)
 		{
-		case 0:
+		case Collumn::label:
 			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(label[a]), QString::fromStdString(label[b])) < 0; };
 			break;
-		case 1:
+		case Collumn::code:
 			predicate = [this] (int a, int b) { return code[a] < code[b]; };
 			break;
-		case 2:
+		case Collumn::color:
 			predicate = [this] (int a, int b) { return color[a].name() < color[b].name(); };
 			break;
-		case 3:
+		case Collumn::amplitude:
 			predicate = [this] (int a, int b) { return amplitude[a] < amplitude[b]; };
 			break;
-		case 4:
+		case Collumn::hidden:
 			predicate = [this] (int a, int b) { return hidden[a] < hidden[b]; };
 			break;
 		default:
@@ -308,19 +360,19 @@ void TrackTable::sort(int column, Qt::SortOrder order)
 	{
 		switch (column)
 		{
-		case 0:
+		case Collumn::label:
 			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(label[a]), QString::fromStdString(label[b])) > 0; };
 			break;
-		case 1:
+		case Collumn::code:
 			predicate = [this] (int a, int b) { return code[a] > code[b]; };
 			break;
-		case 2:
+		case Collumn::color:
 			predicate = [this] (int a, int b) { return color[a].name() > color[b].name(); };
 			break;
-		case 3:
+		case Collumn::amplitude:
 			predicate = [this] (int a, int b) { return amplitude[a] > amplitude[b]; };
 			break;
-		case 4:
+		case Collumn::hidden:
 			predicate = [this] (int a, int b) { return hidden[a] > hidden[b]; };
 			break;
 		default:
@@ -337,3 +389,6 @@ void TrackTable::sort(int column, Qt::SortOrder order)
 
 	emit layoutChanged();
 }
+
+const char* TrackTable::NO_CHANNEL_STRING = "<No Channel>";
+const char* TrackTable::ALL_CHANNEL_STRING = "<All>";

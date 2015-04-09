@@ -15,13 +15,23 @@
 
 class QXmlStreamReader;
 class QXmlStreamWriter;
+class EventTypeTable;
 
 class MontageTable : public QAbstractTableModel
 {
 public:
-	MontageTable(EventTypeTable* eventTypeTable, QObject* parent = nullptr);
+	enum class Collumn
+	{
+		name, save, collumnCount
+	};
+
+	MontageTable(QObject* parent = nullptr);
 	~MontageTable();
 
+	void setReferences(EventTypeTable* eventTypeTable)
+	{
+		this->eventTypeTable = eventTypeTable;
+	}
 	void write(QXmlStreamWriter* xml) const;
 	void read(QXmlStreamReader* xml);
 	std::vector<TrackTable*>* getTrackTables()
@@ -32,6 +42,12 @@ public:
 	{
 		return &eventTables;
 	}
+	EventTypeTable* getEventTypeTable()
+	{
+		return eventTypeTable;
+	}
+	bool insertRowsBack(int count = 1);
+
 	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override
 	{
 		(void)parent;
@@ -42,7 +58,7 @@ public:
 	{
 		(void)parent;
 
-		return 2;
+		return static_cast<int>(Collumn::collumnCount);
 	}
 	virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 	virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
@@ -70,7 +86,7 @@ public:
 	{
 		assert(0 <= i && i < static_cast<int>(name.size()));
 
-		setData(index(order[i], 0), QString::fromStdString(value));
+		name[i] = value;
 	}
 	bool getSave(int i) const
 	{
@@ -82,7 +98,7 @@ public:
 	{
 		assert(0 <= i && i < static_cast<int>(save.size()));
 
-		setData(index(order[i], 1), value);
+		save[i] = value;
 	}
 
 private:
@@ -93,6 +109,8 @@ private:
 	std::vector<int> order;
 	std::vector<TrackTable*> trackTables;
 	std::vector<EventTable*> eventTables;
+
+	void pushBackNew();
 };
 
 #endif // MONTAGETABLE_H

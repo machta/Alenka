@@ -8,7 +8,8 @@
 
 class QTableView;
 class QAbstractTableModel;
-class QHBoxLayout;
+class QGridLayout;
+class QPushButton;
 
 class Manager : public QWidget
 {
@@ -22,9 +23,14 @@ public:
 
 protected:
 	QTableView* tableView;
-	QHBoxLayout* buttonLayout;
+
+	void addButton(QPushButton* button);
 
 private:
+	int buttonsPerRow = 4;
+	int buttonsAdded = 0;
+	QGridLayout* buttonLayout;
+
 	std::map<std::pair<int, int>, QString> textOfSelection();
 	QString replaceTabsAndBreaks(const QString& string)
 	{
@@ -38,7 +44,7 @@ private:
 
 private slots:
 	void addRow();
-	void removeRow();
+	void removeRows();
 	void copy();
 	void copyHtml();
 	void paste();

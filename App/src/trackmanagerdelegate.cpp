@@ -24,7 +24,7 @@ QWidget* TrackManagerDelegate::createEditor(QWidget* parent, const QStyleOptionV
 {
 	switch (index.column())
 	{
-	case 1:
+	case TrackTable::Collumn::code:
 	{
 		QLineEdit* lineEdit = new QLineEdit(parent);
 
@@ -47,7 +47,7 @@ QWidget* TrackManagerDelegate::createEditor(QWidget* parent, const QStyleOptionV
 
 		return lineEdit;
 	}
-	case 2:
+	case TrackTable::Collumn::color:
 	{
 		QLineEdit* lineEdit = new QLineEdit(parent);
 
@@ -71,7 +71,7 @@ QWidget* TrackManagerDelegate::createEditor(QWidget* parent, const QStyleOptionV
 
 		return lineEdit;
 	}
-	case 3:
+	case TrackTable::Collumn::amplitude:
 	{
 		QDoubleSpinBox* spinBox = new QDoubleSpinBox(parent);
 		spinBox->setDecimals(10);
@@ -85,16 +85,6 @@ QWidget* TrackManagerDelegate::createEditor(QWidget* parent, const QStyleOptionV
 
 void TrackManagerDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
 {
-	switch (index.column())
-	{
-	case 2:
-	{
-		QLineEdit* lineEdit = reinterpret_cast<QLineEdit*>(editor);
-		lineEdit->setText(index.model()->data(index).value<QColor>().name());
-		return;
-	}
-	}
-
 	QStyledItemDelegate::setEditorData(editor, index);
 }
 
@@ -102,7 +92,7 @@ void TrackManagerDelegate::setModelData(QWidget* editor, QAbstractItemModel* mod
 {
 	switch (index.column())
 	{
-	case 1:
+	case TrackTable::Collumn::code:
 	{
 		QLineEdit* lineEdit = reinterpret_cast<QLineEdit*>(editor);
 		QString message;
@@ -117,12 +107,6 @@ void TrackManagerDelegate::setModelData(QWidget* editor, QAbstractItemModel* mod
 			CodeEditDialog::errorMessageDialog(message, editor);
 			return;
 		}
-	}
-	case 2:
-	{
-		QLineEdit* lineEdit = reinterpret_cast<QLineEdit*>(editor);
-		model->setData(index, QVariant::fromValue(QColor(lineEdit->text())));
-		return;
 	}
 	}
 

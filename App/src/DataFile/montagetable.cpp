@@ -9,8 +9,7 @@
 
 using namespace std;
 
-MontageTable::MontageTable(EventTypeTable* eventTypeTable, QObject* parent)
-	: QAbstractTableModel(parent), eventTypeTable(eventTypeTable)
+MontageTable::MontageTable(QObject* parent) : QAbstractTableModel(parent)
 {
 }
 
@@ -72,8 +71,7 @@ void MontageTable::read(QXmlStreamReader* xml)
 			name.push_back(xml->attributes().value("name").toString().toStdString());
 			save.push_back(xml->attributes().value("save") == "0" ? false : true);
 
-			trackTables.push_back(new TrackTable);
-			eventTables.push_back(new EventTable(eventTypeTable, trackTables.back()));
+			pushBackNew();
 
 			while (xml->readNextStartElement())
 			{
@@ -100,15 +98,41 @@ void MontageTable::read(QXmlStreamReader* xml)
 
 #undef readNumericAttribute
 
+bool MontageTable::insertRowsBack(int count)
+{
+	assert(count >= 1);
+
+	int row = rowCount();
+
+	beginInsertRows(QModelIndex(), row, row + count - 1);
+
+	for (int i = 0; i < count; ++i)
+	{
+		std::stringstream ss;
+		ss << "Montage " << row + i;
+
+		name.push_back(ss.str());
+		save.push_back(false);
+
+		pushBackNew();
+
+		order.push_back(order.size());
+	}
+
+	endInsertRows();
+
+	return true;
+}
+
 QVariant MontageTable::headerData(int section, Qt::Orientation orientation, int role) const
 {
 	if (role == Qt::DisplayRole && orientation == Qt::Horizontal)
 	{
 		switch (section)
 		{
-		case 0:
+		case Collumn::name:
 			return "Name";
-		case 1:
+		case Collumn::save:
 			return "Save";
 		}
 	}
@@ -126,9 +150,9 @@ QVariant MontageTable::data(const QModelIndex& index, int role) const
 		{
 			switch (index.column())
 			{
-			case 0:
+			case Collumn::name:
 				return QString::fromStdString(name[row]);
-			case 1:
+			case Collumn::save:
 				return save[row];
 			}
 		}
@@ -147,10 +171,10 @@ bool MontageTable::setData(const QModelIndex& index, const QVariant& value, int 
 		{
 			switch (index.column())
 			{
-			case 0:
+			case Collumn::name:
 				name[row] = value.toString().toStdString();
 				break;
-			case 1:
+			case Collumn::save:
 				save[row] = value.toBool();
 				break;
 			}
@@ -165,26 +189,9 @@ bool MontageTable::setData(const QModelIndex& index, const QVariant& value, int 
 
 bool MontageTable::insertRows(int row, int count, const QModelIndex& /*parent*/)
 {
-	if (count > 0)
+	if (count >= 1 && row == rowCount())
 	{
-		beginInsertRows(QModelIndex(), row, row + count - 1);
-
-		for (int i = 0; i < count; ++i)
-		{
-			std::stringstream ss;
-			ss << "Montage " << row + i;
-
-			name.push_back(ss.str());
-			save.push_back(false);
-
-			trackTables.push_back(new TrackTable);
-			eventTables.push_back(new EventTable(eventTypeTable, trackTables.back()));
-
-			order.insert(order.begin() + row + i, order.size());
-		}
-
-		endInsertRows();
-
+		insertRowsBack(count);
 		return true;
 	}
 	else
@@ -201,7 +208,7 @@ bool MontageTable::removeRows(int row, int count, const QModelIndex& /*parent*/)
 
 		for (int i = 0; i < count; ++i)
 		{
-			int index = order[row + i];
+			int index = order[row];
 
 			name.erase(name.begin() + index);
 			save.erase(save.begin() + index);
@@ -209,7 +216,7 @@ bool MontageTable::removeRows(int row, int count, const QModelIndex& /*parent*/)
 			trackTables.erase(trackTables.begin() + index);
 			eventTables.erase(eventTables.begin() + index);
 
-			order.erase(order.begin() + row + i);
+			order.erase(order.begin() + row);
 
 			for (auto& e : order)
 			{
@@ -244,10 +251,10 @@ void MontageTable::sort(int column, Qt::SortOrder order)
 	{
 		switch (column)
 		{
-		case 0:
+		case Collumn::name:
 			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(name[a]), QString::fromStdString(name[b])) < 0; };
 			break;
-		case 1:
+		case Collumn::save:
 			predicate = [this] (int a, int b) { return save[a] < save[b]; };
 			break;
 		default:
@@ -258,10 +265,10 @@ void MontageTable::sort(int column, Qt::SortOrder order)
 	{
 		switch (column)
 		{
-		case 0:
+		case Collumn::name:
 			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(name[a]), QString::fromStdString(name[b])) > 0; };
 			break;
-		case 1:
+		case Collumn::save:
 			predicate = [this] (int a, int b) { return save[a] > save[b]; };
 			break;
 		default:
@@ -277,4 +284,14 @@ void MontageTable::sort(int column, Qt::SortOrder order)
 	changePersistentIndex(index(0, 0), index(rowCount() - 1, columnCount() - 1));
 
 	emit layoutChanged();
+}
+
+void MontageTable::pushBackNew()
+{
+	TrackTable* tt = new TrackTable;
+	EventTable* et = new EventTable;
+	tt->setReferences(et);
+	et->setReferences(eventTypeTable, tt);
+	trackTables.push_back(tt);
+	eventTables.push_back(et);
 }

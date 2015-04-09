@@ -324,11 +324,11 @@ bool GDF2::load()
 
 		// Add a default montage.
 		// TODO: handle unexpected values in event table and strange track labels
-		getMontageTable()->insertRow(0);
+		getMontageTable()->insertRowsBack();
 
 		// Fill the track table of the default montage with channels from gdf.
 		TrackTable* defaultTracks = getMontageTable()->getTrackTables()->back();
-		defaultTracks->insertRows(0, getChannelCount());
+		defaultTracks->insertRowsBack(getChannelCount());
 
 		for (int i = 0; i < defaultTracks->rowCount(); ++i)
 		{
@@ -337,7 +337,7 @@ bool GDF2::load()
 
 		// Fill the event table of the default montage with events from the event table in gdf.
 		EventTable* defaultEvents = getMontageTable()->getEventTables()->back();
-		defaultEvents->insertRows(0, numberOfEvents);
+		defaultEvents->insertRowsBack(numberOfEvents);
 
 		for (int i = 0; i < numberOfEvents; ++i)
 		{
@@ -389,7 +389,7 @@ bool GDF2::load()
 		{
 			int row = getEventTypeTable()->rowCount();
 
-			getEventTypeTable()->insertRow(row);
+			getEventTypeTable()->insertRowsBack();
 
 			std::stringstream ss;
 			ss << "Type " << e;

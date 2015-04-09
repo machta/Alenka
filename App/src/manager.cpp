@@ -3,7 +3,7 @@
 #include <QTableView>
 #include <QPushButton>
 #include <QVBoxLayout>
-#include <QHBoxLayout>
+#include <QGridLayout>
 #include <QHeaderView>
 #include <QAction>
 #include <QApplication>
@@ -11,6 +11,7 @@
 #include <QTextDocumentFragment>
 
 #include <sstream>
+#include <algorithm>
 
 using namespace std;
 
@@ -46,13 +47,13 @@ Manager::Manager(QWidget* parent) : QWidget(parent, Qt::Window)
 	QPushButton* addRowButton = new QPushButton("Add Row", this);
 	connect(addRowButton, SIGNAL(clicked()), this, SLOT(addRow()));
 
-	QPushButton* removeRowButton = new QPushButton("Remove Row", this);
-	connect(removeRowButton, SIGNAL(clicked()), this, SLOT(removeRow()));
+	QPushButton* removeRowButton = new QPushButton("Remove Rows", this);
+	connect(removeRowButton, SIGNAL(clicked()), this, SLOT(removeRows()));
 
 	// Add the widgets to a layout.
-	buttonLayout = new QHBoxLayout;
-	buttonLayout->addWidget(addRowButton);
-	buttonLayout->addWidget(removeRowButton);
+	buttonLayout = new QGridLayout;
+	addButton(addRowButton);
+	addButton(removeRowButton);
 
 	QVBoxLayout* box1 = new QVBoxLayout;
 	box1->addLayout(buttonLayout);
@@ -69,6 +70,16 @@ void Manager::setModel(QAbstractTableModel* model)
 	tableView->setModel(model);
 
 	tableView->sortByColumn(tableView->horizontalHeader()->sortIndicatorSection(), tableView->horizontalHeader()->sortIndicatorOrder());
+}
+
+void Manager::addButton(QPushButton* button)
+{
+	int row = buttonsAdded/buttonsPerRow;
+	int col = buttonsAdded%buttonsPerRow;
+
+	buttonLayout->addWidget(button, row, col);
+
+	++buttonsAdded;
 }
 
 map<pair<int, int>, QString> Manager::textOfSelection()
@@ -92,12 +103,25 @@ void Manager::addRow()
 	tableView->model()->insertRow(tableView->model()->rowCount());
 }
 
-void Manager::removeRow()
+void Manager::removeRows()
 {
-	QModelIndex currentIndex = tableView->selectionModel()->currentIndex();
-	if (currentIndex.isValid())
+	auto indexes = tableView->selectionModel()->selection().indexes();
+
+	if (indexes.empty() == false)
 	{
-		tableView->model()->removeRow(currentIndex.row());
+		int m = tableView->model()->rowCount();
+		int M = 0;
+
+		for (const auto& e : indexes)
+		{
+			if (e.isValid())
+			{
+				m = min(m, e.row());
+				M = max(M, e.row());
+			}
+		}
+
+		tableView->model()->removeRows(m, M - m + 1);
 	}
 }
 

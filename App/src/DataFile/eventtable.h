@@ -21,9 +21,19 @@ class EventTable : public QAbstractTableModel
 	Q_OBJECT
 
 public:
-	EventTable(EventTypeTable* eventTypeTable, TrackTable* trackTable, QObject* parent = nullptr);
+	enum class Collumn
+	{
+		label, type, position, duration, channel, description, collumnCount
+	};
+
+	EventTable(QObject* parent = nullptr);
 	~EventTable();
 
+	void setReferences(EventTypeTable* eventTypeTable, TrackTable* trackTable)
+	{
+		this->eventTypeTable = eventTypeTable;
+		this->trackTable = trackTable;
+	}
 	void write(QXmlStreamWriter* xml) const;
 	void read(QXmlStreamReader* xml);	
 	void getEventsForRendering(int firstSample, int lastSample, std::vector<std::tuple<int, int, int>>* allChannelEvents, std::vector<std::tuple<int, int, int, int>>* singleChannelEvents);
@@ -35,6 +45,7 @@ public:
 	{
 		return trackTable;
 	}
+	bool insertRowsBack(int count = 1);
 
 	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override
 	{
@@ -46,7 +57,7 @@ public:
 	{
 		(void)parent;
 
-		return 6;
+		return static_cast<int>(Collumn::collumnCount);
 	}
 	virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 	virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
@@ -74,7 +85,7 @@ public:
 	{
 		assert(0 <= i && i < static_cast<int>(label.size()));
 
-		setData(index(order[i], 0), QString::fromStdString(value));
+		label[i] = value;
 	}
 	int getType(int i) const
 	{
@@ -86,7 +97,7 @@ public:
 	{
 		assert(0 <= i && i < static_cast<int>(type.size()));
 
-		setData(index(order[i], 1), value);
+		type[i] = value;
 	}
 	int getPosition(int i) const
 	{
@@ -98,7 +109,7 @@ public:
 	{
 		assert(0 <= i && i < static_cast<int>(position.size()));
 
-		setData(index(order[i], 2), value);
+		position[i] = value;
 	}
 	int getDuration(int i) const
 	{
@@ -110,7 +121,7 @@ public:
 	{
 		assert(0 <= i && i < static_cast<int>(duration.size()));
 
-		setData(index(order[i], 3), value);
+		duration[i] = value;
 	}
 	int getChannel(int i) const
 	{
@@ -122,7 +133,7 @@ public:
 	{
 		assert(0 <= i && i < static_cast<int>(channel.size()));
 
-		setData(index(order[i], 4), value);
+		channel[i] = value;
 	}
 	std::string getDescription(int i) const
 	{
@@ -134,7 +145,7 @@ public:
 	{
 		assert(0 <= i && i < static_cast<int>(description.size()));
 
-		setData(index(order[i], 5), QString::fromStdString(value));
+		description[i] = value;
 	}
 
 private:

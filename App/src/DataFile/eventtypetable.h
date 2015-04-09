@@ -12,17 +12,33 @@
 
 class QXmlStreamReader;
 class QXmlStreamWriter;
+class MontageTable;
 
 class EventTypeTable : public QAbstractTableModel
 {
 	Q_OBJECT
 
 public:
+	enum class Collumn
+	{
+		id, name, opacity, color, hidden, collumnCount
+	};
+
 	EventTypeTable(QObject* parent = nullptr);
 	~EventTypeTable();
 
+	void setReferences(MontageTable* montageTable)
+	{
+		this->montageTable = montageTable;
+	}
 	void write(QXmlStreamWriter* xml) const;
 	void read(QXmlStreamReader* xml);
+	MontageTable* getMontageTable()
+	{
+		return montageTable;
+	}
+	bool insertRowsBack(int count = 1);
+
 	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override
 	{
 		(void)parent;
@@ -33,7 +49,7 @@ public:
 	{
 		(void)parent;
 
-		return 5;
+		return static_cast<int>(Collumn::collumnCount);
 	}
 	virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 	virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
@@ -61,7 +77,7 @@ public:
 	{
 		assert(0 <= i && i < static_cast<int>(id.size()));
 
-		setData(index(order[i], 0), value);
+		id[i] = value;
 	}
 	std::string getName(int i) const
 	{
@@ -73,7 +89,7 @@ public:
 	{
 		assert(0 <= i && i < static_cast<int>(name.size()));
 
-		setData(index(order[i], 1), QString::fromStdString(value));
+		name[i] = value;
 	}
 	double getOpacity(int i) const
 	{
@@ -85,7 +101,7 @@ public:
 	{
 		assert(0 <= i && i < static_cast<int>(opacity.size()));
 
-		setData(index(order[i], 2), value);
+		opacity[i] = value;
 	}
 	QColor getColor(int i) const
 	{
@@ -97,7 +113,7 @@ public:
 	{
 		assert(0 <= i && i < static_cast<int>(color.size()));
 
-		setData(index(order[i], 3), value);
+		color[i] = value;
 	}
 	bool getHidden(int i) const
 	{
@@ -109,8 +125,10 @@ public:
 	{
 		assert(0 <= i && i < static_cast<int>(hidden.size()));
 
-		setData(index(order[i], 4), value);
+		hidden[i] = value;
 	}
+
+	static const char* NO_TYPE_STRING;
 
 private:
 	std::vector<int> id;
@@ -119,6 +137,7 @@ private:
 	std::vector<QColor> color;
 	std::vector<bool> hidden;
 
+	MontageTable* montageTable;
 	std::vector<int> order;
 };
 

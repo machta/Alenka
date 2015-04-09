@@ -6,9 +6,10 @@
 
 using namespace std;
 
-DataFile::DataFile(const string& filePath)
-	: filePath(filePath), eventTypeTable(), montageTable(&eventTypeTable)
+DataFile::DataFile(const string& filePath) : filePath(filePath)
 {
+	eventTypeTable.setReferences(&montageTable);
+	montageTable.setReferences(&eventTypeTable);
 }
 
 DataFile::~DataFile()

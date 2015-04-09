@@ -12,8 +12,7 @@
 
 using namespace std;
 
-EventTable::EventTable(EventTypeTable* eventTypeTable, TrackTable* trackTable, QObject* parent)
-	: QAbstractTableModel(parent), eventTypeTable(eventTypeTable), trackTable(trackTable)
+EventTable::EventTable(QObject* parent) : QAbstractTableModel(parent)
 {
 }
 
@@ -102,9 +101,10 @@ void EventTable::getEventsForRendering(int firstSample, int lastSample, vector<t
 {
 	for (int i = 0; i < rowCount(); ++i)
 	{
-		if (position[i] <= lastSample && firstSample <= position[i] + duration[i] - 1 && getEventTypeTable()->getHidden(type[i]) == false)
+		if (position[i] <= lastSample && firstSample <= position[i] + duration[i] - 1 &&
+			type[i] >= 0 && getEventTypeTable()->getHidden(type[i]) == false && channel[i] >= -1)
 		{
-			if (channel[i] < 0)
+			if (channel[i] == - 1)
 			{
 				allChannelEvents->emplace_back(type[i], position[i], duration[i]);
 			}
@@ -124,23 +124,51 @@ void EventTable::getEventsForRendering(int firstSample, int lastSample, vector<t
 	stable_sort(singleChannelEvents->begin(), singleChannelEvents->end(), [] (tuple<int, int, int, int> a, tuple<int, int, int, int> b) { return get<0>(a) < get<0>(b); });
 }
 
+bool EventTable::insertRowsBack(int count)
+{
+	assert(count >= 1);
+
+	int row = rowCount();
+
+	beginInsertRows(QModelIndex(), row, row + count - 1);
+
+	for (int i = 0; i < count; ++i)
+	{
+		std::stringstream ss;
+		ss << "Event " << row + i;
+
+		label.push_back(ss.str());
+		type.push_back(-1); // TODO: load current selected type
+		position.push_back(0);
+		duration.push_back(1);
+		channel.push_back(-2);
+		description.push_back("");
+
+		order.push_back(order.size());
+	}
+
+	endInsertRows();
+
+	return true;
+}
+
 QVariant EventTable::headerData(int section, Qt::Orientation orientation, int role) const
 {
 	if (role == Qt::DisplayRole && orientation == Qt::Horizontal)
 	{
 		switch (section)
 		{
-		case 0:
+		case Collumn::label:
 			return "Label";
-		case 1:
+		case Collumn::type:
 			return "Type";
-		case 2:
+		case Collumn::position:
 			return "Position";
-		case 3:
+		case Collumn::duration:
 			return "Duration";
-		case 4:
+		case Collumn::channel:
 			return "Channel";
-		case 5:
+		case Collumn::description:
 			return "Description";
 		}
 	}
@@ -158,14 +186,16 @@ QVariant EventTable::data(const QModelIndex& index, int role) const
 		{
 			switch (index.column())
 			{
-			case 1:
-				return QString::fromStdString(eventTypeTable->getName(type[row]));
-			case 2:
+			case Collumn::type:
+				return type[row] < 0 ? EventTypeTable::NO_TYPE_STRING : QString::fromStdString(eventTypeTable->getName(type[row]));
+			case Collumn::position:
 				return position[row]; // TODO
-			case 3:
+			case Collumn::duration:
 				return duration[row]; // TODO
-			case 4:
-				return channel[row] < 0 ? "All" : QString::fromStdString(trackTable->getLabel(channel[row]));
+			case Collumn::channel:
+				return channel[row] < 0 ?
+					   channel[row] == -1 ? TrackTable::ALL_CHANNEL_STRING : TrackTable::NO_CHANNEL_STRING :
+					   QString::fromStdString(trackTable->getLabel(channel[row]));
 			}
 		}
 
@@ -173,17 +203,17 @@ QVariant EventTable::data(const QModelIndex& index, int role) const
 		{
 			switch (index.column())
 			{
-			case 0:
+			case Collumn::label:
 				return QString::fromStdString(label[row]);
-			case 1:
+			case Collumn::type:
 				return type[row];
-			case 2:
+			case Collumn::position:
 				return position[row];
-			case 3:
+			case Collumn::duration:
 				return duration[row];
-			case 4:
+			case Collumn::channel:
 				return channel[row];
-			case 5:
+			case Collumn::description:
 				return QString::fromStdString(description[row]);
 			}
 		}
@@ -202,22 +232,22 @@ bool EventTable::setData(const QModelIndex& index, const QVariant &value, int ro
 		{
 			switch (index.column())
 			{
-			case 0:
+			case Collumn::label:
 				label[row] = value.toString().toStdString();
 				break;
-			case 1:
+			case Collumn::type:
 				type[row] = value.value<decltype(type)::value_type>();
 				break;
-			case 2:
+			case Collumn::position:
 				position[row] = value.value<decltype(position)::value_type>();
 				break;
-			case 3:
+			case Collumn::duration:
 				duration[row] = value.value<decltype(duration)::value_type>();
 				break;
-			case 4:
+			case Collumn::channel:
 				channel[row] = value.value<decltype(channel)::value_type>();
 				break;
-			case 5:
+			case Collumn::description:
 				description[row] = value.toString().toStdString();
 				break;
 			}
@@ -232,27 +262,9 @@ bool EventTable::setData(const QModelIndex& index, const QVariant &value, int ro
 
 bool EventTable::insertRows(int row, int count, const QModelIndex& /*parent*/)
 {
-	if (count > 0)
+	if (count >= 1 && row == rowCount())
 	{
-		beginInsertRows(QModelIndex(), row, row + count - 1);
-
-		for (int i = 0; i < count; ++i)
-		{
-			std::stringstream ss;
-			ss << "Event " << row + i;
-
-			label.push_back(ss.str());
-			type.push_back(0); // TODO: load current selected type
-			position.push_back(0);
-			duration.push_back(1);
-			channel.push_back(-1);
-			description.push_back("");
-
-			order.insert(order.begin() + row + i, order.size());
-		}
-
-		endInsertRows();
-
+		insertRowsBack(count);
 		return true;
 	}
 	else
@@ -269,7 +281,7 @@ bool EventTable::removeRows(int row, int count, const QModelIndex& /*parent*/)
 
 		for (int i = 0; i < count; ++i)
 		{
-			int index = order[row + i];
+			int index = order[row];
 
 			label.erase(label.begin() + index);
 			type.erase(type.begin() + index);
@@ -278,7 +290,7 @@ bool EventTable::removeRows(int row, int count, const QModelIndex& /*parent*/)
 			channel.erase(channel.begin() + index);
 			description.erase(description.begin() + index);
 
-			order.erase(order.begin() + row + i);
+			order.erase(order.begin() + row);
 
 			for (auto& e : order)
 			{
@@ -313,22 +325,22 @@ void EventTable::sort(int column, Qt::SortOrder order)
 	{
 		switch (column)
 		{
-		case 0:
+		case Collumn::label:
 			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(label[a]), QString::fromStdString(label[b])) < 0; };
 			break;
-		case 1:
+		case Collumn::type:
 			predicate = [this] (int a, int b) { return type[a] < type[b]; };
 			break;
-		case 2:
+		case Collumn::position:
 			predicate = [this] (int a, int b) { return position[a] < position[b]; };
 			break;
-		case 3:
+		case Collumn::duration:
 			predicate = [this] (int a, int b) { return duration[a] < duration[b]; };
 			break;
-		case 4:
+		case Collumn::channel:
 			predicate = [this] (int a, int b) { return channel[a] < channel[b]; };
 			break;
-		case 5:
+		case Collumn::description:
 			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(description[a]), QString::fromStdString(description[b])) < 0; };
 			break;
 		default:
@@ -339,22 +351,22 @@ void EventTable::sort(int column, Qt::SortOrder order)
 	{
 		switch (column)
 		{
-		case 0:
+		case Collumn::label:
 			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(label[a]), QString::fromStdString(label[b])) > 0; };
 			break;
-		case 1:
+		case Collumn::type:
 			predicate = [this] (int a, int b) { return type[a] > type[b]; };
 			break;
-		case 2:
+		case Collumn::position:
 			predicate = [this] (int a, int b) { return position[a] > position[b]; };
 			break;
-		case 3:
+		case Collumn::duration:
 			predicate = [this] (int a, int b) { return duration[a] > duration[b]; };
 			break;
-		case 4:
+		case Collumn::channel:
 			predicate = [this] (int a, int b) { return channel[a] > channel[b]; };
 			break;
-		case 5:
+		case Collumn::description:
 			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(description[a]), QString::fromStdString(description[b])) > 0; };
 			break;
 		default:

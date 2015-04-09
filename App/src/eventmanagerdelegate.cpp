@@ -22,10 +22,11 @@ QWidget* EventManagerDelegate::createEditor(QWidget* parent, const QStyleOptionV
 
 	switch (index.column())
 	{
-	case 1:
+	case EventTable::Collumn::type:
 	{
 		QComboBox* combo = new QComboBox(parent);
 
+		combo->addItem(EventTypeTable::NO_TYPE_STRING);
 		for (int i = 0; i < eventTypeTable->rowCount(); ++i)
 		{
 			combo->addItem(QString::fromStdString(eventTypeTable->getName(i)));
@@ -33,11 +34,12 @@ QWidget* EventManagerDelegate::createEditor(QWidget* parent, const QStyleOptionV
 
 		return combo;
 	}
-	case 4:
+	case EventTable::Collumn::channel:
 	{
 		QComboBox* combo = new QComboBox(parent);
 
-		combo->addItem("All");
+		combo->addItem(TrackTable::NO_CHANNEL_STRING);
+		combo->addItem(TrackTable::ALL_CHANNEL_STRING);
 		for (int i = 0; i < trackTable->rowCount(); ++i)
 		{
 			combo->addItem(QString::fromStdString(trackTable->getLabel(i)));
@@ -54,17 +56,18 @@ void EventManagerDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 {
 	switch (index.column())
 	{
-	case 1:
+	case EventTable::Collumn::type:
 	{
 		QComboBox* combo = reinterpret_cast<QComboBox*>(editor);
-		combo->setCurrentIndex(index.model()->data(index, Qt::EditRole).toInt());
+		int i = index.data(Qt::EditRole).toInt();
+		combo->setCurrentIndex(i < 0 ? 0 : i + 1);
 		return;
 	}
-	case 4:
+	case EventTable::Collumn::channel:
 	{
 		QComboBox* combo = reinterpret_cast<QComboBox*>(editor);
-		int i = index.model()->data(index, Qt::EditRole).toInt();
-		combo->setCurrentIndex(i < 0 ? 0 : i + 1);
+		int i = index.data(Qt::EditRole).toInt();
+		combo->setCurrentIndex(i < -1 ? 0 : i + 1);
 		return;
 	}
 	}
@@ -76,16 +79,16 @@ void EventManagerDelegate::setModelData(QWidget* editor, QAbstractItemModel* mod
 {
 	switch (index.column())
 	{
-	case 1:
-	{
-		QComboBox* combo = reinterpret_cast<QComboBox*>(editor);
-		model->setData(index, combo->currentIndex());
-		return;
-	}
-	case 4:
+	case EventTable::Collumn::type:
 	{
 		QComboBox* combo = reinterpret_cast<QComboBox*>(editor);
 		model->setData(index, combo->currentIndex() - 1);
+		return;
+	}
+	case EventTable::Collumn::channel:
+	{
+		QComboBox* combo = reinterpret_cast<QComboBox*>(editor);
+		model->setData(index, combo->currentIndex() - 2);
 		return;
 	}
 	}

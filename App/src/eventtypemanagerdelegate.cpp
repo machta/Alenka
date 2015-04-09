@@ -1,5 +1,7 @@
 #include "eventtypemanagerdelegate.h"
 
+#include "DataFile/eventtypetable.h"
+
 #include <QColorDialog>
 #include <QLineEdit>
 #include <QAction>
@@ -16,7 +18,7 @@ QWidget* EventTypeManagerDelegate::createEditor(QWidget* parent, const QStyleOpt
 {
 	switch (index.column())
 	{
-	case 3:
+	case EventTypeTable::Collumn::color:
 	{
 		QLineEdit* lineEdit = new QLineEdit(parent);
 
@@ -47,31 +49,11 @@ QWidget* EventTypeManagerDelegate::createEditor(QWidget* parent, const QStyleOpt
 
 void EventTypeManagerDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
 {
-	switch (index.column())
-	{
-	case 3:
-	{
-		QLineEdit* lineEdit = reinterpret_cast<QLineEdit*>(editor);
-		lineEdit->setText(index.model()->data(index).value<QColor>().name());
-		return;
-	}
-	}
-
 	QStyledItemDelegate::setEditorData(editor, index);
 }
 
 void EventTypeManagerDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
 {
-	switch (index.column())
-	{
-	case 3:
-	{
-		QLineEdit* lineEdit = reinterpret_cast<QLineEdit*>(editor);
-		model->setData(index, QVariant::fromValue(QColor(lineEdit->text())));
-		return;
-	}
-	}
-
 	QStyledItemDelegate::setModelData(editor, model, index);
 }
 

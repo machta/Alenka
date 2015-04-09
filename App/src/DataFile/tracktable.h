@@ -15,17 +15,33 @@
 
 class QXmlStreamReader;
 class QXmlStreamWriter;
+class EventTable;
 
 class TrackTable : public QAbstractTableModel
 {
 	Q_OBJECT
 
 public:
+	enum class Collumn
+	{
+		label, code, color, amplitude, hidden, collumnCount
+	};
+
 	TrackTable(QObject* parent = nullptr);
 	~TrackTable();
 
+	void setReferences(EventTable* eventTable)
+	{
+		this->eventTable = eventTable;
+	}
 	void write(QXmlStreamWriter* xml) const;
 	void read(QXmlStreamReader* xml);
+	EventTable* getEventTable()
+	{
+		return eventTable;
+	}
+	bool insertRowsBack(int count = 1);
+
 	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override
 	{
 		(void)parent;
@@ -36,7 +52,7 @@ public:
 	{
 		(void)parent;
 
-		return 5;
+		return static_cast<int>(Collumn::collumnCount);
 	}
 	std::vector<std::string> getCode() const;
 	bool validateTrackCode(const QString& code, QString* message = nullptr)
@@ -69,7 +85,7 @@ public:
 	{
 		assert(0 <= i && i < static_cast<int>(label.size()));
 
-		setData(index(order[i], 0), QString::fromStdString(value));
+		label[i] = value;
 	}
 	std::string getCode(int i) const
 	{
@@ -81,7 +97,7 @@ public:
 	{
 		assert(0 <= i && i < static_cast<int>(code.size()));
 
-		setData(index(order[i], 1), QString::fromStdString(value));
+		code[i] = value;
 	}
 	QColor getColor(int i) const
 	{
@@ -93,7 +109,7 @@ public:
 	{
 		assert(0 <= i && i < static_cast<int>(color.size()));
 
-		setData(index(order[i], 2), value);
+		color[i] = value;
 	}
 	double getAmplitude(int i) const
 	{
@@ -105,7 +121,7 @@ public:
 	{
 		assert(0 <= i && i < static_cast<int>(amplitude.size()));
 
-		setData(index(order[i], 3), value);
+		amplitude[i] = value;
 	}
 	bool getHidden(int i) const
 	{
@@ -117,8 +133,11 @@ public:
 	{
 		assert(0 <= i && i < static_cast<int>(hidden.size()));
 
-		setData(index(order[i], 4), value);
+		hidden[i] = value;
 	}
+
+	static const char* NO_CHANNEL_STRING;
+	static const char* ALL_CHANNEL_STRING;
 
 private:
 	std::vector<std::string> label;
@@ -127,6 +146,7 @@ private:
 	std::vector<double> amplitude;
 	std::vector<bool> hidden;
 
+	EventTable* eventTable;
 	std::vector<int> order;
 	TrackCodeValidator validator;
 };
