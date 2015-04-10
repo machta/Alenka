@@ -5,6 +5,9 @@
 #include "SignalProcessor/filter.h"
 
 #include <QMatrix4x4>
+#include <QWheelEvent>
+#include <QKeyEvent>
+#include <QCursor>
 
 #include <cstdio>
 #include <string>
@@ -13,8 +16,17 @@
 
 using namespace std;
 
+namespace
+{
+const double horizontalZoomFactor = 1.3;
+const double verticalZoomFactor = 1.3;
+const double trackZoomFactor = 1.3;
+}
+
 Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent)
 {
+	setFocusPolicy(Qt::ClickFocus);
+	setMouseTracking(true);
 }
 
 Canvas::~Canvas()
@@ -232,6 +244,110 @@ void Canvas::paintGL()
 	logToFile("Painting finished.");
 }
 
+void Canvas::wheelEvent(QWheelEvent* event)
+{
+	bool isUp;
+
+	if (event->angleDelta().isNull() == false)
+	{
+		isUp = event->angleDelta().x() + event->angleDelta().y() > 0;
+	}
+	else if (event->pixelDelta().isNull() == false)
+	{
+		isUp = event->pixelDelta().x() + event->pixelDelta().y() > 0;
+	}
+	else
+	{
+		QOpenGLWidget::wheelEvent(event);
+		return;
+	}
+
+	if (event->modifiers() & Qt::ControlModifier)
+	{
+		if (isUp)
+		{
+			trackZoom(trackZoomFactor);
+		}
+		else
+		{
+			trackZoom(1/trackZoomFactor);
+		}
+	}
+	else if (event->modifiers() & Qt::AltModifier)
+	{
+		if (isUp)
+		{
+			horizontalZoom(horizontalZoomFactor);
+		}
+		else
+		{
+			horizontalZoom(1/horizontalZoomFactor);
+		}
+	}
+	else if (event->modifiers() & Qt::ShiftModifier)
+	{
+		if (isUp)
+		{
+			verticalZoom(verticalZoomFactor);
+		}
+		else
+		{
+			verticalZoom(1/verticalZoomFactor);
+		}
+	}
+	else
+	{
+		QOpenGLWidget::wheelEvent(event);
+	}
+}
+
+void Canvas::keyPressEvent(QKeyEvent* event)
+{
+	if (event->key() == Qt::Key_Control)
+	{
+		if (signalProcessor->ready())
+		{
+			selectTrack = true;
+			updateSelectedTrack();
+		}
+	}
+	else
+	{
+		QOpenGLWidget::keyPressEvent(event);
+	}
+}
+
+void Canvas::keyReleaseEvent(QKeyEvent* event)
+{
+	if (event->key() == Qt::Key_Control)
+	{
+		getInfoTable()->setSelectedTrack(-1);
+		selectTrack = false;
+	}
+	else
+	{
+		QOpenGLWidget::keyReleaseEvent(event);
+	}
+}
+
+void Canvas::mouseMoveEvent(QMouseEvent* event)
+{
+	if (selectTrack)
+	{
+		updateSelectedTrack();
+	}
+	else
+	{
+		QOpenGLWidget::mouseMoveEvent(event);
+	}
+}
+
+void Canvas::focusOutEvent(QFocusEvent* /*event*/)
+{
+	getInfoTable()->setSelectedTrack(-1);
+	selectTrack = false;
+}
+
 void Canvas::drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& eventVector)
 {
 	gl()->glUseProgram(rectangleProgram->getGLProgram());
@@ -342,7 +458,24 @@ void Canvas::drawSignal(const SignalBlock& block)
 		else
 		{
 			setUniformTrack(signalProgram->getGLProgram(), track, hidden, block);
-			setUniformColor(signalProgram->getGLProgram(), currentTrackTable()->getColor(track), 1);
+
+			QColor color = currentTrackTable()->getColor(track);
+
+			if (track == getInfoTable()->getSelectedTrack())
+			{
+				double colorComponents[3] = {color.redF(), color.greenF(), color.blueF()};
+
+				for (int i = 0; i < 3; ++i)
+				{
+					colorComponents[i] += colorComponents[i] > 0.5 ? -0.45 : 0.45;
+				}
+
+				color.setRedF(colorComponents[0]);
+				color.setGreenF(colorComponents[1]);
+				color.setBlueF(colorComponents[2]);
+			}
+
+			setUniformColor(signalProgram->getGLProgram(), color, 1);
 
 			gl()->glDrawArrays(GL_LINE_STRIP, (track - hidden)*signalProcessor->getBlockSize(), signalProcessor->getBlockSize());
 		}
@@ -375,4 +508,68 @@ void Canvas::setUniformColor(GLuint program, const QColor& color, double opacity
 	GLuint location = gl()->glGetUniformLocation(program, "color");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
 	gl()->glUniform4f(location, r, g, b, a);
+}
+
+void Canvas::horizontalZoom(double factor)
+{
+	InfoTable* it = getInfoTable();
+	it->setVirtualWidth(it->getVirtualWidth()*factor);
+}
+
+void Canvas::verticalZoom(double factor)
+{
+	if (montageTable != nullptr)
+	{
+		TrackTable* tt = montageTable->getTrackTables()->at(getInfoTable()->getSelectedMontage());
+
+		for (int i = 0; i < tt->rowCount(); ++i)
+		{
+			tt->setAmplitude(tt->getAmplitude(i)*factor, i);
+		}
+
+		emit tt->dataChanged(tt->index(0, static_cast<int>(TrackTable::Collumn::amplitude)), tt->index(tt->rowCount() - 1, static_cast<int>(TrackTable::Collumn::amplitude)));
+	}
+}
+
+void Canvas::trackZoom(double factor)
+{
+	if (montageTable != nullptr)
+	{
+		TrackTable* tt = montageTable->getTrackTables()->at(getInfoTable()->getSelectedMontage());
+
+		int track = getInfoTable()->getSelectedTrack();
+
+		int hidden = 0;
+		int i = 0;
+		while (i < track)
+		{
+			if (montageTable->getTrackTables()->at(getInfoTable()->getSelectedMontage())->getHidden(track + hidden) == false)
+			{
+				++i;
+			}
+			else
+			{
+				++hidden;
+			}
+		}
+
+		track += hidden;
+
+		if (0 <= track && track < tt->rowCount())
+		{
+			tt->setAmplitude(tt->getAmplitude(track)*factor, track);
+		}
+
+		emit tt->dataChanged(tt->index(0, static_cast<int>(TrackTable::Collumn::amplitude)), tt->index(tt->rowCount() - 1, static_cast<int>(TrackTable::Collumn::amplitude)));
+	}
+}
+
+void Canvas::updateSelectedTrack()
+{
+	int y = mapFromGlobal(QCursor::pos()).y();
+
+	double trackHeigth = static_cast<double>(height())/signalProcessor->getTrackCount();
+	int track = min(static_cast<int>(y/trackHeigth), signalProcessor->getTrackCount() - 1);
+
+	getInfoTable()->setSelectedTrack(track);
 }

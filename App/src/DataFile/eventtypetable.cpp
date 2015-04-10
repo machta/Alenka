@@ -262,7 +262,7 @@ bool EventTypeTable::removeRows(int row, int count, const QModelIndex& /*parent*
 
 			if (changed)
 			{
-				eventTable->dataChanged(eventTable->index(0, static_cast<int>(EventTable::Collumn::type)), eventTable->index(eventTable->rowCount() - 1, static_cast<int>(EventTable::Collumn::type)));
+				emit eventTable->dataChanged(eventTable->index(0, static_cast<int>(EventTable::Collumn::type)), eventTable->index(eventTable->rowCount() - 1, static_cast<int>(EventTable::Collumn::type)));
 			}
 		}
 

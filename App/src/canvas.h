@@ -8,7 +8,7 @@
 #include "openglprogram.h"
 #include "DataFile/datafile.h"
 #include "DataFile/montagetable.h"
-#include "DataFile/eventtable.h"
+#include "DataFile/eventtypetable.h"
 #include "DataFile/tracktable.h"
 #include "DataFile/eventtable.h"
 
@@ -31,6 +31,11 @@ protected:
 	virtual void initializeGL() override;
 	virtual void resizeGL(int w, int h) override;
 	virtual void paintGL() override;
+	virtual void wheelEvent(QWheelEvent* event) override;
+	virtual void keyPressEvent(QKeyEvent* event) override;
+	virtual void keyReleaseEvent(QKeyEvent* event) override;
+	virtual void mouseMoveEvent(QMouseEvent* event) override;
+	virtual void focusOutEvent(QFocusEvent* event) override;
 
 private:
 	InfoTable* infoTable = nullptr;
@@ -45,6 +50,7 @@ private:
 	GLuint rectangleArray;
 	GLuint rectangleBuffer;
 	int eventMode = PROGRAM_OPTIONS["eventRenderMode"].as<int>();
+	bool selectTrack = false;
 
 	InfoTable* getInfoTable()
 	{
@@ -100,6 +106,10 @@ private:
 		prepareBlocks(max(lowIndex, minIndex), lowIndex + capacity/2);
 		prepareBlocks(highIndex, min(highIndex, maxIndex) + capacity/2);
 	}
+	void horizontalZoom(double factor);
+	void verticalZoom(double factor);
+	void trackZoom(double factor);
+	void updateSelectedTrack();
 
 private slots:
 	void updateFilter()

@@ -50,6 +50,10 @@ public:
 	{
 		return selectedMontage;
 	}
+	int getSelectedTrack()
+	{
+		return selectedTrack;
+	}
 
 signals:
 	void virtualWidthChanged(int);
@@ -58,6 +62,7 @@ signals:
 	void highpassFrequencyChanged(double);
 	void notchChanged(bool);
 	void selectedMontageChanged(int);
+	void sectedTrackChanged(int);
 
 public slots:
 	void setVirtualWidth(int value)
@@ -108,6 +113,14 @@ public slots:
 			emit selectedMontageChanged(value);
 		}
 	}
+	void setSelectedTrack(int value)
+	{
+		if (value != selectedTrack)
+		{
+			selectedTrack = value;
+			emit sectedTrackChanged(value);
+		}
+	}
 
 private:
 	int virtualWidth = 100000;
@@ -116,6 +129,7 @@ private:
 	double highPassFrequency = -1000*1000*1000;
 	bool notch = false;
 	int selectedMontage = 0;
+	int selectedTrack = -1;
 };
 
 #endif // INFOTABLE_H

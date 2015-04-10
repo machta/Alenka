@@ -2,13 +2,14 @@
 #define SIGNALVIEWER_H
 
 #include <QWidget>
-#include <QScrollBar>
-#include <QVBoxLayout>
 
 #include "canvas.h"
 #include "SignalProcessor/signalprocessor.h"
 #include "DataFile/datafile.h"
 #include "DataFile/infotable.h"
+
+#include <QScrollBar>
+#include <QVBoxLayout>
 
 #include <algorithm>
 #include <cmath>
@@ -49,6 +50,18 @@ protected:
 	virtual void resizeEvent(QResizeEvent* /*event*/) override
 	{
 		resize(getInfoTable()->getVirtualWidth());
+	}
+	virtual void wheelEvent(QWheelEvent* event) override
+	{
+		scrollBar->event(reinterpret_cast<QEvent*>(event));
+	}
+	virtual void keyPressEvent(QKeyEvent* event) override
+	{
+		scrollBar->event(reinterpret_cast<QEvent*>(event));
+	}
+	virtual void keyReleaseEvent(QKeyEvent* event) override
+	{
+		scrollBar->event(reinterpret_cast<QEvent*>(event));
 	}
 
 private:

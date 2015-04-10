@@ -66,34 +66,38 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 	// Construct File actions.
 	QAction* openFileAction = new QAction("&Open File", this);
-	openFileAction->setShortcuts(QKeySequence::Open);
+	openFileAction->setShortcut(QKeySequence::Open);
 	openFileAction->setToolTip("Open an existing file.");
 	connect(openFileAction, SIGNAL(triggered()), this, SLOT(openFile()));
 
 	QAction* closeFileAction = new QAction("Close File", this);
-	closeFileAction->setShortcuts(QKeySequence::Close);
+	closeFileAction->setShortcut(QKeySequence::Close);
 	closeFileAction->setToolTip("Close the currently opened file.");
 	connect(closeFileAction, SIGNAL(triggered()), this, SLOT(closeFile()));
 
 	QAction* saveFileAction = new QAction("Save File", this);
-	saveFileAction->setShortcuts(QKeySequence::Save);
+	saveFileAction->setShortcut(QKeySequence::Save);
 	saveFileAction->setToolTip("Save the currently opened file.");
 	connect(saveFileAction, SIGNAL(triggered()), this, SLOT(saveFile()));
 
 	// Construct Zoom actions.
 	QAction* horizontalZoomInAction = new QAction("Horizontal Zoom In", this);
+	horizontalZoomInAction->setShortcut(QKeySequence("Alt++"));
 	horizontalZoomInAction->setToolTip("Zoom in timeline.");
 	connect(horizontalZoomInAction, SIGNAL(triggered()), this, SLOT(horizontalZoomIn()));
 
 	QAction* horizontalZoomOutAction = new QAction("Horizontal Zoom Out", this);
+	horizontalZoomOutAction->setShortcut(QKeySequence("Alt+-"));
 	horizontalZoomOutAction->setToolTip("Zoom out timeline.");
 	connect(horizontalZoomOutAction, SIGNAL(triggered()), this, SLOT(horizontalZoomOut()));
 
 	QAction* verticalZoomInAction = new QAction("Vertical Zoom In", this);
+	verticalZoomInAction->setShortcut(QKeySequence("Shift++"));
 	verticalZoomInAction->setToolTip("Zoom in amplitudes of signals.");
 	connect(verticalZoomInAction, SIGNAL(triggered()), this, SLOT(verticalZoomIn()));
 
 	QAction* verticalZoomOutAction = new QAction("Vertical Zoom Out", this);
+	verticalZoomOutAction->setShortcut(QKeySequence("Shift+-"));
 	verticalZoomOutAction->setToolTip("Zoom out amplitudes of signals.");
 	connect(verticalZoomOutAction, SIGNAL(triggered()), this, SLOT(verticalZoomOut()));
 
@@ -208,6 +212,8 @@ void SignalFileBrowserWindow::verticalZoom(double factor)
 		{
 			tt->setAmplitude(tt->getAmplitude(i)*factor, i);
 		}
+
+		emit tt->dataChanged(tt->index(0, static_cast<int>(TrackTable::Collumn::amplitude)), tt->index(tt->rowCount() - 1, static_cast<int>(TrackTable::Collumn::amplitude)));
 	}
 }
 
@@ -269,12 +275,13 @@ void SignalFileBrowserWindow::openFile()
 		connect(it, SIGNAL(selectedMontageChanged(int)), this, SLOT(updateManagers(int)));
 
 		// Connect slot SignalViewer::update() to make sure that the SignalViewer gets updated when needed.
-		connect(it, SIGNAL(highpassFrequencyChanged(double)), signalViewer, SLOT(update()));
-		connect(it, SIGNAL(lowpassFrequencyChanged(double)), signalViewer, SLOT(update()));
-		connect(it, SIGNAL(notchChanged(bool)), signalViewer, SLOT(update()));
-		connect(it, SIGNAL(positionChanged(int)), signalViewer, SLOT(update()));
-		connect(it, SIGNAL(selectedMontageChanged(int)), signalViewer, SLOT(update()));
 		connect(it, SIGNAL(virtualWidthChanged(int)), signalViewer, SLOT(update()));
+		connect(it, SIGNAL(positionChanged(int)), signalViewer, SLOT(update()));
+		connect(it, SIGNAL(lowpassFrequencyChanged(double)), signalViewer, SLOT(update()));
+		connect(it, SIGNAL(highpassFrequencyChanged(double)), signalViewer, SLOT(update()));
+		connect(it, SIGNAL(notchChanged(bool)), signalViewer, SLOT(update()));
+		connect(it, SIGNAL(selectedMontageChanged(int)), signalViewer, SLOT(update()));
+		connect(it, SIGNAL(sectedTrackChanged(int)), signalViewer, SLOT(update()));
 
 		connectModelToUpdate(file->getMontageTable());
 		connectModelToUpdate(file->getEventTypeTable());
