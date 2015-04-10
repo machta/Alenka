@@ -9,7 +9,7 @@
 class SignalBlock
 {
 public:
-	SignalBlock(unsigned int index, unsigned int channelCount, int64_t firstSample, int64_t lastSample, GLuint vertexArrays[2]) :
+	SignalBlock(unsigned int index, int64_t firstSample, int64_t lastSample, GLuint vertexArrays[2]) :
 		index(index), channelCount(channelCount), firstSample(firstSample), lastSample(lastSample)
 	{
 		this->vertexArrays[0] = vertexArrays[0];
@@ -28,10 +28,6 @@ public:
 	unsigned int getIndex() const
 	{
 		return index;
-	}
-	unsigned int getchannelCount() const
-	{
-		return channelCount;
 	}
 	int64_t getFirstSample() const
 	{

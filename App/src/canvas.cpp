@@ -307,8 +307,13 @@ void Canvas::keyPressEvent(QKeyEvent* event)
 	{
 		if (signalProcessor->ready())
 		{
-			selectTrack = true;
 			updateSelectedTrack();
+			update();
+		}
+
+		if (isDrawingEvent == false)
+		{
+			isTrackSelected = true;
 		}
 	}
 	else
@@ -321,9 +326,17 @@ void Canvas::keyReleaseEvent(QKeyEvent* event)
 {
 	if (event->key() == Qt::Key_Control)
 	{
-		getInfoTable()->setSelectedTrack(-1);
-		selectTrack = false;
+		isTrackSelected = false;
+		//drawingEvent = false;
+
+		update();
 	}
+//	else if (event->key() == Qt::Key_Shift)
+//	{
+//		drawingEvent = false;
+
+//		update();
+//	}
 	else
 	{
 		QOpenGLWidget::keyReleaseEvent(event);
@@ -332,20 +345,96 @@ void Canvas::keyReleaseEvent(QKeyEvent* event)
 
 void Canvas::mouseMoveEvent(QMouseEvent* event)
 {
-	if (selectTrack)
+	bool callBase = true;
+
+	if (isTrackSelected)
 	{
 		updateSelectedTrack();
+		update();
+
+		callBase = false;
 	}
-	else
+
+	if (isDrawingEvent)
+	{
+		double ratio = samplesRecorded/getInfoTable()->getVirtualWidth();
+		eventEnd = (event->pos().x() + getInfoTable()->getPosition())*ratio;
+
+		update();
+
+		callBase = false;
+	}
+
+	if (callBase)
 	{
 		QOpenGLWidget::mouseMoveEvent(event);
 	}
 }
 
+void Canvas::mousePressEvent(QMouseEvent* event)
+{
+	if (event->button() == Qt::LeftButton)
+	{
+		if (event->modifiers() == Qt::ShiftModifier || event->modifiers() == Qt::ControlModifier)
+		{
+			if (signalProcessor->ready())
+			{
+				isDrawingEvent = true;
+
+				double ratio = samplesRecorded/getInfoTable()->getVirtualWidth();
+				eventStart = eventEnd = (event->pos().x() + getInfoTable()->getPosition())*ratio;
+			}
+
+			if (event->modifiers() == Qt::ShiftModifier)
+			{
+				selectedTrack = -1;
+			}
+			else if (event->modifiers() == Qt::ControlModifier)
+			{
+				updateSelectedTrack();
+			}
+
+			update();
+		}
+	}
+	else
+	{
+		QOpenGLWidget::mousePressEvent(event);
+	}
+}
+
+void Canvas::mouseReleaseEvent(QMouseEvent* event)
+{
+	if (event->button() == Qt::LeftButton)
+	{
+		if (isDrawingEvent)
+		{
+			isDrawingEvent = false;
+
+			addEvent(selectedTrack);
+		}
+
+		update();
+	}
+	else
+	{
+		QOpenGLWidget::mouseReleaseEvent(event);
+	}
+}
+
 void Canvas::focusOutEvent(QFocusEvent* /*event*/)
 {
-	getInfoTable()->setSelectedTrack(-1);
-	selectTrack = false;
+	if (isTrackSelected)
+	{
+		isTrackSelected = false;
+	}
+
+	if (isDrawingEvent)
+	{
+		isDrawingEvent = false;
+	}
+
+	update();
 }
 
 void Canvas::drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& eventVector)
@@ -362,10 +451,7 @@ void Canvas::drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& 
 			int from = get<1>(eventVector[event]);
 			int to = from + get<2>(eventVector[event]) - 1;
 
-			float data[8] = {static_cast<float>(from), 0, static_cast<float>(to), 0, static_cast<float>(from), static_cast<float>(height()), static_cast<float>(to), static_cast<float>(height())};
-			gl()->glBufferData(GL_ARRAY_BUFFER, 8*sizeof(float), data, GL_STATIC_DRAW);
-
-			gl()->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+			drawAllChannelEvent(from, to);
 
 			++event;
 		}
@@ -375,6 +461,31 @@ void Canvas::drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& 
 			setUniformColor(rectangleProgram->getGLProgram(), eventTypeTable->getColor(type), eventTypeTable->getOpacity(type));
 		}
 	}
+
+	if (isDrawingEvent)
+	{
+		if (selectedTrack == -1)
+		{
+			setUniformColor(rectangleProgram->getGLProgram(), QColor(Qt::blue), 0.5);
+
+			int start = eventStart, end = eventEnd;
+
+			if (end < start)
+			{
+				swap(start, end);
+			}
+
+			drawAllChannelEvent(start, end);
+		}
+	}
+}
+
+void Canvas::drawAllChannelEvent(int from, int to)
+{
+	float data[8] = {static_cast<float>(from), 0, static_cast<float>(to), 0, static_cast<float>(from), static_cast<float>(height()), static_cast<float>(to), static_cast<float>(height())};
+	gl()->glBufferData(GL_ARRAY_BUFFER, 8*sizeof(float), data, GL_STATIC_DRAW);
+
+	gl()->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 void Canvas::drawSingleChannelEvents(const SignalBlock& block, const vector<tuple<int, int, int, int>>& eventVector)
@@ -393,26 +504,13 @@ void Canvas::drawSingleChannelEvents(const SignalBlock& block, const vector<tupl
 				int from = get<2>(eventVector[event]);
 				int to = from + get<3>(eventVector[event]) - 1;
 
-				if (from <= block.getLastSample() && block.getFirstSample() <= to)
-				{
-					from = max<int>(block.getFirstSample(), from);
-					to = min<int>(block.getLastSample(), to);
-
-					if (eventMode == 1)
-					{
-						gl()->glDrawArrays(GL_TRIANGLE_STRIP, (track - hidden)*signalProcessor->getBlockSize() + from - block.getFirstSample(), to - from + 1);
-					}
-					else
-					{
-						gl()->glDrawArrays(GL_TRIANGLE_STRIP, 2*((track - hidden)*signalProcessor->getBlockSize() + from - block.getFirstSample()), 2*(to - from + 1));
-					}
-				}
+				drawSingleChannelEvent(block, track - hidden, from, to);
 
 				++event;
 			}
 			else
 			{
-				track = get<1>(eventVector[event]);
+				track = get<1>(eventVector[event]);				
 				assert(currentTrackTable()->getHidden(track) == false);
 
 				hidden = 0;
@@ -433,6 +531,47 @@ void Canvas::drawSingleChannelEvents(const SignalBlock& block, const vector<tupl
 			setUniformColor(eventProgram->getGLProgram(), eventTypeTable->getColor(type), eventTypeTable->getOpacity(type));
 		}
 	}
+
+	if (isDrawingEvent)
+	{
+		int track = selectedTrack;
+
+		if (0 <= track && track < signalProcessor->getTrackCount())
+		{
+			int hidden = countHiddenTracks(track);
+
+			setUniformTrack(eventProgram->getGLProgram(), track + hidden, hidden, block);
+
+			setUniformColor(eventProgram->getGLProgram(), QColor(Qt::blue), 0.5);
+
+			int start = eventStart, end = eventEnd;
+
+			if (end < start)
+			{
+				swap(start, end);
+			}
+
+			drawSingleChannelEvent(block, track, start, end);
+		}
+	}
+}
+
+void Canvas::drawSingleChannelEvent(const SignalBlock& block, int track, int from, int to)
+{
+	if (from <= block.getLastSample() && block.getFirstSample() <= to)
+	{
+		from = max<int>(block.getFirstSample(), from);
+		to = min<int>(block.getLastSample(), to);
+
+		if (eventMode == 1)
+		{
+			gl()->glDrawArrays(GL_TRIANGLE_STRIP, track*signalProcessor->getBlockSize() + from - block.getFirstSample(), to - from + 1);
+		}
+		else
+		{
+			gl()->glDrawArrays(GL_TRIANGLE_STRIP, 2*(track*signalProcessor->getBlockSize() + from - block.getFirstSample()), 2*(to - from + 1));
+		}
+	}
 }
 
 void Canvas::drawSignal(const SignalBlock& block)
@@ -448,37 +587,31 @@ void Canvas::drawSignal(const SignalBlock& block)
 		gl()->glBindVertexArray(block.getArrayStrideTwo());
 	}
 
-	int hidden = 0;
-	for (int track = 0; track < currentTrackTable()->rowCount(); ++track)
+	for (int track = 0; track < signalProcessor->getTrackCount(); ++track)
 	{
-		if (currentTrackTable()->getHidden(track))
-		{
-			++hidden;
-		}
-		else
-		{
-			setUniformTrack(signalProgram->getGLProgram(), track, hidden, block);
+		int hidden = countHiddenTracks(track);
 
-			QColor color = currentTrackTable()->getColor(track);
+		setUniformTrack(signalProgram->getGLProgram(), track + hidden, hidden, block);
 
-			if (track == getInfoTable()->getSelectedTrack())
+		QColor color = currentTrackTable()->getColor(track + hidden);
+
+		if (isTrackSelected && isDrawingEvent == false && track == selectedTrack)
+		{
+			double colorComponents[3] = {color.redF(), color.greenF(), color.blueF()};
+
+			for (int i = 0; i < 3; ++i)
 			{
-				double colorComponents[3] = {color.redF(), color.greenF(), color.blueF()};
-
-				for (int i = 0; i < 3; ++i)
-				{
-					colorComponents[i] += colorComponents[i] > 0.5 ? -0.45 : 0.45;
-				}
-
-				color.setRedF(colorComponents[0]);
-				color.setGreenF(colorComponents[1]);
-				color.setBlueF(colorComponents[2]);
+				colorComponents[i] += colorComponents[i] > 0.5 ? -0.45 : 0.45;
 			}
 
-			setUniformColor(signalProgram->getGLProgram(), color, 1);
-
-			gl()->glDrawArrays(GL_LINE_STRIP, (track - hidden)*signalProcessor->getBlockSize(), signalProcessor->getBlockSize());
+			color.setRedF(colorComponents[0]);
+			color.setGreenF(colorComponents[1]);
+			color.setBlueF(colorComponents[2]);
 		}
+
+		setUniformColor(signalProgram->getGLProgram(), color, 1);
+
+		gl()->glDrawArrays(GL_LINE_STRIP, track*signalProcessor->getBlockSize(), signalProcessor->getBlockSize());
 	}
 }
 
@@ -537,23 +670,9 @@ void Canvas::trackZoom(double factor)
 	{
 		TrackTable* tt = montageTable->getTrackTables()->at(getInfoTable()->getSelectedMontage());
 
-		int track = getInfoTable()->getSelectedTrack();
+		int track = selectedTrack;
 
-		int hidden = 0;
-		int i = 0;
-		while (i < track)
-		{
-			if (montageTable->getTrackTables()->at(getInfoTable()->getSelectedMontage())->getHidden(track + hidden) == false)
-			{
-				++i;
-			}
-			else
-			{
-				++hidden;
-			}
-		}
-
-		track += hidden;
+		track += countHiddenTracks(track);
 
 		if (0 <= track && track < tt->rowCount())
 		{
@@ -571,5 +690,38 @@ void Canvas::updateSelectedTrack()
 	double trackHeigth = static_cast<double>(height())/signalProcessor->getTrackCount();
 	int track = min(static_cast<int>(y/trackHeigth), signalProcessor->getTrackCount() - 1);
 
-	getInfoTable()->setSelectedTrack(track);
+	selectedTrack = track;
+}
+
+void Canvas::addEvent(int channel)
+{
+	EventTable* et = montageTable->getEventTables()->at(getInfoTable()->getSelectedMontage());
+
+	int index = et->rowCount();
+	et->insertRowsBack();
+
+	et->setChannel(channel + countHiddenTracks(channel), index);
+	if (eventEnd < eventStart)
+	{
+		swap(eventStart, eventEnd);
+	}
+	et->setPosition(eventStart, index);
+	et->setDuration(eventEnd - eventStart + 1, index);
+}
+
+int Canvas::countHiddenTracks(int track)
+{
+	int hidden = 0;
+	int i = 0;
+	while (i - hidden <= track)
+	{
+		if (currentTrackTable()->getHidden(i))
+		{
+			++hidden;
+		}
+
+		++i;
+	}
+
+	return hidden;
 }

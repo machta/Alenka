@@ -35,6 +35,8 @@ protected:
 	virtual void keyPressEvent(QKeyEvent* event) override;
 	virtual void keyReleaseEvent(QKeyEvent* event) override;
 	virtual void mouseMoveEvent(QMouseEvent* event) override;
+	virtual void mousePressEvent(QMouseEvent* event) override;
+	virtual void mouseReleaseEvent(QMouseEvent* event) override;
 	virtual void focusOutEvent(QFocusEvent* event) override;
 
 private:
@@ -50,7 +52,11 @@ private:
 	GLuint rectangleArray;
 	GLuint rectangleBuffer;
 	int eventMode = PROGRAM_OPTIONS["eventRenderMode"].as<int>();
-	bool selectTrack = false;
+	bool isTrackSelected = false;
+	int selectedTrack;
+	bool isDrawingEvent = false;
+	int eventStart;
+	int eventEnd;
 
 	InfoTable* getInfoTable()
 	{
@@ -72,7 +78,9 @@ private:
 		return montageTable->getTrackTables()->at(getInfoTable()->getSelectedMontage());
 	}
 	void drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& events);
+	void drawAllChannelEvent(int from, int to);
 	void drawSingleChannelEvents(const SignalBlock& block, const std::vector<std::tuple<int, int, int, int>>& events);
+	void drawSingleChannelEvent(const SignalBlock& block, int track, int from, int to);
 	void drawSignal(const SignalBlock& block);
 	void setUniformTrack(GLuint program, int track, int hidden, const SignalBlock& block);
 	void setUniformColor(GLuint program, const QColor& color, double opacity);
@@ -110,6 +118,8 @@ private:
 	void verticalZoom(double factor);
 	void trackZoom(double factor);
 	void updateSelectedTrack();
+	void addEvent(int channel);
+	int countHiddenTracks(int track);
 
 private slots:
 	void updateFilter()
