@@ -108,18 +108,20 @@ QVariant EventTypeTable::headerData(int section, Qt::Orientation orientation, in
 {
 	if (role == Qt::DisplayRole && orientation == Qt::Horizontal)
 	{
-		switch (section)
+		switch (static_cast<Column>(section))
 		{
-		case Collumn::id:
+		case Column::id:
 			return QString("ID");
-		case Collumn::name:
+		case Column::name:
 			return QString("Name");
-		case Collumn::opacity:
+		case Column::opacity:
 			return QString("Opacity");
-		case Collumn::color:
+		case Column::color:
 			return QString("Color");
-		case Collumn::hidden:
+		case Column::hidden:
 			return QString("Hidden");
+		default:
+			break;
 		}
 	}
 
@@ -134,36 +136,42 @@ QVariant EventTypeTable::data(const QModelIndex& index, int role) const
 
 		if (role == Qt::DecorationRole)
 		{
-			switch (index.column())
+			switch (static_cast<Column>(index.column()))
 			{
-			case Collumn::color:
+			case Column::color:
 				return color[row];
+			default:
+				break;
 			}
 		}
 
 		if (role == Qt::DisplayRole)
 		{
-			switch (index.column())
+			switch (static_cast<Column>(index.column()))
 			{
-			case Collumn::opacity:
+			case Column::opacity:
 				return QString::number(opacity[row]*100, 'f', 2) + "%";
+			default:
+				break;
 			}
 		}
 
 		if (role == Qt::DisplayRole || role == Qt::EditRole)
 		{
-			switch (index.column())
+			switch (static_cast<Column>(index.column()))
 			{
-			case Collumn::id:
+			case Column::id:
 				return id[row];
-			case Collumn::name:
+			case Column::name:
 				return QString::fromStdString(name[row]);
-			case Collumn::opacity:
+			case Column::opacity:
 				return opacity[row]*100;
-			case Collumn::color:
+			case Column::color:
 				return color[row];
-			case Collumn::hidden:
+			case Column::hidden:
 				return hidden[row];
+			default:
+				break;
 			}
 		}
 	}
@@ -179,22 +187,24 @@ bool EventTypeTable::setData(const QModelIndex& index, const QVariant& value, in
 
 		if (role == Qt::EditRole)
 		{
-			switch (index.column())
+			switch (static_cast<Column>(index.column()))
 			{
-			case Collumn::id:
+			case Column::id:
 				id[row] = value.value<decltype(id)::value_type>();
 				break;
-			case Collumn::name:
+			case Column::name:
 				name[row] = value.toString().toStdString();
 				break;
-			case Collumn::opacity:
+			case Column::opacity:
 				opacity[row] = value.toDouble()/100;
 				break;
-			case Collumn::color:
+			case Column::color:
 				color[row] = value.value<QColor>();
 				break;
-			case Collumn::hidden:
+			case Column::hidden:
 				hidden[row] = value.toBool();
+				break;
+			default:
 				break;
 			}
 
@@ -262,7 +272,7 @@ bool EventTypeTable::removeRows(int row, int count, const QModelIndex& /*parent*
 
 			if (changed)
 			{
-				emit eventTable->dataChanged(eventTable->index(0, static_cast<int>(EventTable::Collumn::type)), eventTable->index(eventTable->rowCount() - 1, static_cast<int>(EventTable::Collumn::type)));
+				emit eventTable->dataChanged(eventTable->index(0, static_cast<int>(EventTable::Column::type)), eventTable->index(eventTable->rowCount() - 1, static_cast<int>(EventTable::Column::type)));
 			}
 		}
 
@@ -312,21 +322,21 @@ void EventTypeTable::sort(int column, Qt::SortOrder order)
 
 	if (order == Qt::AscendingOrder)
 	{
-		switch (column)
+		switch (static_cast<Column>(column))
 		{
-		case Collumn::id:
+		case Column::id:
 			predicate = [this] (int a, int b) { return id[a] < id[b]; };
 			break;
-		case Collumn::name:
+		case Column::name:
 			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(name[a]), QString::fromStdString(name[b])) < 0; };
 			break;
-		case Collumn::opacity:
+		case Column::opacity:
 			predicate = [this] (int a, int b) { return opacity[a] < opacity[b]; };
 			break;
-		case Collumn::color:
+		case Column::color:
 			predicate = [this] (int a, int b) { return color[a].name() < color[b].name(); };
 			break;
-		case Collumn::hidden:
+		case Column::hidden:
 			predicate = [this] (int a, int b) { return hidden[a] < hidden[b]; };
 			break;
 		default:
@@ -335,21 +345,21 @@ void EventTypeTable::sort(int column, Qt::SortOrder order)
 	}
 	else
 	{
-		switch (column)
+		switch (static_cast<Column>(column))
 		{
-		case Collumn::id:
+		case Column::id:
 			predicate = [this] (int a, int b) { return id[a] > id[b]; };
 			break;
-		case Collumn::name:
+		case Column::name:
 			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(name[a]), QString::fromStdString(name[b])) > 0; };
 			break;
-		case Collumn::opacity:
+		case Column::opacity:
 			predicate = [this] (int a, int b) { return opacity[a] > opacity[b]; };
 			break;
-		case Collumn::color:
+		case Column::color:
 			predicate = [this] (int a, int b) { return color[a].name() > color[b].name(); };
 			break;
-		case Collumn::hidden:
+		case Column::hidden:
 			predicate = [this] (int a, int b) { return hidden[a] > hidden[b]; };
 			break;
 		default:

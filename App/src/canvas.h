@@ -142,11 +142,11 @@ private slots:
 	{
 		if (bottomRight.row() - topLeft.row() >= 0)
 		{
-			if (topLeft.column() <= static_cast<int>(TrackTable::Collumn::code) && static_cast<int>(TrackTable::Collumn::code) <= bottomRight.column())
+			if (topLeft.column() <= static_cast<int>(TrackTable::Column::code) && static_cast<int>(TrackTable::Column::code) <= bottomRight.column())
 			{
 				updateMontage();
 			}
-			else if (topLeft.column() <= static_cast<int>(TrackTable::Collumn::hidden) && static_cast<int>(TrackTable::Collumn::hidden) <= bottomRight.column())
+			else if (topLeft.column() <= static_cast<int>(TrackTable::Column::hidden) && static_cast<int>(TrackTable::Column::hidden) <= bottomRight.column())
 			{
 				updateMontage();
 			}

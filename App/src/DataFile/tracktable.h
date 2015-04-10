@@ -22,7 +22,7 @@ class TrackTable : public QAbstractTableModel
 	Q_OBJECT
 
 public:
-	enum class Collumn
+	enum class Column
 	{
 		label, code, color, amplitude, hidden, collumnCount
 	};
@@ -52,7 +52,7 @@ public:
 	{
 		(void)parent;
 
-		return static_cast<int>(Collumn::collumnCount);
+		return static_cast<int>(Column::collumnCount);
 	}
 	std::vector<std::string> getCode() const;
 	bool validateTrackCode(const QString& code, QString* message = nullptr)

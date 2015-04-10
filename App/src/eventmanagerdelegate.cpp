@@ -20,9 +20,9 @@ QWidget* EventManagerDelegate::createEditor(QWidget* parent, const QStyleOptionV
 	const EventTypeTable* eventTypeTable = eventTable->getEventTypeTable();
 	const TrackTable* trackTable = eventTable->getTrackTable();
 
-	switch (index.column())
+	switch (static_cast<EventTable::Column>(index.column()))
 	{
-	case EventTable::Collumn::type:
+	case EventTable::Column::type:
 	{
 		QComboBox* combo = new QComboBox(parent);
 
@@ -34,7 +34,7 @@ QWidget* EventManagerDelegate::createEditor(QWidget* parent, const QStyleOptionV
 
 		return combo;
 	}
-	case EventTable::Collumn::channel:
+	case EventTable::Column::channel:
 	{
 		QComboBox* combo = new QComboBox(parent);
 
@@ -46,7 +46,9 @@ QWidget* EventManagerDelegate::createEditor(QWidget* parent, const QStyleOptionV
 		}
 
 		return combo;
-	}
+	}		
+	default:
+		break;
 	}
 
 	return QStyledItemDelegate::createEditor(parent, option, index);
@@ -54,22 +56,24 @@ QWidget* EventManagerDelegate::createEditor(QWidget* parent, const QStyleOptionV
 
 void EventManagerDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
 {
-	switch (index.column())
+	switch (static_cast<EventTable::Column>(index.column()))
 	{
-	case EventTable::Collumn::type:
+	case EventTable::Column::type:
 	{
 		QComboBox* combo = reinterpret_cast<QComboBox*>(editor);
 		int i = index.data(Qt::EditRole).toInt();
 		combo->setCurrentIndex(i < 0 ? 0 : i + 1);
 		return;
 	}
-	case EventTable::Collumn::channel:
+	case EventTable::Column::channel:
 	{
 		QComboBox* combo = reinterpret_cast<QComboBox*>(editor);
 		int i = index.data(Qt::EditRole).toInt();
 		combo->setCurrentIndex(i < -1 ? 0 : i + 1);
 		return;
 	}
+	default:
+		break;
 	}
 
 	QStyledItemDelegate::setEditorData(editor, index);
@@ -77,20 +81,22 @@ void EventManagerDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 
 void EventManagerDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
 {
-	switch (index.column())
+	switch (static_cast<EventTable::Column>(index.column()))
 	{
-	case EventTable::Collumn::type:
+	case EventTable::Column::type:
 	{
 		QComboBox* combo = reinterpret_cast<QComboBox*>(editor);
 		model->setData(index, combo->currentIndex() - 1);
 		return;
 	}
-	case EventTable::Collumn::channel:
+	case EventTable::Column::channel:
 	{
 		QComboBox* combo = reinterpret_cast<QComboBox*>(editor);
 		model->setData(index, combo->currentIndex() - 2);
 		return;
 	}
+	default:
+		break;
 	}
 
 	QStyledItemDelegate::setModelData(editor, model, index);

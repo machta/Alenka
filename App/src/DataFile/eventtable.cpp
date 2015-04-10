@@ -156,20 +156,22 @@ QVariant EventTable::headerData(int section, Qt::Orientation orientation, int ro
 {
 	if (role == Qt::DisplayRole && orientation == Qt::Horizontal)
 	{
-		switch (section)
+		switch (static_cast<Column>(section))
 		{
-		case Collumn::label:
+		case Column::label:
 			return "Label";
-		case Collumn::type:
+		case Column::type:
 			return "Type";
-		case Collumn::position:
+		case Column::position:
 			return "Position";
-		case Collumn::duration:
+		case Column::duration:
 			return "Duration";
-		case Collumn::channel:
+		case Column::channel:
 			return "Channel";
-		case Collumn::description:
+		case Column::description:
 			return "Description";
+		default:
+			break;
 		}
 	}
 
@@ -184,37 +186,41 @@ QVariant EventTable::data(const QModelIndex& index, int role) const
 
 		if (role == Qt::DisplayRole)
 		{
-			switch (index.column())
+			switch (static_cast<Column>(index.column()))
 			{
-			case Collumn::type:
+			case Column::type:
 				return type[row] < 0 ? EventTypeTable::NO_TYPE_STRING : QString::fromStdString(eventTypeTable->getName(type[row]));
-			case Collumn::position:
+			case Column::position:
 				return position[row]; // TODO
-			case Collumn::duration:
+			case Column::duration:
 				return duration[row]; // TODO
-			case Collumn::channel:
+			case Column::channel:
 				return channel[row] < 0 ?
 					   channel[row] == -1 ? TrackTable::ALL_CHANNEL_STRING : TrackTable::NO_CHANNEL_STRING :
 					   QString::fromStdString(trackTable->getLabel(channel[row]));
+			default:
+				break;
 			}
 		}
 
 		if (role == Qt::DisplayRole || role == Qt::EditRole)
 		{
-			switch (index.column())
+			switch (static_cast<Column>(index.column()))
 			{
-			case Collumn::label:
+			case Column::label:
 				return QString::fromStdString(label[row]);
-			case Collumn::type:
+			case Column::type:
 				return type[row];
-			case Collumn::position:
+			case Column::position:
 				return position[row];
-			case Collumn::duration:
+			case Column::duration:
 				return duration[row];
-			case Collumn::channel:
+			case Column::channel:
 				return channel[row];
-			case Collumn::description:
+			case Column::description:
 				return QString::fromStdString(description[row]);
+			default:
+				break;
 			}
 		}
 	}
@@ -230,25 +236,27 @@ bool EventTable::setData(const QModelIndex& index, const QVariant &value, int ro
 
 		if (role == Qt::EditRole)
 		{
-			switch (index.column())
+			switch (static_cast<Column>(index.column()))
 			{
-			case Collumn::label:
+			case Column::label:
 				label[row] = value.toString().toStdString();
 				break;
-			case Collumn::type:
+			case Column::type:
 				type[row] = value.value<decltype(type)::value_type>();
 				break;
-			case Collumn::position:
+			case Column::position:
 				position[row] = value.value<decltype(position)::value_type>();
 				break;
-			case Collumn::duration:
+			case Column::duration:
 				duration[row] = value.value<decltype(duration)::value_type>();
 				break;
-			case Collumn::channel:
+			case Column::channel:
 				channel[row] = value.value<decltype(channel)::value_type>();
 				break;
-			case Collumn::description:
+			case Column::description:
 				description[row] = value.toString().toStdString();
+				break;
+			default:
 				break;
 			}
 
@@ -323,24 +331,24 @@ void EventTable::sort(int column, Qt::SortOrder order)
 
 	if (order == Qt::AscendingOrder)
 	{
-		switch (column)
+		switch (static_cast<Column>(column))
 		{
-		case Collumn::label:
+		case Column::label:
 			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(label[a]), QString::fromStdString(label[b])) < 0; };
 			break;
-		case Collumn::type:
+		case Column::type:
 			predicate = [this] (int a, int b) { return type[a] < type[b]; };
 			break;
-		case Collumn::position:
+		case Column::position:
 			predicate = [this] (int a, int b) { return position[a] < position[b]; };
 			break;
-		case Collumn::duration:
+		case Column::duration:
 			predicate = [this] (int a, int b) { return duration[a] < duration[b]; };
 			break;
-		case Collumn::channel:
+		case Column::channel:
 			predicate = [this] (int a, int b) { return channel[a] < channel[b]; };
 			break;
-		case Collumn::description:
+		case Column::description:
 			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(description[a]), QString::fromStdString(description[b])) < 0; };
 			break;
 		default:
@@ -349,24 +357,24 @@ void EventTable::sort(int column, Qt::SortOrder order)
 	}
 	else
 	{
-		switch (column)
+		switch (static_cast<Column>(column))
 		{
-		case Collumn::label:
+		case Column::label:
 			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(label[a]), QString::fromStdString(label[b])) > 0; };
 			break;
-		case Collumn::type:
+		case Column::type:
 			predicate = [this] (int a, int b) { return type[a] > type[b]; };
 			break;
-		case Collumn::position:
+		case Column::position:
 			predicate = [this] (int a, int b) { return position[a] > position[b]; };
 			break;
-		case Collumn::duration:
+		case Column::duration:
 			predicate = [this] (int a, int b) { return duration[a] > duration[b]; };
 			break;
-		case Collumn::channel:
+		case Column::channel:
 			predicate = [this] (int a, int b) { return channel[a] > channel[b]; };
 			break;
-		case Collumn::description:
+		case Column::description:
 			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(description[a]), QString::fromStdString(description[b])) > 0; };
 			break;
 		default:

@@ -139,18 +139,20 @@ QVariant TrackTable::headerData(int section, Qt::Orientation orientation, int ro
 {
 	if (role == Qt::DisplayRole && orientation == Qt::Horizontal)
 	{
-		switch (section)
+		switch (static_cast<Column>(section))
 		{
-		case Collumn::label:
+		case Column::label:
 			return "Label";
-		case Collumn::code:
+		case Column::code:
 			return "Code";
-		case Collumn::color:
+		case Column::color:
 			return "Color";
-		case Collumn::amplitude:
+		case Column::amplitude:
 			return "Amplitude";
-		case Collumn::hidden:
-			return "Hidden";
+		case Column::hidden:
+			return "Hidden";			
+		default:
+			break;
 		}
 	}
 
@@ -165,27 +167,31 @@ QVariant TrackTable::data(const QModelIndex& index, int role) const
 
 		if (role == Qt::DecorationRole)
 		{
-			switch (index.column())
+			switch (static_cast<Column>(index.column()))
 			{
-			case Collumn::color:
+			case Column::color:
 				return color[row];
+			default:
+				break;
 			}
 		}
 
 		if (role == Qt::DisplayRole || role == Qt::EditRole)
 		{
-			switch (index.column())
+			switch (static_cast<Column>(index.column()))
 			{
-			case Collumn::label:
+			case Column::label:
 				return QString::fromStdString(label[row]);
-			case Collumn::code:
+			case Column::code:
 				return QString::fromStdString(code[row]);
-			case Collumn::color:
+			case Column::color:
 				return color[row];
-			case Collumn::amplitude:
+			case Column::amplitude:
 				return amplitude[row];
-			case Collumn::hidden:
+			case Column::hidden:
 				return hidden[row];
+			default:
+				break;
 			}
 		}
 	}
@@ -201,12 +207,12 @@ bool TrackTable::setData(const QModelIndex& index, const QVariant &value, int ro
 
 		if (role == Qt::EditRole)
 		{
-			switch (index.column())
+			switch (static_cast<Column>(index.column()))
 			{
-			case Collumn::label:
+			case Column::label:
 				label[row] = value.toString().toStdString();
 				break;
-			case Collumn::code:
+			case Column::code:
 			{
 				QString c = value.toString();
 				if (validateTrackCode(c))
@@ -215,14 +221,16 @@ bool TrackTable::setData(const QModelIndex& index, const QVariant &value, int ro
 				}
 				break;
 			}
-			case Collumn::color:
+			case Column::color:
 				color[row] = value.value<QColor>();
 				break;
-			case Collumn::amplitude:
+			case Column::amplitude:
 				amplitude[row] = value.toDouble();
 				break;
-			case Collumn::hidden:
+			case Column::hidden:
 				hidden[row] = value.toBool();
+				break;
+			default:
 				break;
 			}
 
@@ -286,7 +294,7 @@ bool TrackTable::removeRows(int row, int count, const QModelIndex& /*parent*/)
 
 		if (changed)
 		{
-			emit eventTable->dataChanged(eventTable->index(0, static_cast<int>(EventTable::Collumn::channel)), eventTable->index(eventTable->rowCount() - 1, static_cast<int>(EventTable::Collumn::channel)));
+			emit eventTable->dataChanged(eventTable->index(0, static_cast<int>(EventTable::Column::channel)), eventTable->index(eventTable->rowCount() - 1, static_cast<int>(EventTable::Column::channel)));
 		}
 
 		// Remove rows.
@@ -335,21 +343,21 @@ void TrackTable::sort(int column, Qt::SortOrder order)
 
 	if (order == Qt::AscendingOrder)
 	{
-		switch (column)
+		switch (static_cast<Column>(column))
 		{
-		case Collumn::label:
+		case Column::label:
 			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(label[a]), QString::fromStdString(label[b])) < 0; };
 			break;
-		case Collumn::code:
+		case Column::code:
 			predicate = [this] (int a, int b) { return code[a] < code[b]; };
 			break;
-		case Collumn::color:
+		case Column::color:
 			predicate = [this] (int a, int b) { return color[a].name() < color[b].name(); };
 			break;
-		case Collumn::amplitude:
+		case Column::amplitude:
 			predicate = [this] (int a, int b) { return amplitude[a] < amplitude[b]; };
 			break;
-		case Collumn::hidden:
+		case Column::hidden:
 			predicate = [this] (int a, int b) { return hidden[a] < hidden[b]; };
 			break;
 		default:
@@ -358,21 +366,21 @@ void TrackTable::sort(int column, Qt::SortOrder order)
 	}
 	else
 	{
-		switch (column)
+		switch (static_cast<Column>(column))
 		{
-		case Collumn::label:
+		case Column::label:
 			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(label[a]), QString::fromStdString(label[b])) > 0; };
 			break;
-		case Collumn::code:
+		case Column::code:
 			predicate = [this] (int a, int b) { return code[a] > code[b]; };
 			break;
-		case Collumn::color:
+		case Column::color:
 			predicate = [this] (int a, int b) { return color[a].name() > color[b].name(); };
 			break;
-		case Collumn::amplitude:
+		case Column::amplitude:
 			predicate = [this] (int a, int b) { return amplitude[a] > amplitude[b]; };
 			break;
-		case Collumn::hidden:
+		case Column::hidden:
 			predicate = [this] (int a, int b) { return hidden[a] > hidden[b]; };
 			break;
 		default:

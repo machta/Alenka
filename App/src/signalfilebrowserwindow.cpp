@@ -213,7 +213,7 @@ void SignalFileBrowserWindow::verticalZoom(double factor)
 			tt->setAmplitude(tt->getAmplitude(i)*factor, i);
 		}
 
-		emit tt->dataChanged(tt->index(0, static_cast<int>(TrackTable::Collumn::amplitude)), tt->index(tt->rowCount() - 1, static_cast<int>(TrackTable::Collumn::amplitude)));
+		emit tt->dataChanged(tt->index(0, static_cast<int>(TrackTable::Column::amplitude)), tt->index(tt->rowCount() - 1, static_cast<int>(TrackTable::Column::amplitude)));
 	}
 }
 

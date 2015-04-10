@@ -21,7 +21,7 @@ class EventTable : public QAbstractTableModel
 	Q_OBJECT
 
 public:
-	enum class Collumn
+	enum class Column
 	{
 		label, type, position, duration, channel, description, collumnCount
 	};
@@ -57,7 +57,7 @@ public:
 	{
 		(void)parent;
 
-		return static_cast<int>(Collumn::collumnCount);
+		return static_cast<int>(Column::collumnCount);
 	}
 	virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 	virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;

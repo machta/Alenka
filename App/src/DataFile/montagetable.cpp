@@ -128,12 +128,14 @@ QVariant MontageTable::headerData(int section, Qt::Orientation orientation, int 
 {
 	if (role == Qt::DisplayRole && orientation == Qt::Horizontal)
 	{
-		switch (section)
+		switch (static_cast<Column>(section))
 		{
-		case Collumn::name:
+		case Column::name:
 			return "Name";
-		case Collumn::save:
-			return "Save";
+		case Column::save:
+			return "Save";			
+		default:
+			break;
 		}
 	}
 
@@ -148,12 +150,14 @@ QVariant MontageTable::data(const QModelIndex& index, int role) const
 
 		if (role == Qt::DisplayRole || role == Qt::EditRole)
 		{
-			switch (index.column())
+			switch (static_cast<Column>(index.column()))
 			{
-			case Collumn::name:
+			case Column::name:
 				return QString::fromStdString(name[row]);
-			case Collumn::save:
-				return save[row];
+			case Column::save:
+				return save[row];				
+			default:
+				break;
 			}
 		}
 	}
@@ -169,13 +173,15 @@ bool MontageTable::setData(const QModelIndex& index, const QVariant& value, int 
 
 		if (role == Qt::EditRole)
 		{
-			switch (index.column())
+			switch (static_cast<Column>(index.column()))
 			{
-			case Collumn::name:
+			case Column::name:
 				name[row] = value.toString().toStdString();
 				break;
-			case Collumn::save:
+			case Column::save:
 				save[row] = value.toBool();
+				break;
+			default:
 				break;
 			}
 
@@ -249,12 +255,12 @@ void MontageTable::sort(int column, Qt::SortOrder order)
 
 	if (order == Qt::AscendingOrder)
 	{
-		switch (column)
+		switch (static_cast<Column>(column))
 		{
-		case Collumn::name:
+		case Column::name:
 			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(name[a]), QString::fromStdString(name[b])) < 0; };
 			break;
-		case Collumn::save:
+		case Column::save:
 			predicate = [this] (int a, int b) { return save[a] < save[b]; };
 			break;
 		default:
@@ -263,12 +269,12 @@ void MontageTable::sort(int column, Qt::SortOrder order)
 	}
 	else
 	{
-		switch (column)
+		switch (static_cast<Column>(column))
 		{
-		case Collumn::name:
+		case Column::name:
 			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(name[a]), QString::fromStdString(name[b])) > 0; };
 			break;
-		case Collumn::save:
+		case Column::save:
 			predicate = [this] (int a, int b) { return save[a] > save[b]; };
 			break;
 		default:

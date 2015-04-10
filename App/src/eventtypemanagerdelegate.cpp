@@ -16,9 +16,9 @@ EventTypeManagerDelegate::~EventTypeManagerDelegate()
 
 QWidget* EventTypeManagerDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-	switch (index.column())
+	switch (static_cast<EventTypeTable::Column>(index.column()))
 	{
-	case EventTypeTable::Collumn::color:
+	case EventTypeTable::Column::color:
 	{
 		QLineEdit* lineEdit = new QLineEdit(parent);
 
@@ -42,6 +42,8 @@ QWidget* EventTypeManagerDelegate::createEditor(QWidget* parent, const QStyleOpt
 
 		return lineEdit;
 	}
+	default:
+		break;
 	}
 
 	return QStyledItemDelegate::createEditor(parent, option, index);
