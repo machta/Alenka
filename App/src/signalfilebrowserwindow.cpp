@@ -18,6 +18,7 @@
 #include <QCheckBox>
 #include <QDockWidget>
 #include <QSettings>
+#include <QStatusBar>
 
 using namespace std;
 
@@ -130,7 +131,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	fileMenu->addAction(saveFileAction);
 
 	// Construct View menu.
-	QMenu* vievMenu = menuBar()->addMenu("&Zoom");
+	QMenu* vievMenu = menuBar()->addMenu("&View");
 
 	vievMenu->addAction(horizontalZoomInAction);
 	vievMenu->addAction(horizontalZoomOutAction);
@@ -174,14 +175,18 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	notchCheckBox->setLayoutDirection(Qt::RightToLeft);
 	filterToolBar->addWidget(notchCheckBox);
 
-	// Construct Montage toolbar.
-	QToolBar* montageToolBar = addToolBar("Montage");
-	montageToolBar->setObjectName("Montage QToolBar");
-	montageToolBar->layout()->setSpacing(spacing);
+	// Construct Select toolbar.
+	QToolBar* selectToolBar = addToolBar("Select");
+	selectToolBar->setObjectName("Select QToolBar");
+	selectToolBar->layout()->setSpacing(spacing);
 
-	montageToolBar->addWidget(new QLabel("Montage:", this));
+	selectToolBar->addWidget(new QLabel("Montage:", this));
 	montageComboBox = new QComboBox(this);
-	montageToolBar->addWidget(montageComboBox);
+	selectToolBar->addWidget(montageComboBox);
+
+	selectToolBar->addWidget(new QLabel("Event Type:", this));
+	eventTypeComboBox = new QComboBox(this);
+	selectToolBar->addWidget(eventTypeComboBox);
 
 	// Construct Zoom toolbar.
 	QToolBar* zoomToolBar = addToolBar("Zoom");
@@ -192,6 +197,15 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	zoomToolBar->addAction(horizontalZoomOutAction);
 	zoomToolBar->addAction(verticalZoomInAction);
 	zoomToolBar->addAction(verticalZoomOutAction);
+
+	// Construct status bar.
+	timeStatusLabel = new QLabel(this);
+	positionStatusLabel = new QLabel(this);
+	cursorStatusLabel = new QLabel(this);
+
+	statusBar()->addPermanentWidget(timeStatusLabel);
+	statusBar()->addPermanentWidget(positionStatusLabel);
+	statusBar()->addPermanentWidget(cursorStatusLabel);
 
 	// Restore settings.
 	QSettings settings(settingsParameters[0], settingsParameters[1]);
@@ -213,11 +227,11 @@ void SignalFileBrowserWindow::closeEvent(QCloseEvent* event)
 	QMainWindow::closeEvent(event);
 }
 
-void SignalFileBrowserWindow::connectModelToUpdate(QAbstractTableModel* model)
+void SignalFileBrowserWindow::connectModel(QAbstractTableModel* model, std::function<void ()> f)
 {
-	connect(model, SIGNAL(dataChanged(QModelIndex, QModelIndex)), signalViewer, SLOT(update()));
-	connect(model, SIGNAL(rowsInserted(QModelIndex, int, int)), signalViewer, SLOT(update()));
-	connect(model, SIGNAL(rowsRemoved(QModelIndex, int, int)), signalViewer, SLOT(update()));
+	connect(model, &QAbstractTableModel::dataChanged, f);
+	connect(model, &QAbstractTableModel::rowsInserted, f);
+	connect(model, &QAbstractTableModel::rowsRemoved, f);
 }
 
 void SignalFileBrowserWindow::horizontalZoom(double factor)
@@ -241,6 +255,23 @@ void SignalFileBrowserWindow::verticalZoom(double factor)
 		}
 
 		emit tt->dataChanged(tt->index(0, static_cast<int>(TrackTable::Column::amplitude)), tt->index(tt->rowCount() - 1, static_cast<int>(TrackTable::Column::amplitude)));
+	}
+}
+
+void SignalFileBrowserWindow::mode(int m)
+{
+	if (file != nullptr)
+	{
+		InfoTable* it = file->getInfoTable();
+		EventTable* et = file->getMontageTable()->getEventTables()->at(it->getSelectedMontage());
+
+		it->setTimeMode(static_cast<InfoTable::TimeMode>(m));
+
+		et->emitColumnChanged(EventTable::Column::position);
+		et->emitColumnChanged(EventTable::Column::duration);
+
+		updatePositionStatusLabel();
+		updateCursorStatusLabel();
 	}
 }
 
@@ -290,16 +321,28 @@ void SignalFileBrowserWindow::openFile()
 		connect(notchCheckBox, SIGNAL(toggled(bool)), it, SLOT(setNotch(bool)));
 		connect(it, SIGNAL(notchChanged(bool)), notchCheckBox, SLOT(setChecked(bool)));
 
-		// Update the Montage toolbar.
-		montageComboBox->setModel(file->getMontageTable());
+		// Update the Select toolbar.
+		connectModel(file->getMontageTable(), [this] () { updateMontageComboBox(); });
+		updateMontageComboBox();//*
 		connect(montageComboBox, SIGNAL(currentIndexChanged(int)), it, SLOT(setSelectedMontage(int)));
 		connect(it, SIGNAL(selectedMontageChanged(int)), montageComboBox, SLOT(setCurrentIndex(int)));
+
+		connectModel(file->getEventTypeTable(), [this] () { updateEventTypeComboBox(); });
+		updateEventTypeComboBox();//*
+		connect(eventTypeComboBox, SIGNAL(currentIndexChanged(int)), it, SLOT(setSelectedType(int)));
+		connect(it, SIGNAL(selectedTypeChanged(int)), eventTypeComboBox, SLOT(setCurrentIndex(int)));
 
 		// Update the managers.
 		eventTypeManager->setModel(file->getEventTypeTable());
 		montageManager->setModel(file->getMontageTable());
 
 		connect(it, SIGNAL(selectedMontageChanged(int)), this, SLOT(updateManagers(int)));
+
+		// Update the status bar.
+		timeStatusLabel->setText("Start: " + file->sampleToDateTimeString(0, InfoTable::TimeMode::real) + " Total time: " + file->sampleToDateTimeString(file->getSamplesRecorded(), InfoTable::TimeMode::offset));
+
+		connect(it, SIGNAL(positionChanged(int)), this, SLOT(updatePositionStatusLabel()));
+		connect(signalViewer->getCanvas(), SIGNAL(cursorPositionChangedSample(int)), this, SLOT(updateCursorStatusLabel()));
 
 		// Connect slot SignalViewer::update() to make sure that the SignalViewer gets updated when needed.
 		connect(it, SIGNAL(virtualWidthChanged(int)), signalViewer, SLOT(update()));
@@ -310,8 +353,8 @@ void SignalFileBrowserWindow::openFile()
 		connect(it, SIGNAL(selectedMontageChanged(int)), signalViewer, SLOT(update()));
 		connect(it, SIGNAL(timeModeChanged(int)), this, SLOT(updateTimeMode(int)));
 
-		connectModelToUpdate(file->getMontageTable());
-		connectModelToUpdate(file->getEventTypeTable());
+		connectModel(file->getMontageTable(), [this] () { signalViewer->update(); });
+		connectModel(file->getEventTypeTable(), [this] () { signalViewer->update(); });
 
 		// Emit all signals to ensure there are no uninitialized controls.
 		it->emitAllSignals();
@@ -375,11 +418,11 @@ void SignalFileBrowserWindow::updateManagers(int value)
 {
 	TrackTable* tt = file->getMontageTable()->getTrackTables()->at(value);
 	trackManager->setModel(tt);
-	connectModelToUpdate(tt);
+	connectModel(tt, [this] () { signalViewer->update(); });
 
 	EventTable* et = file->getMontageTable()->getEventTables()->at(value);
 	eventManager->setModel(et);
-	connectModelToUpdate(et);
+	connectModel(et, [this] () { signalViewer->update(); });
 }
 
 void SignalFileBrowserWindow::horizontalZoomIn()
@@ -402,43 +445,81 @@ void SignalFileBrowserWindow::verticalZoomOut()
 	verticalZoom(1/verticalZoomFactor);
 }
 
-void SignalFileBrowserWindow::timeMode0()
-{
-	if (file != nullptr)
-	{
-		file->getInfoTable()->setTimeMode(InfoTable::TimeMode::samples);
-
-		EventTable* et = file->getMontageTable()->getEventTables()->at(file->getInfoTable()->getSelectedMontage());
-		et->emitColumnChanged(EventTable::Column::position);
-		et->emitColumnChanged(EventTable::Column::duration);
-	}
-}
-
-void SignalFileBrowserWindow::timeMode1()
-{
-	if (file != nullptr)
-	{
-		file->getInfoTable()->setTimeMode(InfoTable::TimeMode::offset);
-
-		EventTable* et = file->getMontageTable()->getEventTables()->at(file->getInfoTable()->getSelectedMontage());
-		et->emitColumnChanged(EventTable::Column::position);
-		et->emitColumnChanged(EventTable::Column::duration);
-	}
-}
-
-void SignalFileBrowserWindow::timeMode2()
-{
-	if (file != nullptr)
-	{
-		file->getInfoTable()->setTimeMode(InfoTable::TimeMode::real);
-
-		EventTable* et = file->getMontageTable()->getEventTables()->at(file->getInfoTable()->getSelectedMontage());
-		et->emitColumnChanged(EventTable::Column::position);
-		et->emitColumnChanged(EventTable::Column::duration);
-	}
-}
-
 void SignalFileBrowserWindow::updateTimeMode(int mode)
 {
 	timeModeActionGroup->actions().at(mode)->setChecked(true);
+}
+
+void SignalFileBrowserWindow::updatePositionStatusLabel()
+{
+	double ratio = file->getSamplesRecorded()/file->getInfoTable()->getVirtualWidth();
+	int position = file->getInfoTable()->getPosition()*ratio;
+
+	positionStatusLabel->setText("Position: " + file->sampleToDateTimeString(position));
+}
+
+void SignalFileBrowserWindow::updateCursorStatusLabel()
+{
+	cursorStatusLabel->setText("Cursor at: " + file->sampleToDateTimeString(signalViewer->getCanvas()->getCursorPositionSample()));
+}
+
+void SignalFileBrowserWindow::updateMontageComboBox()
+{
+	if (file != nullptr)
+	{
+		MontageTable* mt = file->getMontageTable();
+		InfoTable* it = file->getInfoTable();
+
+		int itemCount = montageComboBox->count();
+		int index = montageComboBox->currentIndex();
+
+		for (int i = 0; i < mt->rowCount(); ++i)
+		{
+			montageComboBox->addItem(QString::fromStdString(mt->getName(i)));
+		}
+
+		for (int i = 0; i < itemCount; ++i)
+		{
+			montageComboBox->removeItem(0);
+		}
+
+		if (index >= mt->rowCount())
+		{
+			index = mt->rowCount() - 1;
+			it->setSelectedMontage(index);
+		}
+
+		emit it->selectedMontageChanged(index);
+	}
+}
+
+void SignalFileBrowserWindow::updateEventTypeComboBox()
+{
+	if (file != nullptr)
+	{
+		EventTypeTable* ett = file->getEventTypeTable();
+		InfoTable* it = file->getInfoTable();
+
+		int itemCount = eventTypeComboBox->count();
+		int index = eventTypeComboBox->currentIndex();
+
+		eventTypeComboBox->addItem("<No Type>");
+		for (int i = 0; i < ett->rowCount(); ++i)
+		{
+			eventTypeComboBox->addItem(QString::fromStdString(ett->getName(i)));
+		}
+
+		for (int i = 0; i < itemCount; ++i)
+		{
+			eventTypeComboBox->removeItem(0);
+		}
+
+		if (index > ett->rowCount())
+		{
+			index = ett->rowCount();
+			it->setSelectedType(index);
+		}
+
+		emit it->selectedTypeChanged(index);
+	}
 }

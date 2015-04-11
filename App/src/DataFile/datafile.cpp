@@ -55,18 +55,23 @@ QDateTime DataFile::sampleToOffset(int sample)
 	return date;
 }
 
-QString DataFile::sampleToDateTimeString(int sample)
+QString DataFile::sampleToDateTimeString(int sample, InfoTable::TimeMode mode)
 {
-	if (infoTable.getTimeMode() == InfoTable::TimeMode::samples)
+	if (mode == InfoTable::TimeMode::size)
+	{
+		mode = infoTable.getTimeMode();
+	}
+
+	if (mode == InfoTable::TimeMode::samples)
 	{
 		return QString::number(sample);
 	}
-	else if (infoTable.getTimeMode() == InfoTable::TimeMode::offset)
+	else if (mode == InfoTable::TimeMode::offset)
 	{
 		QDateTime date = sampleToOffset(sample);
 		return QString::number(date.date().day() - 1, 2) + date.toString(":hh:mm:ss");
 	}
-	else if (infoTable.getTimeMode() == InfoTable::TimeMode::real)
+	else if (mode == InfoTable::TimeMode::real)
 	{
 		return sampleToDate(sample).toString("dd:MM:yyyy hh:mm:ss");
 	}
@@ -97,6 +102,11 @@ bool DataFile::load()
 			{
 				xml->skipCurrentElement();
 			}
+		}
+
+		if (montageTable.rowCount() == 0)
+		{
+			montageTable.insertRowsBack(1);
 		}
 	});	
 }

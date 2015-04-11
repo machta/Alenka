@@ -26,6 +26,37 @@ public:
 	~Canvas();
 
 	void changeFile(DataFile* file);
+	int getCursorPositionSample() const
+	{
+		return cursorSample;
+	}
+	int getCursorPositionTrack() const
+	{
+		return cursorTrack;
+	}
+
+signals:
+	void cursorPositionChangedSample(int);
+	void cursorPositionChangedTrack(int);
+
+public slots:
+	void updateCursor();
+	void setCursorPositionSample(int sample)
+	{
+		if (sample != cursorSample)
+		{
+			cursorSample = sample;
+			emit cursorPositionChangedSample(sample);
+		}
+	}
+	void setCursorPositionTrack(int track)
+	{
+		if (track != cursorTrack)
+		{
+			cursorTrack = track;
+			emit cursorPositionChangedTrack(track);
+		}
+	}
 
 protected:
 	virtual void initializeGL() override;
@@ -52,11 +83,13 @@ private:
 	GLuint rectangleArray;
 	GLuint rectangleBuffer;
 	int eventMode = PROGRAM_OPTIONS["eventRenderMode"].as<int>();
-	bool isTrackSelected = false;
-	int selectedTrack;
+	bool isSelectingTrack = false;
 	bool isDrawingEvent = false;
+	int eventTrack;
 	int eventStart;
 	int eventEnd;
+	int cursorSample = 0;
+	int cursorTrack = 0;
 
 	InfoTable* getInfoTable()
 	{
@@ -117,7 +150,6 @@ private:
 	void horizontalZoom(double factor);
 	void verticalZoom(double factor);
 	void trackZoom(double factor);
-	void updateSelectedTrack();
 	void addEvent(int channel);
 	int countHiddenTracks(int track);
 

@@ -22,6 +22,11 @@ public:
 	explicit SignalViewer(QWidget* parent = nullptr);
 	~SignalViewer();
 
+	const Canvas* getCanvas() const
+	{
+		return canvas;
+	}
+
 signals:
 	void virtualWidthChanged(int);
 	void positionChanged(int);

@@ -72,10 +72,38 @@ void Canvas::changeFile(DataFile* file)
 
 		connect(infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(selectMontage()));
 
+		connect(infoTable, SIGNAL(positionChanged(int)), this, SLOT(updateCursor()));
+
 		samplesRecorded = file->getSamplesRecorded();
 	}
 
 	doneCurrent();
+}
+
+void Canvas::updateCursor()
+{
+	if (signalProcessor->ready())
+	{
+		QPoint pos = mapFromGlobal(QCursor::pos());
+
+		double ratio = samplesRecorded/getInfoTable()->getVirtualWidth();
+		int sample = (pos.x() + getInfoTable()->getPosition())*ratio;
+
+		double trackHeigth = static_cast<double>(height())/signalProcessor->getTrackCount();
+		//int track = min(static_cast<int>(pos.y()/trackHeigth), signalProcessor->getTrackCount() - 1);
+		int track = static_cast<int>(pos.y()/trackHeigth);
+
+		setCursorPositionSample(sample);
+		setCursorPositionTrack(track);
+
+		if (isDrawingEvent)
+		{
+			double ratio = samplesRecorded/getInfoTable()->getVirtualWidth();
+			eventEnd = (pos.x() + getInfoTable()->getPosition())*ratio;
+
+			update();
+		}
+	}
 }
 
 void Canvas::initializeGL()
@@ -305,15 +333,16 @@ void Canvas::keyPressEvent(QKeyEvent* event)
 {
 	if (event->key() == Qt::Key_Control)
 	{
-		if (signalProcessor->ready())
-		{
-			updateSelectedTrack();
-			update();
-		}
+//		if (signalProcessor->ready())
+//		{
+//			updateSelectedTrack();
+//			update();
+//		}
 
 		if (isDrawingEvent == false)
 		{
-			isTrackSelected = true;
+			isSelectingTrack = true;
+			update();
 		}
 	}
 	else
@@ -326,17 +355,10 @@ void Canvas::keyReleaseEvent(QKeyEvent* event)
 {
 	if (event->key() == Qt::Key_Control)
 	{
-		isTrackSelected = false;
-		//drawingEvent = false;
+		isSelectingTrack = false;
 
 		update();
 	}
-//	else if (event->key() == Qt::Key_Shift)
-//	{
-//		drawingEvent = false;
-
-//		update();
-//	}
 	else
 	{
 		QOpenGLWidget::keyReleaseEvent(event);
@@ -345,30 +367,22 @@ void Canvas::keyReleaseEvent(QKeyEvent* event)
 
 void Canvas::mouseMoveEvent(QMouseEvent* event)
 {
-	bool callBase = true;
-
-	if (isTrackSelected)
+	if (signalProcessor->ready())
 	{
-		updateSelectedTrack();
-		update();
+		updateCursor();
 
-		callBase = false;
+		if (isSelectingTrack)
+		{
+			update();
+		}
+
+		//callBase = false;
 	}
 
-	if (isDrawingEvent)
-	{
-		double ratio = samplesRecorded/getInfoTable()->getVirtualWidth();
-		eventEnd = (event->pos().x() + getInfoTable()->getPosition())*ratio;
-
-		update();
-
-		callBase = false;
-	}
-
-	if (callBase)
-	{
-		QOpenGLWidget::mouseMoveEvent(event);
-	}
+//	if (callBase)
+//	{
+//		QOpenGLWidget::mouseMoveEvent(event);
+//	}
 }
 
 void Canvas::mousePressEvent(QMouseEvent* event)
@@ -377,24 +391,26 @@ void Canvas::mousePressEvent(QMouseEvent* event)
 	{
 		if (event->modifiers() == Qt::ShiftModifier || event->modifiers() == Qt::ControlModifier)
 		{
-			if (signalProcessor->ready())
+			if (signalProcessor->ready() && 0 <= cursorTrack && cursorTrack < signalProcessor->getTrackCount())
 			{
 				isDrawingEvent = true;
 
 				double ratio = samplesRecorded/getInfoTable()->getVirtualWidth();
 				eventStart = eventEnd = (event->pos().x() + getInfoTable()->getPosition())*ratio;
-			}
 
-			if (event->modifiers() == Qt::ShiftModifier)
-			{
-				selectedTrack = -1;
-			}
-			else if (event->modifiers() == Qt::ControlModifier)
-			{
-				updateSelectedTrack();
-			}
+				if (event->modifiers() == Qt::ShiftModifier)
+				{
+					eventTrack = -1;
+				}
+				else if (event->modifiers() == Qt::ControlModifier)
+				{
+					eventTrack = cursorTrack;
+				}
 
-			update();
+				isSelectingTrack = false;
+
+				update();
+			}
 		}
 	}
 	else
@@ -411,7 +427,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent* event)
 		{
 			isDrawingEvent = false;
 
-			addEvent(selectedTrack);
+			addEvent(eventTrack);
 		}
 
 		update();
@@ -424,9 +440,9 @@ void Canvas::mouseReleaseEvent(QMouseEvent* event)
 
 void Canvas::focusOutEvent(QFocusEvent* /*event*/)
 {
-	if (isTrackSelected)
+	if (isSelectingTrack)
 	{
-		isTrackSelected = false;
+		isSelectingTrack = false;
 	}
 
 	if (isDrawingEvent)
@@ -464,9 +480,17 @@ void Canvas::drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& 
 
 	if (isDrawingEvent)
 	{
-		if (selectedTrack == -1)
+		if (eventTrack == -1)
 		{
-			setUniformColor(rectangleProgram->getGLProgram(), QColor(Qt::blue), 0.5);
+			QColor color(Qt::blue);
+			double opacity = 0.5;
+			int type = getInfoTable()->getSelectedType() - 1;
+			if (type != -1)
+			{
+				color = eventTypeTable->getColor(type);
+				opacity = eventTypeTable->getOpacity(type);
+			}
+			setUniformColor(rectangleProgram->getGLProgram(), color, opacity);
 
 			int start = eventStart, end = eventEnd;
 
@@ -534,7 +558,7 @@ void Canvas::drawSingleChannelEvents(const SignalBlock& block, const vector<tupl
 
 	if (isDrawingEvent)
 	{
-		int track = selectedTrack;
+		int track = eventTrack;
 
 		if (0 <= track && track < signalProcessor->getTrackCount())
 		{
@@ -542,7 +566,15 @@ void Canvas::drawSingleChannelEvents(const SignalBlock& block, const vector<tupl
 
 			setUniformTrack(eventProgram->getGLProgram(), track + hidden, hidden, block);
 
-			setUniformColor(eventProgram->getGLProgram(), QColor(Qt::blue), 0.5);
+			QColor color(Qt::blue);
+			double opacity = 0.5;
+			int type = getInfoTable()->getSelectedType() - 1;
+			if (type != -1)
+			{
+				color = eventTypeTable->getColor(type);
+				opacity = eventTypeTable->getOpacity(type);
+			}
+			setUniformColor(eventProgram->getGLProgram(), color, opacity);
 
 			int start = eventStart, end = eventEnd;
 
@@ -595,7 +627,7 @@ void Canvas::drawSignal(const SignalBlock& block)
 
 		QColor color = currentTrackTable()->getColor(track + hidden);
 
-		if (isTrackSelected && isDrawingEvent == false && track == selectedTrack)
+		if (isSelectingTrack && /*isDrawingEvent == false &&*/ track == cursorTrack)
 		{
 			double colorComponents[3] = {color.redF(), color.greenF(), color.blueF()};
 
@@ -670,27 +702,14 @@ void Canvas::trackZoom(double factor)
 	{
 		TrackTable* tt = montageTable->getTrackTables()->at(getInfoTable()->getSelectedMontage());
 
-		int track = selectedTrack;
+		int track = cursorTrack;
 
 		track += countHiddenTracks(track);
 
-		if (0 <= track && track < tt->rowCount())
-		{
-			tt->setAmplitude(tt->getAmplitude(track)*factor, track);
-		}
+		tt->setAmplitude(tt->getAmplitude(track)*factor, track);
 
 		emit tt->emitColumnChanged(TrackTable::Column::amplitude);
 	}
-}
-
-void Canvas::updateSelectedTrack()
-{
-	int y = mapFromGlobal(QCursor::pos()).y();
-
-	double trackHeigth = static_cast<double>(height())/signalProcessor->getTrackCount();
-	int track = min(static_cast<int>(y/trackHeigth), signalProcessor->getTrackCount() - 1);
-
-	selectedTrack = track;
 }
 
 void Canvas::addEvent(int channel)

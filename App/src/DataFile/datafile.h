@@ -43,7 +43,7 @@ public:
 	}
 	QDateTime sampleToDate(int sample);
 	QDateTime sampleToOffset(int sample);
-	QString sampleToDateTimeString(int sample);
+	QString sampleToDateTimeString(int sample, InfoTable::TimeMode mode = InfoTable::TimeMode::size);
 	virtual void readData(std::vector<float>* data, int64_t firstSample, int64_t lastSample) = 0;
 	virtual void readData(std::vector<double>* data, int64_t firstSample, int64_t lastSample) = 0;
 

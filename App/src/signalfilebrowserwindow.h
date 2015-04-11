@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 
+#include <functional>
+
 class DataFile;
 class SignalViewer;
 class TrackManager;
@@ -14,6 +16,7 @@ class QCheckBox;
 class QDockWidget;
 class QAbstractTableModel;
 class QActionGroup;
+class QLabel;
 
 class SignalFileBrowserWindow : public QMainWindow
 {
@@ -41,11 +44,16 @@ private:
 	QComboBox* highpassComboBox;
 	QCheckBox* notchCheckBox;
 	QComboBox* montageComboBox;
+	QComboBox* eventTypeComboBox;
 	QActionGroup* timeModeActionGroup;
+	QLabel* timeStatusLabel;
+	QLabel* positionStatusLabel;
+	QLabel* cursorStatusLabel;
 
-	void connectModelToUpdate(QAbstractTableModel* model);
+	void connectModel(QAbstractTableModel* model, std::function<void ()> f);
 	void horizontalZoom(double factor);
 	void verticalZoom(double factor);
+	void mode(int m);
 
 private slots:
 	void openFile();
@@ -60,10 +68,23 @@ private slots:
 	void horizontalZoomOut();
 	void verticalZoomIn();
 	void verticalZoomOut();
-	void timeMode0();
-	void timeMode1();
-	void timeMode2();
+	void timeMode0()
+	{
+		mode(0);
+	}
+	void timeMode1()
+	{
+		mode(1);
+	}
+	void timeMode2()
+	{
+		mode(2);
+	}
 	void updateTimeMode(int mode);
+	void updatePositionStatusLabel();
+	void updateCursorStatusLabel();
+	void updateMontageComboBox();
+	void updateEventTypeComboBox();
 };
 
 #endif // SIGNALFILEBROWSERWINDOW_H

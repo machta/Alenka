@@ -208,7 +208,7 @@ bool MontageTable::insertRows(int row, int count, const QModelIndex& /*parent*/)
 
 bool MontageTable::removeRows(int row, int count, const QModelIndex& /*parent*/)
 {
-	if (count > 0)
+	if (count > 0 && !(row == 0 && count == rowCount()))
 	{
 		beginRemoveRows(QModelIndex(), row, row + count - 1);
 

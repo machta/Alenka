@@ -30,6 +30,7 @@ public:
 		emit notchChanged(notch);
 		emit selectedMontageChanged(selectedMontage);
 		emit timeModeChanged(static_cast<int>(timeMode));
+		emit selectedTypeChanged(selectedType);
 	}
 
 	int getVirtualWidth() const
@@ -60,6 +61,10 @@ public:
 	{
 		return timeMode;
 	}
+	int getSelectedType() const
+	{
+		return selectedType;
+	}
 
 signals:
 	void virtualWidthChanged(int);
@@ -69,6 +74,7 @@ signals:
 	void notchChanged(bool);
 	void selectedMontageChanged(int);
 	void timeModeChanged(int);
+	void selectedTypeChanged(int);
 
 public slots:
 	void setVirtualWidth(int value)
@@ -127,6 +133,14 @@ public slots:
 			emit timeModeChanged(static_cast<int>(value));
 		}
 	}
+	void setSelectedType(int value)
+	{
+		if (value != selectedType)
+		{
+			selectedType = value;
+			emit selectedTypeChanged(value);
+		}
+	}
 
 private:
 	int virtualWidth = 100000;
@@ -136,6 +150,7 @@ private:
 	bool notch = false;
 	int selectedMontage = 0;
 	TimeMode timeMode = TimeMode::offset;
+	int selectedType = 0;
 };
 
 #endif // INFOTABLE_H

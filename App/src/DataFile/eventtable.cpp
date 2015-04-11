@@ -141,7 +141,7 @@ bool EventTable::insertRowsBack(int count)
 		ss << "Event " << row + i;
 
 		label.push_back(ss.str());
-		type.push_back(-1); // TODO: load current selected type
+		type.push_back(file->getInfoTable()->getSelectedType() - 1);
 		position.push_back(0);
 		duration.push_back(1);
 		channel.push_back(-2);
