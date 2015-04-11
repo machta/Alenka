@@ -4,15 +4,14 @@
 
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
+#include <QCollator>
 
 #include <algorithm>
 #include <functional>
-#include <QCollator>
-#include <vector>
 
 using namespace std;
 
-TrackTable::TrackTable(QObject* parent) : QAbstractTableModel(parent)
+TrackTable::TrackTable(DataFile* file, QObject* parent) : QAbstractTableModel(parent), file(file)
 {
 }
 
@@ -294,7 +293,7 @@ bool TrackTable::removeRows(int row, int count, const QModelIndex& /*parent*/)
 
 		if (changed)
 		{
-			emit eventTable->dataChanged(eventTable->index(0, static_cast<int>(EventTable::Column::channel)), eventTable->index(eventTable->rowCount() - 1, static_cast<int>(EventTable::Column::channel)));
+			eventTable->emitColumnChanged(EventTable::Column::channel);
 		}
 
 		// Remove rows.

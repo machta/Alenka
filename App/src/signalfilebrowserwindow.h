@@ -13,6 +13,7 @@ class QComboBox;
 class QCheckBox;
 class QDockWidget;
 class QAbstractTableModel;
+class QActionGroup;
 
 class SignalFileBrowserWindow : public QMainWindow
 {
@@ -40,6 +41,7 @@ private:
 	QComboBox* highpassComboBox;
 	QCheckBox* notchCheckBox;
 	QComboBox* montageComboBox;
+	QActionGroup* timeModeActionGroup;
 
 	void connectModelToUpdate(QAbstractTableModel* model);
 	void horizontalZoom(double factor);
@@ -58,6 +60,10 @@ private slots:
 	void horizontalZoomOut();
 	void verticalZoomIn();
 	void verticalZoomOut();
+	void timeMode0();
+	void timeMode1();
+	void timeMode2();
+	void updateTimeMode(int mode);
 };
 
 #endif // SIGNALFILEBROWSERWINDOW_H

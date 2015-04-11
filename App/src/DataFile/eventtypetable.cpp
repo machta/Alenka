@@ -5,15 +5,14 @@
 
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
+#include <QCollator>
 
 #include <algorithm>
 #include <functional>
-#include <QCollator>
-#include <vector>
 
 using namespace std;
 
-EventTypeTable::EventTypeTable(QObject* parent) : QAbstractTableModel(parent)
+EventTypeTable::EventTypeTable(DataFile* file, QObject* parent) : QAbstractTableModel(parent), file(file)
 {
 }
 
@@ -272,7 +271,7 @@ bool EventTypeTable::removeRows(int row, int count, const QModelIndex& /*parent*
 
 			if (changed)
 			{
-				emit eventTable->dataChanged(eventTable->index(0, static_cast<int>(EventTable::Column::type)), eventTable->index(eventTable->rowCount() - 1, static_cast<int>(EventTable::Column::type)));
+				eventTable->emitColumnChanged(EventTable::Column::type);
 			}
 		}
 

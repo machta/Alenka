@@ -2,11 +2,17 @@
 
 #include "../error.h"
 
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
 #include <QFile>
+#include <QDateTime>
+#include <QDate>
+
+#include <cassert>
 
 using namespace std;
 
-DataFile::DataFile(const string& filePath) : filePath(filePath)
+DataFile::DataFile(const string& filePath) : filePath(filePath), eventTypeTable(this), montageTable(this)
 {
 	eventTypeTable.setReferences(&montageTable);
 	montageTable.setReferences(&eventTypeTable);
@@ -27,6 +33,45 @@ void DataFile::save()
 		montageTable.write(xml);
 		eventTypeTable.write(xml);
 	});
+}
+
+QDateTime DataFile::sampleToDate(int sample)
+{
+	int timeOffset = static_cast<int>(sample/getSamplingFrequency()*1000);
+
+	QDateTime date = getStartDate();
+	date = date.addMSecs(timeOffset);
+
+	return date;
+}
+
+QDateTime DataFile::sampleToOffset(int sample)
+{
+	int timeOffset = static_cast<int>(sample/getSamplingFrequency()*1000);
+
+	QDateTime date(QDate(1970, 1, 1));
+	date = date.addMSecs(timeOffset);
+
+	return date;
+}
+
+QString DataFile::sampleToDateTimeString(int sample)
+{
+	if (infoTable.getTimeMode() == InfoTable::TimeMode::samples)
+	{
+		return QString::number(sample);
+	}
+	else if (infoTable.getTimeMode() == InfoTable::TimeMode::offset)
+	{
+		QDateTime date = sampleToOffset(sample);
+		return QString::number(date.date().day() - 1, 2) + date.toString(":hh:mm:ss");
+	}
+	else if (infoTable.getTimeMode() == InfoTable::TimeMode::real)
+	{
+		return sampleToDate(sample).toString("dd:MM:yyyy hh:mm:ss");
+	}
+
+	return QString();
 }
 
 bool DataFile::load()

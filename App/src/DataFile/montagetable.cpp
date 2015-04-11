@@ -2,14 +2,14 @@
 
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
+#include <QCollator>
 
 #include <algorithm>
 #include <functional>
-#include <QCollator>
 
 using namespace std;
 
-MontageTable::MontageTable(QObject* parent) : QAbstractTableModel(parent)
+MontageTable::MontageTable(DataFile* file, QObject* parent) : QAbstractTableModel(parent), file(file)
 {
 }
 
@@ -294,8 +294,8 @@ void MontageTable::sort(int column, Qt::SortOrder order)
 
 void MontageTable::pushBackNew()
 {
-	TrackTable* tt = new TrackTable;
-	EventTable* et = new EventTable;
+	TrackTable* tt = new TrackTable(file);
+	EventTable* et = new EventTable(file);
 	tt->setReferences(et);
 	et->setReferences(eventTypeTable, tt);
 	trackTables.push_back(tt);

@@ -11,6 +11,11 @@ class InfoTable : public QObject
 	Q_OBJECT
 
 public:
+	enum class TimeMode
+	{
+		samples, offset, real, size
+	};
+
 	InfoTable();
 	~InfoTable();
 
@@ -18,12 +23,13 @@ public:
 	void read(QXmlStreamReader* xml);
 	void emitAllSignals()
 	{
-		emit virtualWidthChanged(getVirtualWidth());
-		emit positionChanged(getPosition());
-		emit lowpassFrequencyChanged(getLowpassFrequency());
-		emit highpassFrequencyChanged(getHighFrequency());
-		emit notchChanged(getNotch());
-		emit selectedMontageChanged(getSelectedMontage());
+		emit virtualWidthChanged(virtualWidth);
+		emit positionChanged(position);
+		emit lowpassFrequencyChanged(lowpassFrequency);
+		emit highpassFrequencyChanged(highPassFrequency);
+		emit notchChanged(notch);
+		emit selectedMontageChanged(selectedMontage);
+		emit timeModeChanged(static_cast<int>(timeMode));
 	}
 
 	int getVirtualWidth() const
@@ -50,9 +56,9 @@ public:
 	{
 		return selectedMontage;
 	}
-	int getSelectedTrack()
+	TimeMode getTimeMode() const
 	{
-		return selectedTrack;
+		return timeMode;
 	}
 
 signals:
@@ -62,7 +68,7 @@ signals:
 	void highpassFrequencyChanged(double);
 	void notchChanged(bool);
 	void selectedMontageChanged(int);
-	void sectedTrackChanged(int);
+	void timeModeChanged(int);
 
 public slots:
 	void setVirtualWidth(int value)
@@ -113,12 +119,12 @@ public slots:
 			emit selectedMontageChanged(value);
 		}
 	}
-	void setSelectedTrack(int value)
+	void setTimeMode(TimeMode value)
 	{
-		if (value != selectedTrack)
+		if (value != timeMode)
 		{
-			selectedTrack = value;
-			emit sectedTrackChanged(value);
+			timeMode = value;
+			emit timeModeChanged(static_cast<int>(value));
 		}
 	}
 
@@ -129,7 +135,7 @@ private:
 	double highPassFrequency = -1000*1000*1000;
 	bool notch = false;
 	int selectedMontage = 0;
-	int selectedTrack = -1;
+	TimeMode timeMode = TimeMode::offset;
 };
 
 #endif // INFOTABLE_H

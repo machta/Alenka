@@ -7,10 +7,11 @@
 #include <cstdio>
 #include <mutex>
 #include <functional>
-#include <vector>
 
 #ifndef GDF2_H
 #define GDF2_H
+
+class QDateTime;
 
 class GDF2 : public DataFile
 {
@@ -30,6 +31,7 @@ public:
 	{
 		return samplesRecorded;
 	}
+	virtual QDateTime getStartDate() const override;
 	virtual void save() override;
 	virtual void readData(std::vector<float>* data, int64_t firstSample, int64_t lastSample) override
 	{

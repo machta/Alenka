@@ -5,16 +5,14 @@
 #include "eventtypetable.h"
 #include "infotable.h"
 
-#include <QXmlStreamReader>
-#include <QXmlStreamWriter>
-
 #include <cstdint>
-#include <cassert>
-#include <algorithm>
-#include <vector>
 #include <utility>
 #include <string>
 #include <functional>
+
+class QXmlStreamReader;
+class QXmlStreamWriter;
+class QDateTime;
 
 class DataFile
 {
@@ -25,6 +23,7 @@ public:
 	virtual double getSamplingFrequency() const = 0;
 	virtual unsigned int getChannelCount() const = 0;
 	virtual uint64_t getSamplesRecorded() const = 0;
+	virtual QDateTime getStartDate() const = 0;
 	virtual void save();
 	MontageTable* getMontageTable()
 	{
@@ -42,6 +41,9 @@ public:
 	{
 		return &infoTable;
 	}
+	QDateTime sampleToDate(int sample);
+	QDateTime sampleToOffset(int sample);
+	QString sampleToDateTimeString(int sample);
 	virtual void readData(std::vector<float>* data, int64_t firstSample, int64_t lastSample) = 0;
 	virtual void readData(std::vector<double>* data, int64_t firstSample, int64_t lastSample) = 0;
 

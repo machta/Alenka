@@ -8,24 +8,25 @@
 
 #include <QColor>
 
-#include <vector>
 #include <string>
 #include <sstream>
 #include <cassert>
+#include <vector>
 
 class QXmlStreamReader;
 class QXmlStreamWriter;
 class EventTypeTable;
+class DataFile;
 
 class MontageTable : public QAbstractTableModel
 {
 public:
 	enum class Column
 	{
-		name, save, collumnCount
+		name, save, size
 	};
 
-	MontageTable(QObject* parent = nullptr);
+	MontageTable(DataFile* file, QObject* parent = nullptr);
 	~MontageTable();
 
 	void setReferences(EventTypeTable* eventTypeTable)
@@ -47,6 +48,10 @@ public:
 		return eventTypeTable;
 	}
 	bool insertRowsBack(int count = 1);
+	void emitColumnChanged(Column column)
+	{
+		emit dataChanged(index(0, static_cast<int>(column)), index(rowCount() - 1, static_cast<int>(column)));
+	}
 
 	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override
 	{
@@ -58,7 +63,7 @@ public:
 	{
 		(void)parent;
 
-		return static_cast<int>(Column::collumnCount);
+		return static_cast<int>(Column::size);
 	}
 	virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 	virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
@@ -76,6 +81,10 @@ public:
 	virtual bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
 	virtual void sort(int column, Qt::SortOrder order) override;
 
+	DataFile* getDataFile()
+	{
+		return file;
+	}
 	std::string getName(int i) const
 	{
 		assert(0 <= i && i < static_cast<int>(name.size()));
@@ -102,6 +111,8 @@ public:
 	}
 
 private:
+	DataFile* file;
+
 	std::vector<std::string> name;
 	std::vector<bool> save;
 

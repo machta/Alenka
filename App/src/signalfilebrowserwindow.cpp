@@ -101,6 +101,27 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	verticalZoomOutAction->setToolTip("Zoom out amplitudes of signals.");
 	connect(verticalZoomOutAction, SIGNAL(triggered()), this, SLOT(verticalZoomOut()));
 
+	// Construct Time Mode action group.
+	timeModeActionGroup = new QActionGroup(this);
+
+	QAction* timeModeAction0 = new QAction("Sample", this);
+	timeModeAction0->setToolTip("Samples from the start.");
+	connect(timeModeAction0, SIGNAL(triggered()), this, SLOT(timeMode0()));
+	timeModeAction0->setActionGroup(timeModeActionGroup);
+	timeModeAction0->setCheckable(true);
+
+	QAction* timeModeAction1 = new QAction("Offset", this);
+	timeModeAction1->setToolTip("Time offset from the start.");
+	connect(timeModeAction1, SIGNAL(triggered()), this, SLOT(timeMode1()));
+	timeModeAction1->setActionGroup(timeModeActionGroup);
+	timeModeAction1->setCheckable(true);
+
+	QAction* timeModeAction2 = new QAction("Real", this);
+	timeModeAction2->setToolTip("Real time.");
+	connect(timeModeAction2, SIGNAL(triggered()), this, SLOT(timeMode2()));
+	timeModeAction2->setActionGroup(timeModeActionGroup);
+	timeModeAction2->setCheckable(true);
+
 	// Construct File menu.
 	QMenu* fileMenu = menuBar()->addMenu("&File");
 
@@ -108,13 +129,19 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	fileMenu->addAction(closeFileAction);
 	fileMenu->addAction(saveFileAction);
 
-	// Construct Zoom menu.
-	QMenu* zoomMenu = menuBar()->addMenu("&Zoom");
+	// Construct View menu.
+	QMenu* vievMenu = menuBar()->addMenu("&Zoom");
 
-	zoomMenu->addAction(horizontalZoomInAction);
-	zoomMenu->addAction(horizontalZoomOutAction);
-	zoomMenu->addAction(verticalZoomInAction);
-	zoomMenu->addAction(verticalZoomOutAction);
+	vievMenu->addAction(horizontalZoomInAction);
+	vievMenu->addAction(horizontalZoomOutAction);
+	vievMenu->addAction(verticalZoomInAction);
+	vievMenu->addAction(verticalZoomOutAction);
+
+	QMenu* timeModeMenu = new QMenu("Time Mode", this);
+	timeModeMenu->addAction(timeModeAction0);
+	timeModeMenu->addAction(timeModeAction1);
+	timeModeMenu->addAction(timeModeAction2);
+	vievMenu->addMenu(timeModeMenu);
 
 	// Toolbars.
 	const int spacing = 3;
@@ -281,7 +308,7 @@ void SignalFileBrowserWindow::openFile()
 		connect(it, SIGNAL(highpassFrequencyChanged(double)), signalViewer, SLOT(update()));
 		connect(it, SIGNAL(notchChanged(bool)), signalViewer, SLOT(update()));
 		connect(it, SIGNAL(selectedMontageChanged(int)), signalViewer, SLOT(update()));
-		connect(it, SIGNAL(sectedTrackChanged(int)), signalViewer, SLOT(update()));
+		connect(it, SIGNAL(timeModeChanged(int)), this, SLOT(updateTimeMode(int)));
 
 		connectModelToUpdate(file->getMontageTable());
 		connectModelToUpdate(file->getEventTypeTable());
@@ -373,4 +400,45 @@ void SignalFileBrowserWindow::verticalZoomIn()
 void SignalFileBrowserWindow::verticalZoomOut()
 {
 	verticalZoom(1/verticalZoomFactor);
+}
+
+void SignalFileBrowserWindow::timeMode0()
+{
+	if (file != nullptr)
+	{
+		file->getInfoTable()->setTimeMode(InfoTable::TimeMode::samples);
+
+		EventTable* et = file->getMontageTable()->getEventTables()->at(file->getInfoTable()->getSelectedMontage());
+		et->emitColumnChanged(EventTable::Column::position);
+		et->emitColumnChanged(EventTable::Column::duration);
+	}
+}
+
+void SignalFileBrowserWindow::timeMode1()
+{
+	if (file != nullptr)
+	{
+		file->getInfoTable()->setTimeMode(InfoTable::TimeMode::offset);
+
+		EventTable* et = file->getMontageTable()->getEventTables()->at(file->getInfoTable()->getSelectedMontage());
+		et->emitColumnChanged(EventTable::Column::position);
+		et->emitColumnChanged(EventTable::Column::duration);
+	}
+}
+
+void SignalFileBrowserWindow::timeMode2()
+{
+	if (file != nullptr)
+	{
+		file->getInfoTable()->setTimeMode(InfoTable::TimeMode::real);
+
+		EventTable* et = file->getMontageTable()->getEventTables()->at(file->getInfoTable()->getSelectedMontage());
+		et->emitColumnChanged(EventTable::Column::position);
+		et->emitColumnChanged(EventTable::Column::duration);
+	}
+}
+
+void SignalFileBrowserWindow::updateTimeMode(int mode)
+{
+	timeModeActionGroup->actions().at(mode)->setChecked(true);
 }

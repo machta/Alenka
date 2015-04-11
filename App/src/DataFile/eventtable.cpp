@@ -1,18 +1,21 @@
 #include "eventtable.h"
 
+#include "datafile.h"
 #include "eventtypetable.h"
 #include "tracktable.h"
 
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
+#include <QCollator>
+#include <QDateTime>
+#include <QTime>
 
 #include <algorithm>
 #include <functional>
-#include <QCollator>
 
 using namespace std;
 
-EventTable::EventTable(QObject* parent) : QAbstractTableModel(parent)
+EventTable::EventTable(DataFile* file, QObject* parent) : QAbstractTableModel(parent), file(file)
 {
 }
 
@@ -191,9 +194,9 @@ QVariant EventTable::data(const QModelIndex& index, int role) const
 			case Column::type:
 				return type[row] < 0 ? EventTypeTable::NO_TYPE_STRING : QString::fromStdString(eventTypeTable->getName(type[row]));
 			case Column::position:
-				return position[row]; // TODO
+				return file->sampleToDateTimeString(position[row]);
 			case Column::duration:
-				return duration[row]; // TODO
+				return file->sampleToDateTimeString(duration[row]);
 			case Column::channel:
 				return channel[row] < 0 ?
 					   channel[row] == -1 ? TrackTable::ALL_CHANNEL_STRING : TrackTable::NO_CHANNEL_STRING :

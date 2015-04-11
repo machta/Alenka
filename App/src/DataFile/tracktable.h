@@ -8,14 +8,15 @@
 
 #include <QColor>
 
-#include <vector>
 #include <string>
 #include <sstream>
 #include <cassert>
+#include <vector>
 
 class QXmlStreamReader;
 class QXmlStreamWriter;
 class EventTable;
+class DataFile;
 
 class TrackTable : public QAbstractTableModel
 {
@@ -24,10 +25,10 @@ class TrackTable : public QAbstractTableModel
 public:
 	enum class Column
 	{
-		label, code, color, amplitude, hidden, collumnCount
+		label, code, color, amplitude, hidden, size
 	};
 
-	TrackTable(QObject* parent = nullptr);
+	TrackTable(DataFile* file, QObject* parent = nullptr);
 	~TrackTable();
 
 	void setReferences(EventTable* eventTable)
@@ -41,6 +42,10 @@ public:
 		return eventTable;
 	}
 	bool insertRowsBack(int count = 1);
+	void emitColumnChanged(Column column)
+	{
+		emit dataChanged(index(0, static_cast<int>(column)), index(rowCount() - 1, static_cast<int>(column)));
+	}
 
 	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override
 	{
@@ -52,7 +57,7 @@ public:
 	{
 		(void)parent;
 
-		return static_cast<int>(Column::collumnCount);
+		return static_cast<int>(Column::size);
 	}
 	std::vector<std::string> getCode() const;
 	bool validateTrackCode(const QString& code, QString* message = nullptr)
@@ -75,6 +80,10 @@ public:
 	virtual bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
 	virtual void sort(int column, Qt::SortOrder order) override;
 
+	DataFile* getDataFile()
+	{
+		return file;
+	}
 	std::string getLabel(int i) const
 	{
 		assert(0 <= i && i < static_cast<int>(label.size()));
@@ -140,6 +149,8 @@ public:
 	static const char* ALL_CHANNEL_STRING;
 
 private:
+	DataFile* file;
+
 	std::vector<std::string> label;
 	std::vector<std::string> code;
 	std::vector<QColor> color;

@@ -2,6 +2,11 @@
 
 #include "error.h"
 
+#include <algorithm>
+#include <vector>
+#include <iostream>
+#include <sstream>
+
 #if defined WIN_BUILD
 //#include <QtPlatformHeaders/QWGLNativeContext>
 #include <windows.h>
@@ -9,11 +14,6 @@
 //#include <QtPlatformHeaders/QGLXNativeContext>
 #include <GL/glx.h>
 #endif
-
-#include <algorithm>
-#include <vector>
-#include <iostream>
-#include <sstream>
 
 using namespace std;
 

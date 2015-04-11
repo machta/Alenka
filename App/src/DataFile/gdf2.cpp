@@ -2,12 +2,16 @@
 
 #include "../options.h"
 
+#include <QDateTime>
+#include <QDate>
+
 #include <cstdlib>
 #include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <cstring>
 #include <set>
+#include <vector>
 
 using namespace std;
 
@@ -240,6 +244,14 @@ GDF2::~GDF2()
 	delete[] vh.typeOfData;
 	delete[] vh.sensorPosition;
 	delete[] vh.sensorInfo;
+}
+
+QDateTime GDF2::getStartDate() const
+{
+	QDateTime date(QDate(1970, 1, 1));
+	date = date.addDays(fh.startDate[1] - 719529);
+	date = date.addMSecs(static_cast<int>(ldexp(fh.startDate[0], -32)*1000));
+	return date;
 }
 
 void GDF2::save()

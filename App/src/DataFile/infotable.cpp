@@ -19,6 +19,7 @@ void InfoTable::write(QXmlStreamWriter* xml) const
 	xml->writeTextElement("highPassFrequency", QString::number(highPassFrequency));
 	xml->writeTextElement("notch", notch ? "1" : "0");
 	xml->writeTextElement("selectedMontage", QString::number(selectedMontage));
+	xml->writeTextElement("timeMode", QString::number(static_cast<int>(timeMode)));
 }
 
 #define readNumericElement(a_, b_)\
@@ -46,6 +47,17 @@ void InfoTable::read(QXmlStreamReader* xml)
 		}
 
 		readNumericElement(selectedMontage, toInt);
+
+		if (xml->name() == "timeMode")
+		{
+			bool ok;
+			int mode = xml->readElementText().toInt(&ok);
+			if (ok && 0 <= mode && mode < static_cast<int>(TimeMode::size))
+			{
+				timeMode = static_cast<TimeMode>(mode);
+			}
+			continue;
+		}
 
 		xml->skipCurrentElement();
 	}

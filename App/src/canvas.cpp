@@ -660,7 +660,7 @@ void Canvas::verticalZoom(double factor)
 			tt->setAmplitude(tt->getAmplitude(i)*factor, i);
 		}
 
-		emit tt->dataChanged(tt->index(0, static_cast<int>(TrackTable::Column::amplitude)), tt->index(tt->rowCount() - 1, static_cast<int>(TrackTable::Column::amplitude)));
+		emit tt->emitColumnChanged(TrackTable::Column::amplitude);
 	}
 }
 
@@ -679,7 +679,7 @@ void Canvas::trackZoom(double factor)
 			tt->setAmplitude(tt->getAmplitude(track)*factor, track);
 		}
 
-		emit tt->dataChanged(tt->index(0, static_cast<int>(TrackTable::Column::amplitude)), tt->index(tt->rowCount() - 1, static_cast<int>(TrackTable::Column::amplitude)));
+		emit tt->emitColumnChanged(TrackTable::Column::amplitude);
 	}
 }
 
