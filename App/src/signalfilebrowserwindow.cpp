@@ -342,7 +342,7 @@ void SignalFileBrowserWindow::openFile()
 		timeStatusLabel->setText("Start: " + file->sampleToDateTimeString(0, InfoTable::TimeMode::real) + " Total time: " + file->sampleToDateTimeString(file->getSamplesRecorded(), InfoTable::TimeMode::offset));
 
 		connect(it, SIGNAL(positionChanged(int)), this, SLOT(updatePositionStatusLabel()));
-		connect(signalViewer->getCanvas(), SIGNAL(cursorPositionChangedSample(int)), this, SLOT(updateCursorStatusLabel()));
+		connect(signalViewer->getCanvas(), SIGNAL(cursorPositionSampleChanged(int)), this, SLOT(updateCursorStatusLabel()));
 
 		// Connect slot SignalViewer::update() to make sure that the SignalViewer gets updated when needed.
 		connect(it, SIGNAL(virtualWidthChanged(int)), signalViewer, SLOT(update()));

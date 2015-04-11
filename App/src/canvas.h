@@ -36,8 +36,8 @@ public:
 	}
 
 signals:
-	void cursorPositionChangedSample(int);
-	void cursorPositionChangedTrack(int);
+	void cursorPositionSampleChanged(int);
+	void cursorPositionTrackChanged(int);
 
 public slots:
 	void updateCursor();
@@ -46,7 +46,7 @@ public slots:
 		if (sample != cursorSample)
 		{
 			cursorSample = sample;
-			emit cursorPositionChangedSample(sample);
+			emit cursorPositionSampleChanged(sample);
 		}
 	}
 	void setCursorPositionTrack(int track)
@@ -54,7 +54,7 @@ public slots:
 		if (track != cursorTrack)
 		{
 			cursorTrack = track;
-			emit cursorPositionChangedTrack(track);
+			emit cursorPositionTrackChanged(track);
 		}
 	}
 
