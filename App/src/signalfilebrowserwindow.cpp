@@ -310,12 +310,12 @@ void SignalFileBrowserWindow::openFile()
 
 		lowpassComboBox->clear();
 		lowpassComboBox->addItems(comboOptions);
-		connect(lowpassComboBox, SIGNAL(currentTextChanged(QString)), this, SLOT(lowpassComboBoxUpdate(QString)));
+		connect(lowpassComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(lowpassComboBoxUpdate(QString)));
 		connect(it, SIGNAL(lowpassFrequencyChanged(double)), this, SLOT(lowpassComboBoxUpdate(double)));
 
 		highpassComboBox->clear();
 		highpassComboBox->addItems(comboOptions);
-		connect(highpassComboBox, SIGNAL(currentTextChanged(QString)), this, SLOT(highpassComboBoxUpdate(QString)));
+		connect(highpassComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(highpassComboBoxUpdate(QString)));
 		connect(it, SIGNAL(highpassFrequencyChanged(double)), this, SLOT(highpassComboBoxUpdate(double)));
 
 		connect(notchCheckBox, SIGNAL(toggled(bool)), it, SLOT(setNotch(bool)));
@@ -391,8 +391,14 @@ void SignalFileBrowserWindow::lowpassComboBoxUpdate(const QString& text)
 void SignalFileBrowserWindow::lowpassComboBoxUpdate(double value)
 {
 	if (file != nullptr)
-	{
-		lowpassComboBox->setCurrentText(QString::number(value, 'f'));
+	{if (value < 0 || value > file->getSamplingFrequency()/2)
+		{
+			lowpassComboBox->setCurrentIndex(0);
+		}
+		else
+		{
+			lowpassComboBox->setCurrentText(QString::number(value, 'f', 2));
+		}
 	}
 }
 
@@ -402,7 +408,7 @@ void SignalFileBrowserWindow::highpassComboBoxUpdate(const QString& text)
 	{
 		bool ok;
 		double tmp = text.toDouble(&ok);
-		file->getInfoTable()->setHighFrequency(ok ? tmp : -1000*1000*1000);
+		file->getInfoTable()->setHighpassFrequency(ok ? tmp : -1000*1000*1000);
 	}
 }
 
@@ -410,7 +416,14 @@ void SignalFileBrowserWindow::highpassComboBoxUpdate(double value)
 {
 	if (file != nullptr)
 	{
-		highpassComboBox->setCurrentText(QString::number(value, 'f'));
+		if (value < 0 || value > file->getSamplingFrequency()/2)
+		{
+			highpassComboBox->setCurrentIndex(0);
+		}
+		else
+		{
+			highpassComboBox->setCurrentText(QString::number(value, 'f', 2));
+		}
 	}
 }
 

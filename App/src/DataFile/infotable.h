@@ -45,7 +45,7 @@ public:
 	{
 		return lowpassFrequency;
 	}
-	double getHighFrequency() const
+	double getHighpassFrequency() const
 	{
 		return highPassFrequency;
 	}
@@ -101,7 +101,7 @@ public slots:
 			emit lowpassFrequencyChanged(value);
 		}
 	}
-	void setHighFrequency(double value)
+	void setHighpassFrequency(double value)
 	{
 		if (value != highPassFrequency)
 		{

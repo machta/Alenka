@@ -60,7 +60,7 @@ void SignalProcessor::updateFilter()
 
 	Filter filter(static_cast<unsigned int>(file->getSamplingFrequency()), file->getSamplingFrequency()); // Possibly could save this object so that it won't be created from scratch everytime.
 	filter.setLowpass(getInfoTable()->getLowpassFrequency());
-	filter.setHighpass(getInfoTable()->getHighFrequency());
+	filter.setHighpass(getInfoTable()->getHighpassFrequency());
 	filter.setNotch(getInfoTable()->getNotch());
 
 	if (PROGRAM_OPTIONS.isSet("printFilter"))
