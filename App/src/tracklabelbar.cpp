@@ -52,9 +52,13 @@ void TrackLabelBar::paintEvent(QPaintEvent* /*event*/)
 		}
 	}
 
+	double rowHeight = static_cast<double>(height())/totalTracks;
+	double fontHeight = min<double>(10, max<double>(3, rowHeight/2.));
+
 	QPainter painter(this);
-	//painter.setFont(QFont("Arial", 30));
-	//painter.drawText(rect(), Qt::AlignCenter, "Qt");
+	QFont font = painter.font();
+	font.setPointSizeF(fontHeight);
+	painter.setFont(font);
 
 	int hidden = 0;
 	for (int track = 0; track < totalTracks; ++track)
@@ -68,8 +72,8 @@ void TrackLabelBar::paintEvent(QPaintEvent* /*event*/)
 			}
 			painter.setPen(color);
 
-			double y = (0.5 + track)*height()/totalTracks;
-			double x = 1;
+			double y = (0.5 + track)*rowHeight + fontHeight/2;
+			double x = 2;
 
 			painter.drawText(QPointF(x, y), QString::fromStdString(trackTable->getLabel(track + hidden)));
 		}

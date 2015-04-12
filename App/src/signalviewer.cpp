@@ -20,9 +20,11 @@ SignalViewer::SignalViewer(QWidget* parent) : QWidget(parent)
 
 	trackLabelBar = new TrackLabelBar(this);
 	splitter->addWidget(trackLabelBar);
+	splitter->setStretchFactor(0, 0);
 
 	canvas = new Canvas(this);
 	splitter->addWidget(canvas);
+	splitter->setStretchFactor(1, 1);
 
 	scrollBar = new QScrollBar(Qt::Horizontal, this);
 	box->addWidget(scrollBar);
