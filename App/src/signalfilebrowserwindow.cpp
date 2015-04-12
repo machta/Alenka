@@ -162,11 +162,15 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 	filterToolBar->addWidget(new QLabel("LF:", this));
 	lowpassComboBox = new QComboBox(this);
+	lowpassComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+	lowpassComboBox->setMaximumWidth(150);
 	lowpassComboBox->setEditable(true);
 	filterToolBar->addWidget(lowpassComboBox);
 
 	filterToolBar->addWidget(new QLabel("HF:", this));
 	highpassComboBox = new QComboBox(this);
+	highpassComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+	highpassComboBox->setMaximumWidth(150);
 	highpassComboBox->setEditable(true);
 	filterToolBar->addWidget(highpassComboBox);
 
@@ -181,10 +185,14 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 	selectToolBar->addWidget(new QLabel("Montage:", this));
 	montageComboBox = new QComboBox(this);
+	montageComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+	montageComboBox->setMaximumWidth(200);
 	selectToolBar->addWidget(montageComboBox);
 
 	selectToolBar->addWidget(new QLabel("Event Type:", this));
 	eventTypeComboBox = new QComboBox(this);
+	eventTypeComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+	eventTypeComboBox->setMaximumWidth(200);
 	selectToolBar->addWidget(eventTypeComboBox);
 
 	// Construct Zoom toolbar.
@@ -293,8 +301,9 @@ void SignalFileBrowserWindow::openFile()
 			it->setSelectedMontage(0);
 		}
 
-		// Pass the file to the widget responsible for rendering.
-		signalViewer->changeFile(file);
+		// Pass the file to the child widgets.
+		signalViewer->changeFile(file);		
+		eventManager->changeFile(file);
 
 		// Update Filter toolbar.
 		QStringList comboOptions;
@@ -363,7 +372,9 @@ void SignalFileBrowserWindow::closeFile()
 {
 	delete file;
 	file = nullptr;
+
 	signalViewer->changeFile(nullptr);
+	eventManager->changeFile(nullptr);
 
 	signalViewer->update();
 }

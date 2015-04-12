@@ -53,7 +53,7 @@ void TrackLabelBar::paintEvent(QPaintEvent* /*event*/)
 	}
 
 	double rowHeight = static_cast<double>(height())/totalTracks;
-	double fontHeight = min<double>(10, max<double>(3, rowHeight/2.));
+	double fontHeight = min<double>(10, rowHeight/1.5);
 
 	QPainter painter(this);
 	QFont font = painter.font();
