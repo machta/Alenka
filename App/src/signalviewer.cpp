@@ -1,5 +1,11 @@
 #include "signalviewer.h"
 
+#include "DataFile/datafile.h"
+#include "tracklabelbar.h"
+
+#include <QVBoxLayout>
+#include <QSplitter>
+
 using namespace std;
 
 SignalViewer::SignalViewer(QWidget* parent) : QWidget(parent)
@@ -9,19 +15,44 @@ SignalViewer::SignalViewer(QWidget* parent) : QWidget(parent)
 	box->setContentsMargins(0, 0, 0, 0);
 	box->setSpacing(0);
 
+	splitter = new QSplitter;
+	box->addWidget(splitter);
+
+	trackLabelBar = new TrackLabelBar(this);
+	splitter->addWidget(trackLabelBar);
+
 	canvas = new Canvas(this);
-	//canvas->setSizePolicy(QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Expanding);
+	splitter->addWidget(canvas);
 
 	scrollBar = new QScrollBar(Qt::Horizontal, this);
-
-	box->addWidget(canvas);
 	box->addWidget(scrollBar);
 
-	//setLayout(box);
+	splitter->restoreState(PROGRAM_OPTIONS.settings("SignalViewer splitter state").toByteArray());
 }
 
 SignalViewer::~SignalViewer()
 {
+	PROGRAM_OPTIONS.settings("SignalViewer splitter state", splitter->saveState());
 }
 
+void SignalViewer::changeFile(DataFile *file)
+{
+	canvas->changeFile(file);
+	trackLabelBar->changeFile(file);
 
+	if (file != nullptr)
+	{
+		infoTable = file->getInfoTable();
+
+		connect(scrollBar, SIGNAL(valueChanged(int)), infoTable, SLOT(setPosition(int)));
+		connect(infoTable, SIGNAL(positionChanged(int)), this, SLOT(setPosition(int)));
+
+		connect(infoTable, SIGNAL(virtualWidthChanged(int)), this, SLOT(setVirtualWidth(int)));
+
+		connect(canvas, SIGNAL(cursorPositionTrackChanged(int)), trackLabelBar, SLOT(setSelectedTrack(int)));
+	}
+	else
+	{
+		infoTable = nullptr;
+	}
+}

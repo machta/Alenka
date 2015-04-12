@@ -5,14 +5,17 @@
 
 #include "canvas.h"
 #include "SignalProcessor/signalprocessor.h"
-#include "DataFile/datafile.h"
 #include "DataFile/infotable.h"
 
 #include <QScrollBar>
-#include <QVBoxLayout>
 
 #include <algorithm>
 #include <cmath>
+
+class DataFile;
+class TrackLabelBar;
+class QScrollBar;
+class QSplitter;
 
 class SignalViewer : public QWidget
 {
@@ -32,24 +35,7 @@ signals:
 	void positionChanged(int);
 
 public slots:
-	void changeFile(DataFile* file)
-	{
-		canvas->changeFile(file);
-
-		if (file != nullptr)
-		{
-			infoTable = file->getInfoTable();
-
-			connect(scrollBar, SIGNAL(valueChanged(int)), infoTable, SLOT(setPosition(int)));
-
-			connect(infoTable, SIGNAL(virtualWidthChanged(int)), this, SLOT(setVirtualWidth(int)));
-			connect(infoTable, SIGNAL(positionChanged(int)), this, SLOT(setPosition(int)));
-		}
-		else
-		{
-			infoTable = nullptr;
-		}
-	}
+	void changeFile(DataFile* file);
 
 protected:
 	virtual void resizeEvent(QResizeEvent* /*event*/) override
@@ -72,8 +58,10 @@ protected:
 private:
 	InfoTable* infoTable = nullptr;
 	InfoTable defaultInfoTable;
+	QSplitter* splitter;
 	Canvas* canvas;
 	QScrollBar* scrollBar;
+	TrackLabelBar* trackLabelBar;
 
 	InfoTable* getInfoTable()
 	{

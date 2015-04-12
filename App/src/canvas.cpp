@@ -80,6 +80,22 @@ void Canvas::changeFile(DataFile* file)
 	doneCurrent();
 }
 
+QColor Canvas::modifySelectionColor(const QColor& color)
+{
+	double colorComponents[3] = {color.redF(), color.greenF(), color.blueF()};
+
+	for (int i = 0; i < 3; ++i)
+	{
+		colorComponents[i] += colorComponents[i] > 0.5 ? -0.45 : 0.45;
+	}
+
+	QColor newColor(color);
+	newColor.setRedF(colorComponents[0]);
+	newColor.setGreenF(colorComponents[1]);
+	newColor.setBlueF(colorComponents[2]);
+	return newColor;
+}
+
 void Canvas::updateCursor()
 {
 	if (signalProcessor->ready())
@@ -90,7 +106,6 @@ void Canvas::updateCursor()
 		int sample = (pos.x() + getInfoTable()->getPosition())*ratio;
 
 		double trackHeigth = static_cast<double>(height())/signalProcessor->getTrackCount();
-		//int track = min(static_cast<int>(pos.y()/trackHeigth), signalProcessor->getTrackCount() - 1);
 		int track = static_cast<int>(pos.y()/trackHeigth);
 
 		setCursorPositionSample(sample);
@@ -605,18 +620,9 @@ void Canvas::drawSignal(const SignalBlock& block)
 
 		QColor color = currentTrackTable()->getColor(track + hidden);
 
-		if (isSelectingTrack && /*isDrawingEvent == false &&*/ track == cursorTrack)
+		if (isSelectingTrack && track == cursorTrack)
 		{
-			double colorComponents[3] = {color.redF(), color.greenF(), color.blueF()};
-
-			for (int i = 0; i < 3; ++i)
-			{
-				colorComponents[i] += colorComponents[i] > 0.5 ? -0.45 : 0.45;
-			}
-
-			color.setRedF(colorComponents[0]);
-			color.setGreenF(colorComponents[1]);
-			color.setBlueF(colorComponents[2]);
+			color = modifySelectionColor(color);
 		}
 
 		setUniformColor(signalProgram->getGLProgram(), color, 1);

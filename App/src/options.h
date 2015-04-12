@@ -1,11 +1,15 @@
+#ifndef OPTIONS_H
+#define OPTIONS_H
+
 #include <boost/program_options.hpp>
+
+#include <QSettings>
+#include <QString>
+#include <QVariant>
 
 #include <string>
 #include <sstream>
 #include <stdexcept>
-
-#ifndef OPTIONS_H
-#define OPTIONS_H
 
 class Options
 {
@@ -39,15 +43,24 @@ public:
 	{
 		return desc;
 	}
+	QVariant settings(const QString& key)
+	{
+		return programSettings.value(key);
+	}
+	void settings(const QString& key, const QVariant& value)
+	{
+		programSettings.setValue(key, value);
+	}
 
 private:
 	boost::program_options::variables_map vm;
 	boost::program_options::options_description desc;
+	QSettings programSettings;
 
 	void validateValues();
 };
 
-extern const Options* PROGRAM_OPTIONS_POINTER;
+extern Options* PROGRAM_OPTIONS_POINTER;
 
 #define PROGRAM_OPTIONS (*PROGRAM_OPTIONS_POINTER)
 

@@ -1,5 +1,6 @@
 #include "signalfilebrowserwindow.h"
 
+#include "options.h"
 #include "signalviewer.h"
 #include "DataFile/gdf2.h"
 #include "trackmanager.h"
@@ -17,15 +18,13 @@
 #include <QComboBox>
 #include <QCheckBox>
 #include <QDockWidget>
-#include <QSettings>
 #include <QStatusBar>
+#include <QLayout>
 
 using namespace std;
 
 namespace
 {
-QString settingsParameters[2] = {"Martin Bárta", "SignalFileBrowserWindow"};
-
 const double horizontalZoomFactor = 1.3;
 const double verticalZoomFactor = 1.3;
 }
@@ -208,9 +207,8 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	statusBar()->addPermanentWidget(cursorStatusLabel);
 
 	// Restore settings.
-	QSettings settings(settingsParameters[0], settingsParameters[1]);
-	restoreGeometry(settings.value("geometry").toByteArray());
-	restoreState(settings.value("state").toByteArray());
+	restoreGeometry(PROGRAM_OPTIONS.settings("SignalFileBrowserWindow geometry").toByteArray());
+	restoreState(PROGRAM_OPTIONS.settings("SignalFileBrowserWindow state").toByteArray());
 }
 
 SignalFileBrowserWindow::~SignalFileBrowserWindow()
@@ -220,9 +218,9 @@ SignalFileBrowserWindow::~SignalFileBrowserWindow()
 
 void SignalFileBrowserWindow::closeEvent(QCloseEvent* event)
 {
-	QSettings settings(settingsParameters[0], settingsParameters[1]);
-	settings.setValue("geometry", saveGeometry());
-	settings.setValue("state", saveState());
+	// Store settings.
+	PROGRAM_OPTIONS.settings("SignalFileBrowserWindow geometry", saveGeometry());
+	PROGRAM_OPTIONS.settings("SignalFileBrowserWindow state", saveState());
 
 	QMainWindow::closeEvent(event);
 }

@@ -35,6 +35,8 @@ public:
 		return cursorTrack;
 	}
 
+	static QColor modifySelectionColor(const QColor& color);
+
 signals:
 	void cursorPositionSampleChanged(int);
 	void cursorPositionTrackChanged(int);
@@ -175,13 +177,18 @@ private slots:
 	{
 		if (bottomRight.row() - topLeft.row() >= 0)
 		{
-			if (topLeft.column() <= static_cast<int>(TrackTable::Column::code) && static_cast<int>(TrackTable::Column::code) <= bottomRight.column())
+			int column = static_cast<int>(TrackTable::Column::code);
+			if (topLeft.column() <= column && column <= bottomRight.column())
 			{
 				updateMontage();
+				return;
 			}
-			else if (topLeft.column() <= static_cast<int>(TrackTable::Column::hidden) && static_cast<int>(TrackTable::Column::hidden) <= bottomRight.column())
+
+			column = static_cast<int>(TrackTable::Column::hidden);
+			if (topLeft.column() <= column && column <= bottomRight.column())
 			{
 				updateMontage();
+				return;
 			}
 		}
 	}

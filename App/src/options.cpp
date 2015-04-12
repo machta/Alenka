@@ -9,7 +9,7 @@
 using namespace std;
 using namespace boost::program_options;
 
-Options::Options(int ac, char** av)
+Options::Options(int ac, char** av) : programSettings("Martin Barta", "ZSBS")
 {
 	// Definition of the available options.
 	options_description commandLineOnly("Command line options");
@@ -80,4 +80,4 @@ void Options::validateValues()
 	}
 }
 
-const Options* PROGRAM_OPTIONS_POINTER;
+Options* PROGRAM_OPTIONS_POINTER = nullptr;
