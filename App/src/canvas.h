@@ -69,6 +69,7 @@ protected:
 	virtual void mousePressEvent(QMouseEvent* event) override;
 	virtual void mouseReleaseEvent(QMouseEvent* event) override;
 	virtual void focusOutEvent(QFocusEvent* event) override;
+	virtual void focusInEvent(QFocusEvent* event) override;
 
 private:
 	InfoTable* infoTable = nullptr;

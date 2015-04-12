@@ -286,7 +286,7 @@ void Canvas::wheelEvent(QWheelEvent* event)
 	}
 	else
 	{
-		QOpenGLWidget::wheelEvent(event);
+		event->ignore();
 		return;
 	}
 
@@ -325,7 +325,7 @@ void Canvas::wheelEvent(QWheelEvent* event)
 	}
 	else
 	{
-		QOpenGLWidget::wheelEvent(event);
+		event->ignore();
 	}
 }
 
@@ -333,12 +333,6 @@ void Canvas::keyPressEvent(QKeyEvent* event)
 {
 	if (event->key() == Qt::Key_Control)
 	{
-//		if (signalProcessor->ready())
-//		{
-//			updateSelectedTrack();
-//			update();
-//		}
-
 		if (isDrawingEvent == false)
 		{
 			isSelectingTrack = true;
@@ -347,7 +341,7 @@ void Canvas::keyPressEvent(QKeyEvent* event)
 	}
 	else
 	{
-		QOpenGLWidget::keyPressEvent(event);
+		event->ignore();
 	}
 }
 
@@ -359,13 +353,9 @@ void Canvas::keyReleaseEvent(QKeyEvent* event)
 
 		update();
 	}
-	else
-	{
-		QOpenGLWidget::keyReleaseEvent(event);
-	}
 }
 
-void Canvas::mouseMoveEvent(QMouseEvent* event)
+void Canvas::mouseMoveEvent(QMouseEvent* /*event*/)
 {
 	if (signalProcessor->ready())
 	{
@@ -375,14 +365,7 @@ void Canvas::mouseMoveEvent(QMouseEvent* event)
 		{
 			update();
 		}
-
-		//callBase = false;
 	}
-
-//	if (callBase)
-//	{
-//		QOpenGLWidget::mouseMoveEvent(event);
-//	}
 }
 
 void Canvas::mousePressEvent(QMouseEvent* event)
@@ -413,10 +396,6 @@ void Canvas::mousePressEvent(QMouseEvent* event)
 			}
 		}
 	}
-	else
-	{
-		QOpenGLWidget::mousePressEvent(event);
-	}
 }
 
 void Canvas::mouseReleaseEvent(QMouseEvent* event)
@@ -428,13 +407,9 @@ void Canvas::mouseReleaseEvent(QMouseEvent* event)
 			isDrawingEvent = false;
 
 			addEvent(eventTrack);
-		}
 
-		update();
-	}
-	else
-	{
-		QOpenGLWidget::mouseReleaseEvent(event);
+			update();
+		}		
 	}
 }
 
@@ -443,14 +418,17 @@ void Canvas::focusOutEvent(QFocusEvent* /*event*/)
 	if (isSelectingTrack)
 	{
 		isSelectingTrack = false;
+		update();
 	}
-
-	if (isDrawingEvent)
+	else if (isDrawingEvent)
 	{
 		isDrawingEvent = false;
+		update();
 	}
+}
 
-	update();
+void Canvas::focusInEvent(QFocusEvent* /*event*/)
+{
 }
 
 void Canvas::drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& eventVector)
