@@ -25,6 +25,21 @@ Manager::Manager(QWidget* parent) : QWidget(parent, Qt::Window)
 
 	tableView->setSelectionMode(QAbstractItemView::ContiguousSelection);
 
+	tableView->setContextMenuPolicy(Qt::ActionsContextMenu);
+
+	// Add some actions to the tableView.
+	QAction* addRowAction = new QAction("Add Row", this);
+	//addRowAction->setShortcut(QKeySequence());
+	//addRowAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+	connect(addRowAction, SIGNAL(triggered()), this, SLOT(addRow()));
+	tableView->addAction(addRowAction);
+
+	QAction* removeRowsAction = new QAction("Remove Rows", this);
+	removeRowsAction->setShortcut(QKeySequence::Delete);
+	removeRowsAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+	connect(removeRowsAction, SIGNAL(triggered()), this, SLOT(removeRows()));
+	tableView->addAction(removeRowsAction);
+
 	QAction* copyAction = new QAction("Copy", this);
 	copyAction->setShortcut(QKeySequence::Copy);
 	copyAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
@@ -32,8 +47,8 @@ Manager::Manager(QWidget* parent) : QWidget(parent, Qt::Window)
 	tableView->addAction(copyAction);
 
 	QAction* copyHtmlAction = new QAction("Copy HTML", this);
-	copyHtmlAction->setShortcut(QKeySequence("Ctrl+Shift+C"));
-	copyHtmlAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+	//copyHtmlAction->setShortcut(QKeySequence());
+	//copyHtmlAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
 	connect(copyHtmlAction, SIGNAL(triggered()), this, SLOT(copyHtml()));
 	tableView->addAction(copyHtmlAction);
 
@@ -43,17 +58,11 @@ Manager::Manager(QWidget* parent) : QWidget(parent, Qt::Window)
 	connect(pasteAction, SIGNAL(triggered()), this, SLOT(paste()));
 	tableView->addAction(pasteAction);
 
-	QAction* delAction = new QAction("Delete", this);
-	delAction->setShortcut(QKeySequence::Delete);
-	delAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
-	connect(delAction, SIGNAL(triggered()), this, SLOT(removeRows()));
-	tableView->addAction(delAction);
-
 	// Construct other.
 	QPushButton* addRowButton = new QPushButton("Add Row", this);
 	connect(addRowButton, SIGNAL(clicked()), this, SLOT(addRow()));
 
-	QPushButton* removeRowButton = new QPushButton("Remove Rows (DEL)", this);
+	QPushButton* removeRowButton = new QPushButton("Remove Rows", this);
 	connect(removeRowButton, SIGNAL(clicked()), this, SLOT(removeRows()));
 
 	// Add the widgets to a layout.

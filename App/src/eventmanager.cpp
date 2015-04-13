@@ -19,7 +19,7 @@ EventManager::EventManager(QWidget* parent) : Manager(parent)
 	connect(goToAction, SIGNAL(triggered()), this, SLOT(goToEvent()));
 	tableView->addAction(goToAction);
 
-	QPushButton* goToButton = new QPushButton("Go To (G)", this);
+	QPushButton* goToButton = new QPushButton("Go To", this);
 	connect(goToButton, SIGNAL(clicked()), this, SLOT(goToEvent()));
 	addButton(goToButton);
 }
