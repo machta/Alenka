@@ -4,6 +4,7 @@
 #include "error.h"
 #include "myapplication.h"
 
+#include <QLocale>
 #include <QSurfaceFormat>
 #include <clFFT.h>
 
@@ -76,6 +77,10 @@ int main(int ac, char** av)
 		}
 		else
 		{
+			// Set locale;
+			QLocale locale("en_us");
+			QLocale::setDefault(locale);
+
 			// Create application and show main window.
 			MyApplication app(ac, av);
 

@@ -392,21 +392,29 @@ void SignalFileBrowserWindow::lowpassComboBoxUpdate(const QString& text)
 	if (file != nullptr)
 	{
 		bool ok;
-		double tmp = text.toDouble(&ok);
-		file->getInfoTable()->setLowpassFrequency(ok ? tmp : 1000*1000*1000);
+		double tmp = locale().toDouble(text, &ok);
+		if (ok)
+		{
+			file->getInfoTable()->setLowpassFrequency(tmp);
+		}
+		else
+		{
+			lowpassComboBox->setCurrentIndex(0);
+		}
 	}
 }
 
 void SignalFileBrowserWindow::lowpassComboBoxUpdate(double value)
 {
 	if (file != nullptr)
-	{if (value < 0 || value > file->getSamplingFrequency()/2)
+	{
+		if (value < 0 || value > file->getSamplingFrequency()/2)
 		{
 			lowpassComboBox->setCurrentIndex(0);
 		}
 		else
 		{
-			lowpassComboBox->setCurrentText(QString::number(value, 'f', 2));
+			lowpassComboBox->setCurrentText(locale().toString(value, 'f', 2));
 		}
 	}
 }
@@ -416,8 +424,15 @@ void SignalFileBrowserWindow::highpassComboBoxUpdate(const QString& text)
 	if (file != nullptr)
 	{
 		bool ok;
-		double tmp = text.toDouble(&ok);
-		file->getInfoTable()->setHighpassFrequency(ok ? tmp : -1000*1000*1000);
+		double tmp = locale().toDouble(text, &ok);
+		if (ok)
+		{
+			file->getInfoTable()->setHighpassFrequency(tmp);
+		}
+		else
+		{
+			lowpassComboBox->setCurrentIndex(0);
+		}
 	}
 }
 
@@ -431,7 +446,7 @@ void SignalFileBrowserWindow::highpassComboBoxUpdate(double value)
 		}
 		else
 		{
-			highpassComboBox->setCurrentText(QString::number(value, 'f', 2));
+			highpassComboBox->setCurrentText(locale().toString(value, 'f', 2));
 		}
 	}
 }

@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <QLocale>
 
 using namespace std;
 
@@ -149,7 +150,10 @@ QVariant EventTypeTable::data(const QModelIndex& index, int role) const
 			switch (static_cast<Column>(index.column()))
 			{
 			case Column::opacity:
-				return QString::number(opacity[row]*100, 'f', 2) + "%";
+			{
+				QLocale locale;
+				return locale.toString(opacity[row]*100, 'f', 2) + "%";
+			}
 			default:
 				break;
 			}
