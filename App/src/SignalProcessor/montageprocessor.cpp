@@ -4,10 +4,9 @@
 
 using namespace std;
 
-MontageProcessor::MontageProcessor(unsigned int offset, unsigned int blockWidth) :
-	inputRowLength((offset + blockWidth + 4)/4), inputRowOffset(offset/4), outputRowLength(blockWidth/4)
+MontageProcessor::MontageProcessor(unsigned int offset, unsigned int blockWidth, int channelsInFile) :
+	inputRowLength((offset + blockWidth + 4)/4), inputRowOffset(offset/4), outputRowLength(blockWidth/4), channelsInFile(channelsInFile)
 {
-
 }
 
 MontageProcessor::~MontageProcessor()
@@ -39,6 +38,9 @@ void MontageProcessor::process(cl_mem inBuffer, cl_mem outBuffer, cl_command_que
 	checkErrorCode(err, CL_SUCCESS, "clSetKernelArg()");
 
 	err = clSetKernelArg(montageKernel, 4, sizeof(cl_int), &outputRowLength);
+	checkErrorCode(err, CL_SUCCESS, "clSetKernelArg()");
+
+	err = clSetKernelArg(montageKernel, 5, sizeof(cl_int), &channelsInFile);
 	checkErrorCode(err, CL_SUCCESS, "clSetKernelArg()");
 
 	size_t globalWorkSize = outputRowLength;

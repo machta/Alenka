@@ -223,7 +223,7 @@ void SignalProcessor::changeFile(DataFile* file)
 		// Construct the filter and montage processors.
 		filterProcessor = new FilterProcessor(M, blockSize + offset, file->getChannelCount(), context);
 
-		montageProcessor = new MontageProcessor(offset, blockSize);
+		montageProcessor = new MontageProcessor(offset, blockSize, file->getChannelCount());
 
 		// Construct the cache.
 		onlineFilter = PROGRAM_OPTIONS["onlineFilter"].as<bool>();

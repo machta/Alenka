@@ -58,15 +58,15 @@ string Montage::buildSource(const vector<string>& sources)
 	// TODO: add proper indentation
 	string src;
 
-	src += "typedef float4 in_type;\n"
-		   "#define PARA __global in_type* _input_, int _inputRowLength_, int _inputRowOffset_\n"
-		   "#define PASS _input_, _inputRowLength_, _inputRowOffset_\n\n"
-		   "in_type in(int i, PARA) { return _input_[_inputRowLength_*i + _inputRowOffset_ + get_global_id(0)]; }\n"
+	src += "typedef float4 in_type;\n\n"
+		   "#define PARA __global in_type* _input_, int _inputRowLength_, int _inputRowOffset_, int _channelsInFile_\n"
+		   "#define PASS _input_, _inputRowLength_, _inputRowOffset_, _channelsInFile_\n\n"
+		   "in_type in(int i, PARA) { return 0 <= i && i < _channelsInFile_ ? _input_[_inputRowLength_*i + _inputRowOffset_ + get_global_id(0)] : NAN; }\n"
 		   "#define in(a_) in(a_, PASS)\n\n";
 
 	src += readHeader();
 
-	src += "\n\n__kernel void montage(__global in_type* _input_, __global in_type* _output_, int _inputRowLength_, int _inputRowOffset_, int _outputRowLength_)\n{\n\n";
+	src += "\n\n__kernel void montage(__global in_type* _input_, __global in_type* _output_, int _inputRowLength_, int _inputRowOffset_, int _outputRowLength_, int _channelsInFile_)\n{\n\n";
 
 	for (unsigned int i = 0; i < sources.size(); ++i)
 	{

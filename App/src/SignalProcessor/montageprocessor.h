@@ -12,7 +12,7 @@
 class MontageProcessor
 {
 public:
-	MontageProcessor(unsigned int offset, unsigned int blockWidth);
+	MontageProcessor(unsigned int offset, unsigned int blockWidth, int channelsInFile);
 	~MontageProcessor();
 
 	void change(Montage* montage);
@@ -26,6 +26,7 @@ private:
 	cl_int inputRowLength;
 	cl_int inputRowOffset;
 	cl_int outputRowLength;
+	cl_int channelsInFile;
 	cl_kernel montageKernel = nullptr;
 	unsigned int numberOfRows;
 
