@@ -2,8 +2,8 @@
 #include "signalfilebrowserwindow.h"
 #include "openclcontext.h"
 #include "error.h"
+#include "myapplication.h"
 
-#include <QApplication>
 #include <QSurfaceFormat>
 #include <clFFT.h>
 
@@ -77,7 +77,7 @@ int main(int ac, char** av)
 		else
 		{
 			// Create application and show main window.
-			QApplication app(ac, av);
+			MyApplication app(ac, av);
 
 			SignalFileBrowserWindow window;
 			window.show();

@@ -38,7 +38,8 @@ HEADERS += \
     src/codeeditdialog.h \
     src/manager.h \
     src/DataFile/trackcodevalidator.h \
-    src/tracklabelbar.h
+    src/tracklabelbar.h \
+    src/myapplication.h
 
 SOURCES += \
     src/DataFile/gdf2.cpp \
@@ -75,7 +76,8 @@ SOURCES += \
     src/codeeditdialog.cpp \
     src/manager.cpp \
     src/DataFile/trackcodevalidator.cpp \
-    src/tracklabelbar.cpp
+    src/tracklabelbar.cpp \
+    src/myapplication.cpp
 
 DISTFILES += \
     kernels.cl \

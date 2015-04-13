@@ -1,17 +1,19 @@
 #include "manager.h"
 
+#include "myapplication.h"
+
 #include <QTableView>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QGridLayout>
 #include <QHeaderView>
 #include <QAction>
-#include <QApplication>
 #include <QClipboard>
 #include <QTextDocumentFragment>
 
 #include <sstream>
 #include <algorithm>
+#include <cassert>
 
 using namespace std;
 
@@ -172,7 +174,7 @@ void Manager::copy()
 		++iter;
 	}
 
-	QApplication::clipboard()->setText(text);
+	MyApplication::clipboard()->setText(text);
 }
 
 void Manager::copyHtml()
@@ -212,39 +214,54 @@ void Manager::copyHtml()
 
 	text += "</table>";
 
-	QApplication::clipboard()->setText(text);
+	MyApplication::clipboard()->setText(text);
 }
 
 void Manager::paste()
 {
 	QAbstractItemModel* model = tableView->model();
 
-	int row, startColumn;
+	int startRow, startColumn;
 
 	auto index = tableView->selectionModel()->currentIndex();
 	if (index.isValid())
 	{
-		row = index.row();
+		startRow = index.row();
 		startColumn = index.column();
 	}
 	else
 	{
-		row = startColumn = 0;
+		startRow = startColumn = 0;
 	}
 
-	stringstream textStream(QApplication::clipboard()->text().toStdString());
+	// Split the input into rows.
+	stringstream textStream(MyApplication::clipboard()->text().toStdString());
+	vector<string> lines;
 
 	while (textStream.good())
 	{
-		if (row >= model->rowCount())
-		{
-			model->insertRow(row);
-		}
+		lines.emplace_back("");
+		getline(textStream, lines.back());
+	}
 
-		string line;
-		getline(textStream, line);
+	// Ignore last empty row.
+	if (lines.size() >= 1 && lines.back() == "")
+	{
+		lines.pop_back();
+	}
 
-		stringstream lineStream(line);
+	// Insert rows back.
+	int rowsToInsert = startRow + lines.size() - model->rowCount();
+	if (rowsToInsert > 0)
+	{
+		bool res = model->insertRows(model->rowCount(), rowsToInsert);
+		assert(res == true);
+	}
+
+	// Process cells.
+	for (int row = 0; row < lines.size(); ++row)
+	{
+		stringstream lineStream(lines[row]);
 
 		int column = 0;
 
@@ -255,12 +272,10 @@ void Manager::paste()
 
 			if (startColumn + column < model->columnCount())
 			{
-				model->setData(model->index(row, startColumn + column), QVariant(QString::fromStdString(cell)));
+				model->setData(model->index(startRow + row, startColumn + column), QVariant(QString::fromStdString(cell)));
 			}
 
 			++column;
 		}
-
-		++row;
 	}
 }
