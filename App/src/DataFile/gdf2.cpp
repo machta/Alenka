@@ -4,6 +4,7 @@
 
 #include <QDateTime>
 #include <QDate>
+#include <QFile>
 
 #include <cstdlib>
 #include <algorithm>
@@ -21,8 +22,10 @@ GDF2::GDF2(const string& filePath) : DataFile(filePath)
 
 	string fp = filePath + ".gdf";
 
-	file = fopen(fp.c_str(), "r+b");
-	checkNotErrorCode(file, nullptr, "File '" << fp << "' not found.");
+	file = new QFile(fp.c_str());
+
+	bool res = file->open(QIODevice::ReadWrite);
+	checkErrorCode(res, true, "File '" << fp << "' could not be opened.");
 
 	// Load fixed header.
 	seekFile(0, true);
@@ -94,7 +97,7 @@ GDF2::GDF2(const string& filePath) : DataFile(filePath)
 
 	// Load variable header.
 	seekFile(2);
-	assert(ftell(file) == 256);
+	assert(file->pos() == 256);
 
 	vh.label = new char[getChannelCount()][16 + 1];
 	for (unsigned int i = 0; i < getChannelCount(); ++i)
@@ -153,7 +156,7 @@ GDF2::GDF2(const string& filePath) : DataFile(filePath)
 	vh.sensorInfo = new char[getChannelCount()][20];
 	readFile(*vh.sensorInfo, 20*getChannelCount());
 
-	assert(ftell(file) == static_cast<int>(256 + 256*getChannelCount()));
+	assert(file->pos() == 256 + 256*getChannelCount());
 
 	// Initialize other members.
 	samplesRecorded = vh.samplesPerRecord[0]*fh.numberOfDataRecords;
@@ -224,7 +227,7 @@ case a_:\
 
 GDF2::~GDF2()
 {
-	fclose(file);
+	delete file;
 	delete[] scale;
 	delete cache;
 
@@ -321,22 +324,6 @@ bool GDF2::load()
 	{
 		lock_guard<mutex> lock(fileMutex);
 
-		// Load event table info.
-		seekFile(startOfEventTable, true);
-
-		uint8_t eventTableMode;
-		readFile(&eventTableMode);
-
-		uint8_t nev[3];
-		readFile(nev, 3);
-		if (isLittleEndian == false)
-		{
-			changeEndianness(reinterpret_cast<char*>(nev), 3);
-		}
-		int numberOfEvents = nev[0] + nev[1]*256 + nev[2]*256*256;
-
-		seekFile(4);
-
 		// Add a default montage.
 		// TODO: handle unexpected values in event table and strange track labels
 		getMontageTable()->insertRowsBack();
@@ -352,10 +339,70 @@ bool GDF2::load()
 			defaultTracks->setLabel(vh.label[i], i);
 		}
 
+		// Load event table.
+		seekFile(startOfEventTable, true);
+
+		uint8_t eventTableMode;
+		readFile(&eventTableMode);
+
+		uint8_t nev[3];
+		readFile(nev, 3);
+		if (isLittleEndian == false)
+		{
+			changeEndianness(reinterpret_cast<char*>(nev), 3);
+		}
+		int numberOfEvents = nev[0] + nev[1]*256 + nev[2]*256*256;
+
+		seekFile(4);
+
 		readGdfEventTable(numberOfEvents, eventTableMode);
 	}
 
 	return true;
+}
+
+template<typename T>
+void GDF2::readFile(T* val, int elements)
+{
+	size_t read = file->read(reinterpret_cast<char*>(val), sizeof(T)*elements);
+	checkErrorCode(read, sizeof(T)*elements, "read() failed")
+
+	if (isLittleEndian == false)
+	{
+		for (int i = 0; i < elements; ++i)
+		{
+			changeEndianness(val + i);
+		}
+	}
+}
+
+void GDF2::seekFile(int64_t offset, bool fromStart)
+{
+	if (fromStart == false)
+	{
+		offset += file->pos();
+	}
+
+	bool res = file->seek(offset);
+	checkErrorCode(res, true, "seek() failed")
+}
+
+template<typename T>
+void GDF2::writeFile(const T* val, int elements)
+{
+	if (isLittleEndian == false)
+	{
+		for (int i = 0; i < elements; ++i)
+		{
+			T tmp = val[i];
+			changeEndianness(&tmp);
+			file->write(reinterpret_cast<char*>(&tmp), sizeof(T));
+		}
+	}
+	else
+	{
+		file->write(reinterpret_cast<const char*>(val), sizeof(T)*elements);
+	}
 }
 
 void GDF2::readGdfEventTable(int numberOfEvents, int eventTableMode)
@@ -501,7 +548,7 @@ void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSampl
 
 			seekFile(startOfData + recordI*samplesPerRecord*getChannelCount()*dataTypeSize, true);
 
-			freadChecked(record->data(), dataTypeSize, samplesPerRecord*getChannelCount(), file);
+			file->read(record->data(), dataTypeSize*samplesPerRecord*getChannelCount());
 
 			if (isLittleEndian == false)
 			{

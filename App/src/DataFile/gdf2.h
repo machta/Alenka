@@ -12,6 +12,7 @@
 #define GDF2_H
 
 class QDateTime;
+class QFile;
 
 class GDF2 : public DataFile
 {
@@ -47,11 +48,11 @@ protected:
 
 private:
 	std::mutex fileMutex;
-	FILE* file;
+	QFile* file;
 	double samplingFrequency;
 	uint64_t samplesRecorded;
-	size_t startOfData;
-	size_t startOfEventTable;
+	int64_t startOfData;
+	int64_t startOfEventTable;
 	bool isLittleEndian;
 	double* scale;
 	int dataTypeSize;
@@ -110,40 +111,10 @@ private:
 	template<typename T>
 	void readDataLocal(std::vector<T>* data, int64_t firstSample, int64_t lastSample);
 	template<typename T>
-	void readFile(T* val, int elements = 1)
-	{
-		freadChecked(val, sizeof(T), elements, file);
-
-		if (isLittleEndian == false)
-		{
-			for (int i = 0; i < elements; ++i)
-			{
-				changeEndianness(val + i);
-			}
-		}
-	}
-	void seekFile(size_t offset, bool fromStart = false)
-	{
-		int res = std::fseek(file, static_cast<long>(offset), fromStart ? SEEK_SET : SEEK_CUR);
-		checkErrorCode(res, 0, "seekFile(" << offset << ", " << fromStart << ") failed.");
-	}
+	void readFile(T* val, int elements = 1);
+	void seekFile(int64_t offset, bool fromStart = false);
 	template<typename T>
-	void writeFile(const T* val, int elements = 1)
-	{
-		if (isLittleEndian == false)
-		{
-			for (int i = 0; i < elements; ++i)
-			{
-				T tmp = val[i];
-				changeEndianness(&tmp);
-				fwriteChecked(&tmp, sizeof(T), 1, file);
-			}
-		}
-		else
-		{
-			fwriteChecked(const_cast<T*>(val), sizeof(T), elements, file);
-		}
-	}
+	void writeFile(const T* val, int elements = 1);
 	void readGdfEventTable(int numberOfEvents, int eventTableMode);
 };
 
