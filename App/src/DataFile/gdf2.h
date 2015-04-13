@@ -50,8 +50,8 @@ private:
 	FILE* file;
 	double samplingFrequency;
 	uint64_t samplesRecorded;
-	int startOfData;
-	int startOfEventTable;
+	size_t startOfData;
+	size_t startOfEventTable;
 	bool isLittleEndian;
 	double* scale;
 	int dataTypeSize;

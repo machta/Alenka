@@ -255,11 +255,12 @@ void Manager::paste()
 	if (rowsToInsert > 0)
 	{
 		bool res = model->insertRows(model->rowCount(), rowsToInsert);
-		assert(res == true);
+
+		assert(res == true); (void)res;
 	}
 
 	// Process cells.
-	for (int row = 0; row < lines.size(); ++row)
+	for (unsigned int row = 0; row < lines.size(); ++row)
 	{
 		stringstream lineStream(lines[row]);
 

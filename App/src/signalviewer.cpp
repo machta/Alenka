@@ -37,7 +37,7 @@ SignalViewer::~SignalViewer()
 	PROGRAM_OPTIONS.settings("SignalViewer splitter state", splitter->saveState());
 }
 
-void SignalViewer::changeFile(DataFile *file)
+void SignalViewer::changeFile(DataFile* file)
 {
 	canvas->changeFile(file);
 	trackLabelBar->changeFile(file);
