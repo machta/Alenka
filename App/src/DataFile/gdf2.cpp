@@ -342,6 +342,8 @@ bool GDF2::load()
 		getMontageTable()->insertRowsBack();
 
 		// Fill the track table of the default montage with channels from gdf.
+		assert(getChannelCount() > 0);
+
 		TrackTable* defaultTracks = getMontageTable()->getTrackTables()->back();
 		defaultTracks->insertRowsBack(getChannelCount());
 
@@ -350,71 +352,81 @@ bool GDF2::load()
 			defaultTracks->setLabel(vh.label[i], i);
 		}
 
-		// Fill the event table of the default montage with events from the event table in gdf.
-		EventTable* defaultEvents = getMontageTable()->getEventTables()->back();
-		defaultEvents->insertRowsBack(numberOfEvents);
-
-		for (int i = 0; i < numberOfEvents; ++i)
-		{
-			uint32_t position;
-			readFile(&position);
-			int tmp = position - 1;
-			defaultEvents->setPosition(tmp, i);
-		}
-
-		set<int> eventTypesUsed;
-
-		for (int i = 0; i < numberOfEvents; ++i)
-		{
-			uint16_t type;
-			readFile(&type);
-			eventTypesUsed.insert(type);
-			defaultEvents->setType(type, i);
-		}
-
-		for (int i = 0; i < numberOfEvents; ++i)
-		{
-			int type = defaultEvents->getType(i);
-
-			type = distance(eventTypesUsed.begin(), eventTypesUsed.find(type));
-
-			defaultEvents->setType(type, i);
-		}
-
-		if (eventTableMode & 0x02)
-		{
-			for (int i = 0; i < numberOfEvents; ++i)
-			{
-				uint16_t channel;
-				readFile(&channel);
-				int tmp = channel - 1;
-				defaultEvents->setChannel(tmp, i);
-			}
-
-			for (int i = 0; i < numberOfEvents; ++i)
-			{
-				uint32_t duration;
-				readFile(&duration);
-				defaultEvents->setDuration(duration, i);
-			}
-		}
-
-		// Add all event types used in the gdf event table.
-		for (const auto& e : eventTypesUsed)
-		{
-			int row = getEventTypeTable()->rowCount();
-
-			getEventTypeTable()->insertRowsBack();
-
-			std::stringstream ss;
-			ss << "Type " << e;
-
-			getEventTypeTable()->setId(e, row);
-			getEventTypeTable()->setName(ss.str(), row);
-		}
+		readGdfEventTable(numberOfEvents, eventTableMode);
 	}
 
 	return true;
+}
+
+void GDF2::readGdfEventTable(int numberOfEvents, int eventTableMode)
+{
+	if (numberOfEvents == 0)
+	{
+		return;
+	}
+
+	EventTable* defaultEvents = getMontageTable()->getEventTables()->back();
+
+	defaultEvents->insertRowsBack(numberOfEvents);
+
+	for (int i = 0; i < numberOfEvents; ++i)
+	{
+		uint32_t position;
+		readFile(&position);
+		int tmp = position - 1;
+		defaultEvents->setPosition(tmp, i);
+	}
+
+	set<int> eventTypesUsed;
+
+	for (int i = 0; i < numberOfEvents; ++i)
+	{
+		uint16_t type;
+		readFile(&type);
+		eventTypesUsed.insert(type);
+		defaultEvents->setType(type, i);
+	}
+
+	for (int i = 0; i < numberOfEvents; ++i)
+	{
+		int type = defaultEvents->getType(i);
+
+		type = distance(eventTypesUsed.begin(), eventTypesUsed.find(type));
+
+		defaultEvents->setType(type, i);
+	}
+
+	if (eventTableMode & 0x02)
+	{
+		for (int i = 0; i < numberOfEvents; ++i)
+		{
+			uint16_t channel;
+			readFile(&channel);
+			int tmp = channel - 1;
+			defaultEvents->setChannel(tmp, i);
+		}
+
+		for (int i = 0; i < numberOfEvents; ++i)
+		{
+			uint32_t duration;
+			readFile(&duration);
+			defaultEvents->setDuration(duration, i);
+		}
+	}
+
+	// Add all event types used in the gdf event table.
+	for (const auto& e : eventTypesUsed)
+	{
+		int row = getEventTypeTable()->rowCount();
+
+		getEventTypeTable()->insertRowsBack();
+
+		std::stringstream ss;
+		ss << "Type " << e;
+
+		getEventTypeTable()->setId(e, row);
+		getEventTypeTable()->setName(ss.str(), row);
+	}
 }
 
 template<typename T>

@@ -144,6 +144,7 @@ private:
 			fwriteChecked(const_cast<T*>(val), sizeof(T), elements, file);
 		}
 	}
+	void readGdfEventTable(int numberOfEvents, int eventTableMode);
 };
 
 #endif // GDF2_H
