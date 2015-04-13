@@ -1,6 +1,6 @@
-float4 sum(int from, int to, PARA)
+in_type sum(int from, int to, PARA)
 {
-	float4 tmp = 0;
+	in_type tmp = 0;
 	for (int i = from; i <= to; ++i)
 	{
 		tmp += in(i);

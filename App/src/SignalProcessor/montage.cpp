@@ -58,14 +58,15 @@ string Montage::buildSource(const vector<string>& sources)
 	// TODO: add proper indentation
 	string src;
 
-	src += "#define PARA __global float4* _input_, int _inputRowLength_, int _inputRowOffset_\n"
+	src += "typedef float4 in_type;\n"
+		   "#define PARA __global in_type* _input_, int _inputRowLength_, int _inputRowOffset_\n"
 		   "#define PASS _input_, _inputRowLength_, _inputRowOffset_\n\n"
-		   "float4 in(int i, PARA) { return _input_[_inputRowLength_*i + _inputRowOffset_ + get_global_id(0)]; }\n"
+		   "in_type in(int i, PARA) { return _input_[_inputRowLength_*i + _inputRowOffset_ + get_global_id(0)]; }\n"
 		   "#define in(a_) in(a_, PASS)\n\n";
 
 	src += readHeader();
 
-	src += "\n\n__kernel void montage(__global float4* _input_, __global float4* _output_, int _inputRowLength_, int _inputRowOffset_, int _outputRowLength_)\n{\n\n";
+	src += "\n\n__kernel void montage(__global in_type* _input_, __global in_type* _output_, int _inputRowLength_, int _inputRowOffset_, int _outputRowLength_)\n{\n\n";
 
 	for (unsigned int i = 0; i < sources.size(); ++i)
 	{
@@ -84,7 +85,7 @@ string Montage::montageRow(unsigned int row, const string& code)
 	stringstream ss;
 
 	ss << "{" << endl;
-	ss << "float4 out = 0;" << endl;
+	ss << "in_type out = 0;" << endl;
 	ss << "{" << endl;
 	ss << code << endl;
 	ss << "}" << endl;
@@ -95,8 +96,8 @@ string Montage::montageRow(unsigned int row, const string& code)
 	}
 	else
 	{
-		ss << "float4 output1 = out.s0011;" << endl;
-		ss << "float4 output2 = out.s2233;" << endl;
+		ss << "in_type output1 = out.s0011;" << endl;
+		ss << "in_type output2 = out.s2233;" << endl;
 		ss << "int outputIndex = 2*(_outputRowLength_*" << row << " + get_global_id(0));" << endl;
 		ss << "_output_[outputIndex] = output1;" << endl;
 		ss << "_output_[outputIndex + 1] = output2;" << endl;

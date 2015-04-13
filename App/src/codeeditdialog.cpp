@@ -16,7 +16,7 @@ CodeEditDialog::CodeEditDialog(QWidget* parent) : QDialog(parent)
 
 	QVBoxLayout* box = new QVBoxLayout;
 
-	box->addWidget(new QLabel("Input and output definition: \n\tfloat4 out = 0;\n\tfloat4 in(int);\nReserved names are of the form _*_ plus all OpenCL reserved names are forbidden.\nFunctions from montageHeader.cl file:", this)); // TODO: Move these to help sub dialog.
+	box->addWidget(new QLabel("Input and output definition: \n\tin_type out = 0;\n\tin_type in(int);\nReserved names are of the form _*_ plus all OpenCL reserved names are forbidden.\nFunctions from montageHeader.cl file:", this)); // TODO: Move these to help sub dialog.
 
 	QTextEdit* header = new QTextEdit(this);
 	header->setPlainText(QString::fromStdString(Montage::readHeader()));
