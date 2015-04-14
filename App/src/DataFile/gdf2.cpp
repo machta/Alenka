@@ -79,6 +79,11 @@ GDF2::GDF2(const string& filePath) : DataFile(filePath)
 
 	readFile(&fh.numberOfDataRecords);
 
+	if (fh.numberOfDataRecords < 0)
+	{
+		runtime_error("GDF file with unknown number of data recors is not supported.");
+	}
+
 	double duration;
 	if (version > 220)
 	{
