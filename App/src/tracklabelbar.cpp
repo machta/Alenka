@@ -61,7 +61,9 @@ void TrackLabelBar::paintEvent(QPaintEvent* /*event*/)
 	painter.setFont(font);
 
 	int hidden = 0;
-	for (int track = 0; track < totalTracks; ++track)
+	int track = 0;
+
+	while (track < totalTracks)
 	{
 		if (trackTable->getHidden(track + hidden) == false)
 		{
@@ -76,6 +78,8 @@ void TrackLabelBar::paintEvent(QPaintEvent* /*event*/)
 			double x = 2;
 
 			painter.drawText(QPointF(x, y), QString::fromStdString(trackTable->getLabel(track + hidden)));
+
+			++track;
 		}
 		else
 		{
