@@ -78,6 +78,14 @@ QWidget* TrackManagerDelegate::createEditor(QWidget* parent, const QStyleOptionV
 		spinBox->setRange(std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max());
 		return spinBox;
 	}
+	case TrackTable::Column::hidden:
+	{
+		const_cast<QAbstractItemModel*>(index.model())->setData(index, !index.data(Qt::EditRole).toBool());
+
+		emit const_cast<TrackManagerDelegate*>(this)->closeEditor(nullptr);
+
+		return nullptr;
+	}
 	default:
 		break;
 	}

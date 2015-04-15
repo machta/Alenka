@@ -42,6 +42,14 @@ QWidget* EventTypeManagerDelegate::createEditor(QWidget* parent, const QStyleOpt
 
 		return lineEdit;
 	}
+	case EventTypeTable::Column::hidden:
+	{
+		const_cast<QAbstractItemModel*>(index.model())->setData(index, !index.data(Qt::EditRole).toBool());
+
+		emit const_cast<EventTypeManagerDelegate*>(this)->closeEditor(nullptr);
+
+		return nullptr;
+	}
 	default:
 		break;
 	}
