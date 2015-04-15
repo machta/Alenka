@@ -39,30 +39,30 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	// Construct dock widgets.
 	setDockNestingEnabled(true);
 
-	QDockWidget* dockWidget1 = new QDockWidget("Track Manager", this);
-	dockWidget1->setObjectName("Track Manager QDockWidget");
+	QDockWidget* trackManagerDockWidget = new QDockWidget("Track Manager", this);
+	trackManagerDockWidget->setObjectName("Track Manager QDockWidget");
 	trackManager = new TrackManager(this);
-	dockWidget1->setWidget(trackManager);
+	trackManagerDockWidget->setWidget(trackManager);
 
-	QDockWidget* dockWidget2 = new QDockWidget("Event Manager", this);
-	dockWidget2->setObjectName("Event Manager QDockWidget");
+	QDockWidget* eventManagerDockWidget = new QDockWidget("Event Manager", this);
+	eventManagerDockWidget->setObjectName("Event Manager QDockWidget");
 	eventManager = new EventManager(this);
-	dockWidget2->setWidget(eventManager);
+	eventManagerDockWidget->setWidget(eventManager);
 
-	QDockWidget* dockWidget3 = new QDockWidget("EventType Manager", this);
-	dockWidget3->setObjectName("EventType Manager QDockWidget");
+	QDockWidget* eventTypeDockWidget = new QDockWidget("EventType Manager", this);
+	eventTypeDockWidget->setObjectName("EventType Manager QDockWidget");
 	eventTypeManager = new EventTypeManager(this);
-	dockWidget3->setWidget(eventTypeManager);
+	eventTypeDockWidget->setWidget(eventTypeManager);
 
-	QDockWidget* dockWidget4 = new QDockWidget("Montage Manager", this);
-	dockWidget4->setObjectName("Montage Manager QDockWidget");
+	QDockWidget* montageManagerDockWidget = new QDockWidget("Montage Manager", this);
+	montageManagerDockWidget->setObjectName("Montage Manager QDockWidget");
 	montageManager = new MontageManager(this);
-	dockWidget4->setWidget(montageManager);
+	montageManagerDockWidget->setWidget(montageManager);
 
-	addDockWidget(Qt::RightDockWidgetArea, dockWidget1);
-	tabifyDockWidget(dockWidget1, dockWidget2);
-	tabifyDockWidget(dockWidget2, dockWidget3);
-	tabifyDockWidget(dockWidget3, dockWidget4);
+	addDockWidget(Qt::RightDockWidgetArea, trackManagerDockWidget);
+	tabifyDockWidget(trackManagerDockWidget, eventManagerDockWidget);
+	tabifyDockWidget(eventManagerDockWidget, eventTypeDockWidget);
+	tabifyDockWidget(eventTypeDockWidget, montageManagerDockWidget);
 
 	// Construct File actions.
 	QAction* openFileAction = new QAction("&Open File", this);
@@ -122,32 +122,11 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	timeModeAction2->setActionGroup(timeModeActionGroup);
 	timeModeAction2->setCheckable(true);
 
-	// Construct File menu.
-	QMenu* fileMenu = menuBar()->addMenu("&File");
-
-	fileMenu->addAction(openFileAction);
-	fileMenu->addAction(closeFileAction);
-	fileMenu->addAction(saveFileAction);
-
-	// Construct View menu.
-	QMenu* vievMenu = menuBar()->addMenu("&View");
-
-	vievMenu->addAction(horizontalZoomInAction);
-	vievMenu->addAction(horizontalZoomOutAction);
-	vievMenu->addAction(verticalZoomInAction);
-	vievMenu->addAction(verticalZoomOutAction);
-
-	QMenu* timeModeMenu = new QMenu("Time Mode", this);
-	timeModeMenu->addAction(timeModeAction0);
-	timeModeMenu->addAction(timeModeAction1);
-	timeModeMenu->addAction(timeModeAction2);
-	vievMenu->addMenu(timeModeMenu);
-
 	// Toolbars.
 	const int spacing = 3;
 
 	// Construct File toolbar.
-	QToolBar* fileToolBar = addToolBar("File");
+	QToolBar* fileToolBar = addToolBar("File Toolbar");
 	fileToolBar->setObjectName("File QToolBar");
 	fileToolBar->layout()->setSpacing(spacing);
 
@@ -156,7 +135,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	fileToolBar->addAction(saveFileAction);
 
 	// Construct Filter toolbar.
-	QToolBar* filterToolBar = addToolBar("Filter");
+	QToolBar* filterToolBar = addToolBar("Filter Toolbar");
 	filterToolBar->setObjectName("Filter QToolBar");
 	filterToolBar->layout()->setSpacing(spacing);
 
@@ -179,7 +158,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	filterToolBar->addWidget(notchCheckBox);
 
 	// Construct Select toolbar.
-	QToolBar* selectToolBar = addToolBar("Select");
+	QToolBar* selectToolBar = addToolBar("Select Toolbar");
 	selectToolBar->setObjectName("Select QToolBar");
 	selectToolBar->layout()->setSpacing(spacing);
 
@@ -196,7 +175,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	selectToolBar->addWidget(eventTypeComboBox);
 
 	// Construct Zoom toolbar.
-	QToolBar* zoomToolBar = addToolBar("Zoom");
+	QToolBar* zoomToolBar = addToolBar("Zoom Toolbar");
 	zoomToolBar->setObjectName("Zoom QToolBar");
 	zoomToolBar->layout()->setSpacing(spacing);
 
@@ -204,6 +183,41 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	zoomToolBar->addAction(horizontalZoomOutAction);
 	zoomToolBar->addAction(verticalZoomInAction);
 	zoomToolBar->addAction(verticalZoomOutAction);
+
+	// Construct File menu.
+	QMenu* fileMenu = menuBar()->addMenu("&File");
+
+	fileMenu->addAction(openFileAction);
+	fileMenu->addAction(closeFileAction);
+	fileMenu->addAction(saveFileAction);
+
+	// Construct View menu.
+	QMenu* viewMenu = menuBar()->addMenu("&View");
+
+	viewMenu->addAction(horizontalZoomInAction);
+	viewMenu->addAction(horizontalZoomOutAction);
+	viewMenu->addAction(verticalZoomInAction);
+	viewMenu->addAction(verticalZoomOutAction);
+
+	QMenu* timeModeMenu = new QMenu("Time Mode", this);
+	timeModeMenu->addAction(timeModeAction0);
+	timeModeMenu->addAction(timeModeAction1);
+	timeModeMenu->addAction(timeModeAction2);
+	viewMenu->addMenu(timeModeMenu);
+
+	// Construct Window menu.
+	QMenu* windowMenu = menuBar()->addMenu("&Window");
+
+	windowMenu->addAction(trackManagerDockWidget->toggleViewAction());
+	windowMenu->addAction(eventManagerDockWidget->toggleViewAction());
+	windowMenu->addAction(eventTypeDockWidget->toggleViewAction());
+	windowMenu->addAction(montageManagerDockWidget->toggleViewAction());
+
+	windowMenu->addSeparator();
+	windowMenu->addAction(fileToolBar->toggleViewAction());
+	windowMenu->addAction(filterToolBar->toggleViewAction());
+	windowMenu->addAction(selectToolBar->toggleViewAction());
+	windowMenu->addAction(zoomToolBar->toggleViewAction());
 
 	// Construct status bar.
 	timeStatusLabel = new QLabel(this);
