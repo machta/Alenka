@@ -208,7 +208,7 @@ void GPUCache::enqueuCopy(cl_mem source, cl_mem destination, cl_event readyEvent
 	}
 }
 
-void GPUCache::signalEventCallback(cl_event callbackEvent, cl_int status, void* data)
+void CL_CALLBACK GPUCache::signalEventCallback(cl_event callbackEvent, cl_int status, void* data)
 {
 	try
 	{

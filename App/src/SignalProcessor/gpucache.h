@@ -83,7 +83,7 @@ private:
 		return false;
 	}
 	void enqueuCopy(cl_mem source, cl_mem destination, cl_event readyEvent);
-	static void signalEventCallback(cl_event callbackEvent, cl_int status, void* data);
+	static void CL_CALLBACK signalEventCallback(cl_event callbackEvent, cl_int status, void* data);
 };
 
 #endif // GPUCACHE_H
