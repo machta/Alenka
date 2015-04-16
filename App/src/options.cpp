@@ -38,7 +38,7 @@ Options::Options(int ac, char** av) : programSettings("Martin Barta", "ZSBS")
 	("powerFrequency", value<double>()->default_value(50), "frequency used to filter power interference with the signal")
 	("onlineFilter", value<bool>()->default_value(false), "should the signal be filtered everytime before it is rendered")
 	("eventRenderMode", value<int>()->default_value(2), "controls rendering of single-channel events; accepted values (from simplest mode) are 1, 2")
-	("prepareFrames", value<unsigned int>()->default_value(2), "how many frames should be prepared in memory")
+	("prepareFrames", value<unsigned int>()->default_value(0), "how many frames should be prepared in memory")
 	("logFileName", value<string>()->default_value("%Y-%m-%d--%H-%M-%S.log"), "string passed to strftime() to create the file name")
 
 	("montageFile", value<string>(), "definition of the montage, one row per line")

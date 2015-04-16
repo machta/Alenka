@@ -58,3 +58,35 @@ void SignalViewer::changeFile(DataFile* file)
 		infoTable = nullptr;
 	}
 }
+
+void SignalViewer::resize(int virtualWidth)
+{
+	int page = canvas->width();
+
+	scrollBar->setRange(0, virtualWidth - page - 1);
+	scrollBar->setPageStep(page);
+	scrollBar->setSingleStep(std::max(1, page/20));
+}
+
+void SignalViewer::setVirtualWidth(int value)
+{
+	// This version mantains the position of the left canvas edge.
+//	double relPosition = scrollBar->value();
+//	relPosition /= virtualWidthFromScrollBar();
+
+//	resize(value);
+
+//	setPosition(std::round(relPosition*value));
+
+//	canvas->update();
+
+	// This version makes sure that the position indicator stays at the same time.
+	double oldPosition = scrollBar->value() + getInfoTable()->getPositionIndicator()*canvas->width();
+	double ratio = static_cast<double>(value)/virtualWidthFromScrollBar();
+
+	resize(value);
+
+	setPosition(std::round(oldPosition*ratio - getInfoTable()->getPositionIndicator()*canvas->width()));
+
+	canvas->update();
+}

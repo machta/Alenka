@@ -48,6 +48,10 @@ public:
 	SignalBlock getAnyBlock(const std::set<int>& indexSet);
 	void prepareBlock(int index)
 	{
+		// Preparing of blocks is turned off for the moment.
+		assert(0);
+		return;
+
 		assert(ready());
 
 		cl_int err;

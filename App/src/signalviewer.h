@@ -74,27 +74,14 @@ private:
 			return &defaultInfoTable;
 		}
 	}
-	void resize(int virtualWidth)
+	void resize(int virtualWidth);
+	int virtualWidthFromScrollBar()
 	{
-		int page = canvas->size().width();
-
-		scrollBar->setRange(0, virtualWidth - page - 1);
-		scrollBar->setPageStep(page);
-		scrollBar->setSingleStep(std::max(1, page/20));
+		return scrollBar->maximum() + scrollBar->pageStep() + 1 - scrollBar->minimum();
 	}
 
 private slots:
-	void setVirtualWidth(int value)
-	{
-		double relPosition = scrollBar->value();
-		relPosition /= (scrollBar->maximum() - scrollBar->minimum() + 1);
-
-		resize(value);
-
-		setPosition(static_cast<int>(std::round(relPosition*(scrollBar->maximum() - scrollBar->minimum() + 1))));
-
-		canvas->update();
-	}
+	void setVirtualWidth(int value);
 	void setPosition(int value)
 	{
 		scrollBar->setValue(value);

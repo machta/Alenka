@@ -7,6 +7,7 @@
 #include <QFile>
 #include <QDateTime>
 #include <QDate>
+#include <QLocale>
 
 #include <cassert>
 
@@ -57,6 +58,8 @@ QDateTime DataFile::sampleToOffset(int sample)
 
 QString DataFile::sampleToDateTimeString(int sample, InfoTable::TimeMode mode)
 {
+	QLocale locale;
+
 	if (mode == InfoTable::TimeMode::size)
 	{
 		mode = infoTable.getTimeMode();
@@ -69,11 +72,11 @@ QString DataFile::sampleToDateTimeString(int sample, InfoTable::TimeMode mode)
 	else if (mode == InfoTable::TimeMode::offset)
 	{
 		QDateTime date = sampleToOffset(sample);
-		return QString::number(date.date().day() - 1) + "d " + date.toString("hh:mm:ss.zzz");
+		return QString::number(date.date().day() - 1) + "d " + date.toString("hh:mm:ss" + QString(locale.decimalPoint()) + "zzz");
 	}
 	else if (mode == InfoTable::TimeMode::real)
 	{
-		return sampleToDate(sample).toString("d.M.yyyy hh:mm:ss.zzz");
+		return sampleToDate(sample).toString("d.M.yyyy hh:mm:ss" + QString(locale.decimalPoint()) + "zzz");
 	}
 
 	return QString();

@@ -274,10 +274,12 @@ void Canvas::paintGL()
 
 		drawPositionIndicator();
 
-		// Prepare some blocks for the next frame.
-		int cap = min(PROGRAM_OPTIONS["prepareFrames"].as<unsigned int>()*indexSet.size(), signalProcessor->getCapacity() - indexSet.size());
+		//gl()->glFinish();
 
-		prepare(indexSet.size(), 0, static_cast<int>(ceil(getInfoTable()->getVirtualWidth()*ratio)), fromTo.first - indexSet.size(), fromTo.second + indexSet.size(), cap);
+		// Prepare some blocks for the next frame.
+		//int cap = min(PROGRAM_OPTIONS["prepareFrames"].as<unsigned int>()*indexSet.size(), signalProcessor->getCapacity() - indexSet.size());
+
+		//prepare(indexSet.size(), 0, static_cast<int>(ceil(getInfoTable()->getVirtualWidth()*ratio)), fromTo.first - indexSet.size(), fromTo.second + indexSet.size(), cap);
 	}
 
 	gl()->glBindVertexArray(0);
@@ -532,7 +534,7 @@ void Canvas::drawTimeLines()
 	gl()->glBindVertexArray(rectangleLineArray);
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleLineBuffer);
 
-	setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::green), 0.5);
+	setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::green), 1);
 
 	double ratio = samplesRecorded/getInfoTable()->getVirtualWidth();
 	interval *= samplingFrequency;

@@ -155,8 +155,15 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	{
 		if (file != nullptr)
 		{
+			double value = file->getInfoTable()->getTimeLineInterval();
+			if (value == 0)
+			{
+				value = 1;
+			}
+
 			bool ok;
-			double value = QInputDialog::getDouble(this, "Set the interval", "Please, enter the value for the time line interval here:", file->getInfoTable()->getTimeLineInterval(), 0, 1000*1000*1000, 2, &ok);
+			value = QInputDialog::getDouble(this, "Set the interval", "Please, enter the value for the time line interval here:", value, 0, 1000*1000*1000, 2, &ok);
+
 			if (ok)
 			{
 				file->getInfoTable()->setTimeLineInterval(value);
