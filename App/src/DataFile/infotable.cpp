@@ -61,6 +61,8 @@ void InfoTable::read(QXmlStreamReader* xml)
 		}
 
 		readNumericElement(selectedType, toInt);
+		readNumericElement(timeLineInterval, toDouble);
+		readNumericElement(positionIndicator, toDouble);
 
 		xml->skipCurrentElement();
 	}

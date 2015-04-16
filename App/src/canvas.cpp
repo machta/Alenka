@@ -34,12 +34,12 @@ Canvas::~Canvas()
 	delete signalProcessor;
 	delete signalProgram;
 	delete eventProgram;
-	delete rectangleProgram;
+	delete rectangleLineProgram;
 
 	makeCurrent();
 
-	gl()->glDeleteVertexArrays(1, &rectangleArray);
-	gl()->glDeleteBuffers(1, &rectangleBuffer);
+	gl()->glDeleteVertexArrays(1, &rectangleLineArray);
+	gl()->glDeleteBuffers(1, &rectangleLineBuffer);
 
 	gl();
 
@@ -75,6 +75,7 @@ void Canvas::changeFile(DataFile* file)
 		connect(infoTable, SIGNAL(positionChanged(int)), this, SLOT(updateCursor()));
 
 		samplesRecorded = file->getSamplesRecorded();
+		samplingFrequency = file->getSamplingFrequency();
 	}
 
 	doneCurrent();
@@ -103,7 +104,7 @@ void Canvas::updateCursor()
 		QPoint pos = mapFromGlobal(QCursor::pos());
 
 		double ratio = samplesRecorded/getInfoTable()->getVirtualWidth();
-		int sample = (pos.x() + getInfoTable()->getPosition())*ratio;
+		int sample = round((pos.x() + getInfoTable()->getPosition())*ratio);
 
 		double trackHeigth = static_cast<double>(height())/signalProcessor->getTrackCount();
 		int track = static_cast<int>(pos.y()/trackHeigth);
@@ -113,8 +114,7 @@ void Canvas::updateCursor()
 
 		if (isDrawingEvent)
 		{
-			double ratio = samplesRecorded/getInfoTable()->getVirtualWidth();
-			eventEnd = (pos.x() + getInfoTable()->getPosition())*ratio;
+			eventEnd = sample;
 
 			update();
 		}
@@ -151,19 +151,19 @@ void Canvas::initializeGL()
 	FILE* eventVert = fopen("event.vert", "rb");
 	checkNotErrorCode(eventVert, nullptr, "File 'event.vert' could not be opened.");
 
-	FILE* rectangleVert = fopen("rectangle.vert", "rb");
-	checkNotErrorCode(rectangleVert, nullptr, "File 'rectangle.vert' could not be opened.");
+	FILE* rectangleLineVert = fopen("rectangleLine.vert", "rb");
+	checkNotErrorCode(rectangleLineVert, nullptr, "File 'rectangleLine.vert' could not be opened.");
 
 	FILE* colorFrag = fopen("color.frag", "rb");
 	checkNotErrorCode(colorFrag, nullptr, "File 'color.frag could' not be opened.");
 
 	signalProgram = new OpenGLProgram(signalVert, colorFrag);
 	eventProgram = new OpenGLProgram(eventVert, colorFrag);
-	rectangleProgram = new OpenGLProgram(rectangleVert, colorFrag);
+	rectangleLineProgram = new OpenGLProgram(rectangleLineVert, colorFrag);
 
 	fclose(signalVert);
 	fclose(eventVert);
-	fclose(rectangleVert);
+	fclose(rectangleLineVert);
 	fclose(colorFrag);
 
 	gl()->glEnable(GL_BLEND);
@@ -171,11 +171,11 @@ void Canvas::initializeGL()
 
 	gl()->glClearColor(1, 1, 1, 0);
 
-	gl()->glGenVertexArrays(1, &rectangleArray);
-	gl()->glGenBuffers(1, &rectangleBuffer);
+	gl()->glGenVertexArrays(1, &rectangleLineArray);
+	gl()->glGenBuffers(1, &rectangleLineBuffer);
 
-	gl()->glBindVertexArray(rectangleArray);
-	gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleBuffer);
+	gl()->glBindVertexArray(rectangleLineArray);
+	gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleLineBuffer);
 	gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(0));
 	gl()->glEnableVertexAttribArray(0);
 
@@ -224,9 +224,9 @@ void Canvas::paintGL()
 		checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
 		gl()->glUniform1f(location, 0.45*height()/signalProcessor->getTrackCount());
 
-		gl()->glUseProgram(rectangleProgram->getGLProgram());
+		gl()->glUseProgram(rectangleLineProgram->getGLProgram());
 
-		location = gl()->glGetUniformLocation(rectangleProgram->getGLProgram(), "transformMatrix");
+		location = gl()->glGetUniformLocation(rectangleLineProgram->getGLProgram(), "transformMatrix");
 		checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
 		gl()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
 
@@ -252,12 +252,12 @@ void Canvas::paintGL()
 		// Get events.
 		vector<tuple<int, int, int>> allChannelEvents;
 		vector<tuple<int, int, int, int>> singleChannelEvents;
-
 		currentEventTable()->getEventsForRendering(firstSample, lastSample, &allChannelEvents, &singleChannelEvents);
 
+		// Draw.
+		drawTimeLines();
 		drawAllChannelEvents(allChannelEvents);
 
-		// Draw one block at a time.
 		while (indexSet.empty() == false)
 		{
 			SignalBlock block = signalProcessor->getAnyBlock(indexSet);
@@ -272,13 +272,15 @@ void Canvas::paintGL()
 			//logToFile("Block " << block.getIndex() << " painted.");
 		}
 
-		gl()->glBindVertexArray(0);
+		drawPositionIndicator();
 
 		// Prepare some blocks for the next frame.
 		int cap = min(PROGRAM_OPTIONS["prepareFrames"].as<unsigned int>()*indexSet.size(), signalProcessor->getCapacity() - indexSet.size());
 
 		prepare(indexSet.size(), 0, static_cast<int>(ceil(getInfoTable()->getVirtualWidth()*ratio)), fromTo.first - indexSet.size(), fromTo.second + indexSet.size(), cap);
 	}
+
+	gl()->glBindVertexArray(0);
 
 	gl()->glFinish();
 
@@ -315,6 +317,8 @@ void Canvas::wheelEvent(QWheelEvent* event)
 		{
 			trackZoom(1/trackZoomFactor);
 		}
+
+		update();
 	}
 	else if (event->modifiers() & Qt::AltModifier)
 	{
@@ -326,6 +330,11 @@ void Canvas::wheelEvent(QWheelEvent* event)
 		{
 			horizontalZoom(1/horizontalZoomFactor);
 		}
+
+		updateCursor();
+		emit getInfoTable()->positionIndicatorChanged(getInfoTable()->getPositionIndicator());
+
+		update();
 	}
 	else if (event->modifiers() & Qt::ShiftModifier)
 	{
@@ -337,6 +346,8 @@ void Canvas::wheelEvent(QWheelEvent* event)
 		{
 			verticalZoom(1/verticalZoomFactor);
 		}
+
+		update();
 	}
 	else
 	{
@@ -424,7 +435,14 @@ void Canvas::mouseReleaseEvent(QMouseEvent* event)
 			addEvent(eventTrack);
 
 			update();
-		}		
+		}
+		else if (signalProcessor->ready() && event->modifiers() == Qt::AltModifier)
+		{
+			double pos = static_cast<double>(event->pos().x())/width();
+			getInfoTable()->setPositionIndicator(pos);
+
+			update();
+		}
 	}
 }
 
@@ -448,9 +466,9 @@ void Canvas::focusInEvent(QFocusEvent* /*event*/)
 
 void Canvas::drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& eventVector)
 {
-	gl()->glUseProgram(rectangleProgram->getGLProgram());
-	gl()->glBindVertexArray(rectangleArray);
-	gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleBuffer);
+	gl()->glUseProgram(rectangleLineProgram->getGLProgram());
+	gl()->glBindVertexArray(rectangleLineArray);
+	gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleLineBuffer);
 
 	int event = 0, type = -1;
 	while (event < static_cast<int>(eventVector.size()))
@@ -467,7 +485,7 @@ void Canvas::drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& 
 		else
 		{
 			type = get<0>(eventVector[event]);
-			setUniformColor(rectangleProgram->getGLProgram(), eventTypeTable->getColor(type), eventTypeTable->getOpacity(type));
+			setUniformColor(rectangleLineProgram->getGLProgram(), eventTypeTable->getColor(type), eventTypeTable->getOpacity(type));
 		}
 	}
 
@@ -483,7 +501,7 @@ void Canvas::drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& 
 				color = eventTypeTable->getColor(type);
 				opacity = eventTypeTable->getOpacity(type);
 			}
-			setUniformColor(rectangleProgram->getGLProgram(), color, opacity);
+			setUniformColor(rectangleLineProgram->getGLProgram(), color, opacity);
 
 			int start = eventStart, end = eventEnd;
 
@@ -500,9 +518,62 @@ void Canvas::drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& 
 void Canvas::drawAllChannelEvent(int from, int to)
 {
 	float data[8] = {static_cast<float>(from), 0, static_cast<float>(to), 0, static_cast<float>(from), static_cast<float>(height()), static_cast<float>(to), static_cast<float>(height())};
-	gl()->glBufferData(GL_ARRAY_BUFFER, 8*sizeof(float), data, GL_STATIC_DRAW);
+
+	gl()->glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
 
 	gl()->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+}
+
+void Canvas::drawTimeLines()
+{
+	double interval = getInfoTable()->getTimeLineInterval();
+
+	gl()->glUseProgram(rectangleLineProgram->getGLProgram());
+	gl()->glBindVertexArray(rectangleLineArray);
+	gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleLineBuffer);
+
+	setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::green), 0.5);
+
+	double ratio = samplesRecorded/getInfoTable()->getVirtualWidth();
+	interval *= samplingFrequency;
+
+	double position = getInfoTable()->getPosition()*ratio;
+	double end = position + width()*ratio;
+
+	int nextPosition = ceil(position/interval)*interval;
+
+	if (interval > 0)
+	{
+		while (nextPosition <= end)
+		{
+			drawTimeLine(nextPosition);
+
+			nextPosition += interval;
+		}
+	}
+}
+
+void Canvas::drawPositionIndicator()
+{
+	gl()->glUseProgram(rectangleLineProgram->getGLProgram());
+	gl()->glBindVertexArray(rectangleLineArray);
+	gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleLineBuffer);
+
+	setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::blue), 1);
+
+	double ratio = samplesRecorded/getInfoTable()->getVirtualWidth();
+	double position = (getInfoTable()->getPosition() + width()*getInfoTable()->getPositionIndicator())*ratio;
+
+	drawTimeLine(position);
+}
+
+void Canvas::drawTimeLine(double at)
+{
+	float data[4] = {static_cast<float>(at), 0, static_cast<float>(at), static_cast<float>(height())};
+
+	gl()->glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
+
+	gl()->glDrawArrays(GL_LINE_STRIP, 0, 2);
 }
 
 void Canvas::drawSingleChannelEvents(const SignalBlock& block, const vector<tuple<int, int, int, int>>& eventVector)

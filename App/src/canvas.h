@@ -81,10 +81,11 @@ private:
 	SignalProcessor* signalProcessor = nullptr;
 	OpenGLProgram* signalProgram = nullptr;
 	OpenGLProgram* eventProgram = nullptr;
-	OpenGLProgram* rectangleProgram = nullptr;
+	OpenGLProgram* rectangleLineProgram = nullptr;
 	double samplesRecorded = 1;
-	GLuint rectangleArray;
-	GLuint rectangleBuffer;
+	double samplingFrequency = 1;
+	GLuint rectangleLineArray;
+	GLuint rectangleLineBuffer;
 	int eventMode = PROGRAM_OPTIONS["eventRenderMode"].as<int>();
 	bool isSelectingTrack = false;
 	bool isDrawingEvent = false;
@@ -115,6 +116,9 @@ private:
 	}
 	void drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& events);
 	void drawAllChannelEvent(int from, int to);
+	void drawTimeLines();
+	void drawPositionIndicator();
+	void drawTimeLine(double at);
 	void drawSingleChannelEvents(const SignalBlock& block, const std::vector<std::tuple<int, int, int, int>>& events);
 	void drawSingleChannelEvent(const SignalBlock& block, int track, int from, int to);
 	void drawSignal(const SignalBlock& block);

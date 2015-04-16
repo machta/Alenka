@@ -37,7 +37,7 @@ void DataFile::save()
 
 QDateTime DataFile::sampleToDate(int sample)
 {
-	int timeOffset = static_cast<int>(sample/getSamplingFrequency()*1000);
+	int timeOffset = round(sample/getSamplingFrequency()*1000);
 
 	QDateTime date = getStartDate();
 	date = date.addMSecs(timeOffset);
@@ -47,7 +47,7 @@ QDateTime DataFile::sampleToDate(int sample)
 
 QDateTime DataFile::sampleToOffset(int sample)
 {
-	int timeOffset = static_cast<int>(sample/getSamplingFrequency()*1000);
+	int timeOffset = round(sample/getSamplingFrequency()*1000);
 
 	QDateTime date(QDate(1970, 1, 1));
 	date = date.addMSecs(timeOffset);
@@ -69,11 +69,11 @@ QString DataFile::sampleToDateTimeString(int sample, InfoTable::TimeMode mode)
 	else if (mode == InfoTable::TimeMode::offset)
 	{
 		QDateTime date = sampleToOffset(sample);
-		return QString::number(date.date().day() - 1, 2) + date.toString(":hh:mm:ss");
+		return QString::number(date.date().day() - 1) + "d " + date.toString("hh:mm:ss.zzz");
 	}
 	else if (mode == InfoTable::TimeMode::real)
 	{
-		return sampleToDate(sample).toString("dd:MM:yyyy hh:mm:ss");
+		return sampleToDate(sample).toString("d.M.yyyy hh:mm:ss.zzz");
 	}
 
 	return QString();

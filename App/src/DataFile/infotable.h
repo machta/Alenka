@@ -31,6 +31,7 @@ public:
 		emit selectedMontageChanged(selectedMontage);
 		emit timeModeChanged(static_cast<int>(timeMode));
 		emit selectedTypeChanged(selectedType);
+		emit timeLineIntervalChanged(timeLineInterval);
 	}
 
 	int getVirtualWidth() const
@@ -65,6 +66,14 @@ public:
 	{
 		return selectedType;
 	}
+	double getTimeLineInterval() const
+	{
+		return timeLineInterval;
+	}
+	double getPositionIndicator() const
+	{
+		return positionIndicator;
+	}
 
 signals:
 	void virtualWidthChanged(int);
@@ -75,6 +84,8 @@ signals:
 	void selectedMontageChanged(int);
 	void timeModeChanged(int);
 	void selectedTypeChanged(int);
+	void timeLineIntervalChanged(double);
+	void positionIndicatorChanged(double);
 
 public slots:
 	void setVirtualWidth(int value)
@@ -141,6 +152,22 @@ public slots:
 			emit selectedTypeChanged(value);
 		}
 	}
+	void setTimeLineInterval(double value)
+	{
+		if (value != timeLineInterval)
+		{
+			timeLineInterval = value;
+			emit timeLineIntervalChanged(value);
+		}
+	}
+	void setPositionIndicator(double value)
+	{
+		if (value != positionIndicator)
+		{
+			positionIndicator = value;
+			emit positionIndicatorChanged(value);
+		}
+	}
 
 private:
 	int virtualWidth = 100000;
@@ -151,6 +178,8 @@ private:
 	int selectedMontage = 0;
 	TimeMode timeMode = TimeMode::offset;
 	int selectedType = 0;
+	double timeLineInterval = 1;
+	double positionIndicator = 0.5;
 };
 
 #endif // INFOTABLE_H

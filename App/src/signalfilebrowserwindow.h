@@ -17,6 +17,7 @@ class QDockWidget;
 class QAbstractTableModel;
 class QActionGroup;
 class QLabel;
+class QAction;
 
 class SignalFileBrowserWindow : public QMainWindow
 {
@@ -46,6 +47,8 @@ private:
 	QComboBox* montageComboBox;
 	QComboBox* eventTypeComboBox;
 	QActionGroup* timeModeActionGroup;
+	QActionGroup* timeLineIntervalActionGroup;
+	QAction* setTimeLineIntervalAction;
 	QLabel* timeStatusLabel;
 	QLabel* positionStatusLabel;
 	QLabel* cursorStatusLabel;

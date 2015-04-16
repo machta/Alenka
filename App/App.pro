@@ -85,4 +85,4 @@ DISTFILES += \
     color.frag \
     event.vert \
     signal.vert \
-    rectangle.vert
+    rectangleLine.vert

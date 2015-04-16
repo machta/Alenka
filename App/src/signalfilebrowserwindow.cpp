@@ -20,6 +20,8 @@
 #include <QDockWidget>
 #include <QStatusBar>
 #include <QLayout>
+#include <QInputDialog>
+#include <QLocale>
 
 using namespace std;
 
@@ -47,6 +49,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	QDockWidget* eventManagerDockWidget = new QDockWidget("Event Manager", this);
 	eventManagerDockWidget->setObjectName("Event Manager QDockWidget");
 	eventManager = new EventManager(this);
+	eventManager->setReferences(signalViewer->getCanvas());
 	eventManagerDockWidget->setWidget(eventManager);
 
 	QDockWidget* eventTypeDockWidget = new QDockWidget("EventType Manager", this);
@@ -68,37 +71,44 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	QAction* openFileAction = new QAction("&Open File", this);
 	openFileAction->setShortcut(QKeySequence::Open);
 	openFileAction->setToolTip("Open an existing file.");
+	openFileAction->setStatusTip(openFileAction->toolTip());
 	connect(openFileAction, SIGNAL(triggered()), this, SLOT(openFile()));
 
 	QAction* closeFileAction = new QAction("Close File", this);
 	closeFileAction->setShortcut(QKeySequence::Close);
 	closeFileAction->setToolTip("Close the currently opened file.");
+	closeFileAction->setStatusTip(closeFileAction->toolTip());
 	connect(closeFileAction, SIGNAL(triggered()), this, SLOT(closeFile()));
 
 	QAction* saveFileAction = new QAction("Save File", this);
 	saveFileAction->setShortcut(QKeySequence::Save);
 	saveFileAction->setToolTip("Save the currently opened file.");
+	saveFileAction->setStatusTip(saveFileAction->toolTip());
 	connect(saveFileAction, SIGNAL(triggered()), this, SLOT(saveFile()));
 
 	// Construct Zoom actions.
 	QAction* horizontalZoomInAction = new QAction("Horizontal Zoom In", this);
 	horizontalZoomInAction->setShortcut(QKeySequence("Alt++"));
 	horizontalZoomInAction->setToolTip("Zoom in timeline.");
+	horizontalZoomInAction->setStatusTip(horizontalZoomInAction->toolTip());
 	connect(horizontalZoomInAction, SIGNAL(triggered()), this, SLOT(horizontalZoomIn()));
 
 	QAction* horizontalZoomOutAction = new QAction("Horizontal Zoom Out", this);
 	horizontalZoomOutAction->setShortcut(QKeySequence("Alt+-"));
 	horizontalZoomOutAction->setToolTip("Zoom out timeline.");
+	horizontalZoomOutAction->setStatusTip(horizontalZoomOutAction->toolTip());
 	connect(horizontalZoomOutAction, SIGNAL(triggered()), this, SLOT(horizontalZoomOut()));
 
 	QAction* verticalZoomInAction = new QAction("Vertical Zoom In", this);
 	verticalZoomInAction->setShortcut(QKeySequence("Shift++"));
 	verticalZoomInAction->setToolTip("Zoom in amplitudes of signals.");
+	verticalZoomInAction->setStatusTip(verticalZoomInAction->toolTip());
 	connect(verticalZoomInAction, SIGNAL(triggered()), this, SLOT(verticalZoomIn()));
 
 	QAction* verticalZoomOutAction = new QAction("Vertical Zoom Out", this);
 	verticalZoomOutAction->setShortcut(QKeySequence("Shift+-"));
 	verticalZoomOutAction->setToolTip("Zoom out amplitudes of signals.");
+	verticalZoomOutAction->setStatusTip(verticalZoomOutAction->toolTip());
 	connect(verticalZoomOutAction, SIGNAL(triggered()), this, SLOT(verticalZoomOut()));
 
 	// Construct Time Mode action group.
@@ -106,21 +116,53 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 	QAction* timeModeAction0 = new QAction("Sample", this);
 	timeModeAction0->setToolTip("Samples from the start.");
+	timeModeAction0->setStatusTip(timeModeAction0->toolTip());
 	connect(timeModeAction0, SIGNAL(triggered()), this, SLOT(timeMode0()));
 	timeModeAction0->setActionGroup(timeModeActionGroup);
 	timeModeAction0->setCheckable(true);
 
 	QAction* timeModeAction1 = new QAction("Offset", this);
 	timeModeAction1->setToolTip("Time offset from the start.");
+	timeModeAction1->setStatusTip(timeModeAction1->toolTip());
 	connect(timeModeAction1, SIGNAL(triggered()), this, SLOT(timeMode1()));
 	timeModeAction1->setActionGroup(timeModeActionGroup);
 	timeModeAction1->setCheckable(true);
 
 	QAction* timeModeAction2 = new QAction("Real", this);
 	timeModeAction2->setToolTip("Real time.");
+	timeModeAction2->setStatusTip(timeModeAction2->toolTip());
 	connect(timeModeAction2, SIGNAL(triggered()), this, SLOT(timeMode2()));
 	timeModeAction2->setActionGroup(timeModeActionGroup);
 	timeModeAction2->setCheckable(true);
+
+	// Construct Time Line Interval action group.
+	timeLineIntervalActionGroup = new QActionGroup(this);
+
+	QAction* timeLineOffAction = new QAction("Off", this);
+	timeLineOffAction->setToolTip("Turn off the time lines.");
+	timeLineOffAction->setStatusTip(timeLineOffAction->toolTip());
+	connect(timeLineOffAction, &QAction::triggered, [this] ()
+	{
+		if (file != nullptr)
+		{
+			file->getInfoTable()->setTimeLineInterval(0);
+		}
+	});
+
+	setTimeLineIntervalAction = new QAction("Set", this);
+	setTimeLineIntervalAction->setActionGroup(timeLineIntervalActionGroup);
+	connect(setTimeLineIntervalAction, &QAction::triggered, [this] ()
+	{
+		if (file != nullptr)
+		{
+			bool ok;
+			double value = QInputDialog::getDouble(this, "Set the interval", "Please, enter the value for the time line interval here:", file->getInfoTable()->getTimeLineInterval(), 0, 1000*1000*1000, 2, &ok);
+			if (ok)
+			{
+				file->getInfoTable()->setTimeLineInterval(value);
+			}
+		}
+	});
 
 	// Toolbars.
 	const int spacing = 3;
@@ -204,6 +246,11 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	timeModeMenu->addAction(timeModeAction1);
 	timeModeMenu->addAction(timeModeAction2);
 	viewMenu->addMenu(timeModeMenu);
+
+	QMenu* timeLineIntervalMenu = new QMenu("Time Line Interval", this);
+	timeLineIntervalMenu->addAction(timeLineOffAction);
+	timeLineIntervalMenu->addAction(setTimeLineIntervalAction);
+	viewMenu->addMenu(timeLineIntervalMenu);
 
 	// Construct Window menu.
 	QMenu* windowMenu = menuBar()->addMenu("&Window");
@@ -363,6 +410,7 @@ void SignalFileBrowserWindow::openFile()
 		timeStatusLabel->setText("Start: " + file->sampleToDateTimeString(0, InfoTable::TimeMode::real) + " Total time: " + file->sampleToDateTimeString(file->getSamplesRecorded(), InfoTable::TimeMode::offset));
 
 		connect(it, SIGNAL(positionChanged(int)), this, SLOT(updatePositionStatusLabel()));
+		connect(it, SIGNAL(positionIndicatorChanged(double)), this, SLOT(updatePositionStatusLabel()));
 		connect(signalViewer->getCanvas(), SIGNAL(cursorPositionSampleChanged(int)), this, SLOT(updateCursorStatusLabel()));
 
 		// Connect slot SignalViewer::update() to make sure that the SignalViewer gets updated when needed.
@@ -372,10 +420,19 @@ void SignalFileBrowserWindow::openFile()
 		connect(it, SIGNAL(highpassFrequencyChanged(double)), signalViewer, SLOT(update()));
 		connect(it, SIGNAL(notchChanged(bool)), signalViewer, SLOT(update()));
 		connect(it, SIGNAL(selectedMontageChanged(int)), signalViewer, SLOT(update()));
-		connect(it, SIGNAL(timeModeChanged(int)), this, SLOT(updateTimeMode(int)));
+		connect(it, SIGNAL(timeLineIntervalChanged(double)), signalViewer, SLOT(update()));
+		connect(it, SIGNAL(positionIndicatorChanged(double)), signalViewer, SLOT(update()));
 
 		connectModel(file->getMontageTable(), [this] () { signalViewer->update(); });
 		connectModel(file->getEventTypeTable(), [this] () { signalViewer->update(); });
+
+		// Update the View submenus.
+		connect(it, SIGNAL(timeModeChanged(int)), this, SLOT(updateTimeMode(int)));
+		connect(it, &InfoTable::timeLineIntervalChanged, [this] (double value)
+		{
+			setTimeLineIntervalAction->setToolTip("The time line interval is " + locale().toString(value) + " s.");
+			setTimeLineIntervalAction->setStatusTip(setTimeLineIntervalAction->toolTip());
+		});
 
 		// Emit all signals to ensure there are no uninitialized controls.
 		it->emitAllSignals();
@@ -503,10 +560,12 @@ void SignalFileBrowserWindow::updateTimeMode(int mode)
 
 void SignalFileBrowserWindow::updatePositionStatusLabel()
 {
-	double ratio = file->getSamplesRecorded()/file->getInfoTable()->getVirtualWidth();
-	int position = file->getInfoTable()->getPosition()*ratio;
+	InfoTable* it = file->getInfoTable();
 
-	positionStatusLabel->setText("Position: " + file->sampleToDateTimeString(position));
+	double ratio = static_cast<double>(file->getSamplesRecorded())/it->getVirtualWidth();
+	double position = (it->getPosition() + it->getPositionIndicator()*signalViewer->getCanvas()->width())*ratio;
+
+	positionStatusLabel->setText("Position: " + file->sampleToDateTimeString(round(position)));
 }
 
 void SignalFileBrowserWindow::updateCursorStatusLabel()

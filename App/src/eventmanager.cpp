@@ -4,10 +4,15 @@
 #include "DataFile/eventtable.h"
 #include "DataFile/infotable.h"
 #include "eventmanagerdelegate.h"
+#include "canvas.h"
 
 #include <QTableView>
 #include <QPushButton>
 #include <QAction>
+
+#include <algorithm>
+
+using namespace std;
 
 EventManager::EventManager(QWidget* parent) : Manager(parent)
 {
@@ -34,10 +39,15 @@ void EventManager::goToEvent()
 
 	if (index.isValid() && file != nullptr)
 	{
-		int position = tableView->model()->data(tableView->model()->index(index.row(), static_cast<int>(EventTable::Column::position))).toInt();
-
 		double ratio = static_cast<double>(file->getSamplesRecorded())/file->getInfoTable()->getVirtualWidth();
 
-		file->getInfoTable()->setPosition(position/ratio);
+		double position = tableView->model()->data(tableView->model()->index(index.row(), static_cast<int>(EventTable::Column::position)), Qt::EditRole).toInt();
+		position /= ratio;
+		position -= canvas->width()*file->getInfoTable()->getPositionIndicator();
+
+		int intPosition = position;
+		intPosition = min(max(0, intPosition), file->getInfoTable()->getVirtualWidth() - canvas->width() - 1);
+
+		file->getInfoTable()->setPosition(intPosition);
 	}
 }
