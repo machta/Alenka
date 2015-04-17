@@ -3,6 +3,8 @@
 
 #include <QApplication>
 
+class Options;
+
 class MyApplication : public QApplication
 {
 	Q_OBJECT
@@ -12,6 +14,9 @@ public:
 	~MyApplication();
 
 	virtual bool notify(QObject* receiver, QEvent* event) override;
+
+private:
+	Options* options = nullptr;
 };
 
 #endif // MYAPPLICATION_H

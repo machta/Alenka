@@ -140,7 +140,7 @@ void Canvas::initializeGL()
 			cout << "Extensions: " << str << endl;
 		}
 
-		exit(EXIT_SUCCESS);
+		std::exit(EXIT_SUCCESS);
 	}
 
 	signalProcessor = new SignalProcessor;
