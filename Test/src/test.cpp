@@ -8,6 +8,9 @@
 #include "options.h"
 
 #include <clFFT.h>
+#include <QFile>
+
+#include <iostream>
 
 BOOST_AUTO_TEST_SUITE(DataFile_TS)
 	BOOST_AUTO_TEST_SUITE(GDF2_TS)
@@ -31,7 +34,7 @@ int main(int ac, char** av)
 	clfftSetup(&setupData);
 
 	Options* options = new Options(1, av);
-    PROGRAM_OPTIONS_POINTER = options;
+	PROGRAM_OPTIONS_POINTER = options;
 
 	int res = boost::unit_test::unit_test_main(init, ac, av);
 

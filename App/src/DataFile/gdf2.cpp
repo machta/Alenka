@@ -25,7 +25,7 @@ GDF2::GDF2(const string& filePath) : DataFile(filePath)
 	file = new QFile(fp.c_str());
 
 	bool res = file->open(QIODevice::ReadWrite);
-	checkErrorCode(res, true, "File '" << fp << "' could not be opened.");
+	checkErrorCode(res, true, "File '" << fp << "' could not be opened for reading and writing.");
 
 	// Load fixed header.
 	seekFile(0, true);

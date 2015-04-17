@@ -366,7 +366,24 @@ void SignalFileBrowserWindow::openFile()
 	// Open the file.
 	delete file;
 
-	QFileInfo fi(fileName); // TODO: perhaps add additional error checking (exists(), canbeopen(), ...)
+	QFileInfo fi(fileName);
+
+	if (fi.exists() == false)
+	{
+		logToFileAndConsole("File '" + fileName.toStdString() + "' not found.");
+		return;
+	}
+	else if (fi.isReadable() == false)
+	{
+		logToFileAndConsole("File '" + fileName.toStdString() + "' cannot be read.");
+		return;
+	}
+	else if (fi.isWritable() == false)
+	{
+		logToFileAndConsole("File '" + fileName.toStdString() + "' cannot be written to.");
+		return;
+	}
+
 	file = new GDF2((fi.path() + QDir::separator() + fi.completeBaseName()).toStdString());
 
 	setWindowTitle(fi.fileName() + " - " + title);

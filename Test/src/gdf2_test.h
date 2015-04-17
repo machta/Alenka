@@ -65,11 +65,10 @@ BOOST_AUTO_TEST_CASE(construction)
 
 BOOST_AUTO_TEST_CASE(exceptions)
 {
-	BOOST_CHECK_THROW(GDF2 file("blabla"); , runtime_error);
-	BOOST_CHECK_THROW(GDF2 file("data/gdf/empty"); , runtime_error);
-	BOOST_CHECK_THROW(GDF2 file("data/gdf/headerOnly"); , runtime_error);
-	BOOST_CHECK_THROW(GDF2 file("data/gdf/badType"); , runtime_error);
-	BOOST_CHECK_THROW(GDF2 file("data/gdf/badFile"); , runtime_error);
+	BOOST_CHECK_THROW(GDF2 file("data/gdf/empty"), runtime_error);
+	BOOST_CHECK_THROW(GDF2 file("data/gdf/headerOnly"), runtime_error);
+	BOOST_CHECK_THROW(GDF2 file("data/gdf/badType"), runtime_error);
+	BOOST_CHECK_THROW(GDF2 file("data/gdf/badFile"), runtime_error);
 
 	GDF2* file = nullptr;
 
@@ -77,7 +76,7 @@ BOOST_AUTO_TEST_CASE(exceptions)
 	data.insert(data.begin(), 100000, 0);
 
 	BOOST_REQUIRE_NO_THROW(file = new GDF2("data/gdf/t00"));
-	BOOST_CHECK_THROW(file->readData(&data, 100, 50); , invalid_argument);
+	BOOST_CHECK_THROW(file->readData(&data, 100, 50), invalid_argument);
 	delete file;
 }
 
