@@ -31,7 +31,7 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 	// Log the command line parameters.
 	{
 		stringstream ss;
-		ss << "Command: ";
+		ss << "Starting with command: ";
 
 		for (int i = 0; i < argc; ++i)
 		{

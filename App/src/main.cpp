@@ -28,7 +28,11 @@ int main(int argc, char** argv)
 		SignalFileBrowserWindow window;
 		window.show();
 
-		return app.exec();
+		int ret = app.exec();
+
+		logToFile("Exiting with error code " << ret << ".");
+
+		return ret;
 	}
 	catch (std::exception& e)
 	{
