@@ -355,6 +355,8 @@ void SignalFileBrowserWindow::openFile()
 {
 	QString fileName = QFileDialog::getOpenFileName(this, "Open File", "", "GDF file (*.gdf)");
 
+	logToFile("Opening file '" << fileName.toStdString() << "'.");
+
 	if (fileName.isNull())
 	{
 		// No file was selected.
@@ -455,6 +457,8 @@ void SignalFileBrowserWindow::openFile()
 
 void SignalFileBrowserWindow::closeFile()
 {
+	logToFile("Closing file.");
+
 	setWindowTitle(title);
 
 	delete file;
@@ -468,6 +472,8 @@ void SignalFileBrowserWindow::closeFile()
 
 void SignalFileBrowserWindow::saveFile()
 {
+	logToFile("Saving file.");
+
 	if (file != nullptr)
 	{
 		file->save();

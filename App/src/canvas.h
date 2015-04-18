@@ -206,6 +206,10 @@ private slots:
 		signalProcessor->updateMontage();
 		doneCurrent();
 	}
+	bool ready()
+	{
+		return signalProcessor != nullptr && signalProcessor->ready();
+	}
 };
 
 #endif // CANVAS_H

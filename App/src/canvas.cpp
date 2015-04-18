@@ -99,7 +99,7 @@ QColor Canvas::modifySelectionColor(const QColor& color)
 
 void Canvas::updateCursor()
 {
-	if (signalProcessor->ready())
+	if (ready())
 	{
 		QPoint pos = mapFromGlobal(QCursor::pos());
 
@@ -123,25 +123,7 @@ void Canvas::updateCursor()
 
 void Canvas::initializeGL()
 {
-	if (PROGRAM_OPTIONS.isSet("glInfo"))
-	{
-		cout << "Version: " << gl()->glGetString(GL_VERSION) << endl;
-		cout << "Renderer: " << gl()->glGetString(GL_RENDERER) << endl;
-		cout << "Vendor: " << gl()->glGetString(GL_VENDOR) << endl;
-		cout << "GLSH version: " << gl()->glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
-
-		const GLubyte* str = gl()->glGetString(GL_EXTENSIONS);
-		if (str == nullptr)
-		{
-			cout << "Extensions:" << endl;
-		}
-		else
-		{
-			cout << "Extensions: " << str << endl;
-		}
-
-		std::exit(EXIT_SUCCESS);
-	}
+	logToFile("Initializing OpenGL in Canvas.");
 
 	signalProcessor = new SignalProcessor;
 
@@ -182,6 +164,33 @@ void Canvas::initializeGL()
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 	gl()->glBindVertexArray(0);
 
+	// Log OpenGL details.
+	stringstream ss;
+
+	ss << "OpenGL info:" << endl;
+	ss << "Version: " << gl()->glGetString(GL_VERSION) << endl;
+	ss << "Renderer: " << gl()->glGetString(GL_RENDERER) << endl;
+	ss << "Vendor: " << gl()->glGetString(GL_VENDOR) << endl;
+	ss << "GLSH version: " << gl()->glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
+
+	const GLubyte* str = gl()->glGetString(GL_EXTENSIONS);
+	if (str == nullptr)
+	{
+		ss << "Extensions:" << endl;
+	}
+	else
+	{
+		ss << "Extensions: " << str << endl;
+	}
+
+	logToFile(ss.str());
+
+	if (PROGRAM_OPTIONS.isSet("glInfo"))
+	{
+		cout << ss.str();
+		std::exit(EXIT_SUCCESS);
+	}
+
 	checkGLMessages();
 }
 
@@ -192,11 +201,13 @@ void Canvas::resizeGL(int /*w*/, int /*h*/)
 
 void Canvas::paintGL()
 {
+#ifndef NDEBUG
 	logToFile("Painting started.");
+#endif
 
 	gl()->glClear(GL_COLOR_BUFFER_BIT);
 
-	if (signalProcessor->ready())
+	if (ready())
 	{
 		// Calculate the transformMatrix.
 		double ratio = samplesRecorded/getInfoTable()->getVirtualWidth();
@@ -281,15 +292,17 @@ void Canvas::paintGL()
 		//int cap = min(PROGRAM_OPTIONS["prepareFrames"].as<unsigned int>()*indexSet.size(), signalProcessor->getCapacity() - indexSet.size());
 
 		//prepare(indexSet.size(), 0, static_cast<int>(ceil(getInfoTable()->getVirtualWidth()*ratio)), fromTo.first - indexSet.size(), fromTo.second + indexSet.size(), cap);
-	}
 
-	gl()->glBindVertexArray(0);
+		gl()->glBindVertexArray(0);
+	}
 
 	gl()->glFinish();
 
 	checkGLMessages();
 
+#ifndef NDEBUG
 	logToFile("Painting finished.");
+#endif
 }
 
 void Canvas::wheelEvent(QWheelEvent* event)
@@ -391,7 +404,7 @@ void Canvas::keyReleaseEvent(QKeyEvent* event)
 
 void Canvas::mouseMoveEvent(QMouseEvent* /*event*/)
 {
-	if (signalProcessor->ready())
+	if (ready())
 	{
 		updateCursor();
 
@@ -408,7 +421,7 @@ void Canvas::mousePressEvent(QMouseEvent* event)
 	{
 		if (event->modifiers() == Qt::ShiftModifier || event->modifiers() == Qt::ControlModifier)
 		{
-			if (signalProcessor->ready() && 0 <= cursorTrack && cursorTrack < signalProcessor->getTrackCount())
+			if (ready() && 0 <= cursorTrack && cursorTrack < signalProcessor->getTrackCount())
 			{
 				isDrawingEvent = true;
 
@@ -444,7 +457,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent* event)
 
 			update();
 		}
-		else if (signalProcessor->ready() && event->modifiers() == Qt::AltModifier)
+		else if (ready() && event->modifiers() == Qt::AltModifier)
 		{
 			double pos = static_cast<double>(event->pos().x())/width();
 			getInfoTable()->setPositionIndicator(pos);

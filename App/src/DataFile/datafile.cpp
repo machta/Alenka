@@ -111,7 +111,7 @@ bool DataFile::load()
 		{
 			montageTable.insertRowsBack(1);
 		}
-	});	
+	});
 }
 
 bool DataFile::loadXMLFile(const string& extension, function<void (QXmlStreamReader*)> loadFunction)
@@ -131,7 +131,7 @@ bool DataFile::loadXMLFile(const string& extension, function<void (QXmlStreamRea
 
 		if (xml.hasError())
 		{
-			logToBoth("XML error(" << xml.error() << ") while reading file '" << filePath + extension << "': " << xml.errorString().toStdString());
+			logToFileAndConsole("XML error(" << xml.error() << ") while reading file '" << filePath + extension << "': " << xml.errorString().toStdString());
 		}
 
 		ret = true;
@@ -162,7 +162,7 @@ void DataFile::saveXMLFile(const string& extension, std::function<void (QXmlStre
 
 	if (xml.hasError())
 	{
-		logToBoth("XML error occurred while writing to file '" << filePath + extension << "'");
+		logToFileAndConsole("XML error occurred while writing to file '" << filePath + extension << "'");
 	}
 
 	xmlFile.close();

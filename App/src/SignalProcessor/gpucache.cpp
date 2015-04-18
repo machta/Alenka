@@ -185,7 +185,7 @@ void GPUCache::loaderThreadFunction()
 	}
 	catch (exception& e)
 	{
-		logToBoth("Exception caught: " << e.what());
+		logToFileAndConsole("Exception caught: " << e.what());
 		abort();
 	}
 }
@@ -227,7 +227,7 @@ void CL_CALLBACK GPUCache::signalEventCallback(cl_event callbackEvent, cl_int st
 	}
 	catch (exception& e)
 	{
-		logToBoth("Exception caught: " << e.what());
+		logToFileAndConsole("Exception caught: " << e.what());
 		abort();
 	}
 }

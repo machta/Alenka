@@ -346,6 +346,6 @@ extern std::mutex LOG_FILE_MUTEX;
 //#define logToStream(a_, b_) b_ << "[" << getTimeString(time(nullptr)) << " T" << std::this_thread::get_id() << "] " << a_ << " [in " << __FILE__ << ":" << __LINE__ << "]" << std::endl
 #define logToStream(a_, b_) b_ <<  a_ << " [" << "in T" << std::this_thread::get_id() << " from " << __FILE__ << ":" << __LINE__ << "]" << std::endl
 #define logToFile(a_) { std::lock_guard<std::mutex> lock(LOG_FILE_MUTEX); logToStream(a_, LOG_FILE); }
-#define logToBoth(a_) logToFile(a_); logToStream(a_, std::cerr)
+#define logToFileAndConsole(a_) logToFile(a_); logToStream(a_, std::cerr)
 
 #endif // ERROR_H

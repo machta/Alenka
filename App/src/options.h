@@ -14,7 +14,7 @@
 class Options
 {
 public:
-	Options(int ac, char** av);
+	Options(int argc, char** argv);
 
 	const boost::program_options::variable_value& operator[](const std::string& var) const
 	{

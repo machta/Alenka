@@ -32,7 +32,7 @@ void OpenGLProgram::construct(const string& vertSource, const string& fragSource
 		char* log = new char[logLength];
 		gl()->glGetProgramInfoLog(program, logLength, &logLength, log);
 
-		logToBoth("OpenGLProgram link log:" << endl << log);
+		logToFileAndConsole("OpenGLProgram link log:" << endl << log);
 
 		delete log;
 	}
@@ -62,7 +62,7 @@ void OpenGLProgram::addShader(GLuint program, const string& sourceText, GLenum t
 		char* log = new char[logLength];
 		gl()->glGetShaderInfoLog(shader, logLength, &logLength, log);
 
-		logToBoth("Shader " << type << " compilation log:" << endl << log);
+		logToFileAndConsole("Shader " << type << " compilation log:" << endl << log);
 
 		delete log;
 	}

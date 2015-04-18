@@ -104,6 +104,8 @@ void FilterProcessor::process(cl_mem buffer, cl_command_queue queue)
 	if (coefficientsChanged)
 	{
 		// Update values in the filterBuffer.
+		logToFile("Updating filterBuffer.");
+
 		coefficientsChanged = false;
 
 		// This section is disabled because a bug in the implementation of clEnqueueFillBuffer().

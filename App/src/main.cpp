@@ -5,6 +5,9 @@
 #include <QLocale>
 
 #include <stdexcept>
+#include <sstream>
+
+using namespace std;
 
 #if CL_VERSION_1_1
 #else
@@ -29,11 +32,11 @@ int main(int argc, char** argv)
 	}
 	catch (std::exception& e)
 	{
-		logToBoth("Exception caught: " << e.what());
+		logToFileAndConsole("Exception caught: " << e.what());
 	}
 	catch (...)
 	{
-		logToBoth("Unknown exception caught.");
+		logToFileAndConsole("Unknown exception caught.");
 	}
 
 	return EXIT_FAILURE;

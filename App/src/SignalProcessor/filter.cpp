@@ -41,6 +41,8 @@ Filter::~Filter()
 
 vector<double> Filter::computeCoefficients()
 {
+	logToFile("Computing filter coefficients.");
+
 	vector<double> coefficients(2*(1 + M/2));
 
 	int cM = 1 + M/2;

@@ -14,16 +14,6 @@ using namespace std;
 
 MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 {
-	// Set up the clFFT library.
-	clfftStatus errFFT;
-	clfftSetupData setupData;
-
-	errFFT = clfftInitSetupData(&setupData);
-	checkClFFTErrorCode(errFFT, "clfftInitSetupData()");
-
-	errFFT = clfftSetup(&setupData);
-	checkClFFTErrorCode(errFFT, "clfftSetup()");
-
 	// Set up the global options object.
 	options = new Options(argc, argv);
 	PROGRAM_OPTIONS_POINTER = options;
@@ -38,6 +28,33 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 	LOG_FILE.open(logFileName);
 	checkErrorCode(LOG_FILE.good(), true, "Could not open log file for writing.");
 
+	// Log the command line parameters.
+	{
+		stringstream ss;
+		ss << "Command: ";
+
+		for (int i = 0; i < argc; ++i)
+		{
+			if (i != 0)
+			{
+				ss << " ";
+			}
+			ss << argv[i];
+		}
+
+		logToFile(ss.str());
+	}
+
+	// Set up the clFFT library.
+	clfftStatus errFFT;
+	clfftSetupData setupData;
+
+	errFFT = clfftInitSetupData(&setupData);
+	checkClFFTErrorCode(errFFT, "clfftInitSetupData()");
+
+	errFFT = clfftSetup(&setupData);
+	checkClFFTErrorCode(errFFT, "clfftSetup()");
+
 	// Set some OpenGL context details.
 	QSurfaceFormat format = QSurfaceFormat::defaultFormat();
 	format.setVersion(4, 1);
@@ -49,6 +66,17 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 	QSurfaceFormat::setDefaultFormat(format);
 
 	// Process some of the commandline only options.
+	OpenCLContext context(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS);
+
+	stringstream ss;
+
+	ss << "OpenCL platform info:" << endl;
+	ss << context.getPlatformInfo() << endl << endl;
+	ss << "Opencl device info:" << endl;
+	ss << context.getDeviceInfo() << endl;
+
+	logToFile(ss.str());
+
 	if (PROGRAM_OPTIONS.isSet("help"))
 	{
 		cout << PROGRAM_OPTIONS.getDescription() << endl;
@@ -57,23 +85,17 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 	}
 	else if (PROGRAM_OPTIONS.isSet("clInfo"))
 	{
-		OpenCLContext context(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS);
-
-		cout << "Platform" << endl;
-		cout << context.getPlatformInfo() << endl << endl;
-		cout << "Device" << endl;
-		cout << context.getDeviceInfo() << endl;
-
+		cout << ss.str();
 		std::exit(EXIT_SUCCESS);
 	}
 }
 
 MyApplication::~MyApplication()
 {
-	delete options;
-
 	clfftStatus errFFT = clfftTeardown();
 	checkClFFTErrorCode(errFFT, "clfftTeardown()");
+
+	delete options;
 }
 
 bool MyApplication::notify(QObject* receiver, QEvent* event)
@@ -84,11 +106,11 @@ bool MyApplication::notify(QObject* receiver, QEvent* event)
 	}
 	catch (std::exception& e)
 	{
-		logToBoth("Exception caught: " << e.what());
+		logToFileAndConsole("Exception caught: " << e.what());
 	}
 	catch (...)
 	{
-		logToBoth("Unknown exception caught.");
+		logToFileAndConsole("Unknown exception caught.");
 	}
 
 	return false; // TODO: possibly abort the application

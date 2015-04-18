@@ -2,6 +2,8 @@
 
 #include "error.h"
 
+#include <boost/spirit/home/support/detail/hold_any.hpp>
+
 #include <iostream>
 #include <fstream>
 #include <cstdint>
@@ -9,7 +11,7 @@
 using namespace std;
 using namespace boost::program_options;
 
-Options::Options(int ac, char** av) : programSettings("Martin Barta", "ZSBS")
+Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS")
 {
 	// Definition of the available options.
 	options_description commandLineOnly("Command line options");
@@ -48,7 +50,7 @@ Options::Options(int ac, char** av) : programSettings("Martin Barta", "ZSBS")
 	options_description all("Alloved options");
 	all.add(commandLineOnly).add(other);
 
-	store(parse_command_line(ac, av, all), vm);
+	store(parse_command_line(argc, argv, all), vm);
 	notify(vm);
 
 	ifstream ifs(vm["config"].as<string>());
@@ -60,7 +62,7 @@ Options::Options(int ac, char** av) : programSettings("Martin Barta", "ZSBS")
 	}
 	else
 	{
-		logToBoth("Config file '" << vm["config"].as<string>() << "' not found.");
+		logToFileAndConsole("Config file '" << vm["config"].as<string>() << "' not found.");
 	}
 
 	desc.add(all);

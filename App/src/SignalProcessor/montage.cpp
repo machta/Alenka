@@ -7,6 +7,8 @@ using namespace std;
 
 Montage::Montage(const vector<string>& sources, OpenCLContext* context) : numberOfRows(sources.size())
 {
+	logToFile("Constructing montage.");
+
 	program = new OpenCLProgram(buildSource(sources), context);
 }
 
