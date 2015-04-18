@@ -6,7 +6,7 @@
 #include <QLabel>
 #include <QMessageBox>
 
-#include "SignalProcessor/montage.h"
+#include "../SignalProcessor/montage.h"
 
 CodeEditDialog::CodeEditDialog(QWidget* parent) : QDialog(parent)
 {

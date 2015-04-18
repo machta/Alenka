@@ -1,8 +1,8 @@
 #include "eventmanagerdelegate.h"
 
-#include "DataFile/eventtable.h"
-#include "DataFile/eventtypetable.h"
-#include "DataFile/tracktable.h"
+#include "../DataFile/eventtable.h"
+#include "../DataFile/eventtypetable.h"
+#include "../DataFile/tracktable.h"
 
 #include <QComboBox>
 

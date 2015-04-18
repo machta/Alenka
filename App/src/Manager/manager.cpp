@@ -1,6 +1,6 @@
 #include "manager.h"
 
-#include "myapplication.h"
+#include "../myapplication.h"
 
 #include <QTableView>
 #include <QPushButton>

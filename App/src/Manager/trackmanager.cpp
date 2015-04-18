@@ -1,6 +1,6 @@
 #include "trackmanager.h"
 
-#include "DataFile/tracktable.h"
+#include "../DataFile/tracktable.h"
 #include "trackmanagerdelegate.h"
 
 #include <QTableView>

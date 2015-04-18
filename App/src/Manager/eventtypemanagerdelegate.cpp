@@ -1,6 +1,6 @@
 #include "eventtypemanagerdelegate.h"
 
-#include "DataFile/eventtypetable.h"
+#include "../DataFile/eventtypetable.h"
 
 #include <QColorDialog>
 #include <QLineEdit>

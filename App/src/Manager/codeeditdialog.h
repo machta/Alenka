@@ -3,7 +3,7 @@
 
 #include <QDialog>
 
-#include "DataFile/trackcodevalidator.h"
+#include "../DataFile/trackcodevalidator.h"
 
 class OpenCLContext;
 class QTextEdit;

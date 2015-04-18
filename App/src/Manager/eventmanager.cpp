@@ -1,10 +1,10 @@
 #include "eventmanager.h"
 
-#include "DataFile/datafile.h"
-#include "DataFile/eventtable.h"
-#include "DataFile/infotable.h"
+#include "../DataFile/datafile.h"
+#include "../DataFile/eventtable.h"
+#include "../DataFile/infotable.h"
 #include "eventmanagerdelegate.h"
-#include "canvas.h"
+#include "../canvas.h"
 
 #include <QTableView>
 #include <QPushButton>

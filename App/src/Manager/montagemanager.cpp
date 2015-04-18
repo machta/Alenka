@@ -1,6 +1,6 @@
 #include "montagemanager.h"
 
-#include "DataFile/montagetable.h"
+#include "../DataFile/montagetable.h"
 
 #include <QTableView>
 #include <QPushButton>

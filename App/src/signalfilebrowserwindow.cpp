@@ -3,10 +3,10 @@
 #include "options.h"
 #include "signalviewer.h"
 #include "DataFile/gdf2.h"
-#include "trackmanager.h"
-#include "eventmanager.h"
-#include "eventtypemanager.h"
-#include "montagemanager.h"
+#include "Manager/trackmanager.h"
+#include "Manager/eventmanager.h"
+#include "Manager/eventtypemanager.h"
+#include "Manager/montagemanager.h"
 
 #include <QAction>
 #include <QMenuBar>

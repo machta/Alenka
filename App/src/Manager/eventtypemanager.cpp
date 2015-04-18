@@ -1,6 +1,6 @@
 #include "eventtypemanager.h"
 
-#include "DataFile/eventtypetable.h"
+#include "../DataFile/eventtypetable.h"
 #include "eventtypemanagerdelegate.h"
 
 #include <QTableView>
