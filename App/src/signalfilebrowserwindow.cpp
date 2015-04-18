@@ -29,11 +29,13 @@ namespace
 {
 const double horizontalZoomFactor = 1.3;
 const double verticalZoomFactor = 1.3;
+
+const char* title = "Signal File Browser";
 }
 
 SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(parent)
 {
-	setWindowTitle("ZSBS: Signal File Browser");
+	setWindowTitle(title);
 
 	signalViewer = new SignalViewer(this);
 	setCentralWidget(signalViewer);
@@ -353,101 +355,108 @@ void SignalFileBrowserWindow::openFile()
 {
 	QString fileName = QFileDialog::getOpenFileName(this, "Open File", "", "GDF file (*.gdf)");
 
-	if (fileName.isNull() == false)
+	if (fileName.isNull())
 	{
-		// Open the file.
-		delete file;
-
-		QFileInfo fi(fileName); //TODO: perhaps add additional error checking (exists(), canbeopen(), ...)
-		file = new GDF2((fi.path() + QDir::separator() + fi.completeBaseName()).toStdString());
-
-		InfoTable* it = file->getInfoTable();
-
-		// Check for any values in InfoTable that could make trouble.
-		if (it->getSelectedMontage() < 0 || it->getSelectedMontage() >= file->getMontageTable()->rowCount())
-		{
-			it->setSelectedMontage(0);
-		}
-
-		// Pass the file to the child widgets.
-		signalViewer->changeFile(file);		
-		eventManager->changeFile(file);
-
-		// Update Filter toolbar.
-		QStringList comboOptions;
-
-		comboOptions << "---" << "0" << "5" << "10";
-
-		for (int i = 50; i <= file->getSamplingFrequency()/2; i *= 2)
-		{
-			comboOptions << QString::number(i);
-		}
-
-		lowpassComboBox->clear();
-		lowpassComboBox->addItems(comboOptions);
-		connect(lowpassComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(lowpassComboBoxUpdate(QString)));
-		connect(it, SIGNAL(lowpassFrequencyChanged(double)), this, SLOT(lowpassComboBoxUpdate(double)));
-
-		highpassComboBox->clear();
-		highpassComboBox->addItems(comboOptions);
-		connect(highpassComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(highpassComboBoxUpdate(QString)));
-		connect(it, SIGNAL(highpassFrequencyChanged(double)), this, SLOT(highpassComboBoxUpdate(double)));
-
-		connect(notchCheckBox, SIGNAL(toggled(bool)), it, SLOT(setNotch(bool)));
-		connect(it, SIGNAL(notchChanged(bool)), notchCheckBox, SLOT(setChecked(bool)));
-
-		// Update the Select toolbar.
-		connectModel(file->getMontageTable(), [this] () { updateMontageComboBox(); });
-		updateMontageComboBox();//*
-		connect(montageComboBox, SIGNAL(currentIndexChanged(int)), it, SLOT(setSelectedMontage(int)));
-		connect(it, SIGNAL(selectedMontageChanged(int)), montageComboBox, SLOT(setCurrentIndex(int)));
-
-		connectModel(file->getEventTypeTable(), [this] () { updateEventTypeComboBox(); });
-		updateEventTypeComboBox();//*
-		connect(eventTypeComboBox, SIGNAL(currentIndexChanged(int)), it, SLOT(setSelectedType(int)));
-		connect(it, SIGNAL(selectedTypeChanged(int)), eventTypeComboBox, SLOT(setCurrentIndex(int)));
-
-		// Update the managers.
-		eventTypeManager->setModel(file->getEventTypeTable());
-		montageManager->setModel(file->getMontageTable());
-
-		connect(it, SIGNAL(selectedMontageChanged(int)), this, SLOT(updateManagers(int)));
-
-		// Update the status bar.
-		timeStatusLabel->setText("Start: " + file->sampleToDateTimeString(0, InfoTable::TimeMode::real) + " Total time: " + file->sampleToDateTimeString(file->getSamplesRecorded(), InfoTable::TimeMode::offset));
-
-		connect(it, SIGNAL(positionChanged(int)), this, SLOT(updatePositionStatusLabel()));
-		connect(it, SIGNAL(positionIndicatorChanged(double)), this, SLOT(updatePositionStatusLabel()));
-		connect(signalViewer->getCanvas(), SIGNAL(cursorPositionSampleChanged(int)), this, SLOT(updateCursorStatusLabel()));
-
-		// Connect slot SignalViewer::update() to make sure that the SignalViewer gets updated when needed.
-		connect(it, SIGNAL(virtualWidthChanged(int)), signalViewer, SLOT(update()));
-		connect(it, SIGNAL(positionChanged(int)), signalViewer, SLOT(update()));
-		connect(it, SIGNAL(lowpassFrequencyChanged(double)), signalViewer, SLOT(update()));
-		connect(it, SIGNAL(highpassFrequencyChanged(double)), signalViewer, SLOT(update()));
-		connect(it, SIGNAL(notchChanged(bool)), signalViewer, SLOT(update()));
-		connect(it, SIGNAL(selectedMontageChanged(int)), signalViewer, SLOT(update()));
-		connect(it, SIGNAL(timeLineIntervalChanged(double)), signalViewer, SLOT(update()));
-		connect(it, SIGNAL(positionIndicatorChanged(double)), signalViewer, SLOT(update()));
-
-		connectModel(file->getMontageTable(), [this] () { signalViewer->update(); });
-		connectModel(file->getEventTypeTable(), [this] () { signalViewer->update(); });
-
-		// Update the View submenus.
-		connect(it, SIGNAL(timeModeChanged(int)), this, SLOT(updateTimeMode(int)));
-		connect(it, &InfoTable::timeLineIntervalChanged, [this] (double value)
-		{
-			setTimeLineIntervalAction->setToolTip("The time line interval is " + locale().toString(value) + " s.");
-			setTimeLineIntervalAction->setStatusTip(setTimeLineIntervalAction->toolTip());
-		});
-
-		// Emit all signals to ensure there are no uninitialized controls.
-		it->emitAllSignals();
+		// No file was selected.
+		return;
 	}
+
+	// Open the file.
+	delete file;
+
+	QFileInfo fi(fileName); // TODO: perhaps add additional error checking (exists(), canbeopen(), ...)
+	file = new GDF2((fi.path() + QDir::separator() + fi.completeBaseName()).toStdString());
+
+	setWindowTitle(fi.fileName() + " - " + title);
+
+	InfoTable* it = file->getInfoTable();
+
+	// Check for any values in InfoTable that could make trouble.
+	if (it->getSelectedMontage() < 0 || it->getSelectedMontage() >= file->getMontageTable()->rowCount())
+	{
+		it->setSelectedMontage(0);
+	}
+
+	// Pass the file to the child widgets.
+	signalViewer->changeFile(file);
+	eventManager->changeFile(file);
+
+	// Update Filter toolbar.
+	QStringList comboOptions;
+
+	comboOptions << "---" << "0" << "5" << "10";
+
+	for (int i = 50; i <= file->getSamplingFrequency()/2; i *= 2)
+	{
+		comboOptions << QString::number(i);
+	}
+
+	lowpassComboBox->clear();
+	lowpassComboBox->addItems(comboOptions);
+	connect(lowpassComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(lowpassComboBoxUpdate(QString)));
+	connect(it, SIGNAL(lowpassFrequencyChanged(double)), this, SLOT(lowpassComboBoxUpdate(double)));
+
+	highpassComboBox->clear();
+	highpassComboBox->addItems(comboOptions);
+	connect(highpassComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(highpassComboBoxUpdate(QString)));
+	connect(it, SIGNAL(highpassFrequencyChanged(double)), this, SLOT(highpassComboBoxUpdate(double)));
+
+	connect(notchCheckBox, SIGNAL(toggled(bool)), it, SLOT(setNotch(bool)));
+	connect(it, SIGNAL(notchChanged(bool)), notchCheckBox, SLOT(setChecked(bool)));
+
+	// Update the Select toolbar.
+	connectModel(file->getMontageTable(), [this] () { updateMontageComboBox(); });
+	updateMontageComboBox();//*
+	connect(montageComboBox, SIGNAL(currentIndexChanged(int)), it, SLOT(setSelectedMontage(int)));
+	connect(it, SIGNAL(selectedMontageChanged(int)), montageComboBox, SLOT(setCurrentIndex(int)));
+
+	connectModel(file->getEventTypeTable(), [this] () { updateEventTypeComboBox(); });
+	updateEventTypeComboBox();//*
+	connect(eventTypeComboBox, SIGNAL(currentIndexChanged(int)), it, SLOT(setSelectedType(int)));
+	connect(it, SIGNAL(selectedTypeChanged(int)), eventTypeComboBox, SLOT(setCurrentIndex(int)));
+
+	// Update the managers.
+	eventTypeManager->setModel(file->getEventTypeTable());
+	montageManager->setModel(file->getMontageTable());
+
+	connect(it, SIGNAL(selectedMontageChanged(int)), this, SLOT(updateManagers(int)));
+
+	// Update the status bar.
+	timeStatusLabel->setText("Start: " + file->sampleToDateTimeString(0, InfoTable::TimeMode::real) + " Total time: " + file->sampleToDateTimeString(file->getSamplesRecorded(), InfoTable::TimeMode::offset));
+
+	connect(it, SIGNAL(positionChanged(int)), this, SLOT(updatePositionStatusLabel()));
+	connect(it, SIGNAL(positionIndicatorChanged(double)), this, SLOT(updatePositionStatusLabel()));
+	connect(signalViewer->getCanvas(), SIGNAL(cursorPositionSampleChanged(int)), this, SLOT(updateCursorStatusLabel()));
+
+	// Connect slot SignalViewer::update() to make sure that the SignalViewer gets updated when needed.
+	connect(it, SIGNAL(virtualWidthChanged(int)), signalViewer, SLOT(update()));
+	connect(it, SIGNAL(positionChanged(int)), signalViewer, SLOT(update()));
+	connect(it, SIGNAL(lowpassFrequencyChanged(double)), signalViewer, SLOT(update()));
+	connect(it, SIGNAL(highpassFrequencyChanged(double)), signalViewer, SLOT(update()));
+	connect(it, SIGNAL(notchChanged(bool)), signalViewer, SLOT(update()));
+	connect(it, SIGNAL(selectedMontageChanged(int)), signalViewer, SLOT(update()));
+	connect(it, SIGNAL(timeLineIntervalChanged(double)), signalViewer, SLOT(update()));
+	connect(it, SIGNAL(positionIndicatorChanged(double)), signalViewer, SLOT(update()));
+
+	connectModel(file->getMontageTable(), [this] () { signalViewer->update(); });
+	connectModel(file->getEventTypeTable(), [this] () { signalViewer->update(); });
+
+	// Update the View submenus.
+	connect(it, SIGNAL(timeModeChanged(int)), this, SLOT(updateTimeMode(int)));
+	connect(it, &InfoTable::timeLineIntervalChanged, [this] (double value)
+	{
+		setTimeLineIntervalAction->setToolTip("The time line interval is " + locale().toString(value) + " s.");
+		setTimeLineIntervalAction->setStatusTip(setTimeLineIntervalAction->toolTip());
+	});
+
+	// Emit all signals to ensure there are no uninitialized controls.
+	it->emitAllSignals();
 }
 
 void SignalFileBrowserWindow::closeFile()
 {
+	setWindowTitle(title);
+
 	delete file;
 	file = nullptr;
 
