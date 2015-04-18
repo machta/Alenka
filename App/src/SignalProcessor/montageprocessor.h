@@ -37,7 +37,7 @@ private:
 		if (montageKernel != nullptr)
 		{
 			err = clReleaseKernel(montageKernel);
-			checkErrorCode(err, CL_SUCCESS, "clReleaseKernel()");
+			checkClErrorCode(err, "clReleaseKernel()");
 		}
 	}
 };

@@ -33,7 +33,7 @@ public:
 		cl_int err;
 
 		cl_kernel kernel = clCreateKernel(program, kernelName.c_str(), &err);
-		checkErrorCode(err, CL_SUCCESS, "clCreateKernel()");
+		checkClErrorCode(err, "clCreateKernel()");
 
 		return kernel;
 	}

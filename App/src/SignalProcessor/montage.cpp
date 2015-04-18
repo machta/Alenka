@@ -25,7 +25,7 @@ bool Montage::test(const string& source, OpenCLContext* context, string* errorMe
 		cl_kernel kernel = program.createKernel("montage");
 
 		cl_int err = clReleaseKernel(kernel);
-		checkErrorCode(err, CL_SUCCESS, "clReleaseKernel()");
+		checkClErrorCode(err, "clReleaseKernel()");
 
 		return true;
 	}

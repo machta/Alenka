@@ -17,17 +17,17 @@ Filter::Filter(unsigned int M, double Fs) : M(M), Fs(Fs), lowpass(2), highpass(-
 	size_t size = M;
 
 	errFFT = clfftCreateDefaultPlan(&plan, context.getCLContext(), CLFFT_1D, &size);
-	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftCreateDefaultPlan()");
+	checkClFFTErrorCode(errFFT, "clfftCreateDefaultPlan()");
 
 	clfftSetPlanPrecision(plan, CLFFT_DOUBLE);
 	clfftSetLayout(plan, CLFFT_HERMITIAN_INTERLEAVED, CLFFT_REAL);
 	clfftSetResultLocation(plan, CLFFT_INPLACE);
 
 	queue = clCreateCommandQueue(context.getCLContext(), context.getCLDevice(), 0, &errCL);
-	checkErrorCode(errCL, CL_SUCCESS, "clCreateCommandQueue()");
+	checkClErrorCode(errCL, "clCreateCommandQueue()");
 
 	errFFT = clfftBakePlan(plan, 1, &queue, nullptr, nullptr);
-	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftBakePlan()");
+	checkClFFTErrorCode(errFFT, "clfftBakePlan()");
 }
 
 Filter::~Filter()
@@ -36,7 +36,7 @@ Filter::~Filter()
 
 	clfftStatus errFFT;
 	errFFT = clfftDestroyPlan(&plan);
-	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftDestroyPlan()");
+	checkClFFTErrorCode(errFFT, "clfftDestroyPlan()");
 }
 
 vector<double> Filter::computeCoefficients()
@@ -90,13 +90,13 @@ vector<double> Filter::computeCoefficients()
 	// Compute the iFFT of H to make the FIR filter coefficients h. (eq. 10.2.33)
 	cl_int errCL;
 	cl_mem buffer = clCreateBuffer(context.getCLContext(), CL_MEM_USE_HOST_PTR, 2*cM*sizeof(double), coefficients.data(), &errCL);
-	checkErrorCode(errCL, CL_SUCCESS, "clCreateBuffer()");
+	checkClErrorCode(errCL, "clCreateBuffer()");
 
 	clfftStatus errFFT = clfftEnqueueTransform(plan, CLFFT_BACKWARD, 1, &queue, 0, nullptr, nullptr, &buffer, nullptr, nullptr);
-	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftEnqueueTransform()");
+	checkClFFTErrorCode(errFFT, "clfftEnqueueTransform()");
 
 	errCL = clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, 2*cM*sizeof(double), coefficients.data(), 0, nullptr, nullptr);
-	checkErrorCode(errCL, CL_SUCCESS, "clEnqueueReadBuffer()");
+	checkClErrorCode(errCL, "clEnqueueReadBuffer()");
 
 	// Try to improve filter characteristics by applying a window function.
 	string window = PROGRAM_OPTIONS.isSet("window") ? PROGRAM_OPTIONS["window"].as<string>() : "";
@@ -117,7 +117,7 @@ vector<double> Filter::computeCoefficients()
 	}
 
 	errCL = clReleaseMemObject(buffer);
-	checkErrorCode(errCL, CL_SUCCESS, "clReleaseMemObject()");
+	checkClErrorCode(errCL, "clReleaseMemObject()");
 
 	return coefficients;
 }

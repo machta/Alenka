@@ -57,12 +57,12 @@ public:
 		cl_int err;
 
 		cl_event readyEvent = clCreateUserEvent(context->getCLContext(), &err);
-		checkErrorCode(err, CL_SUCCESS, "clCreateUserEvent()");
+		checkClErrorCode(err, "clCreateUserEvent()");
 
 		cache->getAny(std::set<int> {index}, nullptr, readyEvent);
 
 		err = clReleaseEvent(readyEvent);
-		checkErrorCode(err, CL_SUCCESS, "clReleaseEvent()");
+		checkClErrorCode(err, "clReleaseEvent()");
 	}
 	void changeFile(DataFile* file);
 	bool ready() const
@@ -122,7 +122,7 @@ private:
 		if (processorOutputBuffer != nullptr)
 		{
 			cl_int err = clReleaseMemObject(processorOutputBuffer);
-			checkErrorCode(err, CL_SUCCESS, "clReleaseMemObject()");
+			checkClErrorCode(err, "clReleaseMemObject()");
 
 			processorOutputBuffer = nullptr;
 		}

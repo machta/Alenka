@@ -29,14 +29,14 @@ GPUCache::GPUCache(unsigned int blockSize, int offset, int delay, int64_t availa
 	for (unsigned int i = 0; i < capacity; ++i)
 	{
 		buffers.push_back(clCreateBuffer(context->getCLContext(), flags, bytesPerBlock, nullptr, &err));
-		checkErrorCode(err, CL_SUCCESS, "clCreateBuffer()");
+		checkClErrorCode(err, "clCreateBuffer()");
 
 		lastUsed.push_back(0);
 		order.push_back(i);
 	}
 
 	commandQueue = clCreateCommandQueue(context->getCLContext(), context->getCLDevice(), 0, &err);
-	checkErrorCode(err, CL_SUCCESS, "clCreateCommandQueue()");
+	checkClErrorCode(err, "clCreateCommandQueue()");
 
 	loaderThread = thread(&GPUCache::loaderThreadFunction, this);
 }
@@ -58,7 +58,7 @@ GPUCache::~GPUCache()
 	for (auto& e : buffers)
 	{
 		err = clReleaseMemObject(e);
-		checkErrorCode(err, CL_SUCCESS, "clReleaseMemObject()");
+		checkClErrorCode(err, "clReleaseMemObject()");
 	}
 }
 
@@ -153,14 +153,14 @@ void GPUCache::loaderThreadFunction()
 
 #ifdef AMD_BUG
 				err = clEnqueueWriteBuffer(commandQueue, buffers[cacheIndex], CL_TRUE, 0, (blockSize + offset + 4)*file->getChannelCount()*sizeof(float), tmpBuffer.data(), 0, nullptr, nullptr);
-				checkErrorCode(err, CL_SUCCESS, "clEnqueueWriteBuffer()");
+				checkClErrorCode(err, "clEnqueueWriteBuffer()");
 #else
 				size_t origin[] = {0, 0, 0};
 				size_t rowLen = (blockSize + offset)*sizeof(float);
 				size_t region[] = {rowLen, file->getChannelCount(), 1};
 
 				err = clEnqueueWriteBufferRect(commandQueue, buffers[cacheIndex], CL_TRUE, origin, origin, region, rowLen + 4*sizeof(float), 0, 0, 0, tmpBuffer.data(), 0, nullptr, nullptr);
-				checkErrorCode(err, CL_SUCCESS, "clEnqueueWriteBufferRect()");
+				checkClErrorCode(err, "clEnqueueWriteBufferRect()");
 #endif
 
 				printBuffer("after_writeBuffer.txt", buffers[cacheIndex], commandQueue);
@@ -181,7 +181,7 @@ void GPUCache::loaderThreadFunction()
 		}
 
 		err = clReleaseCommandQueue(commandQueue);
-		checkErrorCode(err, CL_SUCCESS, "clReleaseCommandQueue()");
+		checkClErrorCode(err, "clReleaseCommandQueue()");
 	}
 	catch (exception& e)
 	{
@@ -198,13 +198,13 @@ void GPUCache::enqueuCopy(cl_mem source, cl_mem destination, cl_event readyEvent
 		cl_event event;
 
 		err = clEnqueueCopyBuffer(commandQueue, source, destination, 0, 0, (blockSize + offset + 4)*file->getChannelCount()*sizeof(float), 0, nullptr, &event);
-		checkErrorCode(err, CL_SUCCESS, "clEnqueueCopyBuffer()");
+		checkClErrorCode(err, "clEnqueueCopyBuffer()");
 
 		err = clSetEventCallback(event, CL_COMPLETE, &signalEventCallback, readyEvent);
-		checkErrorCode(err, CL_SUCCESS, "clSetEventCallback()");
+		checkClErrorCode(err, "clSetEventCallback()");
 
 		err = clFlush(commandQueue);
-		checkErrorCode(err, CL_SUCCESS, "clFlush()");
+		checkClErrorCode(err, "clFlush()");
 	}
 }
 
@@ -220,10 +220,10 @@ void CL_CALLBACK GPUCache::signalEventCallback(cl_event callbackEvent, cl_int st
 		cl_int err;
 
 		err = clSetUserEventStatus(event, CL_COMPLETE);
-		checkErrorCode(err, CL_SUCCESS, "clSetUserEventStatus()");
+		checkClErrorCode(err, "clSetUserEventStatus()");
 
 		err = clReleaseEvent(callbackEvent);
-		checkErrorCode(err, CL_SUCCESS, "clReleaseEvent()");
+		checkClErrorCode(err, "clReleaseEvent()");
 	}
 	catch (exception& e)
 	{

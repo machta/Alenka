@@ -4,6 +4,7 @@
 #include "options.h"
 
 #include <CL/cl_gl.h>
+#include <clFFT.h>
 
 #include <sstream>
 #include <stdexcept>
@@ -55,6 +56,129 @@ void CNEC(T val, std::string message, const char* file, int line)
 	throw std::runtime_error(ss.str());
 }
 
+#define CASE(a_) case a_: return #a_
+
+std::string clErrorCodeToString(cl_int code)
+{
+	using namespace std;
+
+	switch (code)
+	{
+		CASE(CL_SUCCESS);
+		CASE(CL_DEVICE_NOT_FOUND);
+		CASE(CL_DEVICE_NOT_AVAILABLE);
+		CASE(CL_COMPILER_NOT_AVAILABLE);
+		CASE(CL_MEM_OBJECT_ALLOCATION_FAILURE);
+		CASE(CL_OUT_OF_RESOURCES);
+		CASE(CL_OUT_OF_HOST_MEMORY);
+		CASE(CL_PROFILING_INFO_NOT_AVAILABLE);
+		CASE(CL_MEM_COPY_OVERLAP);
+		CASE(CL_IMAGE_FORMAT_MISMATCH);
+		CASE(CL_IMAGE_FORMAT_NOT_SUPPORTED);
+		CASE(CL_BUILD_PROGRAM_FAILURE);
+		CASE(CL_MAP_FAILURE);
+		CASE(CL_MISALIGNED_SUB_BUFFER_OFFSET);
+		CASE(CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST);
+		CASE(CL_COMPILE_PROGRAM_FAILURE);
+		CASE(CL_LINKER_NOT_AVAILABLE);
+		CASE(CL_LINK_PROGRAM_FAILURE);
+		CASE(CL_DEVICE_PARTITION_FAILED);
+		CASE(CL_KERNEL_ARG_INFO_NOT_AVAILABLE);
+		CASE(CL_INVALID_VALUE);
+		CASE(CL_INVALID_DEVICE_TYPE);
+		CASE(CL_INVALID_PLATFORM);
+		CASE(CL_INVALID_DEVICE);
+		CASE(CL_INVALID_CONTEXT);
+		CASE(CL_INVALID_QUEUE_PROPERTIES);
+		CASE(CL_INVALID_COMMAND_QUEUE);
+		CASE(CL_INVALID_HOST_PTR);
+		CASE(CL_INVALID_MEM_OBJECT);
+		CASE(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR);
+		CASE(CL_INVALID_IMAGE_SIZE);
+		CASE(CL_INVALID_SAMPLER);
+		CASE(CL_INVALID_BINARY);
+		CASE(CL_INVALID_BUILD_OPTIONS);
+		CASE(CL_INVALID_PROGRAM);
+		CASE(CL_INVALID_PROGRAM_EXECUTABLE);
+		CASE(CL_INVALID_KERNEL_NAME);
+		CASE(CL_INVALID_KERNEL_DEFINITION);
+		CASE(CL_INVALID_KERNEL);
+		CASE(CL_INVALID_ARG_INDEX);
+		CASE(CL_INVALID_ARG_VALUE);
+		CASE(CL_INVALID_ARG_SIZE);
+		CASE(CL_INVALID_KERNEL_ARGS);
+		CASE(CL_INVALID_WORK_DIMENSION);
+		CASE(CL_INVALID_WORK_GROUP_SIZE);
+		CASE(CL_INVALID_WORK_ITEM_SIZE);
+		CASE(CL_INVALID_GLOBAL_OFFSET);
+		CASE(CL_INVALID_EVENT_WAIT_LIST);
+		CASE(CL_INVALID_EVENT);
+		CASE(CL_INVALID_OPERATION);
+		CASE(CL_INVALID_GL_OBJECT);
+		CASE(CL_INVALID_BUFFER_SIZE);
+		CASE(CL_INVALID_MIP_LEVEL);
+		CASE(CL_INVALID_GLOBAL_WORK_SIZE);
+		CASE(CL_INVALID_PROPERTY);
+		CASE(CL_INVALID_IMAGE_DESCRIPTOR);
+		CASE(CL_INVALID_COMPILER_OPTIONS);
+		CASE(CL_INVALID_LINKER_OPTIONS);
+		CASE(CL_INVALID_DEVICE_PARTITION_COUNT);
+	}
+
+	stringstream ss;
+	ss << "unknown code ";
+	printEC(code, ss);
+
+	return ss.str();
+}
+
+std::string clFFTErrorCodeToString(clfftStatus code)
+{
+	using namespace std;
+
+	switch (code)
+	{
+		CASE(CLFFT_BUGCHECK);
+		CASE(CLFFT_NOTIMPLEMENTED);
+		CASE(CLFFT_TRANSPOSED_NOTIMPLEMENTED);
+		CASE(CLFFT_FILE_NOT_FOUND);
+		CASE(CLFFT_FILE_CREATE_FAILURE);
+		CASE(CLFFT_VERSION_MISMATCH);
+		CASE(CLFFT_INVALID_PLAN);
+		CASE(CLFFT_DEVICE_NO_DOUBLE);
+		CASE(CLFFT_DEVICE_MISMATCH);
+		CASE(CLFFT_ENDSTATUS);
+	}
+
+	return clErrorCodeToString(code);
+}
+
+#undef CASE
+
+void CCEC(cl_int val, std::string message, const char* file, int line)
+{
+	std::stringstream ss;
+
+	ss << "Unexpected error code: " << clErrorCodeToString(val);
+	ss << ", required CL_SUCCESS. ";
+
+	ss << message << " " << file << ":" << line;
+
+	throw std::runtime_error(ss.str());
+}
+
+void CFCEC(clfftStatus val, std::string message, const char* file, int line)
+{
+	std::stringstream ss;
+
+	ss << "Unexpected error code: " << clFFTErrorCodeToString(val);
+	ss << ", required CLFFT_SUCCESS. ";
+
+	ss << message << " " << file << ":" << line;
+
+	throw std::runtime_error(ss.str());
+}
+
 const char* getTimeString(std::time_t t)
 {
 	using namespace std;
@@ -70,6 +194,8 @@ const char* getTimeString(std::time_t t)
 
 #define checkErrorCode(val_, expected_, message_) if((val_) != (expected_)) { std::stringstream ss; ss << message_; CEC(val_, expected_, ss.str(), __FILE__, __LINE__); }
 #define checkNotErrorCode(val_, expected_, message_) if((val_) == (expected_)) { std::stringstream ss; ss << message_; CNEC(val_, ss.str(), __FILE__, __LINE__); }
+#define checkClErrorCode(val_, message_) if((val_) != CL_SUCCESS) { std::stringstream ss; ss << message_; CCEC(val_, ss.str(), __FILE__, __LINE__); }
+#define checkClFFTErrorCode(val_, message_) if((val_) != CLFFT_SUCCESS) { std::stringstream ss; ss << message_; CFCEC(val_, ss.str(), __FILE__, __LINE__); }
 
 inline std::size_t freadChecked(void* data, std::size_t size, std::size_t n, FILE* file)
 {
@@ -136,7 +262,9 @@ inline void printBuffer(FILE* file, float* data, int n)
 		}
 	}
 #else
-	(void)file; (void)data; (void)n;
+	(void)file;
+	(void)data;
+	(void)n;
 #endif
 }
 
@@ -149,19 +277,21 @@ inline void printBuffer(FILE* file, cl_mem buffer, cl_command_queue queue)
 
 		size_t size;
 		err = clGetMemObjectInfo(buffer, CL_MEM_SIZE, sizeof(size_t), &size, nullptr);
-		checkErrorCode(err, CL_SUCCESS, "clGetMemObjectInfo");
+		checkClErrorCode(err, "clGetMemObjectInfo");
 
 		float* tmp = new float[size];
 
 		err = clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, size, tmp, 0, nullptr, nullptr);
-		checkErrorCode(err, CL_SUCCESS, "clGetMemObjectInfo");
+		checkClErrorCode(err, "clGetMemObjectInfo");
 
 		printBuffer(file, tmp, size/sizeof(float));
 
 		delete[] tmp;
 	}
 #else
-	(void)file; (void)buffer; (void)queue;
+	(void)file;
+	(void)buffer;
+	(void)queue;
 #endif
 }
 
@@ -182,7 +312,9 @@ inline void printBuffer(const std::string& filePath, float* data, int n)
 		fclose(file);
 	}
 #else
-	(void)filePath; (void)data; (void)n;
+	(void)filePath;
+	(void)data;
+	(void)n;
 #endif
 }
 
@@ -203,7 +335,9 @@ inline void printBuffer(const std::string& filePath, cl_mem buffer, cl_command_q
 		fclose(file);
 	}
 #else
-	(void)filePath; (void)buffer; (void)queue;
+	(void)filePath;
+	(void)buffer;
+	(void)queue;
 #endif
 }
 

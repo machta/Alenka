@@ -11,7 +11,7 @@ using namespace std;
 OpenCLProgram::~OpenCLProgram()
 {
 	cl_int err = clReleaseProgram(program);
-	checkErrorCode(err, CL_SUCCESS, "clReleaseProgram()");
+	checkClErrorCode(err, "clReleaseProgram()");
 }
 
 string OpenCLProgram::getCompilationLog() const
@@ -19,13 +19,13 @@ string OpenCLProgram::getCompilationLog() const
 	size_t logLength;
 
 	cl_int err = clGetProgramBuildInfo(program, context->getCLDevice(), CL_PROGRAM_BUILD_LOG, 0, nullptr, &logLength);
-	checkErrorCode(err, CL_SUCCESS, "clGetProgramBuildInfo()");
+	checkClErrorCode(err, "clGetProgramBuildInfo()");
 
 	char* tmp = new char[logLength + 1];
 	tmp[logLength] = 0;
 
 	err = clGetProgramBuildInfo(program, context->getCLDevice(), CL_PROGRAM_BUILD_LOG, logLength, tmp, nullptr);
-	checkErrorCode(err, CL_SUCCESS, "clGetProgramBuildInfo()");
+	checkClErrorCode(err, "clGetProgramBuildInfo()");
 
 	string str(tmp);
 
@@ -42,7 +42,7 @@ void OpenCLProgram::construct(const string& source)
 	size_t size = source.size();
 
 	program = clCreateProgramWithSource(context->getCLContext(), 1, &sourcePointer, &size, &err);
-	checkErrorCode(err, CL_SUCCESS, "clCreateProgramWithSource()");
+	checkClErrorCode(err, "clCreateProgramWithSource()");
 
 	err = clBuildProgram(program, 0, nullptr, nullptr, nullptr, nullptr);
 
@@ -67,7 +67,7 @@ void OpenCLProgram::construct(const string& source)
 		}
 		else
 		{
-			checkErrorCode(err, CL_SUCCESS, "clBuildProgram()");
+			checkClErrorCode(err, "clBuildProgram()");
 		}
 	}
 }

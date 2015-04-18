@@ -71,7 +71,7 @@ OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device, cl_devi
 	properties.push_back(0);
 
 	context = clCreateContext(properties.data(), 1, &deviceId, nullptr, nullptr, &err);
-	checkErrorCode(err, CL_SUCCESS, "clCreateContext()");
+	checkClErrorCode(err, "clCreateContext()");
 
 	delete[] platforms;
 	delete[] devices;
@@ -80,7 +80,7 @@ OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device, cl_devi
 OpenCLContext::~OpenCLContext()
 {
 	cl_int err = clReleaseContext(context);
-	checkErrorCode(err, CL_SUCCESS, "clReleaseContext()");
+	checkClErrorCode(err, "clReleaseContext()");
 }
 
 string OpenCLContext::getPlatformInfo() const
@@ -90,19 +90,19 @@ string OpenCLContext::getPlatformInfo() const
 
 	// Find the maximum size needed for the value.
 	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_VERSION, 0, nullptr, &size);
-	checkErrorCode(err, CL_SUCCESS, "clGetPlatformInfo()");
+	checkClErrorCode(err, "clGetPlatformInfo()");
 	maxSize = max(maxSize, size);
 
 	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_NAME, 0, nullptr, &size);
-	checkErrorCode(err, CL_SUCCESS, "clGetPlatformInfo()");
+	checkClErrorCode(err, "clGetPlatformInfo()");
 	maxSize = max(maxSize, size);
 
 	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_VENDOR, 0, nullptr, &size);
-	checkErrorCode(err, CL_SUCCESS, "clGetPlatformInfo()");
+	checkClErrorCode(err, "clGetPlatformInfo()");
 	maxSize = max(maxSize, size);
 
 	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_EXTENSIONS, 0, nullptr, &size);
-	checkErrorCode(err, CL_SUCCESS, "clGetPlatformInfo()");
+	checkClErrorCode(err, "clGetPlatformInfo()");
 	maxSize = max(maxSize, size);
 
 	// Build the string.
@@ -111,22 +111,22 @@ string OpenCLContext::getPlatformInfo() const
 
 	str += "Version: ";
 	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_VERSION, maxSize, tmp, nullptr);
-	checkErrorCode(err, CL_SUCCESS, "clGetPlatformInfo()");
+	checkClErrorCode(err, "clGetPlatformInfo()");
 	str += tmp;
 
 	str += "\nName: ";
 	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_NAME, maxSize, tmp, nullptr);
-	checkErrorCode(err, CL_SUCCESS, "clGetPlatformInfo()");
+	checkClErrorCode(err, "clGetPlatformInfo()");
 	str += tmp;
 
 	str += "\nVendor: ";
 	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_VENDOR, maxSize, tmp, nullptr);
-	checkErrorCode(err, CL_SUCCESS, "clGetPlatformInfo()");
+	checkClErrorCode(err, "clGetPlatformInfo()");
 	str += tmp;
 
 	str += "\nExtensions: ";
 	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_EXTENSIONS, maxSize, tmp, nullptr);
-	checkErrorCode(err, CL_SUCCESS, "clGetPlatformInfo()");
+	checkClErrorCode(err, "clGetPlatformInfo()");
 	str += tmp;
 
 	delete[] tmp;
@@ -141,19 +141,19 @@ string OpenCLContext::getDeviceInfo() const
 
 	// Find the maximum size needed for the value.
 	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_VERSION, 0, nullptr, &size);
-	checkErrorCode(err, CL_SUCCESS, "clGetDeviceInfo()");
+	checkClErrorCode(err, "clGetDeviceInfo()");
 	maxSize = max(maxSize, size);
 
 	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_NAME, 0, nullptr, &size);
-	checkErrorCode(err, CL_SUCCESS, "clGetDeviceInfo()");
+	checkClErrorCode(err, "clGetDeviceInfo()");
 	maxSize = max(maxSize, size);
 
 	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_VENDOR, 0, nullptr, &size);
-	checkErrorCode(err, CL_SUCCESS, "clGetDeviceInfo()");
+	checkClErrorCode(err, "clGetDeviceInfo()");
 	maxSize = max(maxSize, size);
 
 	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_EXTENSIONS, 0, nullptr, &size);
-	checkErrorCode(err, CL_SUCCESS, "clGetDeviceInfo()");
+	checkClErrorCode(err, "clGetDeviceInfo()");
 	maxSize = max(maxSize, size);
 
 	// Build the string.
@@ -162,22 +162,22 @@ string OpenCLContext::getDeviceInfo() const
 
 	str += "Version: ";
 	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_VERSION, maxSize, tmp, nullptr);
-	checkErrorCode(err, CL_SUCCESS, "clGetDeviceInfo()");
+	checkClErrorCode(err, "clGetDeviceInfo()");
 	str += tmp;
 
 	str += "\nName: ";
 	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_NAME, maxSize, tmp, nullptr);
-	checkErrorCode(err, CL_SUCCESS, "clGetDeviceInfo()");
+	checkClErrorCode(err, "clGetDeviceInfo()");
 	str += tmp;
 
 	str += "\nVendor: ";
 	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_VENDOR, maxSize, tmp, nullptr);
-	checkErrorCode(err, CL_SUCCESS, "clGetDeviceInfo()");
+	checkClErrorCode(err, "clGetDeviceInfo()");
 	str += tmp;
 
 	str += "\nExtensions: ";
 	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_EXTENSIONS, maxSize, tmp, nullptr);
-	checkErrorCode(err, CL_SUCCESS, "clGetDeviceInfo()");
+	checkClErrorCode(err, "clGetDeviceInfo()");
 	str += tmp;
 
 	delete[] tmp;

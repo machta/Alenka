@@ -13,7 +13,7 @@ SignalProcessor::SignalProcessor()
 	context = new OpenCLContext(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS, QOpenGLContext::currentContext());
 
 	commandQueue = clCreateCommandQueue(context->getCLContext(), context->getCLDevice(), 0, &err);
-	checkErrorCode(err, CL_SUCCESS, "clCreateCommandQueue()");
+	checkClErrorCode(err, "clCreateCommandQueue()");
 
 	gl()->glGenBuffers(1, &glBuffer);
 	gl()->glGenVertexArrays(2, vertexArrays);
@@ -41,7 +41,7 @@ SignalProcessor::~SignalProcessor()
 	delete context;
 
 	err = clReleaseCommandQueue(commandQueue);
-	checkErrorCode(err, CL_SUCCESS, "clReleaseCommandQueue()");
+	checkClErrorCode(err, "clReleaseCommandQueue()");
 
 	gl()->glDeleteBuffers(1, &glBuffer);
 	gl()->glDeleteVertexArrays(2, vertexArrays);
@@ -89,7 +89,7 @@ void SignalProcessor::updateFilter()
 }
 
 void SignalProcessor::updateMontage()
-{	
+{
 	if (file == nullptr)
 	{
 		return;
@@ -132,7 +132,7 @@ void SignalProcessor::updateMontage()
 	cl_int err;
 
 	processorOutputBuffer = clCreateFromGLBuffer(context->getCLContext(), flags, glBuffer, &err);
-	checkErrorCode(err, CL_SUCCESS, "clCreateFromGLBuffer()");
+	checkClErrorCode(err, "clCreateFromGLBuffer()");
 
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
@@ -145,18 +145,18 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 	cl_int err;
 
 	cl_event readyEvent = clCreateUserEvent(context->getCLContext(), &err);
-	checkErrorCode(err, CL_SUCCESS, "clCreateUserEvent()");
+	checkClErrorCode(err, "clCreateUserEvent()");
 
 #if CL_VERSION_1_2
 	err = clEnqueueBarrierWithWaitList(commandQueue, 1, &readyEvent, nullptr);
-	checkErrorCode(err, CL_SUCCESS, "clEnqueueBarrierWithWaitList()");
+	checkClErrorCode(err, "clEnqueueBarrierWithWaitList()");
 #else
 	err = clEnqueueWaitForEvents(commandQueue, 1, &readyEvent);
-	checkErrorCode(err, CL_SUCCESS, "clEnqueueWaitForEvents()");
+	checkClErrorCode(err, "clEnqueueWaitForEvents()");
 #endif
 
 	err = clReleaseEvent(readyEvent);
-	checkErrorCode(err, CL_SUCCESS, "clReleaseEvent()");
+	checkClErrorCode(err, "clReleaseEvent()");
 
 	int index = cache->getAny(indexSet, processorTmpBuffer, readyEvent);
 
@@ -169,26 +169,26 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 		printBuffer("after_filter.txt", processorTmpBuffer, commandQueue);
 
 		err = clFlush(commandQueue);
-		checkErrorCode(err, CL_SUCCESS, "clFlush()");
+		checkClErrorCode(err, "clFlush()");
 	}
 
 	gl()->glFinish(); // Could be replaced by a fence.
 
 	err = clEnqueueAcquireGLObjects(commandQueue, 1, &processorOutputBuffer, 0, nullptr, nullptr);
-	checkErrorCode(err, CL_SUCCESS, "clEnqueueAcquireGLObjects()");
+	checkClErrorCode(err, "clEnqueueAcquireGLObjects()");
 
 	montageProcessor->process(processorTmpBuffer, processorOutputBuffer, commandQueue);
 
 	printBuffer("after_montage.txt", processorOutputBuffer, commandQueue);
 
 	err = clFinish(commandQueue);
-	checkErrorCode(err, CL_SUCCESS, "clFinish()");
+	checkClErrorCode(err, "clFinish()");
 
 	err = clEnqueueReleaseGLObjects(commandQueue, 1, &processorOutputBuffer, 0, nullptr, nullptr);
-	checkErrorCode(err, CL_SUCCESS, "clEnqueueReleaseGLObjects()");
+	checkClErrorCode(err, "clEnqueueReleaseGLObjects()");
 
 	err = clFinish(commandQueue);
-	checkErrorCode(err, CL_SUCCESS, "clFinish()");
+	checkClErrorCode(err, "clFinish()");
 
 	auto fromTo = DataFile::blockIndexToSampleRange(index, getBlockSize());
 	return SignalBlock(index, fromTo.first, fromTo.second, vertexArrays);
@@ -236,7 +236,7 @@ void SignalProcessor::changeFile(DataFile* file)
 			cl_ulong size;
 
 			err = clGetDeviceInfo(context->getCLDevice(), CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &size, nullptr);
-			checkErrorCode(err, CL_SUCCESS, "clGetDeviceInfo()");
+			checkClErrorCode(err, "clGetDeviceInfo()");
 
 			memory += size;
 		}
@@ -254,7 +254,7 @@ void SignalProcessor::changeFile(DataFile* file)
 #endif
 
 		processorTmpBuffer = clCreateBuffer(context->getCLContext(), flags, tmpBlockSize*sizeof(float), nullptr, &err);
-		checkErrorCode(err, CL_SUCCESS, "clCreateBuffer()");
+		checkClErrorCode(err, "clCreateBuffer()");
 
 		// Default filter and montage.
 		updateFilter();
@@ -274,7 +274,7 @@ void SignalProcessor::destroyFileRelated()
 		delete montageProcessor;
 
 		cl_int err = clReleaseMemObject(processorTmpBuffer);
-		checkErrorCode(err, CL_SUCCESS, "clReleaseMemObject()");
+		checkClErrorCode(err, "clReleaseMemObject()");
 
 		releaseOutputBuffer();
 	}

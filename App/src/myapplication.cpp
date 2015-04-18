@@ -19,10 +19,10 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 	clfftSetupData setupData;
 
 	errFFT = clfftInitSetupData(&setupData);
-	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftInitSetupData()");
+	checkClFFTErrorCode(errFFT, "clfftInitSetupData()");
 
 	errFFT = clfftSetup(&setupData);
-	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftSetup()");
+	checkClFFTErrorCode(errFFT, "clfftSetup()");
 
 	// Set up the global options object.
 	options = new Options(argc, argv);
@@ -73,7 +73,7 @@ MyApplication::~MyApplication()
 	delete options;
 
 	clfftStatus errFFT = clfftTeardown();
-	checkErrorCode(errFFT, CLFFT_SUCCESS, "clfftTeardown()");
+	checkClFFTErrorCode(errFFT, "clfftTeardown()");
 }
 
 bool MyApplication::notify(QObject* receiver, QEvent* event)
