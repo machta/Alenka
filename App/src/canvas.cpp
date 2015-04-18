@@ -273,6 +273,7 @@ void Canvas::paintGL()
 		}
 
 		drawPositionIndicator();
+		drawCross();
 
 		//gl()->glFinish();
 
@@ -367,6 +368,11 @@ void Canvas::keyPressEvent(QKeyEvent* event)
 			update();
 		}
 	}
+	else if (event->key() == Qt::Key_C)
+	{
+		isDrawingCross = !isDrawingCross; // Perhaps promote this to an action?
+		update();
+	}
 	else
 	{
 		event->ignore();
@@ -389,7 +395,7 @@ void Canvas::mouseMoveEvent(QMouseEvent* /*event*/)
 	{
 		updateCursor();
 
-		if (isSelectingTrack)
+		if (isSelectingTrack || isDrawingEvent || isDrawingCross)
 		{
 			update();
 		}
@@ -458,6 +464,10 @@ void Canvas::focusOutEvent(QFocusEvent* /*event*/)
 	else if (isDrawingEvent)
 	{
 		isDrawingEvent = false;
+		update();
+	}
+	else if (isDrawingCross)
+	{
 		update();
 	}
 }
@@ -569,6 +579,33 @@ void Canvas::drawPositionIndicator()
 	drawTimeLine(position);
 }
 
+void Canvas::drawCross()
+{
+	QPoint pos = mapFromGlobal(QCursor::pos());
+
+	if (isDrawingCross == false || hasFocus() == false || pos.x() < 0 || pos.x() >= width() || pos.y() < 0 || pos.y() >= height())
+	{
+		return;
+	}
+
+	gl()->glUseProgram(rectangleLineProgram->getGLProgram());
+	gl()->glBindVertexArray(rectangleLineArray);
+	gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleLineBuffer);
+
+	setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::black), 1);
+
+	double ratio = samplesRecorded/getInfoTable()->getVirtualWidth();
+
+	double position = (getInfoTable()->getPosition() + pos.x())*ratio;
+
+	float data[8] = {static_cast<float>(position), 0, static_cast<float>(position), static_cast<float>(height()), 0, pos.y(), static_cast<float>(samplesRecorded), pos.y()};
+
+	gl()->glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
+
+	gl()->glDrawArrays(GL_LINE_STRIP, 0, 2);
+	gl()->glDrawArrays(GL_LINE_STRIP, 2, 2);
+}
+
 void Canvas::drawTimeLine(double at)
 {
 	float data[4] = {static_cast<float>(at), 0, static_cast<float>(at), static_cast<float>(height())};
@@ -600,7 +637,7 @@ void Canvas::drawSingleChannelEvents(const SignalBlock& block, const vector<tupl
 			}
 			else
 			{
-				track = get<1>(eventVector[event]);				
+				track = get<1>(eventVector[event]);
 				assert(currentTrackTable()->getHidden(track) == false);
 
 				hidden = 0;

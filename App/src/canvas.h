@@ -89,6 +89,7 @@ private:
 	int eventMode = PROGRAM_OPTIONS["eventRenderMode"].as<int>();
 	bool isSelectingTrack = false;
 	bool isDrawingEvent = false;
+	bool isDrawingCross = false;
 	int eventTrack;
 	int eventStart;
 	int eventEnd;
@@ -118,6 +119,7 @@ private:
 	void drawAllChannelEvent(int from, int to);
 	void drawTimeLines();
 	void drawPositionIndicator();
+	void drawCross();
 	void drawTimeLine(double at);
 	void drawSingleChannelEvents(const SignalBlock& block, const std::vector<std::tuple<int, int, int, int>>& events);
 	void drawSingleChannelEvent(const SignalBlock& block, int track, int from, int to);
