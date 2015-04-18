@@ -329,6 +329,8 @@ bool GDF2::load()
 	{
 		lock_guard<mutex> lock(fileMutex);
 
+		getInfoTable()->setVirtualWidth(getSamplesRecorded()/getSamplingFrequency()*100); // Set default zoom at 100 pixels per second.
+
 		// Add a default montage.
 		// TODO: handle unexpected values in event table and strange track labels
 		getMontageTable()->insertRowsBack();
