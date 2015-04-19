@@ -486,13 +486,14 @@ void SignalFileBrowserWindow::lowpassComboBoxUpdate(const QString& text)
 	{
 		bool ok;
 		double tmp = locale().toDouble(text, &ok);
+
 		if (ok)
 		{
 			file->getInfoTable()->setLowpassFrequency(tmp);
 		}
 		else
 		{
-			lowpassComboBox->setCurrentIndex(0);
+			file->getInfoTable()->setLowpassFrequency(1000*1000*1000);
 		}
 	}
 }
@@ -518,13 +519,14 @@ void SignalFileBrowserWindow::highpassComboBoxUpdate(const QString& text)
 	{
 		bool ok;
 		double tmp = locale().toDouble(text, &ok);
+
 		if (ok)
 		{
 			file->getInfoTable()->setHighpassFrequency(tmp);
 		}
 		else
 		{
-			lowpassComboBox->setCurrentIndex(0);
+			file->getInfoTable()->setHighpassFrequency(-1000*1000*1000);
 		}
 	}
 }

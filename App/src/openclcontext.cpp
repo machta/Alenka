@@ -1,7 +1,5 @@
 #include "openclcontext.h"
 
-#include "error.h"
-
 #include <algorithm>
 #include <vector>
 #include <iostream>

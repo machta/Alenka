@@ -133,29 +133,6 @@ private:
 			logToFile("OpenGL message: " << m.message().toStdString());
 		}
 	}
-	void prepareBlocks(int from, int to)
-	{
-		for (; from <= to; ++from)
-		{
-			signalProcessor->prepareBlock(from);
-		}
-	}
-	void prepare(int size, int minIndex, int maxIndex, int lowIndex, int highIndex, int capacity)
-	{
-		using namespace std;
-
-		if (capacity <= 0)
-		{
-			return;
-		}
-
-		prepare(size, minIndex, maxIndex, lowIndex - size, highIndex + size, capacity - 2*size);
-
-		capacity = min(2*size, capacity);
-
-		prepareBlocks(max(lowIndex, minIndex), lowIndex + capacity/2);
-		prepareBlocks(highIndex, min(highIndex, maxIndex) + capacity/2);
-	}
 	void horizontalZoom(double factor);
 	void verticalZoom(double factor);
 	void trackZoom(double factor);

@@ -14,8 +14,8 @@ FilterProcessor::FilterProcessor(unsigned int M, unsigned int blockWidth, unsign
 	cl_int err;
 	clfftStatus errFFT;
 
-	FILE* file = fopen(PROGRAM_OPTIONS["kernels"].as<string>().c_str(), "rb");
-	checkNotErrorCode(file, nullptr, "File '" << PROGRAM_OPTIONS["kernels"].as<string>() << "' could not be opened.");
+	FILE* file = fopen("kernels.cl", "rb");
+	checkNotErrorCode(file, nullptr, "File 'kernels.cl' could not be opened.");
 
 	OpenCLProgram program(file, context);
 

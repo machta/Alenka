@@ -254,12 +254,6 @@ void Canvas::paintGL()
 			indexSet.insert(i);
 		}
 
-		if (signalProcessor->getCapacity() > indexSet.size())
-		{
-			// Enqueue all blocks.
-			//prepareBlocks(firstIndex, lastIndex);
-		}
-
 		// Get events.
 		vector<tuple<int, int, int>> allChannelEvents;
 		vector<tuple<int, int, int, int>> singleChannelEvents;
@@ -285,13 +279,6 @@ void Canvas::paintGL()
 
 		drawPositionIndicator();
 		drawCross();
-
-		//gl()->glFinish();
-
-		// Prepare some blocks for the next frame.
-		//int cap = min(PROGRAM_OPTIONS["prepareFrames"].as<unsigned int>()*indexSet.size(), signalProcessor->getCapacity() - indexSet.size());
-
-		//prepare(indexSet.size(), 0, static_cast<int>(ceil(getInfoTable()->getVirtualWidth()*ratio)), fromTo.first - indexSet.size(), fromTo.second + indexSet.size(), cap);
 
 		gl()->glBindVertexArray(0);
 	}
