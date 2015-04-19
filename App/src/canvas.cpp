@@ -373,6 +373,18 @@ void Canvas::keyPressEvent(QKeyEvent* event)
 		isDrawingCross = !isDrawingCross; // Perhaps promote this to an action?
 		update();
 	}
+	else if (ready() && event->key() == Qt::Key_T)
+	{
+		QPoint pos = mapFromGlobal(QCursor::pos());
+		double indicator = static_cast<double>(pos.x())/width();
+
+		if (0 <= indicator && indicator <= 1)
+		{
+			getInfoTable()->setPositionIndicator(indicator);
+
+			update();
+		}
+	}
 	else
 	{
 		event->ignore();
@@ -441,13 +453,6 @@ void Canvas::mouseReleaseEvent(QMouseEvent* event)
 			isDrawingEvent = false;
 
 			addEvent(eventTrack);
-
-			update();
-		}
-		else if (ready() && event->modifiers() == Qt::AltModifier)
-		{
-			double pos = static_cast<double>(event->pos().x())/width();
-			getInfoTable()->setPositionIndicator(pos);
 
 			update();
 		}
