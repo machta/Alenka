@@ -9,7 +9,7 @@ using namespace std;
 
 Filter::Filter(unsigned int M, double Fs) : M(M), Fs(Fs), lowpass(2), highpass(-1), notch(false),
 	context(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS),
-	notchF(PROGRAM_OPTIONS["powerFrequency"].as<double>()/Fs*2)
+	notchF(PROGRAM_OPTIONS["notchFrequency"].as<double>()/Fs*2)
 {
 	cl_int errCL;
 	clfftStatus errFFT;

@@ -33,17 +33,13 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("blockSize", value<unsigned int>()->default_value(32*1024), "size of one block of signal data")
 	("gpuMemorySize", value<int64_t>()->default_value(0), "the maximum amount of GPU memory used; if <= 0 then the value is relative to the implementation defined maximum, otherwise it is absolute")
 	("dataFileCacheSize", value<int64_t>()->default_value(0), "maximum total memory used by the data file cache; zero means don't use cache")
-	("file,f", value<string>(), "data file")
-	("kernels", value<string>()->default_value("kernels.cl"), "OpenCL kernel source file")
 	("printFilterFile", value<string>(), "print filter to a file with this name; if empty, stderr is used")
 	("printBuffersFolder", value<string>()->default_value("."), "path to the folder to which the values will be saved (no end slash), only in debug build")
-	("powerFrequency", value<double>()->default_value(50), "frequency used to filter power interference with the signal")
+	("notchFrequency", value<double>()->default_value(50), "frequency used to filter power interference with the signal")
 	("onlineFilter", value<bool>()->default_value(false), "should the signal be filtered everytime before it is rendered")
 	("eventRenderMode", value<int>()->default_value(2), "controls rendering of single-channel events; accepted values (from simplest mode) are 1, 2")
-	("prepareFrames", value<unsigned int>()->default_value(0), "how many frames should be prepared in memory")
+	//("prepareFrames", value<unsigned int>()->default_value(0), "how many frames should be prepared in memory")
 	("logFileName", value<string>()->default_value("%Y-%m-%d--%H-%M-%S.log"), "string passed to strftime() to create the file name")
-
-	("montageFile", value<string>(), "definition of the montage, one row per line")
 	;
 
 	// Parse the input.

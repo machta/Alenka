@@ -46,24 +46,6 @@ public:
 		return cache->getCapacity();
 	}
 	SignalBlock getAnyBlock(const std::set<int>& indexSet);
-	void prepareBlock(int index)
-	{
-		// Preparing of blocks is turned off for the moment.
-		assert(0);
-		return;
-
-		assert(ready());
-
-		cl_int err;
-
-		cl_event readyEvent = clCreateUserEvent(context->getCLContext(), &err);
-		checkClErrorCode(err, "clCreateUserEvent()");
-
-		cache->getAny(std::set<int> {index}, nullptr, readyEvent);
-
-		err = clReleaseEvent(readyEvent);
-		checkClErrorCode(err, "clReleaseEvent()");
-	}
 	void changeFile(DataFile* file);
 	bool ready() const
 	{
