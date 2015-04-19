@@ -19,6 +19,8 @@ GPUCache::GPUCache(unsigned int blockSize, int offset, int delay, int64_t availa
 		throw runtime_error("Not enough memory for the gpu cache.");
 	}
 
+	logToFile("Creating GPUCache with " << capacity << " blocks.");
+
 	cl_mem_flags flags = CL_MEM_READ_WRITE;
 #ifdef NDEBUG
 #if CL_VERSION_1_2

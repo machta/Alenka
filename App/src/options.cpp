@@ -58,7 +58,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	if (ifs.good())
 	{
 		store(parse_config_file(ifs, other), vm);
-		notify(vm);
+		notify(vm);		
 	}
 	else
 	{
@@ -79,6 +79,21 @@ void Options::validateValues()
 	{
 		ss << mode;
 		throw validation_error(validation_error::invalid_option_value, "eventRenderMode", ss.str());
+	}
+}
+
+void Options::logConfigFile() const
+{
+	ifstream ifs(get("config").as<string>());
+
+	if (ifs.good())
+	{
+		stringstream ss;
+		while (ifs.peek() != EOF)
+		{
+			ss.put(ifs.get());
+		}
+		logToFile("Config file:\n" << ss.str());
 	}
 }
 

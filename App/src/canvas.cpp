@@ -611,7 +611,7 @@ void Canvas::drawCross()
 
 	double position = (getInfoTable()->getPosition() + pos.x())*ratio;
 
-	float data[8] = {static_cast<float>(position), 0, static_cast<float>(position), static_cast<float>(height()), 0, pos.y(), static_cast<float>(samplesRecorded), pos.y()};
+	float data[8] = {static_cast<float>(position), 0, static_cast<float>(position), static_cast<float>(height()), 0, static_cast<float>(pos.y()), static_cast<float>(samplesRecorded), static_cast<float>(pos.y())};
 
 	gl()->glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
 

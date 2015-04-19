@@ -28,7 +28,7 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 	LOG_FILE.open(logFileName);
 	checkErrorCode(LOG_FILE.good(), true, "Could not open log file for writing.");
 
-	// Log the command line parameters.
+	// Log the command line parameters and config file.
 	{
 		stringstream ss;
 		ss << "Starting with command: ";
@@ -44,6 +44,8 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 
 		logToFile(ss.str());
 	}
+
+	options->logConfigFile();
 
 	// Set up the clFFT library.
 	clfftStatus errFFT;

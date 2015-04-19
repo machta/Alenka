@@ -241,7 +241,7 @@ void SignalProcessor::changeFile(DataFile* file)
 			memory += size;
 		}
 
-		memory -= tmpBlockSize + blockSize*sizeof(float)*200; // substract the sizes of the tmp buffer and the output buffer (for a realistically big montage)
+		memory -= tmpBlockSize + blockSize*sizeof(float)*500; // substract the sizes of the tmp buffer and the output buffer (for a realistically big montage)
 
 		cache = new GPUCache(blockSize, offset, delay, memory, file, context, onlineFilter ? nullptr : filterProcessor);
 

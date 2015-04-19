@@ -52,6 +52,8 @@ public:
 		programSettings.setValue(key, value);
 	}
 
+	void logConfigFile() const;
+
 private:
 	boost::program_options::variables_map vm;
 	boost::program_options::options_description desc;

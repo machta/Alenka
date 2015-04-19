@@ -16,6 +16,8 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
+	int ret = EXIT_FAILURE;
+
 	try
 	{
 		// Set locale.
@@ -28,11 +30,7 @@ int main(int argc, char** argv)
 		SignalFileBrowserWindow window;
 		window.show();
 
-		int ret = app.exec();
-
-		logToFile("Exiting with error code " << ret << ".");
-
-		return ret;
+		ret = app.exec();
 	}
 	catch (std::exception& e)
 	{
@@ -43,5 +41,6 @@ int main(int argc, char** argv)
 		logToFileAndConsole("Unknown exception caught.");
 	}
 
-	return EXIT_FAILURE;
+	logToFile("Exiting with error code " << ret << ".");
+	return ret;
 }

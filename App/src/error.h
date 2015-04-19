@@ -148,9 +148,9 @@ std::string clFFTErrorCodeToString(clfftStatus code)
 		CASE(CLFFT_DEVICE_NO_DOUBLE);
 		CASE(CLFFT_DEVICE_MISMATCH);
 		CASE(CLFFT_ENDSTATUS);
+	default:
+		return clErrorCodeToString(code);
 	}
-
-	return clErrorCodeToString(code);
 }
 
 #undef CASE
