@@ -276,12 +276,32 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	windowMenu->addAction(zoomToolBar->toggleViewAction());
 
 	// Construct status bar.
-	timeStatusLabel = new QLabel(this);
-	positionStatusLabel = new QLabel(this);
-	cursorStatusLabel = new QLabel(this);
+	timeModeStatusLabel = new QLabel(this);
+	timeModeStatusLabel->setContextMenuPolicy(Qt::ActionsContextMenu);
+	timeModeStatusLabel->addAction(timeModeAction0);
+	timeModeStatusLabel->addAction(timeModeAction1);
+	timeModeStatusLabel->addAction(timeModeAction2);
+	statusBar()->addPermanentWidget(timeModeStatusLabel);
 
+	timeStatusLabel = new QLabel(this);
+	timeStatusLabel->setContextMenuPolicy(Qt::ActionsContextMenu);
+	timeStatusLabel->addAction(timeModeAction0);
+	timeStatusLabel->addAction(timeModeAction1);
+	timeStatusLabel->addAction(timeModeAction2);
 	statusBar()->addPermanentWidget(timeStatusLabel);
+
+	positionStatusLabel = new QLabel(this);
+	positionStatusLabel->setContextMenuPolicy(Qt::ActionsContextMenu);
+	positionStatusLabel->addAction(timeModeAction0);
+	positionStatusLabel->addAction(timeModeAction1);
+	positionStatusLabel->addAction(timeModeAction2);
 	statusBar()->addPermanentWidget(positionStatusLabel);
+
+	cursorStatusLabel = new QLabel(this);
+	cursorStatusLabel->setContextMenuPolicy(Qt::ActionsContextMenu);
+	cursorStatusLabel->addAction(timeModeAction0);
+	cursorStatusLabel->addAction(timeModeAction1);
+	cursorStatusLabel->addAction(timeModeAction2);
 	statusBar()->addPermanentWidget(cursorStatusLabel);
 
 	// Restore settings.
@@ -596,7 +616,10 @@ void SignalFileBrowserWindow::verticalZoomOut()
 
 void SignalFileBrowserWindow::updateTimeMode(int mode)
 {
-	timeModeActionGroup->actions().at(mode)->setChecked(true);
+	QAction* a = timeModeActionGroup->actions().at(mode);
+	a->setChecked(true);
+
+	timeModeStatusLabel->setText("Time Mode: " + a->text());
 }
 
 void SignalFileBrowserWindow::updatePositionStatusLabel()

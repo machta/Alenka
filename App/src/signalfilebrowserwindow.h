@@ -49,6 +49,7 @@ private:
 	QActionGroup* timeModeActionGroup;
 	QActionGroup* timeLineIntervalActionGroup;
 	QAction* setTimeLineIntervalAction;
+	QLabel* timeModeStatusLabel;
 	QLabel* timeStatusLabel;
 	QLabel* positionStatusLabel;
 	QLabel* cursorStatusLabel;
