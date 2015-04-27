@@ -6,8 +6,6 @@
 #include <QOpenGLFunctions_4_1_Core>
 #include <QOpenGLDebugLogger>
 
-#include <iostream>
-
 class OpenGLInterface
 {
 public:

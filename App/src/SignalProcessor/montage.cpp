@@ -1,7 +1,6 @@
 #include "montage.h"
 
-#include <sstream>
-#include <fstream>
+#include <cstdio>
 
 using namespace std;
 
@@ -43,16 +42,10 @@ bool Montage::test(const string& source, OpenCLContext* context, string* errorMe
 
 string Montage::readHeader()
 {
-	string str;
+	FILE* file = fopen("montageHeader.cl", "rb");
+	checkNotErrorCode(file, nullptr, "File 'montageHeader.cl' could not be opened.");
 
-	ifstream fs("montageHeader.cl");
-
-	while (fs.peek() != EOF)
-	{
-		str.push_back(fs.get());
-	}
-
-	return str;
+	return readWholeTextFile(file);
 }
 
 string Montage::buildSource(const vector<string>& sources)

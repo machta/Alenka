@@ -14,7 +14,7 @@ using namespace std;
 
 MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 {
-	// Set up the global options object.
+	// Set up the global options object. // TODO: add try-catch block around this section
 	options = new Options(argc, argv);
 	PROGRAM_OPTIONS_POINTER = options;
 

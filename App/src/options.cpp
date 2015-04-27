@@ -4,7 +4,6 @@
 
 #include <boost/spirit/home/support/detail/hold_any.hpp>
 
-#include <iostream>
 #include <fstream>
 #include <cstdint>
 
@@ -54,7 +53,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	if (ifs.good())
 	{
 		store(parse_config_file(ifs, other), vm);
-		notify(vm);		
+		notify(vm);
 	}
 	else
 	{

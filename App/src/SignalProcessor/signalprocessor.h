@@ -17,7 +17,6 @@
 #include <set>
 #include <vector>
 #include <sstream>
-#include <iostream>
 #include <cassert>
 
 class SignalProcessor : public OpenGLInterface
