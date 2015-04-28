@@ -67,7 +67,7 @@ void SignalProcessor::updateFilter()
 		if (PROGRAM_OPTIONS.isSet("printFilterFile"))
 		{
 			FILE* file = fopen(PROGRAM_OPTIONS["printFilterFile"].as<string>().c_str(), "w");
-			checkNotErrorCode(file, nullptr, "File '" << PROGRAM_OPTIONS["printFilterFile"].as<string>() << "' could not be opened for wtiting.");
+			checkNotErrorCode(file, nullptr, "File '" << PROGRAM_OPTIONS["printFilterFile"].as<string>() << "' could not be opened for writing.");
 
 			filter.printCoefficients(file);
 

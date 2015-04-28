@@ -30,9 +30,7 @@ public:
 		}
 		else
 		{
-			stringstream ss;
-			ss << "Option '" << var << "' has no value.";
-			throw runtime_error(ss.str());
+			throw runtime_error("Option '" + var + "' has no value.");
 		}
 	}
 	bool isSet(const std::string& var) const

@@ -74,29 +74,8 @@ private:
 	int lastCallLine = -1;
 #endif
 
-	void checkGLErrors()
-	{
-		using namespace std;
-
-		GLenum err;
-		bool errorDetected = false;
-
-		while (err = functions->glGetError(), err != GL_NO_ERROR)
-		{
-			errorDetected = true;
-
-#ifdef NDEBUG
-			logToFileAndConsole("OpenGL error: " << err << "(0x" << hex << err << dec << ")");
-#else
-			logToFileAndConsole("OpenGL error: " << err << "(0x" << hex << err << dec << ")" << " last call from " << lastCallFile << ":" << lastCallLine);
-#endif
-		}
-
-		if (errorDetected)
-		{
-			throw runtime_error("OpenGL error detected.");
-		}
-	}
+	void checkGLErrors();
+	std::string getErrorCode(GLenum code);
 };
 
 #define gl() gl(__FILE__, __LINE__)

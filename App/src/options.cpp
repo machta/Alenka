@@ -79,7 +79,8 @@ void Options::validateValues()
 
 void Options::logConfigFile() const
 {
-	ifstream ifs(get("config").as<string>());
+	string fileName = get("config").as<string>();
+	ifstream ifs(fileName);
 
 	if (ifs.good())
 	{
@@ -88,7 +89,7 @@ void Options::logConfigFile() const
 		{
 			ss.put(ifs.get());
 		}
-		logToFile("Config file:\n" << ss.str());
+		logToFile("Config file '" << fileName << "' :\n" << ss.str());
 	}
 }
 

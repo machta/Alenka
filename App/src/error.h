@@ -18,23 +18,29 @@
 #include <string>
 #include <sstream>
 
-namespace
-{
 template <typename T>
-void printEC(T val, std::stringstream& ss)
+inline std::string errorCodeToString(T val)
 {
-	ss << std::dec << val << "(0x" << std::hex << val << std::dec << ")";
+	using namespace std;
+
+	stringstream ss;
+
+	ss << dec << val << "(0x" << hex << val << dec << ")";
+
+	return ss.str();
 }
 
+namespace
+{
 template <typename T>
 void CEC(T val, T expected, std::string message, const char* file, int line)
 {
 	std::stringstream ss;
 
 	ss << "Unexpected error code: ";
-	printEC(val, ss);
+	ss << errorCodeToString(val);
 	ss << ", required ";
-	printEC(expected, ss);
+	ss << errorCodeToString(expected);
 	ss << ". ";
 
 	ss << message << " " << file << ":" << line;
@@ -48,7 +54,7 @@ void CNEC(T val, std::string message, const char* file, int line)
 	std::stringstream ss;
 
 	ss << "Error code returned ";
-	printEC(val, ss);
+	ss << errorCodeToString(val);
 	ss << ". ";
 
 	ss << message << " " << file << ":" << line;
@@ -129,17 +135,11 @@ std::string clErrorCodeToString(cl_int code)
 #endif
 	}
 
-	stringstream ss;
-	ss << "unknown code ";
-	printEC(code, ss);
-
-	return ss.str();
+	return "unknown code " + errorCodeToString(code);
 }
 
 std::string clFFTErrorCodeToString(clfftStatus code)
 {
-	using namespace std;
-
 	switch (code)
 	{
 		CASE(CLFFT_BUGCHECK);
@@ -163,7 +163,8 @@ void CCEC(cl_int val, std::string message, const char* file, int line)
 {
 	std::stringstream ss;
 
-	ss << "Unexpected error code: " << clErrorCodeToString(val);
+	ss << "Unexpected error code: ";
+	ss << clErrorCodeToString(val);
 	ss << ", required CL_SUCCESS. ";
 
 	ss << message << " " << file << ":" << line;
@@ -198,6 +199,7 @@ const char* getTimeString(std::time_t t)
 
 #define checkErrorCode(val_, expected_, message_) if((val_) != (expected_)) { std::stringstream ss; ss << message_; CEC(val_, expected_, ss.str(), __FILE__, __LINE__); }
 #define checkNotErrorCode(val_, expected_, message_) if((val_) == (expected_)) { std::stringstream ss; ss << message_; CNEC(val_, ss.str(), __FILE__, __LINE__); }
+
 #define checkClErrorCode(val_, message_) if((val_) != CL_SUCCESS) { std::stringstream ss; ss << message_; CCEC(val_, ss.str(), __FILE__, __LINE__); }
 #define checkClFFTErrorCode(val_, message_) if((val_) != CLFFT_SUCCESS) { std::stringstream ss; ss << message_; CFCEC(val_, ss.str(), __FILE__, __LINE__); }
 
