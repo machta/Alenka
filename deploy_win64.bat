@@ -17,6 +17,9 @@ copy App\*.frag %folder%
 copy App\kernels.cl %folder%
 copy App\montageHeader.cl %folder%
 
+:: icon
+copy App\edit.png %folder%
+
 :: clFFT lib
 copy App\clFFT.dll %folder%
 
