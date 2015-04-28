@@ -6,8 +6,9 @@ void OpenGLInterface::checkGLErrors()
 
 	GLenum err;
 	bool errorDetected = false;
+	int maxIterations = 10*1000; // This is to prevent infinite loop and filling the hard drive with garbage.
 
-	while (err = functions->glGetError(), err != GL_NO_ERROR)
+	while (err = functions->glGetError(), err != GL_NO_ERROR && maxIterations-- > 0)
 	{
 		errorDetected = true;
 

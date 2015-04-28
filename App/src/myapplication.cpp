@@ -5,6 +5,7 @@
 #include "openclcontext.h"
 
 #include <QSurfaceFormat>
+#include <QMessageBox>
 #include <clFFT.h>
 
 #include <stdexcept>
@@ -14,19 +15,32 @@ using namespace std;
 
 MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 {
-	// Set up the global options object. // TODO: add try-catch block around this section
-	options = new Options(argc, argv);
-	PROGRAM_OPTIONS_POINTER = options;
+	// Set up the global options object.
+	try
+	{
+		options = new Options(argc, argv);
+		PROGRAM_OPTIONS_POINTER = options;
 
-	// Set up the log.
-	const int maxLogFileNameLength = 1000;
-	char logFileName[maxLogFileNameLength + 1];
-	time_t now = time(nullptr);
-	size_t len = strftime(logFileName, maxLogFileNameLength, PROGRAM_OPTIONS["logFileName"].as<string>().c_str(), localtime(&now));
-	logFileName[len] = 0;
+		// Set up the log.
+		const int maxLogFileNameLength = 1000;
+		char logFileName[maxLogFileNameLength + 1];
+		time_t now = time(nullptr);
+		size_t len = strftime(logFileName, maxLogFileNameLength, PROGRAM_OPTIONS["logFileName"].as<string>().c_str(), localtime(&now));
+		logFileName[len] = 0;
 
-	LOG_FILE.open(logFileName);
-	checkErrorCode(LOG_FILE.good(), true, "Could not open log file for writing.");
+		LOG_FILE.open(logFileName);
+		checkErrorCode(LOG_FILE.good(), true, "Could not open log file '" + string(logFileName) + "' for writing.");
+	}
+	catch (std::exception& e)
+	{
+		QMessageBox::critical(nullptr, "Exception caught", QString::fromStdString(e.what()));
+		abort();
+	}
+	catch (...)
+	{
+		QMessageBox::critical(nullptr, "Exception caught", "Unknown exception caught.");
+		abort();
+	}
 
 	// Log the command line parameters and config file.
 	{
