@@ -231,7 +231,13 @@ QVariant EventTable::data(const QModelIndex& index, int role) const
 	return QVariant();
 }
 
-bool EventTable::setData(const QModelIndex& index, const QVariant &value, int role)
+#define CASE(a_, b_)\
+	case Column::a_:\
+		if (a_[row] == (b_)) {	return false; }\
+		a_[row] = (b_);\
+		break
+
+bool EventTable::setData(const QModelIndex& index, const QVariant& value, int role)
 {
 	if (index.isValid() && index.row() < rowCount() && index.column() < columnCount())
 	{
@@ -239,26 +245,15 @@ bool EventTable::setData(const QModelIndex& index, const QVariant &value, int ro
 
 		if (role == Qt::EditRole)
 		{
+
 			switch (static_cast<Column>(index.column()))
 			{
-			case Column::label:
-				label[row] = value.toString().toStdString();
-				break;
-			case Column::type:
-				type[row] = value.value<decltype(type)::value_type>();
-				break;
-			case Column::position:
-				position[row] = value.value<decltype(position)::value_type>();
-				break;
-			case Column::duration:
-				duration[row] = value.value<decltype(duration)::value_type>();
-				break;
-			case Column::channel:
-				channel[row] = value.value<decltype(channel)::value_type>();
-				break;
-			case Column::description:
-				description[row] = value.toString().toStdString();
-				break;
+				CASE(label, value.toString().toStdString());
+				CASE(type, value.value<decltype(type)::value_type>());
+				CASE(position, value.value<decltype(position)::value_type>());
+				CASE(duration, value.value<decltype(duration)::value_type>());
+				CASE(channel, value.value<decltype(channel)::value_type>());
+				CASE(description, value.toString().toStdString());
 			default:
 				break;
 			}
@@ -270,6 +265,8 @@ bool EventTable::setData(const QModelIndex& index, const QVariant &value, int ro
 
 	return false;
 }
+
+#undef CASE
 
 bool EventTable::insertRows(int row, int count, const QModelIndex& /*parent*/)
 {

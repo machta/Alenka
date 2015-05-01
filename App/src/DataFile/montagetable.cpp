@@ -133,7 +133,7 @@ QVariant MontageTable::headerData(int section, Qt::Orientation orientation, int 
 		case Column::name:
 			return "Name";
 		case Column::save:
-			return "Save";			
+			return "Save";
 		default:
 			break;
 		}
@@ -155,7 +155,7 @@ QVariant MontageTable::data(const QModelIndex& index, int role) const
 			case Column::name:
 				return QString::fromStdString(name[row]);
 			case Column::save:
-				return save[row];				
+				return save[row];
 			default:
 				break;
 			}
@@ -164,6 +164,12 @@ QVariant MontageTable::data(const QModelIndex& index, int role) const
 
 	return QVariant();
 }
+
+#define CASE(a_, b_)\
+	case Column::a_:\
+		if (a_[row] == (b_)) {	return false; }\
+		a_[row] = (b_);\
+		break
 
 bool MontageTable::setData(const QModelIndex& index, const QVariant& value, int role)
 {
@@ -175,12 +181,8 @@ bool MontageTable::setData(const QModelIndex& index, const QVariant& value, int 
 		{
 			switch (static_cast<Column>(index.column()))
 			{
-			case Column::name:
-				name[row] = value.toString().toStdString();
-				break;
-			case Column::save:
-				save[row] = value.toBool();
-				break;
+				CASE(name, value.toString().toStdString());
+				CASE(save, value.toBool());
 			default:
 				break;
 			}
@@ -192,6 +194,8 @@ bool MontageTable::setData(const QModelIndex& index, const QVariant& value, int 
 
 	return false;
 }
+
+#undef CASE
 
 bool MontageTable::insertRows(int row, int count, const QModelIndex& /*parent*/)
 {

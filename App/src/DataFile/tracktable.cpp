@@ -63,7 +63,7 @@ void TrackTable::read(QXmlStreamReader* xml)
 	while (xml->readNextStartElement())
 	{
 		if (xml->name() == "track")
-		{			
+		{
 			order.push_back(order.size());
 
 			label.push_back(xml->attributes().value("label").toString().toStdString());
@@ -149,7 +149,7 @@ QVariant TrackTable::headerData(int section, Qt::Orientation orientation, int ro
 		case Column::amplitude:
 			return "Amplitude";
 		case Column::hidden:
-			return "Hidden";			
+			return "Hidden";
 		default:
 			break;
 		}
@@ -198,6 +198,12 @@ QVariant TrackTable::data(const QModelIndex& index, int role) const
 	return QVariant();
 }
 
+#define CASE(a_, b_)\
+	case Column::a_:\
+		if (a_[row] == (b_)) {	return false; }\
+		a_[row] = (b_);\
+		break
+
 bool TrackTable::setData(const QModelIndex& index, const QVariant &value, int role)
 {
 	if (index.isValid() && index.row() < rowCount() && index.column() < columnCount())
@@ -208,27 +214,28 @@ bool TrackTable::setData(const QModelIndex& index, const QVariant &value, int ro
 		{
 			switch (static_cast<Column>(index.column()))
 			{
-			case Column::label:
-				label[row] = value.toString().toStdString();
-				break;
+				CASE(label, value.toString().toStdString());
 			case Column::code:
-			{
-				QString c = value.toString();
-				if (validateTrackCode(c))
+				if (code[row] == value.toString().toStdString())
 				{
-					code[row] = c.toStdString();
+					return false;
 				}
-				break;
-			}
-			case Column::color:
-				color[row] = value.value<QColor>();
-				break;
-			case Column::amplitude:
-				amplitude[row] = value.toDouble();
-				break;
-			case Column::hidden:
-				hidden[row] = value.toBool();
-				break;
+				else
+				{
+					QString c = value.toString();
+					if (validateTrackCode(c))
+					{
+						code[row] = c.toStdString();
+						break;
+					}
+					else
+					{
+						return false;
+					}
+				}
+				CASE(color, value.value<QColor>());
+				CASE(amplitude, value.toDouble());
+				CASE(hidden, value.toBool());
 			default:
 				break;
 			}
@@ -240,6 +247,8 @@ bool TrackTable::setData(const QModelIndex& index, const QVariant &value, int ro
 
 	return false;
 }
+
+#undef CASE
 
 bool TrackTable::insertRows(int row, int count, const QModelIndex& /*parent*/)
 {

@@ -182,6 +182,12 @@ QVariant EventTypeTable::data(const QModelIndex& index, int role) const
 	return QVariant();
 }
 
+#define CASE(a_, b_)\
+	case Column::a_:\
+		if (a_[row] == (b_)) {	return false; }\
+		a_[row] = (b_);\
+		break
+
 bool EventTypeTable::setData(const QModelIndex& index, const QVariant& value, int role)
 {
 	if (index.isValid() && index.row() < rowCount() && index.column() < columnCount())
@@ -192,21 +198,11 @@ bool EventTypeTable::setData(const QModelIndex& index, const QVariant& value, in
 		{
 			switch (static_cast<Column>(index.column()))
 			{
-			case Column::id:
-				id[row] = value.value<decltype(id)::value_type>();
-				break;
-			case Column::name:
-				name[row] = value.toString().toStdString();
-				break;
-			case Column::opacity:
-				opacity[row] = value.toDouble()/100;
-				break;
-			case Column::color:
-				color[row] = value.value<QColor>();
-				break;
-			case Column::hidden:
-				hidden[row] = value.toBool();
-				break;
+				CASE(id, value.value<decltype(id)::value_type>());
+				CASE(name, value.toString().toStdString());
+				CASE(opacity, value.toDouble()/100);
+				CASE(color, value.value<QColor>());
+				CASE(hidden, value.toBool());
 			default:
 				break;
 			}
@@ -218,6 +214,8 @@ bool EventTypeTable::setData(const QModelIndex& index, const QVariant& value, in
 
 	return false;
 }
+
+#undef CASE
 
 bool EventTypeTable::insertRows(int row, int count, const QModelIndex& /*parent*/)
 {
