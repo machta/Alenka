@@ -180,7 +180,7 @@ private slots:
 		assert(signalProcessor != nullptr);
 
 		makeCurrent();
-		signalProcessor->updateMontage();
+		signalProcessor->setUpdateMontageFlag();
 		doneCurrent();
 	}
 	bool ready()

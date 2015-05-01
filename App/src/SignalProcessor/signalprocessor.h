@@ -34,7 +34,7 @@ public:
 		return trackCount;
 	}
 	void updateFilter();
-	void updateMontage();
+	void setUpdateMontageFlag();
 	unsigned int getCapacity() const
 	{
 		if (ready() == false)
@@ -63,6 +63,7 @@ private:
 	bool onlineFilter;
 	unsigned int blockSize;
 	int trackCount = 0;
+	bool updateMontageFlag = false;
 
 	std::condition_variable processorInCV;
 	cl_command_queue commandQueue;
@@ -108,6 +109,7 @@ private:
 			processorOutputBuffer = nullptr;
 		}
 	}
+	void updateMontage();
 };
 
 #endif // SIGNALPROCESSOR_H

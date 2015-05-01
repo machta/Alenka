@@ -71,7 +71,8 @@ void SignalProcessor::updateFilter()
 
 			filter.printCoefficients(file);
 
-			fclose(file);
+			int err = fclose(file);
+			checkErrorCode(err, 0, "fclose()");
 		}
 		else
 		{
@@ -87,7 +88,7 @@ void SignalProcessor::updateFilter()
 	}
 }
 
-void SignalProcessor::updateMontage()
+void SignalProcessor::setUpdateMontageFlag()
 {
 	if (file == nullptr)
 	{
@@ -103,43 +104,19 @@ void SignalProcessor::updateMontage()
 		return;
 	}
 
-	assert(ready());
-
-	Montage montage(code, context);
-
-	assert(montage.getNumberOfRows() > 0);
-
-	montageProcessor->change(&montage);
-
-	releaseOutputBuffer();
-
-	gl()->glBindBuffer(GL_ARRAY_BUFFER, glBuffer);
-
-	unsigned int outputBlockSize = blockSize*trackCount;
-	outputBlockSize *= PROGRAM_OPTIONS["eventRenderMode"].as<int>();
-
-	gl()->glBufferData(GL_ARRAY_BUFFER, outputBlockSize*sizeof(float), nullptr, GL_STATIC_DRAW);
-
-	cl_mem_flags flags = CL_MEM_READ_WRITE;
-#ifdef NDEBUG
-	flags = CL_MEM_WRITE_ONLY;
-#if CL_VERSION_1_2
-	flags |= CL_MEM_HOST_NO_ACCESS;
-#endif
-#endif
-
-	cl_int err;
-
-	processorOutputBuffer = clCreateFromGLBuffer(context->getCLContext(), flags, glBuffer, &err);
-	checkClErrorCode(err, "clCreateFromGLBuffer()");
-
-	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
+	updateMontageFlag = true;
 }
 
 SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 {
 	assert(ready());
 	assert(indexSet.empty() == false);
+
+	if (updateMontageFlag)
+	{
+		updateMontageFlag = false;
+		updateMontage();
+	}
 
 	cl_int err;
 
@@ -249,7 +226,7 @@ void SignalProcessor::changeFile(DataFile* file)
 		// Default filter and montage.
 		updateFilter();
 
-		updateMontage();
+		setUpdateMontageFlag();
 	}
 }
 
@@ -268,4 +245,41 @@ void SignalProcessor::destroyFileRelated()
 
 		releaseOutputBuffer();
 	}
+}
+
+void SignalProcessor::updateMontage()
+{
+	assert(ready());
+
+	auto code = file->getMontageTable()->getTrackTables()->at(getInfoTable()->getSelectedMontage())->getCode();
+
+	Montage montage(code, context);
+
+	assert(montage.getNumberOfRows() > 0);
+
+	montageProcessor->change(&montage);
+
+	releaseOutputBuffer();
+
+	gl()->glBindBuffer(GL_ARRAY_BUFFER, glBuffer);
+
+	unsigned int outputBlockSize = blockSize*trackCount;
+	outputBlockSize *= PROGRAM_OPTIONS["eventRenderMode"].as<int>();
+
+	gl()->glBufferData(GL_ARRAY_BUFFER, outputBlockSize*sizeof(float), nullptr, GL_STATIC_DRAW);
+
+	cl_mem_flags flags = CL_MEM_READ_WRITE;
+#ifdef NDEBUG
+	flags = CL_MEM_WRITE_ONLY;
+#if CL_VERSION_1_2
+	flags |= CL_MEM_HOST_NO_ACCESS;
+#endif
+#endif
+
+	cl_int err;
+
+	processorOutputBuffer = clCreateFromGLBuffer(context->getCLContext(), flags, glBuffer, &err);
+	checkClErrorCode(err, "clCreateFromGLBuffer()");
+
+	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
