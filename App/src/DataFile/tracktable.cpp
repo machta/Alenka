@@ -4,6 +4,7 @@
 
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
+#include <QLocale>
 #include <QCollator>
 
 #include <algorithm>
@@ -204,10 +205,11 @@ QVariant TrackTable::data(const QModelIndex& index, int role) const
 		a_[row] = (b_);\
 		break
 
-bool TrackTable::setData(const QModelIndex& index, const QVariant &value, int role)
+bool TrackTable::setData(const QModelIndex& index, const QVariant& value, int role)
 {
 	if (index.isValid() && index.row() < rowCount() && index.column() < columnCount())
 	{
+		QLocale locale;
 		int row = order[index.row()];
 
 		if (role == Qt::EditRole)
@@ -234,7 +236,30 @@ bool TrackTable::setData(const QModelIndex& index, const QVariant &value, int ro
 					}
 				}
 				CASE(color, value.value<QColor>());
-				CASE(amplitude, value.toDouble());
+			case Column::amplitude:
+			{
+				bool ok;
+				double tmp = value.toDouble(&ok);
+				if (ok)
+				{
+					if (amplitude[row] == tmp)
+					{
+						return false;
+					}
+					amplitude[row] = tmp;
+					break;
+				}
+				else
+				{
+					tmp = locale.toDouble(value.toString());
+					if (amplitude[row] == tmp)
+					{
+						return false;
+					}
+					amplitude[row] = tmp;
+					break;
+				}
+			}
 				CASE(hidden, value.toBool());
 			default:
 				break;

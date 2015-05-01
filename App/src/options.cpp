@@ -25,6 +25,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 
 	options_description other("Configuration");
 	other.add_options()
+	("locale", value<string>()->default_value("en_us"), "the locale to be use; mostly controls decimal number format")
 	("uncalibrated", value<bool>()->default_value(false), "assume uncalibrated data in gdf files")
 	("clPlatform", value<int>()->default_value(0), "OpenCL platform id")
 	("clDevice", value<int>()->default_value(0), "OpenCL device id to be used in SignalProcessor")

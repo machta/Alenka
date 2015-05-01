@@ -5,11 +5,11 @@
 
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
+#include <QLocale>
 #include <QCollator>
 
 #include <algorithm>
 #include <functional>
-#include <QLocale>
 
 using namespace std;
 
@@ -192,6 +192,7 @@ bool EventTypeTable::setData(const QModelIndex& index, const QVariant& value, in
 {
 	if (index.isValid() && index.row() < rowCount() && index.column() < columnCount())
 	{
+		QLocale locale;
 		int row = order[index.row()];
 
 		if (role == Qt::EditRole)
@@ -200,7 +201,30 @@ bool EventTypeTable::setData(const QModelIndex& index, const QVariant& value, in
 			{
 				CASE(id, value.value<decltype(id)::value_type>());
 				CASE(name, value.toString().toStdString());
-				CASE(opacity, value.toDouble()/100);
+			case Column::opacity:
+			{
+				bool ok;
+				double tmp = value.toDouble(&ok)/100;
+				if (ok)
+				{
+					if (opacity[row] == tmp)
+					{
+						return false;
+					}
+					opacity[row] = tmp;
+					break;
+				}
+				else
+				{
+					tmp = locale.toDouble(value.toString())/100;
+					if (opacity[row] == tmp)
+					{
+						return false;
+					}
+					opacity[row] = tmp;
+					break;
+				}
+			}
 				CASE(color, value.value<QColor>());
 				CASE(hidden, value.toBool());
 			default:

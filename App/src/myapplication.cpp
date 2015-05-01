@@ -15,9 +15,9 @@ using namespace std;
 
 MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 {
-	// Set up the global options object.
 	try
 	{
+		// Set up the global options object.
 		options = new Options(argc, argv);
 		PROGRAM_OPTIONS_POINTER = options;
 
@@ -59,7 +59,7 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 		logToFile(ss.str());
 	}
 
-	options->logConfigFile();
+	PROGRAM_OPTIONS.logConfigFile();
 
 	// Set up the clFFT library.
 	clfftStatus errFFT;
@@ -104,6 +104,10 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 		cout << ss.str();
 		std::exit(EXIT_SUCCESS);
 	}
+
+	// Set locale.
+	QLocale locale(PROGRAM_OPTIONS["locale"].as<string>().c_str());
+	QLocale::setDefault(locale);
 }
 
 MyApplication::~MyApplication()

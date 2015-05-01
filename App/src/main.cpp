@@ -20,10 +20,6 @@ int main(int argc, char** argv)
 
 	try
 	{
-		// Set locale.
-		QLocale locale("en_us");
-		QLocale::setDefault(locale);
-
 		// Set up the application.
 		MyApplication app(argc, argv);
 
