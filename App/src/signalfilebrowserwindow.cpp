@@ -190,14 +190,18 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	filterToolBar->setObjectName("Filter QToolBar");
 	filterToolBar->layout()->setSpacing(spacing);
 
-	filterToolBar->addWidget(new QLabel("LF:", this));
+	QLabel* label = new QLabel("LF:", this);
+	label->setToolTip("Low-pass Filter frequency");
+	filterToolBar->addWidget(label);
 	lowpassComboBox = new QComboBox(this);
 	lowpassComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 	lowpassComboBox->setMaximumWidth(150);
 	lowpassComboBox->setEditable(true);
 	filterToolBar->addWidget(lowpassComboBox);
 
-	filterToolBar->addWidget(new QLabel("HF:", this));
+	label = new QLabel("HF:", this);
+	label->setToolTip("High-pass Filter frequency");
+	filterToolBar->addWidget(label);
 	highpassComboBox = new QComboBox(this);
 	highpassComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 	highpassComboBox->setMaximumWidth(150);
@@ -205,6 +209,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	filterToolBar->addWidget(highpassComboBox);
 
 	notchCheckBox = new QCheckBox("Notch:", this);
+	notchCheckBox->setToolTip("Notch Filter on/off");
 	notchCheckBox->setLayoutDirection(Qt::RightToLeft);
 	filterToolBar->addWidget(notchCheckBox);
 

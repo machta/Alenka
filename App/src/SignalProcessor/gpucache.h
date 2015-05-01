@@ -25,7 +25,7 @@ public:
 	GPUCache(unsigned int blockSize, int offset, int delay, int64_t availableMemory, DataFile* file, OpenCLContext* context, FilterProcessor* filterProcessor);
 	~GPUCache();
 
-	int getAny(const std::set<int> &indexSet, cl_mem buffer, cl_event readyEvent);
+	int getAny(const std::set<int>& indexSet, cl_mem buffer, cl_event readyEvent);
 	unsigned int getCapacity() const
 	{
 		return capacity;

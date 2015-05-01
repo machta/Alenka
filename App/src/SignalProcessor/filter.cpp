@@ -65,7 +65,7 @@ vector<double> Filter::computeCoefficients()
 		{
 			double tmp = round(f/notchF);
 			tmp = fabs(f - tmp*notchF);
-			if (tmp <= 3./M*Fs/M) // possibly make the '3.' into a parameter
+			if (tmp <= 3./M*Fs/M) // Possibly turn the '3.' into a parameter.
 			{
 				val = 0;
 			}

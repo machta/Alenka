@@ -70,8 +70,6 @@ string Montage::buildSource(const vector<string>& sources)
 
 	src += "}\n";
 
-	QString qsrc = QString::fromStdString(src);
-
 	return src;
 }
 

@@ -36,7 +36,7 @@ public:
 		this->trackTable = trackTable;
 	}
 	void write(QXmlStreamWriter* xml) const;
-	void read(QXmlStreamReader* xml);	
+	void read(QXmlStreamReader* xml);
 	void getEventsForRendering(int firstSample, int lastSample, std::vector<std::tuple<int, int, int>>* allChannelEvents, std::vector<std::tuple<int, int, int, int>>* singleChannelEvents);
 	const EventTypeTable* getEventTypeTable() const
 	{

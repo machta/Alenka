@@ -156,4 +156,3 @@ void FilterProcessor::process(cl_mem buffer, cl_command_queue queue)
 	errFFT = clfftEnqueueTransform(ifftPlanBatch, CLFFT_BACKWARD, 1, &queue, 0, nullptr, nullptr, &buffer, nullptr, nullptr);
 	checkClFFTErrorCode(errFFT, "clfftEnqueueTransform");
 }
-
