@@ -795,7 +795,9 @@ void Canvas::verticalZoom(double factor)
 
 		for (int i = 0; i < tt->rowCount(); ++i)
 		{
-			tt->setAmplitude(tt->getAmplitude(i)*factor, i);
+			double value = tt->getAmplitude(i)*factor;
+			value = value != 0 ? value : -0.000001;
+			tt->setAmplitude(value, i);
 		}
 
 		emit tt->emitColumnChanged(TrackTable::Column::amplitude);
@@ -812,7 +814,9 @@ void Canvas::trackZoom(double factor)
 
 		track += countHiddenTracks(track);
 
-		tt->setAmplitude(tt->getAmplitude(track)*factor, track);
+		double value = tt->getAmplitude(track)*factor;
+		value = value != 0 ? value : -0.000001;
+		tt->setAmplitude(value, track);
 
 		emit tt->emitColumnChanged(TrackTable::Column::amplitude);
 	}
