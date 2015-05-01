@@ -6,7 +6,7 @@ using namespace std;
 
 Montage::Montage(const vector<string>& sources, OpenCLContext* context) : numberOfRows(sources.size())
 {
-	logToFile("Constructing montage.");
+	logToFile("Constructing montage with " << sources.size() << " tracks.");
 
 	program = new OpenCLProgram(buildSource(sources), context);
 }
@@ -18,6 +18,8 @@ Montage::~Montage()
 
 bool Montage::test(const string& source, OpenCLContext* context, string* errorMessage)
 {
+	logToFile("Testing montage code.");
+
 	// Use the OpenCL compiler to test the source.
 	OpenCLProgram program(buildSource(vector<string> {source}), context);
 
@@ -45,7 +47,12 @@ string Montage::readHeader()
 	FILE* file = fopen("montageHeader.cl", "rb");
 	checkNotErrorCode(file, nullptr, "File 'montageHeader.cl' could not be opened.");
 
-	return readWholeTextFile(file);
+	string header = readWholeTextFile(file);
+
+	int err = fclose(file);
+	checkErrorCode(err, 0, "fclose()");
+
+	return header;
 }
 
 string Montage::buildSource(const vector<string>& sources)

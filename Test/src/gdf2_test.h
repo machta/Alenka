@@ -51,7 +51,8 @@ void dataTest(int fi)
 		}
 	}
 
-	fclose(file);
+	int err = fclose(file);
+	checkErrorCode(err, 0, "fclose()");
 }
 }
 
@@ -97,7 +98,8 @@ BOOST_AUTO_TEST_CASE(metaInfo)
 		BOOST_CHECK_EQUAL(gdf.getChannelCount(), channels);
 		BOOST_CHECK_EQUAL(gdf.getSamplesRecorded(), len);
 
-		fclose(file);
+		int err = fclose(file);
+		checkErrorCode(err, 0, "fclose()");
 	}
 }
 

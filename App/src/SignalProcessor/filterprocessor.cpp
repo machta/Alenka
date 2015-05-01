@@ -19,7 +19,8 @@ FilterProcessor::FilterProcessor(unsigned int M, unsigned int blockWidth, unsign
 
 	OpenCLProgram program(file, context);
 
-	fclose(file);
+	int ierr = fclose(file);
+	checkErrorCode(ierr, 0, "fclose()");
 
 	filterKernel = program.createKernel("filter");
 	zeroKernel = program.createKernel("zero");

@@ -143,10 +143,17 @@ void Canvas::initializeGL()
 	eventProgram = new OpenGLProgram(eventVert, colorFrag);
 	rectangleLineProgram = new OpenGLProgram(rectangleLineVert, colorFrag);
 
-	fclose(signalVert);
-	fclose(eventVert);
-	fclose(rectangleLineVert);
-	fclose(colorFrag);
+	int err = fclose(signalVert);
+	checkErrorCode(err, 0, "fclose()");
+
+	err = fclose(eventVert);
+	checkErrorCode(err, 0, "fclose()");
+
+	err = fclose(rectangleLineVert);
+	checkErrorCode(err, 0, "fclose()");
+
+	err = fclose(colorFrag);
+	checkErrorCode(err, 0, "fclose()");
 
 	gl()->glEnable(GL_BLEND);
 	gl()->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

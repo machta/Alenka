@@ -315,7 +315,8 @@ inline void printBuffer(const std::string& filePath, float* data, int n)
 
 		printBuffer(file, data, n);
 
-		fclose(file);
+		int err = fclose(file);
+		checkErrorCode(err, 0, "fclose()");
 	}
 #else
 	(void)filePath;
@@ -338,7 +339,8 @@ inline void printBuffer(const std::string& filePath, cl_mem buffer, cl_command_q
 
 		printBuffer(file, buffer, queue);
 
-		fclose(file);
+		int err = fclose(file);
+		checkErrorCode(err, 0, "fclose()");
 	}
 #else
 	(void)filePath;
