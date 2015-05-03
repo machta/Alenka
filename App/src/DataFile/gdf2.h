@@ -56,7 +56,7 @@ protected:
 	/**
 	 * @brief Creates a default montage with EventTable and TrackTable created
 	 * from the information retrieved from the GDF file.
-	 * @return True, if the loading finished successfully.
+	 * @return True if the loading finished successfully.
 	 */
 	virtual bool load() override;
 

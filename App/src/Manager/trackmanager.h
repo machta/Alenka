@@ -3,6 +3,9 @@
 
 #include "manager.h"
 
+/**
+ * @brief Track manager widget implementation.
+ */
 class TrackManager : public Manager
 {
 	Q_OBJECT

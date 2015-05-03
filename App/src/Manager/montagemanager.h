@@ -3,6 +3,9 @@
 
 #include "manager.h"
 
+/**
+ * @brief Montage manager widget implementation.
+ */
 class MontageManager : public Manager
 {
 	Q_OBJECT

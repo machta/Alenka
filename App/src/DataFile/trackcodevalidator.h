@@ -17,7 +17,7 @@ public:
 	 * @brief Test the code in input.
 	 * @param input Input code.
 	 * @param errorMessage [out]
-	 * @return True, if the test succeeds.
+	 * @return True if the test succeeds.
 	 */
 	bool validate(const QString& input, QString* errorMessage = nullptr);
 

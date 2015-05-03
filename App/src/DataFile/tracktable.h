@@ -89,7 +89,7 @@ public:
 	/**
 	 * @brief Test code with TrackCodeValidator.
 	 * @param message [out]
-	 * @return True, if the test succeeds.
+	 * @return True if the test succeeds.
 	 */
 	bool validateTrackCode(const QString& code, QString* message = nullptr)
 	{
