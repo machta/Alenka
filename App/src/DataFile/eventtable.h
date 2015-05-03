@@ -17,11 +17,23 @@ class EventTypeTable;
 class TrackTable;
 class DataFile;
 
+/**
+ * @brief A data structure for handling events.
+ *
+ * This class stores info about events.
+ *
+ * Two interfaces are available for accessing the underlying data:
+ * * direct access via get/set functions
+ * * interface inherited from QAbstractTableModel
+ */
 class EventTable : public QAbstractTableModel
 {
 	Q_OBJECT
 
 public:
+	/**
+	 * @brief Enum defining symbolic constants for the table columns and the number of columns.
+	 */
 	enum class Column
 	{
 		label, type, position, duration, channel, description, size
@@ -30,14 +42,32 @@ public:
 	EventTable(DataFile* file, QObject* parent = nullptr);
 	~EventTable();
 
+	/**
+	 * @brief Sets pointers to related objects.
+	 */
 	void setReferences(EventTypeTable* eventTypeTable, TrackTable* trackTable)
 	{
 		this->eventTypeTable = eventTypeTable;
 		this->trackTable = trackTable;
 	}
+
+	/**
+	 * @brief Writes an eventTable element.
+	 */
 	void write(QXmlStreamWriter* xml) const;
+
+	/**
+	 * @brief Parses the eventTable element.
+	 */
 	void read(QXmlStreamReader* xml);
+
+	/**
+	 * @brief A convenience method for retrieving event info for rendering.
+	 * @param allChannelEvents [out] All-channel event details sorted by type.
+	 * @param singleChannelEvents [out] Single-channel event details sorted by type and channel.
+	 */
 	void getEventsForRendering(int firstSample, int lastSample, std::vector<std::tuple<int, int, int>>* allChannelEvents, std::vector<std::tuple<int, int, int, int>>* singleChannelEvents);
+
 	const EventTypeTable* getEventTypeTable() const
 	{
 		return eventTypeTable;
@@ -46,7 +76,15 @@ public:
 	{
 		return trackTable;
 	}
+
+	/**
+	 * @brief Inserts count rows with default values at the end of the table.
+	 */
 	bool insertRowsBack(int count = 1);
+
+	/**
+	 * @brief Notify the program that the values in column have changed.
+	 */
 	void emitColumnChanged(Column column)
 	{
 		emit dataChanged(index(0, static_cast<int>(column)), index(rowCount() - 1, static_cast<int>(column)));

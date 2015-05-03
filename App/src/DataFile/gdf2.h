@@ -14,9 +14,18 @@
 class QDateTime;
 class QFile;
 
+/**
+ * @brief A class implementing the GDF v2 file type.
+ *
+ * All methods accessing the information stored in the file are thread-safe.
+ */
 class GDF2 : public DataFile
 {
 public:
+	/**
+	 * @brief GDF2 constructor.
+	 * @param filePath The file path of the data file without the extension.
+	 */
 	GDF2(const std::string& filePath);
 	virtual ~GDF2();
 
@@ -44,6 +53,11 @@ public:
 	}
 
 protected:
+	/**
+	 * @brief Creates a default montage with EventTable and TrackTable created
+	 * from the information retrieved from the GDF file.
+	 * @return True, if the loading finished successfully.
+	 */
 	virtual bool load() override;
 
 private:
@@ -61,6 +75,10 @@ private:
 	bool uncalibrated;
 	QCache<unsigned int, std::vector<char>>* cache = nullptr;
 
+	/**
+	 * @brief A structure for storing values from the file's fixed header
+	 * as C++ types at one place.
+	 */
 	struct
 	{
 		char versionID[8 + 1];
@@ -87,6 +105,10 @@ private:
 		// 2B reserved
 	} fh;
 
+	/**
+	 * @brief A structure for storing values from the file's variable header
+	 * as C++ types at one place.
+	 */
 	struct
 	{
 		char (* label)[16 + 1];

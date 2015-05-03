@@ -18,9 +18,21 @@ class QXmlStreamWriter;
 class EventTypeTable;
 class DataFile;
 
+/**
+ * @brief A data structure for handling montages.
+ *
+ * This class stores info about montages.
+ *
+ * Two interfaces are available for accessing the underlying data:
+ * * direct access via get/set functions
+ * * interface inherited from QAbstractTableModel
+ */
 class MontageTable : public QAbstractTableModel
 {
 public:
+	/**
+	 * @brief Enum defining symbolic constants for the table columns and the number of columns.
+	 */
 	enum class Column
 	{
 		name, save, size
@@ -29,12 +41,24 @@ public:
 	MontageTable(DataFile* file, QObject* parent = nullptr);
 	~MontageTable();
 
+	/**
+	 * @brief Sets pointers to related objects.
+	 */
 	void setReferences(EventTypeTable* eventTypeTable)
 	{
 		this->eventTypeTable = eventTypeTable;
 	}
+
+	/**
+	 * @brief Writes an montageTable element.
+	 */
 	void write(QXmlStreamWriter* xml) const;
+
+	/**
+	 * @brief Parses the montageTable element.
+	 */
 	void read(QXmlStreamReader* xml);
+
 	std::vector<TrackTable*>* getTrackTables()
 	{
 		return &trackTables;
@@ -47,7 +71,15 @@ public:
 	{
 		return eventTypeTable;
 	}
+
+	/**
+	 * @brief Inserts count rows with default values at the end of the table.
+	 */
 	bool insertRowsBack(int count = 1);
+
+	/**
+	 * @brief Notify the program that the values in column have changed.
+	 */
 	void emitColumnChanged(Column column)
 	{
 		emit dataChanged(index(0, static_cast<int>(column)), index(rowCount() - 1, static_cast<int>(column)));
