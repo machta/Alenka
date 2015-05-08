@@ -7,6 +7,7 @@
 #include "Manager/eventmanager.h"
 #include "Manager/eventtypemanager.h"
 #include "Manager/montagemanager.h"
+#include "SignalProcessor/filter.h"
 
 #include <QAction>
 #include <QMenuBar>
@@ -537,7 +538,7 @@ void SignalFileBrowserWindow::lowpassComboBoxUpdate(const QString& text)
 		}
 		else
 		{
-			file->getInfoTable()->setLowpassFrequency(1000*1000*1000);
+			file->getInfoTable()->setLowpassFrequency(Filter::LOWPASS_OFF_VALUE);
 		}
 	}
 }
@@ -570,7 +571,7 @@ void SignalFileBrowserWindow::highpassComboBoxUpdate(const QString& text)
 		}
 		else
 		{
-			file->getInfoTable()->setHighpassFrequency(-1000*1000*1000);
+			file->getInfoTable()->setHighpassFrequency(Filter::HIGHPASS_OFF_VALUE);
 		}
 	}
 }

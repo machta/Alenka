@@ -9,13 +9,28 @@
 
 #include <vector>
 
+/**
+ * @brief This class handles filtering of data blocks.
+ */
 class FilterProcessor
 {
 public:
+	/**
+	 * @brief FilterProcessor constructor.
+	 * @param M The size of the filter.
+	 */
 	FilterProcessor(unsigned int M, unsigned int blockWidth, unsigned int blockHeight, OpenCLContext* context);
 	~FilterProcessor();
 
+	/**
+	 * @brief From now on use coefficients of filter for computations.
+	 */
 	void change(Filter* filter);
+	
+	/**
+	 * @brief Enqueues all commands required for filter computation to queue.
+	 * @param buffer [in,out]
+	 */
 	void process(cl_mem buffer, cl_command_queue queue);
 
 private:

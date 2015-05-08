@@ -431,5 +431,5 @@ void TrackTable::sort(int column, Qt::SortOrder order)
 	emit layoutChanged();
 }
 
-const char* TrackTable::NO_CHANNEL_STRING = "<No Channel>";
-const char* TrackTable::ALL_CHANNEL_STRING = "<All>";
+const char* const TrackTable::NO_CHANNEL_STRING = "<No Channel>";
+const char* const TrackTable::ALL_CHANNEL_STRING = "<All>";

@@ -17,6 +17,10 @@ public:
 	explicit TrackLabelBar(QWidget* parent = nullptr);
 	~TrackLabelBar();
 
+	/**
+	 * @brief Notifies this object that the DataFile changed.
+	 * @param file Pointer to the data file. nullptr means file was closed.
+	 */
 	void changeFile(DataFile* file);
 
 signals:

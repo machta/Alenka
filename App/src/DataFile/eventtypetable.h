@@ -172,7 +172,7 @@ public:
 	/**
 	 * @brief A string to be used by GUI controls to represent unknown type option.
 	 */
-	static const char* NO_TYPE_STRING;
+	static const char* const NO_TYPE_STRING;
 
 private:
 	DataFile* file;

@@ -25,7 +25,12 @@ public:
 	explicit Canvas(QWidget* parent = nullptr);
 	~Canvas();
 
+	/**
+	 * @brief Notifies this object that the DataFile changed.
+	 * @param file Pointer to the data file. nullptr means file was closed.
+	 */
 	void changeFile(DataFile* file);
+
 	int getCursorPositionSample() const
 	{
 		return cursorSample;
@@ -183,6 +188,13 @@ private slots:
 		signalProcessor->setUpdateMontageFlag();
 		doneCurrent();
 	}
+
+	/**
+	 * @brief Tests whether SignalProcessor is ready to return blocks.
+	 *
+	 * This method is used to skip some code that would break if no file is
+	 * open and/or the current montage is empty.
+	 */
 	bool ready()
 	{
 		return signalProcessor != nullptr && signalProcessor->ready();

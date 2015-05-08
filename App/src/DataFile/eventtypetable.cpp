@@ -402,4 +402,4 @@ void EventTypeTable::sort(int column, Qt::SortOrder order)
 	emit layoutChanged();
 }
 
-const char* EventTypeTable::NO_TYPE_STRING = "<No Type>";
+const char* const EventTypeTable::NO_TYPE_STRING = "<No Type>";

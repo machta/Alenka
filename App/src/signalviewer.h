@@ -30,12 +30,17 @@ public:
 		return canvas;
 	}
 
+	/**
+	 * @brief Notifies this object that the DataFile changed.
+	 * @param file Pointer to the data file. nullptr means file was closed.
+	 */
+	void changeFile(DataFile* file);
+
 signals:
 	void virtualWidthChanged(int);
 	void positionChanged(int);
 
-public slots:
-	void changeFile(DataFile* file);
+public slots:	
 
 protected:
 	virtual void resizeEvent(QResizeEvent* /*event*/) override

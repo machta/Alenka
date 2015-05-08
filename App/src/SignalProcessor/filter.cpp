@@ -134,3 +134,6 @@ void Filter::printCoefficients(FILE* file)
 		fprintf(file, "%lf\n", tmp[i]);
 	}
 }
+
+const double Filter::LOWPASS_OFF_VALUE = 1000*1000*1000*1000;
+const double Filter::HIGHPASS_OFF_VALUE = -1000*1000*1000*1000;

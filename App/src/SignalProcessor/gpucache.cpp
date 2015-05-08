@@ -5,7 +5,7 @@
 
 using namespace std;
 
-GPUCache::GPUCache(unsigned int blockSize, int offset, int delay, int64_t availableMemory, DataFile* file, OpenCLContext* context, FilterProcessor* filterProcessor)
+GPUCache::GPUCache(unsigned int blockSize, unsigned int offset, int delay, int64_t availableMemory, DataFile* file, OpenCLContext* context, FilterProcessor* filterProcessor)
 	: blockSize(blockSize), offset(offset), delay(delay), file(file), filterProcessor(filterProcessor)
 {
 	cl_int err;

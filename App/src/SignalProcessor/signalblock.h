@@ -6,6 +6,19 @@
 
 #include <cinttypes>
 
+/**
+ * @brief A wrapper for the vertex array objects passed from SignalProcessor to Canvas.
+ *
+ * The order of the vertex array objects is important as each is used in different
+ * circumstances:
+ *
+ * 1. The first array is used for single-channel events when the mode for better quality is active.
+ * The number of samples is doubled, every even sample has its duplicate in the following index.
+ *
+ * 2. The second array skips these duplicate samples.
+ *
+ * Only one buffer is used to store the actual data.
+ */
 class SignalBlock
 {
 public:

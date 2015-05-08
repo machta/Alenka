@@ -192,11 +192,11 @@ public:
 	/**
 	 * @brief A string to be used by GUI controls to represent unknown channel option.
 	 */
-	static const char* NO_CHANNEL_STRING;
+	static const char* const NO_CHANNEL_STRING;
 	/**
 	 * @brief A string to be used by GUI controls to represent all-channel option.
 	 */
-	static const char* ALL_CHANNEL_STRING;
+	static const char* const ALL_CHANNEL_STRING;
 
 private:
 	DataFile* file;

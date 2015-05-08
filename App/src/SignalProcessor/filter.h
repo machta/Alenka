@@ -10,13 +10,41 @@
 #include <CL/cl_gl.h>
 #include <clFFT.h>
 
+/**
+ * @brief A class for computing FIR filter coefficients.
+ *
+ * After construction the filter has no effect, i.e. it is an all-pass filter.
+ *
+ * The filter can be configured to work as any combination of the following
+ * basic filter types:
+ * * low-pass,
+ * * high-pass and
+ * * notch filter.
+ *
+ * The filter can be configured by the appropriate set functions.
+ *
+ * The coefficients are computed using the frequency-sampling method.
+ */
 class Filter
 {
 public:
+	/**
+	 * @brief Filter constructor.
+	 * @param M The length of the filter and the number of coefficients that
+	 * will be returned.
+	 * @param Fs The sampling frequency.
+	 */
 	Filter(unsigned int M, double Fs);
 	~Filter();
 
+	/**
+	 * @brief Print coefficients to the file stream.
+	 */
 	void printCoefficients(FILE* file);
+
+	/**
+	 * @brief Returns a vector with the coefficients.
+	 */
 	std::vector<double> computeCoefficients();
 
 	double getLowpass() const
@@ -43,6 +71,16 @@ public:
 	{
 		notch = value;
 	}
+
+	/**
+	 * @brief If this value is passed to setLowpass, low-pass has no effect.
+	 */
+	static const double LOWPASS_OFF_VALUE;
+
+	/**
+	 * @brief If this value is passed to setHighpass(), high-pass has no effect.
+	 */
+	static const double HIGHPASS_OFF_VALUE;
 
 private:
 	unsigned int M;
