@@ -45,7 +45,7 @@ QString CodeEditDialog::getText() const
 	return editor->toPlainText();
 }
 
-void CodeEditDialog::errorMessageDialog(const QString &message, QWidget* parent)
+void CodeEditDialog::errorMessageDialog(const QString& message, QWidget* parent)
 {
 	// TODO: Make a better error dialog.
 	QMessageBox messageBox(parent);

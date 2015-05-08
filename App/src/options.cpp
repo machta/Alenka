@@ -17,7 +17,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	commandLineOnly.add_options()
 	("help", "help message")
 	("config,c", value<string>()->default_value("options.cfg"), "config file")
-	("printFilter", "should the filter coefficients be printed (everytime they are computed)")
+	("printFilter", "should the filter coefficients be printed (every time they are computed)")
 	("printBuffers", "print the values in buffers during signal processing")
 	("clInfo", "print OpenCL platform and device info")
 	("glInfo", "print OpenGL info")
@@ -36,14 +36,14 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("printFilterFile", value<string>(), "print filter to a file with this name; if empty, stderr is used")
 	("printBuffersFolder", value<string>()->default_value("."), "path to the folder to which the values will be saved (no end slash), only in debug build")
 	("notchFrequency", value<double>()->default_value(50), "frequency used to filter power interference with the signal")
-	("onlineFilter", value<bool>()->default_value(false), "should the signal be filtered everytime before it is rendered")
+	("onlineFilter", value<bool>()->default_value(false), "should the signal be filtered every time before it is rendered")
 	("eventRenderMode", value<int>()->default_value(2), "controls rendering of single-channel events; accepted values (from simplest mode) are 1, 2")
 	//("prepareFrames", value<unsigned int>()->default_value(0), "how many frames should be prepared in memory")
 	("logFileName", value<string>()->default_value("%Y-%m-%d--%H-%M-%S.log"), "string passed to strftime() to create the file name")
 	;
 
 	// Parse the input.
-	options_description all("Alloved options");
+	options_description all("Allowed options");
 	all.add(commandLineOnly).add(other);
 
 	store(parse_command_line(argc, argv, all), vm);

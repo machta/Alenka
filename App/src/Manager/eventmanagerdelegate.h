@@ -3,6 +3,9 @@
 
 #include <QStyledItemDelegate>
 
+/**
+ * @brief Implements custom editors for EventManager.
+ */
 class EventManagerDelegate : public QStyledItemDelegate
 {
 	Q_OBJECT

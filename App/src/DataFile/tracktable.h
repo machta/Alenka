@@ -18,11 +18,23 @@ class QXmlStreamWriter;
 class EventTable;
 class DataFile;
 
+/**
+ * @brief A data structure for handling tracks.
+ *
+ * This class stores info about tracks.
+ *
+ * Two interfaces are available for accessing the underlying data:
+ * * direct access via get/set functions
+ * * interface inherited from QAbstractTableModel
+ */
 class TrackTable : public QAbstractTableModel
 {
 	Q_OBJECT
 
 public:
+	/**
+	 * @brief Enum defining symbolic constants for the table columns and the number of columns.
+	 */
 	enum class Column
 	{
 		label, code, color, amplitude, hidden, size
@@ -31,20 +43,57 @@ public:
 	TrackTable(DataFile* file, QObject* parent = nullptr);
 	~TrackTable();
 
+	/**
+	 * @brief Sets pointers to related objects.
+	 */
 	void setReferences(EventTable* eventTable)
 	{
 		this->eventTable = eventTable;
 	}
+
+	/**
+	 * @brief Writes an trackTable element.
+	 */
 	void write(QXmlStreamWriter* xml) const;
+
+	/**
+	 * @brief Parses the trackTable element.
+	 */
 	void read(QXmlStreamReader* xml);
+
 	EventTable* getEventTable()
 	{
 		return eventTable;
 	}
+
+	/**
+	 * @brief Inserts count rows with default values at the end of the table.
+	 */
 	bool insertRowsBack(int count = 1);
+
+	/**
+	 * @brief Notify the program that the values in column have changed.
+	 */
 	void emitColumnChanged(Column column)
 	{
 		emit dataChanged(index(0, static_cast<int>(column)), index(rowCount() - 1, static_cast<int>(column)));
+	}
+
+	/**
+	 * @brief Return the code for montage tracks.
+	 *
+	 * Hidden tracks are excluded.
+	 */
+	std::vector<std::string> getCode() const;
+
+	/**
+	 * @brief Test code with TrackCodeValidator.
+	 * @param message [out]
+	 * @return True if the test succeeds.
+	 */
+	bool validateTrackCode(const QString& code, QString* message = nullptr)
+	{
+		return validator.validate(code, message);
 	}
 
 	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override
@@ -58,11 +107,6 @@ public:
 		(void)parent;
 
 		return static_cast<int>(Column::size);
-	}
-	std::vector<std::string> getCode() const;
-	bool validateTrackCode(const QString& code, QString* message = nullptr)
-	{
-		return validator.validate(code, message);
 	}
 	virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 	virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
@@ -145,7 +189,13 @@ public:
 		hidden[i] = value;
 	}
 
+	/**
+	 * @brief A string to be used by GUI controls to represent unknown channel option.
+	 */
 	static const char* NO_CHANNEL_STRING;
+	/**
+	 * @brief A string to be used by GUI controls to represent all-channel option.
+	 */
 	static const char* ALL_CHANNEL_STRING;
 
 private:

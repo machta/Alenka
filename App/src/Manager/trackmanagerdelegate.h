@@ -3,6 +3,9 @@
 
 #include <QStyledItemDelegate>
 
+/**
+ * @brief Implements custom editors for TrackManager.
+ */
 class TrackManagerDelegate : public QStyledItemDelegate
 {
 	Q_OBJECT

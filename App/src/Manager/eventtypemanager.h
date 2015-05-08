@@ -3,6 +3,9 @@
 
 #include "manager.h"
 
+/**
+ * @brief Event type manager widget implementation.
+ */
 class EventTypeManager : public Manager
 {
 	Q_OBJECT

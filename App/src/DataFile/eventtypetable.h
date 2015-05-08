@@ -15,11 +15,23 @@ class QXmlStreamWriter;
 class MontageTable;
 class DataFile;
 
+/**
+ * @brief A data structure for handling event types.
+ *
+ * This class stores info about event types.
+ *
+ * Two interfaces are available for accessing the underlying data:
+ * * direct access via get/set functions
+ * * interface inherited from QAbstractTableModel
+ */
 class EventTypeTable : public QAbstractTableModel
 {
 	Q_OBJECT
 
 public:
+	/**
+	 * @brief Enum defining symbolic constants for the table columns and the number of columns.
+	 */
 	enum class Column
 	{
 		id, name, opacity, color, hidden, size
@@ -28,17 +40,37 @@ public:
 	EventTypeTable(DataFile* file, QObject* parent = nullptr);
 	~EventTypeTable();
 
+	/**
+	 * @brief Sets pointers to related objects.
+	 */
 	void setReferences(MontageTable* montageTable)
 	{
 		this->montageTable = montageTable;
 	}
+
+	/**
+	 * @brief Writes an eventTypeTable element.
+	 */
 	void write(QXmlStreamWriter* xml) const;
+
+	/**
+	 * @brief Parses the eventTypeTable element.
+	 */
 	void read(QXmlStreamReader* xml);
+
 	MontageTable* getMontageTable()
 	{
 		return montageTable;
 	}
+
+	/**
+	 * @brief Inserts count rows with default values at the end of the table.
+	 */
 	bool insertRowsBack(int count = 1);
+
+	/**
+	 * @brief Notify the program that the values in column have changed.
+	 */
 	void emitColumnChanged(Column column)
 	{
 		emit dataChanged(index(0, static_cast<int>(column)), index(rowCount() - 1, static_cast<int>(column)));
@@ -137,6 +169,9 @@ public:
 		hidden[i] = value;
 	}
 
+	/**
+	 * @brief A string to be used by GUI controls to represent unknown type option.
+	 */
 	static const char* NO_TYPE_STRING;
 
 private:

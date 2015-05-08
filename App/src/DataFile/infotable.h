@@ -6,11 +6,17 @@
 class QXmlStreamReader;
 class QXmlStreamWriter;
 
+/**
+ * @brief A class for handling program wide used information stored in .info files.
+ */
 class InfoTable : public QObject
 {
 	Q_OBJECT
 
 public:
+	/**
+	 * @brief Enum defining symbolic constants for modes of time output.
+	 */
 	enum class TimeMode
 	{
 		samples, offset, real, size
@@ -19,8 +25,22 @@ public:
 	InfoTable();
 	~InfoTable();
 
+	/**
+	 * @brief Writes an infoTable element.
+	 */
 	void write(QXmlStreamWriter* xml) const;
+
+	/**
+	 * @brief Parses the infoTable element.
+	 */
 	void read(QXmlStreamReader* xml);
+
+	/**
+	 * @brief Emit all signals defined by this class.
+	 *
+	 * This method can be used to ensure that all components referencing values
+	 * governed by InfoTable are synchronized.
+	 */
 	void emitAllSignals()
 	{
 		emit virtualWidthChanged(virtualWidth);
@@ -32,6 +52,7 @@ public:
 		emit timeModeChanged(static_cast<int>(timeMode));
 		emit selectedTypeChanged(selectedType);
 		emit timeLineIntervalChanged(timeLineInterval);
+		emit positionIndicatorChanged(positionIndicator);
 	}
 
 	int getVirtualWidth() const
