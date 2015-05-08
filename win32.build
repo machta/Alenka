@@ -1,10 +1,8 @@
+include(win.build)
+
 LIBS += /LIBPATH:C:\boost_1_57_0\static_32\lib \
 	"C:/Program Files/clFFT-2.2.0-Windows-x32/lib/import/clFFT.lib"
 
-INCLUDEPATH += C:/boost_1_57_0 \
-	"C:/Program Files/clFFT-2.2.0-Windows-x32/include"
+INCLUDEPATH += "C:/Program Files/clFFT-2.2.0-Windows-x32/include"
 
-DEFINES += WIN_BUILD \
-	_USE_MATH_DEFINES \
-	_CRT_SECURE_NO_WARNINGS
 
