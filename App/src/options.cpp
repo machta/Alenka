@@ -76,6 +76,15 @@ void Options::validateValues()
 		ss << mode;
 		throw validation_error(validation_error::invalid_option_value, "eventRenderMode", ss.str());
 	}
+
+	if (isSet("window"))
+	{
+		string window = get("window").as<string>();
+		if (window != "hamming" && window != "blackman")
+		{
+			throw validation_error(validation_error::invalid_option_value, "window", window);
+		}
+	}
 }
 
 void Options::logConfigFile() const

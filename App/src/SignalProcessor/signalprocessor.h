@@ -27,11 +27,11 @@
  *
  * Before an object of this class is constructed or used an OpenGL context must be set current.
  * There is example usage outside of a method that guarantees this:
- * \code{.cpp}
- * makeCurrent();
- * signalProcessor->setUpdateMontageFlag();
- * doneCurrent();
- * \endcode
+ * @code{.cpp}
+makeCurrent();
+signalProcessor->setUpdateMontageFlag();
+doneCurrent();
+ * @endcode
  *
  */
 class SignalProcessor : public OpenGLInterface

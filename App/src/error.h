@@ -1,3 +1,18 @@
+/**
+ * @brief This file defines some global auxiliary functions and macros (mostly for error handling).
+ *
+ * Convenience functions (further simplified by macros) for handling
+ * of error codes and for accessing the log are defined here.
+ *
+ * The message_ parameter of these macros accepts expressions like:
+ *
+ * * "a string"
+ * * "the value is" << integerVar
+ * * "a string" << std::endl << "some more on a new line"
+ *
+ * @file
+ */
+
 #ifndef ERROR_H
 #define ERROR_H
 
@@ -18,6 +33,9 @@
 #include <string>
 #include <sstream>
 
+/**
+ * @brief Returns error code converted to a suitable form for printing.
+ */
 template <typename T>
 inline std::string errorCodeToString(T val)
 {
@@ -30,6 +48,7 @@ inline std::string errorCodeToString(T val)
 	return ss.str();
 }
 
+/// @cond
 namespace
 {
 template <typename T>
@@ -196,13 +215,37 @@ const char* getTimeString(std::time_t t)
 	return tmp.c_str();
 }
 }
+/// @endcond
 
+/**
+ * @brief Compared the returned error code with the success value.
+ * @param val_ The error code.
+ * @param expected_ The expected error code.
+ */
 #define checkErrorCode(val_, expected_, message_) if((val_) != (expected_)) { std::stringstream ss; ss << message_; CEC(val_, expected_, ss.str(), __FILE__, __LINE__); }
-#define checkNotErrorCode(val_, expected_, message_) if((val_) == (expected_)) { std::stringstream ss; ss << message_; CNEC(val_, ss.str(), __FILE__, __LINE__); }
 
+/**
+ * @brief Compared the returned error code with the failure value.
+ * @param val_The error code.
+ * @param notExpected_ The error code you are trying to avoid.
+ */
+#define checkNotErrorCode(val_, notExpected_, message_) if((val_) == (notExpected_)) { std::stringstream ss; ss << message_; CNEC(val_, ss.str(), __FILE__, __LINE__); }
+
+/**
+ * @brief Simplified error code test for OpenCL functions.
+ * @param val_ The error code.
+ */
 #define checkClErrorCode(val_, message_) if((val_) != CL_SUCCESS) { std::stringstream ss; ss << message_; CCEC(val_, ss.str(), __FILE__, __LINE__); }
+
+/**
+ * @brief Simplified error code test for clFFT functions
+ * @param val_ The error code.
+ */
 #define checkClFFTErrorCode(val_, message_) if((val_) != CLFFT_SUCCESS) { std::stringstream ss; ss << message_; CFCEC(val_, ss.str(), __FILE__, __LINE__); }
 
+/**
+ * @brief Same as std::fread() but when an error is detected an exception is thrown.
+ */
 inline std::size_t freadChecked(void* data, std::size_t size, std::size_t n, FILE* file)
 {
 	using namespace std;
@@ -226,6 +269,9 @@ inline std::size_t freadChecked(void* data, std::size_t size, std::size_t n, FIL
 	return elementsRead;
 }
 
+/**
+ * @brief Same as std::fwrite() but when an error is detected an exception is thrown.
+ */
 inline std::size_t fwriteChecked(void* data, std::size_t size, std::size_t n, FILE* file)
 {
 	using namespace std;
@@ -238,6 +284,9 @@ inline std::size_t fwriteChecked(void* data, std::size_t size, std::size_t n, FI
 	return elementsWritten;
 }
 
+/**
+ * @brief Reads the whole content of the text file and returns it as a string.
+ */
 inline std::string readWholeTextFile(FILE* file)
 {
 	using namespace std;
@@ -257,6 +306,11 @@ inline std::string readWholeTextFile(FILE* file)
 	return str;
 }
 
+/**
+ * @brief Prints the content of the data array to a file in a human-readable format.
+ *
+ * Used for debugging purposes.
+ */
 inline void printBuffer(FILE* file, float* data, int n)
 {
 #ifndef NDEBUG
@@ -274,6 +328,11 @@ inline void printBuffer(FILE* file, float* data, int n)
 #endif
 }
 
+/**
+ * @brief Prints the content of the OpenCL buffer to a file in a human-readable format.
+ *
+ * Used for debugging purposes.
+ */
 inline void printBuffer(FILE* file, cl_mem buffer, cl_command_queue queue)
 {
 #ifndef NDEBUG
@@ -301,6 +360,11 @@ inline void printBuffer(FILE* file, cl_mem buffer, cl_command_queue queue)
 #endif
 }
 
+/**
+ * @brief Prints the content of the data array to a new file with filePath in a human-readable format.
+ *
+ * Used for debugging purposes.
+ */
 inline void printBuffer(const std::string& filePath, float* data, int n)
 {
 #ifndef NDEBUG
@@ -325,6 +389,11 @@ inline void printBuffer(const std::string& filePath, float* data, int n)
 #endif
 }
 
+/**
+ * @brief Prints the content of the OpenCL buffer to a new file with filePath in a human-readable format.
+ *
+ * Used for debugging purposes.
+ */
 inline void printBuffer(const std::string& filePath, cl_mem buffer, cl_command_queue queue)
 {
 #ifndef NDEBUG
@@ -349,11 +418,34 @@ inline void printBuffer(const std::string& filePath, cl_mem buffer, cl_command_q
 #endif
 }
 
+/**
+ * @brief Log file object.
+ */
 extern std::ofstream LOG_FILE;
+
+/**
+ * @brief Log file mutex.
+ *
+ * This ensures that the the log is not broken due to race conditions.
+ */
 extern std::mutex LOG_FILE_MUTEX;
-//#define logToStream(a_, b_) b_ << "[" << getTimeString(time(nullptr)) << " T" << std::this_thread::get_id() << "] " << a_ << " [in " << __FILE__ << ":" << __LINE__ << "]" << std::endl
-#define logToStream(a_, b_) b_ <<  a_ << " [" << "in T" << std::this_thread::get_id() << " from " << __FILE__ << ":" << __LINE__ << "]" << std::endl
-#define logToFile(a_) { std::lock_guard<std::mutex> lock(LOG_FILE_MUTEX); logToStream(a_, LOG_FILE); }
-#define logToFileAndConsole(a_) logToFile(a_); logToStream(a_, std::cerr)
+
+/**
+ * @brief Logs a message to the stream.
+ *
+ * The format of the log entries (for the log file and stderr) is defined here.
+ */
+#define logToStream(message_, stream_) stream_ <<  message_ << " [" << "in T" << std::this_thread::get_id() << " from " << __FILE__ << ":" << __LINE__ << "]" << std::endl
+//#define logToStream(message_, stream_) stream_ << "[" << getTimeString(time(nullptr)) << " T" << std::this_thread::get_id() << "] " << message_ << " [in " << __FILE__ << ":" << __LINE__ << "]" << std::endl
+
+/**
+ * @brief Logs a message to the log file.
+ */
+#define logToFile(message_) { std::lock_guard<std::mutex> lock(LOG_FILE_MUTEX); logToStream(message_, LOG_FILE); }
+
+/**
+ * @brief Logs a message to both the log file and the standard error output.
+ */
+#define logToFileAndConsole(message_) logToFile(message_); logToStream(message_, std::cerr)
 
 #endif // ERROR_H

@@ -1,3 +1,9 @@
+/**
+ * @brief The header defining the OpenGLInterface class.
+ *
+ * @file
+ */
+
 #ifndef OPENGLINTERFACE_H
 #define OPENGLINTERFACE_H
 
@@ -6,18 +12,32 @@
 #include <QOpenGLFunctions_4_1_Core>
 #include <QOpenGLDebugLogger>
 
+/**
+ * @brief This class provides extending classes with the interface needed to call OpenGL API.
+ *
+ * Initialization is done when the interface pointers are needed for the first time.
+ * initialize() method could be added instead so that gl() and log() don't have
+ * to check the pointer every time they are called.
+ */
 class OpenGLInterface
 {
 public:
-	//OpenGLInterface() {}
-	// Initialization is done when the interface pointers are needed for the first time. Initialize() could be added instead so that the condition can be removed from fun() and log().
-
 	~OpenGLInterface()
 	{
 		delete logger;
 	}
 
 protected:
+	/**
+	 * @brief Returns a pointer needed for accessing the OpenGL API.
+	 *
+	 * If an error occurs it will be picked up by the next call to gl().
+	 *
+	 * In debug mode the file and line number of the last is stored.
+	 * It is used to report from where the detected error originated
+	 * (i.e. the position of the last call to gl()).
+	 * In release mode this information is ignored.
+	 */
 #ifndef NDEBUG
 	QOpenGLFunctions_4_1_Core* gl(const char* file = "", int line = 0)
 #else
@@ -47,6 +67,14 @@ protected:
 		return functions;
 	}
 
+	/**
+	 * @brief Returns a pointer needed to access the OpenGL debug log.
+	 *
+	 * This also checks OpenGL errors.
+	 *
+	 * For some reason the log is always empty.
+	 * (I guess the OpenGL implementation doesn't use it or perhaps I didn't initialize it properly...)
+	 */
 	QOpenGLDebugLogger* log()
 	{
 		using namespace std;
@@ -74,10 +102,22 @@ private:
 	int lastCallLine = -1;
 #endif
 
+	/**
+	 * @brief Checks if there are any OpenGL errors.
+	 *
+	 * If there are, print a message to the log and throw an exception.
+	 */
 	void checkGLErrors();
+
+	/**
+	 * @brief Converts enum item to a string name.
+	 */
 	std::string getErrorCode(GLenum code);
 };
 
+/**
+ * @brief Macro that passes some debug info to the gl() method.
+ */
 #define gl() gl(__FILE__, __LINE__)
 
 #endif // OPENGLINTERFACE_H

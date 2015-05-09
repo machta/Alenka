@@ -15,8 +15,8 @@ void OpenGLProgram::construct(const string& vertSource, const string& fragSource
 {
 	program = gl()->glCreateProgram();
 
-	addShader(program, vertSource, GL_VERTEX_SHADER);
-	addShader(program, fragSource, GL_FRAGMENT_SHADER);
+	addShader(vertSource, GL_VERTEX_SHADER);
+	addShader(fragSource, GL_FRAGMENT_SHADER);
 
 	gl()->glLinkProgram(program);
 
@@ -41,7 +41,7 @@ void OpenGLProgram::construct(const string& vertSource, const string& fragSource
 	checkNotErrorCode(linkStatus, GL_FALSE, "OpenGLProgram link failed.");
 }
 
-void OpenGLProgram::addShader(GLuint program, const string& sourceText, GLenum type)
+void OpenGLProgram::addShader(const string& sourceText, GLenum type)
 {
 	GLuint shader = gl()->glCreateShader(type);
 

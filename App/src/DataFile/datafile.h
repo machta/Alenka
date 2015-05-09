@@ -137,7 +137,7 @@ public:
 	}
 
 	/**
-	 * @brief A convenience method for resolving blocks needed to cover a sample range.
+	 * @brief A convenience function for resolving blocks needed to cover a sample range.
 	 * @param range The sample range.
 	 * @param blockSize The size of the blocks constant for all blocks.
 	 */

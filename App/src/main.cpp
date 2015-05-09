@@ -1,11 +1,16 @@
+/**
+ * @brief Definition of main() is here.
+ *
+ * In this source file is a compile time check of OpenCL 1.1 availability.
+ *
+ * @file
+ */
+
 #include "error.h"
 #include "myapplication.h"
 #include "signalfilebrowserwindow.h"
 
-#include <QLocale>
-
 #include <stdexcept>
-#include <sstream>
 
 using namespace std;
 
@@ -20,7 +25,6 @@ int main(int argc, char** argv)
 
 	try
 	{
-		// Set up the application.
 		MyApplication app(argc, argv);
 
 		SignalFileBrowserWindow window;

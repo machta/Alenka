@@ -1,4 +1,12 @@
 #version 410 core
+/**
+ * @brief Source code of the vertex shader used for drawing of single-channel events.
+ *
+ * @file
+ * @include event.vert
+ */
+/// @cond
+
 layout(location = 0) in float sampleValue;
 
 uniform mat4 transformMatrix;
@@ -16,3 +24,4 @@ void main()
 
 	gl_Position = transformMatrix*vec4(x, y, 0, 1);
 }
+/// @endcond

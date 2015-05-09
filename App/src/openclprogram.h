@@ -10,19 +10,39 @@
 #include <string>
 #include <stdexcept>
 
+/**
+ * @brief A wrapper for cl_program.
+ */
 class OpenCLProgram
 {
 public:
+	/**
+	 * @brief OpenCLProgram constructor.
+	 * @param source The source file.
+	 */
 	OpenCLProgram(FILE* source, OpenCLContext* context) : context(context)
 	{
 		construct(readWholeTextFile(source));
 	}
+
+	/**
+	 * @brief OpenCLProgram constructor.
+	 * @param source The source string.
+	 */
 	OpenCLProgram(std::string source, OpenCLContext* context) : context(context)
 	{
 		construct(source);
 	}
+
 	~OpenCLProgram();
 
+	/**
+	 * @brief Returns a kernel object.
+	 * @param kernelName The name of the kernel function.
+	 *
+	 * The returned kernel object is independent of this class and the caller
+	 * takes its ownership.
+	 */
 	cl_kernel createKernel(const std::string& kernelName)
 	{
 		if (compilationSuccessful() == false)
@@ -37,10 +57,19 @@ public:
 
 		return kernel;
 	}
+
+	/**
+	 * @brief Returns cl_program compilation status.
+	 * @return True if there was no error during compilation.
+	 */
 	bool compilationSuccessful() const
 	{
 		return !invalid;
 	}
+
+	/**
+	 * @brief Returns a string with the compilation output (errors and warnings).
+	 */
 	std::string getCompilationLog() const;
 
 private:
@@ -49,6 +78,9 @@ private:
 	bool invalid;
 	OpenCLContext* context;
 
+	/**
+	 * @brief The common functionality to both constructors.
+	 */
 	void construct(const std::string& source);
 };
 

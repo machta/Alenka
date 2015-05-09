@@ -9,6 +9,9 @@
 
 class DataFile;
 
+/**
+ * @brief This class implements the GUI control responsible for displaying track names.
+ */
 class TrackLabelBar : public QWidget
 {
 	Q_OBJECT
