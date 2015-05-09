@@ -15,7 +15,7 @@
  *
  * This class generates a source string for a kernel function called 'montage'.
  * For this it uses the formulas passed to it in the constructor, the
- * montageHeader.cl file and string constants hardcoded in the cpp file.
+ * montageHeader.cl file and string constants hard-coded in the cpp file.
  *
  * Then this string is used for creating an OpenCL kernel object that is
  * the final representation of the code. After the kernel object is retrieved

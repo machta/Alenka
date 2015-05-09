@@ -17,7 +17,7 @@ class MontageProcessor
 public:
 	/**
 	 * @brief MontageProcessor constructor.
-	 * @param offset Skip this many samples at the begining of the input buffer.
+	 * @param offset Skip this many samples at the beginning of the input buffer.
 	 */
 	MontageProcessor(unsigned int offset, unsigned int blockWidth, int channelsInFile);
 	~MontageProcessor();
@@ -28,7 +28,7 @@ public:
 	void change(Montage* montage);
 	
 	/**
-	 * @brief Enqueues all commnands required for montage computation to queue.
+	 * @brief Enqueues all commands required for montage computation to queue.
 	 */
 	void process(cl_mem inBuffer, cl_mem outBuffer, cl_command_queue queue);
 	

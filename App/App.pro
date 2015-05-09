@@ -1,6 +1,6 @@
 include(../build)
 
-TEMPLATE = app
+TEMPLATE = app console
 
 QT += widgets
 

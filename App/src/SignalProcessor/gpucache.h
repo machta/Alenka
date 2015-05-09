@@ -102,8 +102,6 @@ private:
 
 	/**
 	 * @brief Tries to find an element common to the map keys in a and the set elements in b.
-	 * @param a
-	 * @param b
 	 * @param index [out]
 	 * @param cacheIndex [out]
 	 * @return True if a common element was found.

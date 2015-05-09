@@ -23,7 +23,7 @@
  * @brief A class used for retrieving the processed signal blocks.
  *
  * This is the main class in the SignalProcessor package. As such it is the only
- * one directly accesed from the rest of the code.
+ * one directly accessed from the rest of the code.
  *
  * Before an object of this class is constructed or used an OpenGL context must be set current.
  * There is example usage outside of a method that guarantees this:
