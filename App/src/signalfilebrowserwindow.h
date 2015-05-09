@@ -19,6 +19,9 @@ class QActionGroup;
 class QLabel;
 class QAction;
 
+/**
+ * @brief This class implements the top level window of the program.
+ */
 class SignalFileBrowserWindow : public QMainWindow
 {
 	Q_OBJECT

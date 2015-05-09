@@ -17,6 +17,13 @@
 #include <vector>
 #include <tuple>
 
+/**
+ * @brief This class implemets GUI control for rendering signal data and events.
+ *
+ * Every time this control gets updated the whole surface gets repainted.
+ *
+ * This class also handles user keyboard and mouse input.
+ */
 class Canvas : public QOpenGLWidget, public OpenGLInterface
 {
 	Q_OBJECT
@@ -40,6 +47,17 @@ public:
 		return cursorTrack;
 	}
 
+	/**
+	 * @brief This method defines logic of changing color of objects during selection.
+	 *
+	 * This method is used at different places in code.
+	 * It is defined here so that this behavior is uniform.
+	 *
+	 * @bug{The ad hoc method used to achieve this is not ideal and could be improved.
+	 * All three components or are modified the same way. For colors that have two
+	 * of the three components equal to zero or for black the resulting color differs little
+	 * from the original color and the selected object is not very distinctive.}
+	 */
 	static QColor modifySelectionColor(const QColor& color);
 
 signals:
@@ -48,22 +66,6 @@ signals:
 
 public slots:
 	void updateCursor();
-	void setCursorPositionSample(int sample)
-	{
-		if (sample != cursorSample)
-		{
-			cursorSample = sample;
-			emit cursorPositionSampleChanged(sample);
-		}
-	}
-	void setCursorPositionTrack(int track)
-	{
-		if (track != cursorTrack)
-		{
-			cursorTrack = track;
-			emit cursorPositionTrackChanged(track);
-		}
-	}
 
 protected:
 	virtual void initializeGL() override;
@@ -143,6 +145,22 @@ private:
 	void trackZoom(double factor);
 	void addEvent(int channel);
 	int countHiddenTracks(int track);
+	void setCursorPositionSample(int sample)
+	{
+		if (sample != cursorSample)
+		{
+			cursorSample = sample;
+			emit cursorPositionSampleChanged(sample);
+		}
+	}
+	void setCursorPositionTrack(int track)
+	{
+		if (track != cursorTrack)
+		{
+			cursorTrack = track;
+			emit cursorPositionTrackChanged(track);
+		}
+	}
 
 private slots:
 	void updateFilter()
@@ -161,25 +179,7 @@ private slots:
 
 		updateMontage();
 	}
-	void updateMontage(const QModelIndex& topLeft, const QModelIndex& bottomRight)
-	{
-		if (bottomRight.row() - topLeft.row() >= 0)
-		{
-			int column = static_cast<int>(TrackTable::Column::code);
-			if (topLeft.column() <= column && column <= bottomRight.column())
-			{
-				updateMontage();
-				return;
-			}
-
-			column = static_cast<int>(TrackTable::Column::hidden);
-			if (topLeft.column() <= column && column <= bottomRight.column())
-			{
-				updateMontage();
-				return;
-			}
-		}
-	}
+	void updateMontage(const QModelIndex& topLeft, const QModelIndex& bottomRight);
 	void updateMontage()
 	{
 		assert(signalProcessor != nullptr);

@@ -854,3 +854,23 @@ int Canvas::countHiddenTracks(int track)
 
 	return hidden;
 }
+
+void Canvas::updateMontage(const QModelIndex &topLeft, const QModelIndex &bottomRight)
+{
+	if (bottomRight.row() - topLeft.row() >= 0)
+	{
+		int column = static_cast<int>(TrackTable::Column::code);
+		if (topLeft.column() <= column && column <= bottomRight.column())
+		{
+			updateMontage();
+			return;
+		}
+
+		column = static_cast<int>(TrackTable::Column::hidden);
+		if (topLeft.column() <= column && column <= bottomRight.column())
+		{
+			updateMontage();
+			return;
+		}
+	}
+}

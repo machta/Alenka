@@ -133,5 +133,5 @@ bool MyApplication::notify(QObject* receiver, QEvent* event)
 		logToFileAndConsole("Unknown exception caught.");
 	}
 
-	return false; // TODO: possibly abort the application
+	return false;
 }
