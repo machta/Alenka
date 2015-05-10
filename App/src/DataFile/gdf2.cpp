@@ -80,7 +80,7 @@ GDF2::GDF2(const string& filePath) : DataFile(filePath)
 
 	if (fh.numberOfDataRecords < 0)
 	{
-		runtime_error("GDF file with unknown number of data recors is not supported.");
+		runtime_error("GDF file with unknown number of data record is not supported.");
 	}
 
 	double duration;
@@ -326,13 +326,10 @@ bool GDF2::load()
 {
 	if (DataFile::load() == false)
 	{
+		// TODO: handle unexpected values in event table and strange track labels
 		lock_guard<mutex> lock(fileMutex);
 
 		getInfoTable()->setVirtualWidth(getSamplesRecorded()/getSamplingFrequency()*100); // Set default zoom at 100 pixels per second.
-
-		// Add a default montage.
-		// TODO: handle unexpected values in event table and strange track labels
-		getMontageTable()->insertRowsBack();
 
 		// Fill the track table of the default montage with channels from gdf.
 		assert(getChannelCount() > 0);
@@ -495,7 +492,7 @@ void GDF2::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSampl
 
 	if (lastSample < firstSample)
 	{
-		throw invalid_argument("lastSample must be greater than or equeal to firstSample.");
+		throw invalid_argument("lastSample must be greater than or equal to firstSample.");
 	}
 
 	if (lastSample - firstSample + 1 > data->size())

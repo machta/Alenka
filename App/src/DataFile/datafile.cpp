@@ -89,7 +89,7 @@ bool DataFile::load()
 		infoTable.read(xml);
 	});
 
-	return loadXMLFile(".mont", [this] (QXmlStreamReader* xml)
+	bool res =  loadXMLFile(".mont", [this] (QXmlStreamReader* xml)
 	{
 		while (xml->readNextStartElement())
 		{
@@ -112,6 +112,13 @@ bool DataFile::load()
 			montageTable.insertRowsBack(1);
 		}
 	});
+
+	if (res == false)
+	{
+		getMontageTable()->insertRowsBack();
+	}
+
+	return res;
 }
 
 bool DataFile::loadXMLFile(const string& extension, function<void (QXmlStreamReader*)> loadFunction)

@@ -92,13 +92,13 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	// Construct Zoom actions.
 	QAction* horizontalZoomInAction = new QAction("Horizontal Zoom In", this);
 	horizontalZoomInAction->setShortcut(QKeySequence("Alt++"));
-	horizontalZoomInAction->setToolTip("Zoom in timeline.");
+	horizontalZoomInAction->setToolTip("Zoom in time line.");
 	horizontalZoomInAction->setStatusTip(horizontalZoomInAction->toolTip());
 	connect(horizontalZoomInAction, SIGNAL(triggered()), this, SLOT(horizontalZoomIn()));
 
 	QAction* horizontalZoomOutAction = new QAction("Horizontal Zoom Out", this);
 	horizontalZoomOutAction->setShortcut(QKeySequence("Alt+-"));
-	horizontalZoomOutAction->setToolTip("Zoom out timeline.");
+	horizontalZoomOutAction->setToolTip("Zoom out time line.");
 	horizontalZoomOutAction->setStatusTip(horizontalZoomOutAction->toolTip());
 	connect(horizontalZoomOutAction, SIGNAL(triggered()), this, SLOT(horizontalZoomOut()));
 
@@ -174,11 +174,11 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 		}
 	});
 
-	// Toolbars.
+	// Tool bars.
 	const int spacing = 3;
 
-	// Construct File toolbar.
-	QToolBar* fileToolBar = addToolBar("File Toolbar");
+	// Construct File tool bar.
+	QToolBar* fileToolBar = addToolBar("File Tool Bar");
 	fileToolBar->setObjectName("File QToolBar");
 	fileToolBar->layout()->setSpacing(spacing);
 
@@ -186,8 +186,8 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	fileToolBar->addAction(closeFileAction);
 	fileToolBar->addAction(saveFileAction);
 
-	// Construct Filter toolbar.
-	QToolBar* filterToolBar = addToolBar("Filter Toolbar");
+	// Construct Filter tool bar.
+	QToolBar* filterToolBar = addToolBar("Filter Tool Bar");
 	filterToolBar->setObjectName("Filter QToolBar");
 	filterToolBar->layout()->setSpacing(spacing);
 
@@ -214,8 +214,8 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	notchCheckBox->setLayoutDirection(Qt::RightToLeft);
 	filterToolBar->addWidget(notchCheckBox);
 
-	// Construct Select toolbar.
-	QToolBar* selectToolBar = addToolBar("Select Toolbar");
+	// Construct Select tool bar.
+	QToolBar* selectToolBar = addToolBar("Select Tool bar");
 	selectToolBar->setObjectName("Select QToolBar");
 	selectToolBar->layout()->setSpacing(spacing);
 
@@ -231,8 +231,8 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	eventTypeComboBox->setMaximumWidth(200);
 	selectToolBar->addWidget(eventTypeComboBox);
 
-	// Construct Zoom toolbar.
-	QToolBar* zoomToolBar = addToolBar("Zoom Toolbar");
+	// Construct Zoom tool bar.
+	QToolBar* zoomToolBar = addToolBar("Zoom Tool Bar");
 	zoomToolBar->setObjectName("Zoom QToolBar");
 	zoomToolBar->layout()->setSpacing(spacing);
 
@@ -428,7 +428,7 @@ void SignalFileBrowserWindow::openFile()
 	signalViewer->changeFile(file);
 	eventManager->changeFile(file);
 
-	// Update Filter toolbar.
+	// Update Filter tool bar.
 	QStringList comboOptions;
 
 	comboOptions << "---" << "0" << "5" << "10";
@@ -451,14 +451,14 @@ void SignalFileBrowserWindow::openFile()
 	connect(notchCheckBox, SIGNAL(toggled(bool)), it, SLOT(setNotch(bool)));
 	connect(it, SIGNAL(notchChanged(bool)), notchCheckBox, SLOT(setChecked(bool)));
 
-	// Update the Select toolbar.
+	// Update the Select tool bar.
 	connectModel(file->getMontageTable(), [this] () { updateMontageComboBox(); });
-	updateMontageComboBox();//*
+	updateMontageComboBox();
 	connect(montageComboBox, SIGNAL(currentIndexChanged(int)), it, SLOT(setSelectedMontage(int)));
 	connect(it, SIGNAL(selectedMontageChanged(int)), montageComboBox, SLOT(setCurrentIndex(int)));
 
 	connectModel(file->getEventTypeTable(), [this] () { updateEventTypeComboBox(); });
-	updateEventTypeComboBox();//*
+	updateEventTypeComboBox();
 	connect(eventTypeComboBox, SIGNAL(currentIndexChanged(int)), it, SLOT(setSelectedType(int)));
 	connect(it, SIGNAL(selectedTypeChanged(int)), eventTypeComboBox, SLOT(setCurrentIndex(int)));
 

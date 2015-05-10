@@ -30,7 +30,7 @@ public:
 	~MyApplication();
 
 	/**
-	 * @brief This method allowes for handling exceptions originating from event handlers.
+	 * @brief This method allows for handling exceptions originating from event handlers.
 	 *
 	 * Currently when an exception is caught, it is logged and then program
 	 * execution continues. It is not clear whether this causes problems.

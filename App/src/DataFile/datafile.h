@@ -157,11 +157,13 @@ public:
 protected:
 	/**
 	 * @brief Loads the info from the .mont file.
+	 * @return True if the .mont file was located.
 	 *
 	 * This method tries to load the necessary information from the .mont file.
-	 * If the file is not located false is returned to notify the the child
-	 * classes that they can load this information instead.
-	 * @return Return true if the .mont file was located.
+	 * If the file is not located false is returned. The extending class then
+	 * can load this information instead in its specific way.
+	 *
+	 * An empty montage is always created.
 	 */
 	virtual bool load();
 
