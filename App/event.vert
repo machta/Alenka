@@ -1,4 +1,4 @@
-#version 150 core
+#version 130
 /**
  * @brief Source code of the vertex shader used for drawing of single-channel events.
  *

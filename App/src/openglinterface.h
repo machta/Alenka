@@ -9,10 +9,10 @@
 
 #include "error.h"
 
-#include <QOpenGLFunctions_3_2_Core>
+#include <QOpenGLFunctions_3_0>
 #include <QOpenGLDebugLogger>
 
-#define GL_FUNCTIONS QOpenGLFunctions_3_2_Core
+#define GL_FUNCTIONS QOpenGLFunctions_3_0
 
 /**
  * @brief This class provides extending classes with the interface needed to call OpenGL API.
