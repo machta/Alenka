@@ -157,7 +157,7 @@ std::string clErrorCodeToString(cl_int code)
 	return "unknown code " + errorCodeToString(code);
 }
 
-std::string clFFTErrorCodeToString(clfftStatus code)
+std::string clfftErrorCodeToString(clfftStatus code)
 {
 	switch (code)
 	{
@@ -195,7 +195,7 @@ void CFCEC(clfftStatus val, std::string message, const char* file, int line)
 {
 	std::stringstream ss;
 
-	ss << "Unexpected error code: " << clFFTErrorCodeToString(val);
+	ss << "Unexpected error code: " << clfftErrorCodeToString(val);
 	ss << ", required CLFFT_SUCCESS. ";
 
 	ss << message << " " << file << ":" << line;
@@ -241,7 +241,7 @@ const char* getTimeString(std::time_t t)
  * @brief Simplified error code test for clFFT functions
  * @param val_ The error code.
  */
-#define checkClFFTErrorCode(val_, message_) if((val_) != CLFFT_SUCCESS) { std::stringstream ss; ss << message_; CFCEC(val_, ss.str(), __FILE__, __LINE__); }
+#define checkClfftErrorCode(val_, message_) if((val_) != CLFFT_SUCCESS) { std::stringstream ss; ss << message_; CFCEC(val_, ss.str(), __FILE__, __LINE__); }
 
 /**
  * @brief Same as std::fread() but when an error is detected an exception is thrown.

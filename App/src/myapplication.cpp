@@ -66,10 +66,10 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 	clfftSetupData setupData;
 
 	errFFT = clfftInitSetupData(&setupData);
-	checkClFFTErrorCode(errFFT, "clfftInitSetupData()");
+	checkClfftErrorCode(errFFT, "clfftInitSetupData()");
 
 	errFFT = clfftSetup(&setupData);
-	checkClFFTErrorCode(errFFT, "clfftSetup()");
+	checkClfftErrorCode(errFFT, "clfftSetup()");
 
 	// Set some OpenGL context details.
 	QSurfaceFormat format = QSurfaceFormat::defaultFormat();
@@ -114,7 +114,7 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 MyApplication::~MyApplication()
 {
 	clfftStatus errFFT = clfftTeardown();
-	checkClFFTErrorCode(errFFT, "clfftTeardown()");
+	checkClfftErrorCode(errFFT, "clfftTeardown()");
 
 	delete options;
 }

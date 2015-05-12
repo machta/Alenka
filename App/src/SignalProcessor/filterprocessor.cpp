@@ -40,21 +40,21 @@ FilterProcessor::FilterProcessor(unsigned int M, unsigned int blockWidth, unsign
 	size_t bufferDistance = size + 4;
 
 	errFFT = clfftCreateDefaultPlan(&fftPlan, context->getCLContext(), CLFFT_1D, &size);
-	checkClFFTErrorCode(errFFT, "clfftCreateDefaultPlan()");
+	checkClfftErrorCode(errFFT, "clfftCreateDefaultPlan()");
 	clfftSetLayout(fftPlan, CLFFT_REAL, CLFFT_HERMITIAN_INTERLEAVED);
 	clfftSetResultLocation(fftPlan, CLFFT_INPLACE);
 	clfftSetPlanBatchSize(fftPlan, 1);
 	//clfftSetPlanDistance(fftPlan, bufferDistance, bufferDistance/2);
 
 	errFFT = clfftCreateDefaultPlan(&fftPlanBatch, context->getCLContext(), CLFFT_1D, &size);
-	checkClFFTErrorCode(errFFT, "clfftCreateDefaultPlan()");
+	checkClfftErrorCode(errFFT, "clfftCreateDefaultPlan()");
 	clfftSetLayout(fftPlanBatch, CLFFT_REAL, CLFFT_HERMITIAN_INTERLEAVED);
 	clfftSetResultLocation(fftPlanBatch, CLFFT_INPLACE);
 	clfftSetPlanBatchSize(fftPlanBatch, height);
 	clfftSetPlanDistance(fftPlanBatch, bufferDistance, bufferDistance/2);
 
 	errFFT = clfftCreateDefaultPlan(&ifftPlanBatch, context->getCLContext(), CLFFT_1D, &size);
-	checkClFFTErrorCode(errFFT, "clfftCreateDefaultPlan()");
+	checkClfftErrorCode(errFFT, "clfftCreateDefaultPlan()");
 	clfftSetLayout(ifftPlanBatch, CLFFT_HERMITIAN_INTERLEAVED, CLFFT_REAL);
 	clfftSetResultLocation(ifftPlanBatch, CLFFT_INPLACE);
 	clfftSetPlanBatchSize(ifftPlanBatch, height);
@@ -76,11 +76,11 @@ FilterProcessor::~FilterProcessor()
 
 	clfftStatus errFFT;
 	errFFT = clfftDestroyPlan(&fftPlan);
-	checkClFFTErrorCode(errFFT, "clfftDestroyPlan()");
+	checkClfftErrorCode(errFFT, "clfftDestroyPlan()");
 	errFFT = clfftDestroyPlan(&fftPlanBatch);
-	checkClFFTErrorCode(errFFT, "clfftDestroyPlan()");
+	checkClfftErrorCode(errFFT, "clfftDestroyPlan()");
 	errFFT = clfftDestroyPlan(&ifftPlanBatch);
-	checkClFFTErrorCode(errFFT, "clfftDestroyPlan()");
+	checkClfftErrorCode(errFFT, "clfftDestroyPlan()");
 }
 
 void FilterProcessor::change(Filter* filter)
@@ -128,14 +128,14 @@ void FilterProcessor::process(cl_mem buffer, cl_command_queue queue)
 		checkClErrorCode(err, "clEnqueueWriteBuffer()");
 
 		errFFT = clfftEnqueueTransform(fftPlan, CLFFT_FORWARD, 1, &queue, 0, nullptr, nullptr, &filterBuffer, nullptr, nullptr);
-		checkClFFTErrorCode(errFFT, "clfftEnqueueTransform");
+		checkClfftErrorCode(errFFT, "clfftEnqueueTransform");
 
 		printBuffer("filterBuffer.txt", filterBuffer, queue);
 	}
 
 	// FFT.
 	errFFT = clfftEnqueueTransform(fftPlanBatch, CLFFT_FORWARD, 1, &queue, 0, nullptr, nullptr, &buffer, nullptr, nullptr);
-	checkClFFTErrorCode(errFFT, "clfftEnqueueTransform");
+	checkClfftErrorCode(errFFT, "clfftEnqueueTransform");
 
 	printBuffer("after_fft.txt", buffer, queue);
 
@@ -155,5 +155,5 @@ void FilterProcessor::process(cl_mem buffer, cl_command_queue queue)
 
 	// IFFT.
 	errFFT = clfftEnqueueTransform(ifftPlanBatch, CLFFT_BACKWARD, 1, &queue, 0, nullptr, nullptr, &buffer, nullptr, nullptr);
-	checkClFFTErrorCode(errFFT, "clfftEnqueueTransform");
+	checkClfftErrorCode(errFFT, "clfftEnqueueTransform");
 }

@@ -17,7 +17,7 @@ Filter::Filter(unsigned int M, double Fs) : M(M), Fs(Fs), lowpass(2), highpass(-
 	size_t size = M;
 
 	errFFT = clfftCreateDefaultPlan(&plan, context.getCLContext(), CLFFT_1D, &size);
-	checkClFFTErrorCode(errFFT, "clfftCreateDefaultPlan()");
+	checkClfftErrorCode(errFFT, "clfftCreateDefaultPlan()");
 
 	clfftSetPlanPrecision(plan, CLFFT_DOUBLE);
 	clfftSetLayout(plan, CLFFT_HERMITIAN_INTERLEAVED, CLFFT_REAL);
@@ -27,7 +27,7 @@ Filter::Filter(unsigned int M, double Fs) : M(M), Fs(Fs), lowpass(2), highpass(-
 	checkClErrorCode(errCL, "clCreateCommandQueue()");
 
 	errFFT = clfftBakePlan(plan, 1, &queue, nullptr, nullptr);
-	checkClFFTErrorCode(errFFT, "clfftBakePlan()");
+	checkClfftErrorCode(errFFT, "clfftBakePlan()");
 }
 
 Filter::~Filter()
@@ -36,7 +36,7 @@ Filter::~Filter()
 
 	clfftStatus errFFT;
 	errFFT = clfftDestroyPlan(&plan);
-	checkClFFTErrorCode(errFFT, "clfftDestroyPlan()");
+	checkClfftErrorCode(errFFT, "clfftDestroyPlan()");
 }
 
 vector<double> Filter::computeCoefficients()
@@ -95,7 +95,7 @@ vector<double> Filter::computeCoefficients()
 	checkClErrorCode(errCL, "clCreateBuffer()");
 
 	clfftStatus errFFT = clfftEnqueueTransform(plan, CLFFT_BACKWARD, 1, &queue, 0, nullptr, nullptr, &buffer, nullptr, nullptr);
-	checkClFFTErrorCode(errFFT, "clfftEnqueueTransform()");
+	checkClfftErrorCode(errFFT, "clfftEnqueueTransform()");
 
 	errCL = clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, 2*cM*sizeof(double), coefficients.data(), 0, nullptr, nullptr);
 	checkClErrorCode(errCL, "clEnqueueReadBuffer()");
