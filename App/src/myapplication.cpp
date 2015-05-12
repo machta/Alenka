@@ -73,8 +73,9 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 
 	// Set some OpenGL context details.
 	QSurfaceFormat format = QSurfaceFormat::defaultFormat();
-	format.setVersion(4, 1);
+	format.setVersion(3, 2);
 	format.setProfile(QSurfaceFormat::CoreProfile);
+	//format.setProfile(QSurfaceFormat::NoProfile);
 #ifndef NDEBUG
 	format.setOption(QSurfaceFormat::DebugContext);
 #endif

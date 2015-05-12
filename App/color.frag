@@ -1,4 +1,4 @@
-#version 410 core
+#version 150 core
 /**
  * @brief Source code of the fragment shader used for all the drawing modes.
  *

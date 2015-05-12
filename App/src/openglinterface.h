@@ -9,8 +9,10 @@
 
 #include "error.h"
 
-#include <QOpenGLFunctions_4_1_Core>
+#include <QOpenGLFunctions_3_2_Core>
 #include <QOpenGLDebugLogger>
+
+#define GL_FUNCTIONS QOpenGLFunctions_3_2_Core
 
 /**
  * @brief This class provides extending classes with the interface needed to call OpenGL API.
@@ -39,9 +41,9 @@ protected:
 	 * In release mode this information is ignored.
 	 */
 #ifndef NDEBUG
-	QOpenGLFunctions_4_1_Core* gl(const char* file = "", int line = 0)
+	GL_FUNCTIONS* gl(const char* file = "", int line = 0)
 #else
-	QOpenGLFunctions_4_1_Core* gl(const char*, int)
+	GL_FUNCTIONS* gl(const char*, int)
 #endif
 	{
 		using namespace std;
@@ -51,8 +53,8 @@ protected:
 			QOpenGLContext* c = QOpenGLContext::currentContext();
 			checkErrorCode(c->isValid(), true, "is current context valid");
 
-			functions = c->versionFunctions<QOpenGLFunctions_4_1_Core>();
-			checkNotErrorCode(functions, nullptr, "versionFunctions<QOpenGLFunctions_4_1_Core>() failed.");
+			functions = c->versionFunctions<GL_FUNCTIONS>();
+			checkNotErrorCode(functions, nullptr, "versionFunctions<>() failed.");
 
 			checkNotErrorCode(functions->initializeOpenGLFunctions(), false, "initializeOpenGLFunctions() failed.");
 		}
@@ -94,7 +96,7 @@ protected:
 	}
 
 private:
-	QOpenGLFunctions_4_1_Core* functions = nullptr;
+	GL_FUNCTIONS* functions = nullptr;
 	QOpenGLDebugLogger* logger = nullptr;
 
 #ifndef NDEBUG
@@ -114,6 +116,8 @@ private:
 	 */
 	std::string getErrorCode(GLenum code);
 };
+
+#undef GL_FUNCTIONS
 
 /**
  * @brief Macro that passes some debug info to the gl() method.

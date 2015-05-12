@@ -1,4 +1,4 @@
-#version 410 core
+#version 150 core
 /**
  * @brief Source code of the vertex shader used for drawing of single-channel events.
  *
@@ -7,7 +7,7 @@
  */
 /// @cond
 
-layout(location = 0) in float sampleValue;
+/*layout(location = 0) */in float sampleValue;
 
 uniform mat4 transformMatrix;
 uniform float y0;

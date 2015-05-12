@@ -29,6 +29,8 @@ SignalProcessor::SignalProcessor()
 
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 	gl()->glBindVertexArray(0);
+
+	gl();
 }
 
 SignalProcessor::~SignalProcessor()

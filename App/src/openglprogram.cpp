@@ -1,6 +1,7 @@
 #include "openglprogram.h"
 
 #include <cstdio>
+#include <sstream>
 
 using namespace std;
 
@@ -62,7 +63,21 @@ void OpenGLProgram::addShader(const string& sourceText, GLenum type)
 		char* log = new char[logLength];
 		gl()->glGetShaderInfoLog(shader, logLength, &logLength, log);
 
-		logToFileAndConsole("Shader " << type << " compilation log:" << endl << log);
+		stringstream ss;
+		switch (type)
+		{
+		case GL_VERTEX_SHADER:
+			ss << "GL_VERTEX_SHADER" << "(" << type << ")";
+			break;
+		case GL_FRAGMENT_SHADER:
+			ss << "GL_FRAGMENT_SHADER" << "(" << type << ")";
+			break;
+		default:
+			ss << type;
+			break;
+		}
+
+		logToFileAndConsole("Shader " << ss.str() << ":" << endl << sourceText << endl << "Compilation log:" << endl << log);
 
 		delete log;
 	}

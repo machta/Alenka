@@ -80,7 +80,7 @@ GDF2::GDF2(const string& filePath) : DataFile(filePath)
 
 	if (fh.numberOfDataRecords < 0)
 	{
-		runtime_error("GDF file with unknown number of data record is not supported.");
+		runtime_error("GDF file with unknown number of data records is not supported.");
 	}
 
 	double duration;
