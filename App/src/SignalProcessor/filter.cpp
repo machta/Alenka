@@ -32,7 +32,9 @@ Filter::Filter(unsigned int M, double Fs) : M(M), Fs(Fs), lowpass(2), highpass(-
 
 Filter::~Filter()
 {
-	clReleaseCommandQueue(queue);
+	cl_int errCL;
+	errCL = clReleaseCommandQueue(queue);
+	checkClErrorCode(errCL, "clReleaseCommandQueue()");
 
 	clfftStatus errFFT;
 	errFFT = clfftDestroyPlan(&plan);
@@ -47,7 +49,7 @@ vector<double> Filter::computeCoefficients()
 
 	int cM = 1 + M/2;
 
-	// Initialize cofficients with the values of Hr.
+	// Initialize coefficients with the values of Hr.
 	for (int i = 0; i < cM; ++i)
 	{
 		double f = 2.*i/M;

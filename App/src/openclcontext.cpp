@@ -17,11 +17,15 @@ using namespace std;
 
 OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device, cl_device_type deviceType, QOpenGLContext* parentContext)
 {
+	cl_int err;
+
 	// Retrieve the platform and device ids.
 	cl_uint pCount = platform + 1;
 	cl_platform_id* platforms = new cl_platform_id[pCount];
 
-	clGetPlatformIDs(pCount, platforms, &pCount);
+	err = clGetPlatformIDs(pCount, platforms, &pCount);
+	checkClErrorCode(err, "clGetPlatformIDs()");
+
 	if (platform >= pCount)
 	{
 		stringstream ss;
@@ -34,7 +38,9 @@ OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device, cl_devi
 	cl_uint dCount = device + 1;
 	cl_device_id* devices = new cl_device_id[dCount];
 
-	clGetDeviceIDs(platformId, deviceType, dCount, devices, &dCount);
+	err = clGetDeviceIDs(platformId, deviceType, dCount, devices, &dCount);
+	checkClErrorCode(err, "clGetDeviceIDs()");
+
 	if (device >= dCount)
 	{
 		stringstream ss;
@@ -45,8 +51,6 @@ OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device, cl_devi
 	deviceId = devices[device];
 
 	// Create the context.
-	cl_int err;
-
 	vector<cl_context_properties> properties {CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(platformId)};
 
 	if (parentContext != nullptr)
