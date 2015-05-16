@@ -1,4 +1,5 @@
-#version 130
+#version 110
+#extension GL_EXT_gpu_shader4 : enable
 /**
  * @brief Source code of the vertex shader used for drawing of the signal tracks.
  *
@@ -16,7 +17,7 @@ uniform float yScale;
 
 void main()
 {
-	float x = bufferOffset + gl_VertexID;
+	float x = float(bufferOffset) + float(gl_VertexID);
 
 	float y = y0 + yScale*sampleValue;
 

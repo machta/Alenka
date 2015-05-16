@@ -14,6 +14,8 @@ OpenGLProgram::~OpenGLProgram()
 
 void OpenGLProgram::construct(const string& vertSource, const string& fragSource)
 {
+	initializeOpenGLInterface();
+
 	program = gl()->glCreateProgram();
 
 	addShader(vertSource, GL_VERTEX_SHADER);

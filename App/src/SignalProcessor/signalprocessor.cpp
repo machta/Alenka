@@ -9,26 +9,28 @@ SignalProcessor::SignalProcessor()
 {
 	cl_int err;
 
+	initializeOpenGLInterface();
+
 	context = new OpenCLContext(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS, QOpenGLContext::currentContext());
 
 	commandQueue = clCreateCommandQueue(context->getCLContext(), context->getCLDevice(), 0, &err);
 	checkClErrorCode(err, "clCreateCommandQueue()");
 
 	gl()->glGenBuffers(1, &glBuffer);
-	gl()->glGenVertexArrays(2, vertexArrays);
+	glGenVertexArrays(2, vertexArrays);
 
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, glBuffer);
 
-	gl()->glBindVertexArray(vertexArrays[0]);
+	glBindVertexArray(vertexArrays[0]);
 	gl()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(0));
 	gl()->glEnableVertexAttribArray(0);
 
-	gl()->glBindVertexArray(vertexArrays[1]);
+	glBindVertexArray(vertexArrays[1]);
 	gl()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 2*sizeof(float), reinterpret_cast<void*>(0));
 	gl()->glEnableVertexAttribArray(0);
 
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
-	gl()->glBindVertexArray(0);
+	glBindVertexArray(0);
 
 	gl();
 }
@@ -45,7 +47,7 @@ SignalProcessor::~SignalProcessor()
 	checkClErrorCode(err, "clReleaseCommandQueue()");
 
 	gl()->glDeleteBuffers(1, &glBuffer);
-	gl()->glDeleteVertexArrays(2, vertexArrays);
+	glDeleteVertexArrays(2, vertexArrays);
 
 	gl();
 }
