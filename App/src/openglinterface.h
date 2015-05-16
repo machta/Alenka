@@ -56,11 +56,7 @@ protected:
 	 * (i.e. the position of the last call to gl()).
 	 * In release mode this information is ignored.
 	 */
-#ifndef NDEBUG
 	QOpenGLFunctions_type* gl(const char* file = "", int line = 0)
-#else
-	QOpenGLFunctions_type* gl(const char*, int)
-#endif
 	{
 		assert(functions != nullptr);
 
@@ -69,6 +65,9 @@ protected:
 #ifndef NDEBUG
 		lastCallFile = file;
 		lastCallLine = line;
+#else
+		(void)file;
+		(void)line;
 #endif
 
 		return functions;
