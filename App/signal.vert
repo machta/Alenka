@@ -1,4 +1,3 @@
-#version 410 core
 /**
  * @brief Source code of the vertex shader used for drawing of the signal tracks.
  *
@@ -7,7 +6,7 @@
  */
 /// @cond
 
-layout(location = 0) in float sampleValue;
+in float sampleValue;
 
 uniform mat4 transformMatrix;
 uniform float y0;
@@ -16,7 +15,7 @@ uniform float yScale;
 
 void main()
 {
-	float x = bufferOffset + gl_VertexID;
+	float x = float(bufferOffset) + float(gl_VertexID);
 
 	float y = y0 + yScale*sampleValue;
 

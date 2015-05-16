@@ -38,7 +38,7 @@ Canvas::~Canvas()
 
 	makeCurrent();
 
-	gl()->glDeleteVertexArrays(1, &rectangleLineArray);
+	glDeleteVertexArrays(1, &rectangleLineArray);
 	gl()->glDeleteBuffers(1, &rectangleLineBuffer);
 
 	gl();
@@ -125,6 +125,8 @@ void Canvas::initializeGL()
 {
 	logToFile("Initializing OpenGL in Canvas.");
 
+	initializeOpenGLInterface();
+
 	signalProcessor = new SignalProcessor;
 
 	FILE* signalVert = fopen("signal.vert", "rb");
@@ -160,16 +162,16 @@ void Canvas::initializeGL()
 
 	gl()->glClearColor(1, 1, 1, 0);
 
-	gl()->glGenVertexArrays(1, &rectangleLineArray);
+	glGenVertexArrays(1, &rectangleLineArray);
 	gl()->glGenBuffers(1, &rectangleLineBuffer);
 
-	gl()->glBindVertexArray(rectangleLineArray);
+	glBindVertexArray(rectangleLineArray);
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleLineBuffer);
 	gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(0));
 	gl()->glEnableVertexAttribArray(0);
 
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
-	gl()->glBindVertexArray(0);
+	glBindVertexArray(0);
 
 	// Log OpenGL details.
 	stringstream ss;
@@ -180,6 +182,7 @@ void Canvas::initializeGL()
 	ss << "Vendor: " << gl()->glGetString(GL_VENDOR) << endl;
 	ss << "GLSH version: " << gl()->glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
 
+#ifdef GL_2_0
 	const GLubyte* str = gl()->glGetString(GL_EXTENSIONS);
 	if (str == nullptr)
 	{
@@ -189,6 +192,17 @@ void Canvas::initializeGL()
 	{
 		ss << "Extensions: " << str << endl;
 	}
+#else
+	GLint extensions;
+	gl()->glGetIntegerv(GL_NUM_EXTENSIONS, &extensions);
+
+	ss << "Extensions:";
+	for (GLint i = 0; i < extensions; ++i)
+	{
+		ss << " " << gl()->glGetStringi(GL_EXTENSIONS, i);
+	}
+	ss << endl;
+#endif
 
 	logToFile(ss.str());
 
@@ -287,7 +301,7 @@ void Canvas::paintGL()
 		drawPositionIndicator();
 		drawCross();
 
-		gl()->glBindVertexArray(0);
+		glBindVertexArray(0);
 	}
 
 	gl()->glFinish();
@@ -491,7 +505,7 @@ void Canvas::focusInEvent(QFocusEvent* /*event*/)
 void Canvas::drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& eventVector)
 {
 	gl()->glUseProgram(rectangleLineProgram->getGLProgram());
-	gl()->glBindVertexArray(rectangleLineArray);
+	glBindVertexArray(rectangleLineArray);
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleLineBuffer);
 
 	int event = 0, type = -1;
@@ -553,7 +567,7 @@ void Canvas::drawTimeLines()
 	double interval = getInfoTable()->getTimeLineInterval();
 
 	gl()->glUseProgram(rectangleLineProgram->getGLProgram());
-	gl()->glBindVertexArray(rectangleLineArray);
+	glBindVertexArray(rectangleLineArray);
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleLineBuffer);
 
 	setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::green), 1);
@@ -580,7 +594,7 @@ void Canvas::drawTimeLines()
 void Canvas::drawPositionIndicator()
 {
 	gl()->glUseProgram(rectangleLineProgram->getGLProgram());
-	gl()->glBindVertexArray(rectangleLineArray);
+	glBindVertexArray(rectangleLineArray);
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleLineBuffer);
 
 	setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::blue), 1);
@@ -601,7 +615,7 @@ void Canvas::drawCross()
 	}
 
 	gl()->glUseProgram(rectangleLineProgram->getGLProgram());
-	gl()->glBindVertexArray(rectangleLineArray);
+	glBindVertexArray(rectangleLineArray);
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleLineBuffer);
 
 	setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::black), 1);
@@ -631,7 +645,7 @@ void Canvas::drawSingleChannelEvents(const SignalBlock& block, const vector<tupl
 {
 	gl()->glUseProgram(eventProgram->getGLProgram());
 
-	gl()->glBindVertexArray(block.getArray());
+	glBindVertexArray(block.getArray());
 
 	int event = 0, type = -1, track = -1, hidden = 0;
 	while (event < static_cast<int>(eventVector.size()))
@@ -727,11 +741,11 @@ void Canvas::drawSignal(const SignalBlock& block)
 
 	if (eventMode == 1)
 	{
-		gl()->glBindVertexArray(block.getArray());
+		glBindVertexArray(block.getArray());
 	}
 	else
 	{
-		gl()->glBindVertexArray(block.getArrayStrideTwo());
+		glBindVertexArray(block.getArrayStrideTwo());
 	}
 
 	for (int track = 0; track < signalProcessor->getTrackCount(); ++track)

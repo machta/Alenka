@@ -1,6 +1,7 @@
 #include "openglprogram.h"
 
 #include <cstdio>
+#include <sstream>
 
 using namespace std;
 
@@ -13,10 +14,27 @@ OpenGLProgram::~OpenGLProgram()
 
 void OpenGLProgram::construct(const string& vertSource, const string& fragSource)
 {
+	initializeOpenGLInterface();
+
 	program = gl()->glCreateProgram();
 
-	addShader(vertSource, GL_VERTEX_SHADER);
-	addShader(fragSource, GL_FRAGMENT_SHADER);
+#if defined GL_2_0
+	const char* shaderHeader =
+		"#version 110\n"
+		"#extension GL_EXT_gpu_shader4 : enable\n\n"
+		"#define GL_2_0\n";
+#elif defined GL_3_0
+	const char* shaderHeader =
+		"#version 130\n\n"
+		"#define GL_3_0\n";
+#elif defined GL_3_2
+	const char* shaderHeader =
+		"#version 150 core\n\n"
+		"#define GL_3_2\n";
+#endif
+
+	addShader(shaderHeader + vertSource, GL_VERTEX_SHADER);
+	addShader(shaderHeader + fragSource, GL_FRAGMENT_SHADER);
 
 	gl()->glLinkProgram(program);
 
@@ -62,7 +80,21 @@ void OpenGLProgram::addShader(const string& sourceText, GLenum type)
 		char* log = new char[logLength];
 		gl()->glGetShaderInfoLog(shader, logLength, &logLength, log);
 
-		logToFileAndConsole("Shader " << type << " compilation log:" << endl << log);
+		stringstream ss;
+		switch (type)
+		{
+		case GL_VERTEX_SHADER:
+			ss << "GL_VERTEX_SHADER" << "(" << type << ")";
+			break;
+		case GL_FRAGMENT_SHADER:
+			ss << "GL_FRAGMENT_SHADER" << "(" << type << ")";
+			break;
+		default:
+			ss << type;
+			break;
+		}
+
+		logToFileAndConsole("Shader " << ss.str() << ":" << endl << sourceText << endl << "Compilation log:" << endl << log);
 
 		delete log;
 	}
