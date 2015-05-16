@@ -1,4 +1,5 @@
-#version 130
+#version 110
+#extension GL_EXT_gpu_shader4 : enable
 /**
  * @brief Source code of the vertex shader used for drawing of all-channel events and lines.
  *

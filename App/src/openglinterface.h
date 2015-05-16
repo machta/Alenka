@@ -9,20 +9,29 @@
 
 #include "error.h"
 
+#include <QOpenGLFunctions_3_2_Core>
 #include <QOpenGLFunctions_3_0>
+#include <QOpenGLFunctions_2_1>
+#include <QOpenGLFunctions_2_0>
 #include <QOpenGLDebugLogger>
 
-#define GL_FUNCTIONS QOpenGLFunctions_3_0
+#include <cassert>
+#include <functional>
 
 /**
  * @brief This class provides extending classes with the interface needed to call OpenGL API.
  *
- * Initialization is done when the interface pointers are needed for the first time.
- * initialize() method could be added instead so that gl() and log() don't have
- * to check the pointer every time they are called.
+ * Before any of the protected functions are used initializeOpenGLInterface()
+ * must be called.
+ *
+ * All functions must be called from within an active OpenGL context section
+ * (i.e. between makeCurrent(); and doneCurrent();).
+ *
  */
 class OpenGLInterface
 {
+	using QOpenGLFunctions_type = QOpenGLFunctions_2_0;
+
 public:
 	~OpenGLInterface()
 	{
@@ -30,6 +39,8 @@ public:
 	}
 
 protected:
+	void initializeOpenGLInterface();
+
 	/**
 	 * @brief Returns a pointer needed for accessing the OpenGL API.
 	 *
@@ -41,23 +52,12 @@ protected:
 	 * In release mode this information is ignored.
 	 */
 #ifndef NDEBUG
-	GL_FUNCTIONS* gl(const char* file = "", int line = 0)
+	QOpenGLFunctions_type* gl(const char* file = "", int line = 0)
 #else
-	GL_FUNCTIONS* gl(const char*, int)
+	QOpenGLFunctions_type* gl(const char*, int)
 #endif
 	{
-		using namespace std;
-
-		if (functions == nullptr)
-		{
-			QOpenGLContext* c = QOpenGLContext::currentContext();
-			checkErrorCode(c->isValid(), true, "is current context valid");
-
-			functions = c->versionFunctions<GL_FUNCTIONS>();
-			checkNotErrorCode(functions, nullptr, "versionFunctions<>() failed.");
-
-			checkNotErrorCode(functions->initializeOpenGLFunctions(), false, "initializeOpenGLFunctions() failed.");
-		}
+		assert(functions != nullptr);
 
 		checkGLErrors();
 
@@ -79,25 +79,34 @@ protected:
 	 */
 	QOpenGLDebugLogger* log()
 	{
-		using namespace std;
-
-		if (logger == nullptr)
-		{
-			logger = new QOpenGLDebugLogger();
-
-			checkNotErrorCode(logger->initialize(), false, "logger->initialize() failed.");
-
-			logger->logMessage(QOpenGLDebugMessage::createApplicationMessage("OpenGL debug log initialized."));
-		}
+		assert(logger != nullptr);
 
 		checkGLErrors();
 
 		return logger;
 	}
 
+	void glGenVertexArrays(GLsizei n, GLuint* arrays)
+	{
+		genVertexArrays(n, arrays);
+	}
+
+	void glDeleteVertexArrays(GLsizei n, const GLuint* arrays)
+	{
+		deleteVertexArrays(n, arrays);
+	}
+
+	void glBindVertexArray(GLuint array)
+	{
+		bindVertexArray(array);
+	}
+
 private:
-	GL_FUNCTIONS* functions = nullptr;
+	QOpenGLFunctions_type* functions = nullptr;
 	QOpenGLDebugLogger* logger = nullptr;
+	std::function<void (GLsizei, GLuint*)> genVertexArrays;
+	std::function<void (GLsizei, const GLuint*)> deleteVertexArrays;
+	std::function<void (GLuint)> bindVertexArray;
 
 #ifndef NDEBUG
 	const char* lastCallFile = "none";
@@ -116,8 +125,6 @@ private:
 	 */
 	std::string getErrorCode(GLenum code);
 };
-
-#undef GL_FUNCTIONS
 
 /**
  * @brief Macro that passes some debug info to the gl() method.
