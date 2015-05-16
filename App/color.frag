@@ -1,5 +1,3 @@
-#version 110
-#extension GL_EXT_gpu_shader4 : enable
 /**
  * @brief Source code of the fragment shader used for all the drawing modes.
  *
@@ -10,11 +8,16 @@
 
 uniform vec4 color;
 
-//out vec4 outColor;
+#ifndef GL_2_0
+out vec4 outColor;
+#endif
 
 void main()
 {
-	//outColor = color;
+#ifdef GL_2_0
 	gl_FragColor = color;
+#else
+	outColor = color;
+#endif
 }
 /// @endcond

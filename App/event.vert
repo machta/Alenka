@@ -1,5 +1,3 @@
-#version 110
-#extension GL_EXT_gpu_shader4 : enable
 /**
  * @brief Source code of the vertex shader used for drawing of single-channel events.
  *
@@ -8,7 +6,7 @@
  */
 /// @cond
 
-/*layout(location = 0) */in float sampleValue;
+in float sampleValue;
 
 uniform mat4 transformMatrix;
 uniform float y0;

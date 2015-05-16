@@ -25,6 +25,7 @@ void OpenGLInterface::initializeOpenGLInterface()
 	logger->logMessage(QOpenGLDebugMessage::createApplicationMessage("OpenGL debug log initialized."));
 
 	// get extension function addresses
+#if defined GL_2_0
 	auto ptr1 = reinterpret_cast<void (*)(GLsizei, GLuint*)>(QOpenGLContext::currentContext()->getProcAddress("glGenVertexArrays"));
 	checkNotErrorCode(ptr1, nullptr, "getProcAddress(\"glGenVertexArrays\")");
 	genVertexArrays = ptr1;
@@ -36,6 +37,7 @@ void OpenGLInterface::initializeOpenGLInterface()
 	auto ptr3 = reinterpret_cast<void (*)(GLuint)>(QOpenGLContext::currentContext()->getProcAddress("glBindVertexArray"));
 	checkNotErrorCode(ptr3, nullptr, "getProcAddress(\"glBindVertexArray\")");
 	bindVertexArray = ptr3;
+#endif
 }
 
 void OpenGLInterface::checkGLErrors()

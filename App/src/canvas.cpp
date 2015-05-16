@@ -182,7 +182,8 @@ void Canvas::initializeGL()
 	ss << "Vendor: " << gl()->glGetString(GL_VENDOR) << endl;
 	ss << "GLSH version: " << gl()->glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
 
-	const GLubyte* str = gl()->glGetString(GL_EXTENSIONS); // TODO: use glGetStringi instead for this
+#ifdef GL_2_0
+	const GLubyte* str = gl()->glGetString(GL_EXTENSIONS);
 	if (str == nullptr)
 	{
 		ss << "Extensions:" << endl;
@@ -191,6 +192,17 @@ void Canvas::initializeGL()
 	{
 		ss << "Extensions: " << str << endl;
 	}
+#else
+	GLint extensions;
+	gl()->glGetIntegerv(GL_NUM_EXTENSIONS, &extensions);
+
+	ss << "Extensions:";
+	for (GLint i = 0; i < extensions; ++i)
+	{
+		ss << " " << gl()->glGetStringi(GL_EXTENSIONS, i);
+	}
+	ss << endl;
+#endif
 
 	logToFile(ss.str());
 
