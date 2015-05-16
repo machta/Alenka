@@ -11,7 +11,6 @@
 
 #include <QOpenGLFunctions_3_2_Core>
 #include <QOpenGLFunctions_3_0>
-#include <QOpenGLFunctions_2_1>
 #include <QOpenGLFunctions_2_0>
 #include <QOpenGLDebugLogger>
 
@@ -30,7 +29,13 @@
  */
 class OpenGLInterface
 {
+#if defined GL_2_0
 	using QOpenGLFunctions_type = QOpenGLFunctions_2_0;
+#elif defined GL_3_0
+	using QOpenGLFunctions_type = QOpenGLFunctions_3_0;
+#elif defined GL_3_2
+	using QOpenGLFunctions_type = QOpenGLFunctions_3_2_Core;
+#endif
 
 public:
 	~OpenGLInterface()
@@ -88,17 +93,44 @@ protected:
 
 	void glGenVertexArrays(GLsizei n, GLuint* arrays)
 	{
+#if defined GL_2_0
+		checkGLErrors();
 		genVertexArrays(n, arrays);
+#ifndef NDEBUG
+		lastCallFile = __FILE__;
+		lastCallLine = __LINE__;
+#endif
+#else
+		gl()->glGenVertexArrays(n, arrays);
+#endif
 	}
 
 	void glDeleteVertexArrays(GLsizei n, const GLuint* arrays)
 	{
+#if defined GL_2_0
+		checkGLErrors();
 		deleteVertexArrays(n, arrays);
+#ifndef NDEBUG
+		lastCallFile = __FILE__;
+		lastCallLine = __LINE__;
+#endif
+#else
+		gl()->glDeleteVertexArrays(n, arrays);
+#endif
 	}
 
 	void glBindVertexArray(GLuint array)
 	{
+#if defined GL_2_0
+		checkGLErrors();
 		bindVertexArray(array);
+#ifndef NDEBUG
+		lastCallFile = __FILE__;
+		lastCallLine = __LINE__;
+#endif
+#else
+		gl()->glBindVertexArray(array);
+#endif
 	}
 
 private:

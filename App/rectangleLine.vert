@@ -1,5 +1,3 @@
-#version 110
-#extension GL_EXT_gpu_shader4 : enable
 /**
  * @brief Source code of the vertex shader used for drawing of all-channel events and lines.
  *
@@ -8,7 +6,7 @@
  */
 /// @cond
 
-/*layout(location = 0) */in vec2 inputVertex;
+in vec2 inputVertex;
 
 uniform mat4 transformMatrix;
 
