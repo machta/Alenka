@@ -22,15 +22,15 @@ void OpenGLProgram::construct(const string& vertSource, const string& fragSource
 	const char* shaderHeader =
 		"#version 110\n"
 		"#extension GL_EXT_gpu_shader4 : enable\n\n"
-		"#define GL_2_0\n";
+		"#define GLSL_110\n";
 #elif defined GL_3_0
 	const char* shaderHeader =
 		"#version 130\n\n"
-		"#define GL_3_0\n";
+		"#define GLSL_130\n";
 #elif defined GL_3_2
 	const char* shaderHeader =
 		"#version 150 core\n\n"
-		"#define GL_3_2\n";
+		"#define GLSL_150\n";
 #endif
 
 	addShader(shaderHeader + vertSource, GL_VERTEX_SHADER);

@@ -8,13 +8,13 @@
 
 uniform vec4 color;
 
-#ifndef GL_2_0
+#ifndef GLSL_110
 out vec4 outColor;
 #endif
 
 void main()
 {
-#ifdef GL_2_0
+#ifdef GLSL_110
 	gl_FragColor = color;
 #else
 	outColor = color;
