@@ -6,7 +6,11 @@
  */
 /// @cond
 
+#ifdef GLSL_110
+attribute vec2 inputVertex;
+#else
 in vec2 inputVertex;
+#endif
 
 uniform mat4 transformMatrix;
 

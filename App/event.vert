@@ -6,7 +6,11 @@
  */
 /// @cond
 
+#ifdef GLSL_110
+attribute float sampleValue;
+#else
 in float sampleValue;
+#endif
 
 uniform mat4 transformMatrix;
 uniform float y0;
