@@ -1,11 +1,10 @@
 :: The first parameter is the folder to which to deploy.
 :: If empty, use current directory.
 
-echo Deploying to %1
-
 set folder=%1
-if [%folder%] == [] set folder=.
-set folder=%folder%\ZSBS_x64
+if [%folder%] == [] set folder=.\ZSBS_x64
+
+echo Deploying to %folder%
 
 ::del /q /s %folder%\*
 mkdir %folder%
