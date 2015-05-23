@@ -91,14 +91,14 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 
 	QSurfaceFormat::setDefaultFormat(format);
 
-	// Process some of the commandline only options.
+	// Process some of the command-line only options.
 	OpenCLContext context(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS);
 
 	stringstream ss;
 
 	ss << "OpenCL platform info:" << endl;
 	ss << context.getPlatformInfo() << endl << endl;
-	ss << "Opencl device info:" << endl;
+	ss << "OpenCL device info:" << endl;
 	ss << context.getDeviceInfo() << endl;
 
 	logToFile(ss.str());

@@ -22,7 +22,7 @@ GPUCache::GPUCache(unsigned int blockSize, unsigned int offset, int delay, int64
 
 	cl_mem_flags flags = CL_MEM_READ_WRITE;
 #ifdef NDEBUG
-#if CL_VERSION_1_2
+#if CL_1_2
 	flags |= CL_MEM_HOST_WRITE_ONLY;
 #endif
 #endif

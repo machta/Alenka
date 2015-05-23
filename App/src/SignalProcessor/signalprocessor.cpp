@@ -219,7 +219,7 @@ void SignalProcessor::changeFile(DataFile* file)
 		// Construct tmp buffer.
 		cl_mem_flags flags = CL_MEM_READ_WRITE;
 #ifdef NDEBUG
-#if CL_VERSION_1_2
+#if CL_1_2
 		flags |= CL_MEM_HOST_NO_ACCESS;
 #endif
 #endif
@@ -275,7 +275,7 @@ void SignalProcessor::updateMontage()
 	cl_mem_flags flags = CL_MEM_READ_WRITE;
 #ifdef NDEBUG
 	flags = CL_MEM_WRITE_ONLY;
-#if CL_VERSION_1_2
+#if CL_1_2
 	flags |= CL_MEM_HOST_NO_ACCESS;
 #endif
 #endif

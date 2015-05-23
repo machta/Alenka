@@ -27,7 +27,7 @@ FilterProcessor::FilterProcessor(unsigned int M, unsigned int blockWidth, unsign
 
 	cl_mem_flags flags = CL_MEM_READ_WRITE;
 #ifdef NDEBUG
-#if CL_VERSION_1_2
+#if CL_1_2
 	flags |= CL_MEM_HOST_WRITE_ONLY;
 #endif
 #endif
@@ -110,7 +110,7 @@ void FilterProcessor::process(cl_mem buffer, cl_command_queue queue)
 		coefficientsChanged = false;
 
 		// This section is disabled because a bug in the implementation of clEnqueueFillBuffer().
-//#if CL_VERSION_1_2
+//#if CL_1_2
 //		float zero = 0;
 //		err = clEnqueueFillBuffer(queue, filterBuffer, &zero, sizeof(zero), 0, width + 4, 0, nullptr, nullptr);
 //		checkClErrorCode(err, "clEnqueueFillBuffer()");

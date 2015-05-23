@@ -80,7 +80,7 @@ public:
 	static void enqueueBarrier(cl_command_queue commandQueue, cl_event event)
 	{
 		cl_int err;
-#if CL_VERSION_1_2
+#if CL_1_2
 		err = clEnqueueBarrierWithWaitList(commandQueue, 1, &event, nullptr);
 		checkClErrorCode(err, "clEnqueueBarrierWithWaitList()");
 #else
