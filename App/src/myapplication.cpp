@@ -96,9 +96,7 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 
 	stringstream ss;
 
-	ss << "OpenCL platform info:" << endl;
 	ss << context.getPlatformInfo() << endl << endl;
-	ss << "OpenCL device info:" << endl;
 	ss << context.getDeviceInfo() << endl;
 
 	logToFile(ss.str());

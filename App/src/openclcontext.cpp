@@ -15,7 +15,7 @@
 
 using namespace std;
 
-OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device, cl_device_type deviceType, QOpenGLContext* parentContext)
+OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device, QOpenGLContext* parentContext)
 {
 	cl_int err;
 
@@ -38,7 +38,7 @@ OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device, cl_devi
 	cl_uint dCount = device + 1;
 	cl_device_id* devices = new cl_device_id[dCount];
 
-	err = clGetDeviceIDs(platformId, deviceType, dCount, devices, &dCount);
+	err = clGetDeviceIDs(platformId, CL_DEVICE_TYPE_ALL, dCount, devices, &dCount);
 	checkClErrorCode(err, "clGetDeviceIDs()");
 
 	if (device >= dCount)
@@ -87,37 +87,64 @@ OpenCLContext::~OpenCLContext()
 
 string OpenCLContext::getPlatformInfo() const
 {
-	cl_int err;
+	cl_int err;	
+
+	cl_uint platformCount;
+
+	err = clGetPlatformIDs(0, nullptr, &platformCount);
+	checkClErrorCode(err, "clGetPlatformIDs()");
+
+	cl_platform_id* platformIDs = new cl_platform_id[platformCount];
+
+	err = clGetPlatformIDs(platformCount, platformIDs, nullptr);
+	checkClErrorCode(err, "clGetPlatformIDs()");
+
+	// Find the maximum size needed for the values.
 	size_t size, maxSize = 0;
 
-	// Find the maximum size needed for the value.
-	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_VERSION, 0, nullptr, &size);
-	checkClErrorCode(err, "clGetPlatformInfo()");
-	maxSize = max(maxSize, size);
+	for (cl_uint i = 0; i < platformCount; ++i)
+	{
+		err = clGetPlatformInfo(platformIDs[i], CL_PLATFORM_VERSION, 0, nullptr, &size);
+		checkClErrorCode(err, "clGetPlatformInfo()");
+		maxSize = max(maxSize, size);
 
-	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_NAME, 0, nullptr, &size);
-	checkClErrorCode(err, "clGetPlatformInfo()");
-	maxSize = max(maxSize, size);
+		err = clGetPlatformInfo(platformIDs[i], CL_PLATFORM_NAME, 0, nullptr, &size);
+		checkClErrorCode(err, "clGetPlatformInfo()");
+		maxSize = max(maxSize, size);
 
-	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_VENDOR, 0, nullptr, &size);
-	checkClErrorCode(err, "clGetPlatformInfo()");
-	maxSize = max(maxSize, size);
+		err = clGetPlatformInfo(platformIDs[i], CL_PLATFORM_VENDOR, 0, nullptr, &size);
+		checkClErrorCode(err, "clGetPlatformInfo()");
+		maxSize = max(maxSize, size);
 
-	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_EXTENSIONS, 0, nullptr, &size);
-	checkClErrorCode(err, "clGetPlatformInfo()");
-	maxSize = max(maxSize, size);
+		err = clGetPlatformInfo(platformIDs[i], CL_PLATFORM_EXTENSIONS, 0, nullptr, &size);
+		checkClErrorCode(err, "clGetPlatformInfo()");
+		maxSize = max(maxSize, size);
+	}
 
 	// Build the string.
 	char* tmp = new char[maxSize];
 	string str;
 
-	str += "Version: ";
-	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_VERSION, maxSize, tmp, nullptr);
+	str += "Available platforms:";
+	for (cl_uint i = 0; i < platformCount; ++i)
+	{
+		if (platformIDs[i] == getCLPlatform())
+			str += "\n * ";
+		else
+			str += "\n   ";
+
+		err = clGetPlatformInfo(platformIDs[i], CL_PLATFORM_NAME, maxSize, tmp, nullptr);
+		checkClErrorCode(err, "clGetPlatformInfo()");
+		str += tmp;
+	}
+
+	str += "\n\nSelected platform: ";
+	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_NAME, maxSize, tmp, nullptr);
 	checkClErrorCode(err, "clGetPlatformInfo()");
 	str += tmp;
 
-	str += "\nName: ";
-	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_NAME, maxSize, tmp, nullptr);
+	str += "\nVersion: ";
+	err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_VERSION, maxSize, tmp, nullptr);
 	checkClErrorCode(err, "clGetPlatformInfo()");
 	str += tmp;
 
@@ -139,36 +166,63 @@ string OpenCLContext::getPlatformInfo() const
 string OpenCLContext::getDeviceInfo() const
 {
 	cl_int err;
-	size_t size, maxSize = 0;
+
+	cl_uint deviceCount;
+
+	err = clGetDeviceIDs(getCLPlatform(), CL_DEVICE_TYPE_ALL, 0, nullptr, &deviceCount);
+	checkClErrorCode(err, "clGetDeviceIDs()");
+
+	cl_device_id* deviceIDs = new cl_device_id[deviceCount];
+
+	err = clGetDeviceIDs(getCLPlatform(), CL_DEVICE_TYPE_ALL, deviceCount, deviceIDs, nullptr);
+	checkClErrorCode(err, "clGetDeviceIDs()");
 
 	// Find the maximum size needed for the value.
-	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_VERSION, 0, nullptr, &size);
-	checkClErrorCode(err, "clGetDeviceInfo()");
-	maxSize = max(maxSize, size);
+	size_t size, maxSize = 0;
 
-	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_NAME, 0, nullptr, &size);
-	checkClErrorCode(err, "clGetDeviceInfo()");
-	maxSize = max(maxSize, size);
+	for (cl_uint i = 0; i < deviceCount; ++i)
+	{
+		err = clGetDeviceInfo(deviceIDs[i], CL_DEVICE_VERSION, 0, nullptr, &size);
+		checkClErrorCode(err, "clGetDeviceInfo()");
+		maxSize = max(maxSize, size);
 
-	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_VENDOR, 0, nullptr, &size);
-	checkClErrorCode(err, "clGetDeviceInfo()");
-	maxSize = max(maxSize, size);
+		err = clGetDeviceInfo(deviceIDs[i], CL_DEVICE_NAME, 0, nullptr, &size);
+		checkClErrorCode(err, "clGetDeviceInfo()");
+		maxSize = max(maxSize, size);
 
-	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_EXTENSIONS, 0, nullptr, &size);
-	checkClErrorCode(err, "clGetDeviceInfo()");
-	maxSize = max(maxSize, size);
+		err = clGetDeviceInfo(deviceIDs[i], CL_DEVICE_VENDOR, 0, nullptr, &size);
+		checkClErrorCode(err, "clGetDeviceInfo()");
+		maxSize = max(maxSize, size);
+
+		err = clGetDeviceInfo(deviceIDs[i], CL_DEVICE_EXTENSIONS, 0, nullptr, &size);
+		checkClErrorCode(err, "clGetDeviceInfo()");
+		maxSize = max(maxSize, size);
+	}
 
 	// Build the string.
 	char* tmp = new char[maxSize];
 	string str;
 
-	str += "Version: ";
-	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_VERSION, maxSize, tmp, nullptr);
+	str += "Available devices:";
+	for (cl_uint i = 0; i < deviceCount; ++i)
+	{
+		if (deviceIDs[i] == getCLDevice())
+			str += "\n * ";
+		else
+			str += "\n   ";
+
+		err = clGetDeviceInfo(deviceIDs[i], CL_DEVICE_NAME, maxSize, tmp, nullptr);
+		checkClErrorCode(err, "clGetDeviceInfo()");
+		str += tmp;
+	}
+
+	str += "\n\nSelected device: ";
+	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_NAME, maxSize, tmp, nullptr);
 	checkClErrorCode(err, "clGetDeviceInfo()");
 	str += tmp;
 
-	str += "\nName: ";
-	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_NAME, maxSize, tmp, nullptr);
+	str += "\nVersion: ";
+	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_VERSION, maxSize, tmp, nullptr);
 	checkClErrorCode(err, "clGetDeviceInfo()");
 	str += tmp;
 
