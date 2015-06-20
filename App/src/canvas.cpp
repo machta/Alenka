@@ -182,7 +182,7 @@ void Canvas::initializeGL()
 	ss << "Vendor: " << gl()->glGetString(GL_VENDOR) << endl;
 	ss << "GLSH version: " << gl()->glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
 
-#ifdef GL_2_0
+#if defined GL_2_0
 	const GLubyte* str = gl()->glGetString(GL_EXTENSIONS);
 	if (str == nullptr)
 	{
