@@ -62,7 +62,8 @@ void OpenCLProgram::construct(const string& source)
 
 		if (invalid)
 		{
-			logToFileAndConsole(getCompilationLog());
+			string log = getCompilationLog();
+			logToFileAndConsole(log);
 		}
 		else
 		{

@@ -5,7 +5,6 @@
 #include "../openclprogram.h"
 
 #include <CL/cl_gl.h>
-#include <clFFT.h>
 
 #include <vector>
 
