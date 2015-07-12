@@ -87,7 +87,7 @@ OpenCLContext::~OpenCLContext()
 
 string OpenCLContext::getPlatformInfo() const
 {
-	cl_int err;	
+	cl_int err;
 
 	cl_uint platformCount;
 
@@ -200,8 +200,8 @@ string OpenCLContext::getDeviceInfo() const
 	}
 
 	// Build the string.
-	char* tmp = new char[maxSize];
 	string str;
+	char* tmp = new char[maxSize];
 
 	str += "Available devices:";
 	for (cl_uint i = 0; i < deviceCount; ++i)
@@ -235,6 +235,15 @@ string OpenCLContext::getDeviceInfo() const
 	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_EXTENSIONS, maxSize, tmp, nullptr);
 	checkClErrorCode(err, "clGetDeviceInfo()");
 	str += tmp;
+
+	str += "\nGlobal memory size: ";
+	cl_ulong memSize;
+	err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &memSize, nullptr);
+	checkClErrorCode(err, "clGetDeviceInfo()");
+	stringstream ss;
+	double memGigs = memSize/(1000.*1000*1000);
+	ss << memGigs << " GB";
+	str += ss.str();
 
 	delete[] tmp;
 
