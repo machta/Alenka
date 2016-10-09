@@ -16,6 +16,9 @@
 
 /**
  * @brief A wrapper for cl_context.
+ *
+ * CL_DEVICE_TYPE_ALL is used universally in the whole class (e.g. when calling
+ * clGetDeviceIDs).
  */
 class OpenCLContext
 {
@@ -24,15 +27,16 @@ public:
 	 * @brief OpenCLContext constructor.
 	 * @param platform Used as an index to an array returned by clGetPlatformIDs().
 	 * @param device Used as an index to an array returned by clGetDeviceIDs().
-	 * @param deviceType Used in the call to clGetDeviceIDs().
 	 * @param parentContext If not nullptr, this context will be able to share
 	 * buffers with parentContext.
 	 *
 	 * parentContext is needed to setup proper communication between OpenGL and OpenCL.
 	 * This is the only platform dependent code in the whole program and
 	 * will probably need to be modified when the code is ported to other platforms.
+	 *
+	 * CL_DEVICE_TYPE_ALL is used when
 	 */
-	OpenCLContext(unsigned int platform, unsigned int device, cl_device_type deviceType, QOpenGLContext* parentContext = nullptr);
+	OpenCLContext(unsigned int platform, unsigned int device, QOpenGLContext* parentContext = nullptr);
 
 	~OpenCLContext();
 
@@ -101,6 +105,6 @@ private:
 /**
  * @brief This macro is used to ensure consistency when creating the same object in different places.
  */
-#define OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS PROGRAM_OPTIONS["clPlatform"].as<int>(), PROGRAM_OPTIONS["clDevice"].as<int>(), CL_DEVICE_TYPE_ALL
+#define OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS PROGRAM_OPTIONS["clPlatform"].as<int>(), PROGRAM_OPTIONS["clDevice"].as<int>()
 
 #endif // OPENCLCONTEXT_H

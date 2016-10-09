@@ -99,7 +99,7 @@ void Options::logConfigFile() const
 		{
 			ss.put(ifs.get());
 		}
-		logToFile("Config file '" << fileName << "' :\n" << ss.str());
+		logToFile("Config file '" << fileName << "':\n" << ss.str());
 	}
 }
 
