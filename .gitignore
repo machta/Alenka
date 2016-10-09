@@ -21,7 +21,7 @@ core
 !core/
 tags
 .DS_Store
-*.debug
+#*.debug
 Makefile*
 *.prl
 *.app
