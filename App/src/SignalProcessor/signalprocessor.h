@@ -121,6 +121,7 @@ private:
 	GPUCache* cache;
 
 	bool onlineFilter;
+	bool glSharing;
 	unsigned int blockSize;
 	int trackCount = 0;
 	bool updateMontageFlag = false;
@@ -129,6 +130,7 @@ private:
 	cl_command_queue commandQueue;
 	cl_mem processorTmpBuffer;
 	cl_mem processorOutputBuffer = nullptr;
+	float* processorOutputBufferTmp = nullptr;
 	GLuint vertexArrays[2];
 	GLuint glBuffer;
 
@@ -168,6 +170,9 @@ private:
 
 			processorOutputBuffer = nullptr;
 		}
+
+		delete[] processorOutputBufferTmp;
+		processorOutputBufferTmp = nullptr;
 	}
 
 	/**

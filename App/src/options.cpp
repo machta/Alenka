@@ -37,6 +37,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("printBuffersFolder", value<string>()->default_value("."), "path to the folder to which the values will be saved (no end slash), only in debug build")
 	("notchFrequency", value<double>()->default_value(50), "frequency used to filter power interference with the signal")
 	("onlineFilter", value<bool>()->default_value(false), "should the signal be filtered every time before it is rendered")
+	("glSharing", value<bool>()->default_value(false), "if true, OpenCL will share data directly with OpenGL")
 	("eventRenderMode", value<int>()->default_value(2), "controls rendering of single-channel events; accepted values (from simplest mode) are 1, 2")
 	//("prepareFrames", value<unsigned int>()->default_value(0), "how many frames should be prepared in memory")
 	("logFileName", value<string>()->default_value("%Y-%m-%d--%H-%M-%S.log"), "string passed to strftime() to create the file name")

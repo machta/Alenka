@@ -7,11 +7,14 @@ using namespace std;
 
 SignalProcessor::SignalProcessor()
 {
+	onlineFilter = PROGRAM_OPTIONS["onlineFilter"].as<bool>();
+	glSharing = PROGRAM_OPTIONS["glSharing"].as<bool>();
+
 	cl_int err;
 
 	initializeOpenGLInterface();
 
-	context = new OpenCLContext(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS, QOpenGLContext::currentContext());
+	context = new OpenCLContext(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS, glSharing ? QOpenGLContext::currentContext() : nullptr);
 
 	commandQueue = clCreateCommandQueue(context->getCLContext(), context->getCLDevice(), 0, &err);
 	checkClErrorCode(err, "clCreateCommandQueue()");
@@ -143,23 +146,42 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 		checkClErrorCode(err, "clFlush()");
 	}
 
-	gl()->glFinish(); // Could be replaced by a fence.
+	if (glSharing)
+	{
+		gl()->glFinish(); // Could be replaced by a fence.
 
-	err = clEnqueueAcquireGLObjects(commandQueue, 1, &processorOutputBuffer, 0, nullptr, nullptr);
-	checkClErrorCode(err, "clEnqueueAcquireGLObjects()");
+		err = clEnqueueAcquireGLObjects(commandQueue, 1, &processorOutputBuffer, 0, nullptr, nullptr);
+		checkClErrorCode(err, "clEnqueueAcquireGLObjects()");
+	}
 
 	montageProcessor->process(processorTmpBuffer, processorOutputBuffer, commandQueue);
 
 	printBuffer("after_montage.txt", processorOutputBuffer, commandQueue);
 
-	err = clFinish(commandQueue);
-	checkClErrorCode(err, "clFinish()");
+	if (glSharing)
+	{
+		err = clFinish(commandQueue);
+		checkClErrorCode(err, "clFinish()");
 
-	err = clEnqueueReleaseGLObjects(commandQueue, 1, &processorOutputBuffer, 0, nullptr, nullptr);
-	checkClErrorCode(err, "clEnqueueReleaseGLObjects()");
+		err = clEnqueueReleaseGLObjects(commandQueue, 1, &processorOutputBuffer, 0, nullptr, nullptr);
+		checkClErrorCode(err, "clEnqueueReleaseGLObjects()");
 
-	err = clFinish(commandQueue);
-	checkClErrorCode(err, "clFinish()");
+		err = clFinish(commandQueue);
+		checkClErrorCode(err, "clFinish()");
+	}
+	else
+	{
+		// Pull the data from CL buffer and copy it to the GL buffer.
+
+		unsigned int outputBlockSize = blockSize*trackCount; // Code-duplicity.
+		outputBlockSize *= PROGRAM_OPTIONS["eventRenderMode"].as<int>();
+
+		err = clEnqueueReadBuffer(commandQueue, processorOutputBuffer, CL_TRUE, 0, outputBlockSize*sizeof(float), processorOutputBufferTmp, 0, nullptr, nullptr);
+		checkClErrorCode(err, "clGetMemObjectInfo");
+
+		gl()->glBindBuffer(GL_ARRAY_BUFFER, glBuffer);
+		gl()->glBufferData(GL_ARRAY_BUFFER, outputBlockSize*sizeof(float), processorOutputBufferTmp, GL_STATIC_DRAW);
+	}
 
 	auto fromTo = DataFile::blockIndexToSampleRange(index, getBlockSize());
 	return SignalBlock(index, fromTo.first, fromTo.second, vertexArrays);
@@ -197,8 +219,6 @@ void SignalProcessor::changeFile(DataFile* file)
 		montageProcessor = new MontageProcessor(offset, blockSize, file->getChannelCount());
 
 		// Construct the cache.
-		onlineFilter = PROGRAM_OPTIONS["onlineFilter"].as<bool>();
-
 		int64_t memory = PROGRAM_OPTIONS["gpuMemorySize"].as<int64_t>();
 		cl_int err;
 
@@ -265,25 +285,42 @@ void SignalProcessor::updateMontage()
 
 	releaseOutputBuffer();
 
-	gl()->glBindBuffer(GL_ARRAY_BUFFER, glBuffer);
-
-	unsigned int outputBlockSize = blockSize*trackCount;
+	unsigned int outputBlockSize = blockSize*trackCount; // Code-duplicity.
 	outputBlockSize *= PROGRAM_OPTIONS["eventRenderMode"].as<int>();
-
-	gl()->glBufferData(GL_ARRAY_BUFFER, outputBlockSize*sizeof(float), nullptr, GL_STATIC_DRAW);
-
-	cl_mem_flags flags = CL_MEM_READ_WRITE;
-#ifdef NDEBUG
-	flags = CL_MEM_WRITE_ONLY;
-#if CL_1_2
-	flags |= CL_MEM_HOST_NO_ACCESS;
-#endif
-#endif
 
 	cl_int err;
 
-	processorOutputBuffer = clCreateFromGLBuffer(context->getCLContext(), flags, glBuffer, &err);
-	checkClErrorCode(err, "clCreateFromGLBuffer()");
+	if (glSharing)
+	{
+		gl()->glBindBuffer(GL_ARRAY_BUFFER, glBuffer);
+		gl()->glBufferData(GL_ARRAY_BUFFER, outputBlockSize*sizeof(float), nullptr, GL_STATIC_DRAW);
+
+		cl_mem_flags flags = CL_MEM_READ_WRITE;
+	#ifdef NDEBUG
+		flags = CL_MEM_WRITE_ONLY;
+	#if CL_1_2
+		flags |= CL_MEM_HOST_NO_ACCESS;
+	#endif
+	#endif
+
+		processorOutputBuffer = clCreateFromGLBuffer(context->getCLContext(), flags, glBuffer, &err);
+		checkClErrorCode(err, "clCreateFromGLBuffer()");
+	}
+	else
+	{
+		cl_mem_flags flags = CL_MEM_READ_WRITE;
+	#ifdef NDEBUG
+	#if CL_1_2
+		flags |= CL_MEM_HOST_READ_ONLY;
+	#endif
+	#endif
+
+		processorOutputBuffer = clCreateBuffer(context->getCLContext(), flags, outputBlockSize*sizeof(float), nullptr, &err);
+		checkClErrorCode(err, "clCreateBuffer");
+
+		assert(processorOutputBufferTmp == nullptr && "Make sure the buffer does't leak.");
+		processorOutputBufferTmp = new float[outputBlockSize];
+	}
 
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
