@@ -344,10 +344,10 @@ inline void printBuffer(FILE* file, cl_mem buffer, cl_command_queue queue)
 		err = clGetMemObjectInfo(buffer, CL_MEM_SIZE, sizeof(size_t), &size, nullptr);
 		checkClErrorCode(err, "clGetMemObjectInfo");
 
-		float* tmp = new float[size];
+		float* tmp = new float[size/sizeof(float)];
 
 		err = clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, size, tmp, 0, nullptr, nullptr);
-		checkClErrorCode(err, "clGetMemObjectInfo");
+		checkClErrorCode(err, "clEnqueueReadBuffer");
 
 		printBuffer(file, tmp, size/sizeof(float));
 
