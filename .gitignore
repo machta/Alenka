@@ -55,8 +55,9 @@ build
 # local excludes file
 excludes.txt
 
-# log files
+# log files and log dir
 App/*.log
+App/log
 
 # mont and info files
 *.mont
