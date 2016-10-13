@@ -257,7 +257,10 @@ QDateTime GDF2::getStartDate() const
 {
 	QDateTime date(QDate(1970, 1, 1));
 	date = date.addDays(fh.startDate[1] - 719529);
-	date = date.addMSecs(static_cast<int>(ldexp(fh.startDate[0], -32)*1000));
+
+	double fractionOfDay = ldexp(static_cast<double>(fh.startDate[0]), -32);
+	date = date.addMSecs(fractionOfDay*24*60*60*1000);
+
 	return date;
 }
 
