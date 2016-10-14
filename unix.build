@@ -1,6 +1,12 @@
-LIBS += -lboost_program_options \
-	-lclFFT \
-	-lOpenCL
+LIBS += -lclFFT \
+        -lOpenCL
+
+# Choose whether to link to the staic version of BOOST.
+equals(STATIC_BOOST, "1") {
+    LIBS += /usr/lib/x86_64-linux-gnu/libboost_program_options.a
+} else {
+    LIBS += -lboost_program_options
+}
 
 QMAKE_CXXFLAGS += -std=c++11 -pedantic
 
@@ -12,4 +18,3 @@ QMAKE_CXXFLAGS_RELEASE += -O3
 QMAKE_LFLAGS_RELEASE   += -O3
 
 DEFINES += UNIX_BUILD
-
