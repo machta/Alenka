@@ -34,7 +34,7 @@ public:
 	 * will be returned.
 	 * @param Fs The sampling frequency.
 	 */
-	Filter(unsigned int M, double Fs);
+	Filter(OpenCLContext* context, unsigned int M, double Fs);
 	~Filter();
 
 	/**
@@ -89,10 +89,9 @@ private:
 	double highpass;
 	bool notch;
 
-	OpenCLContext context;
+	OpenCLContext* context;
 	cl_command_queue queue;
 	clfftPlanHandle plan;
-	double* coefficients;
 	double notchF;
 
 	double hammingWindow(int n, int M)

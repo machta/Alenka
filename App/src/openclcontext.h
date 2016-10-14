@@ -13,6 +13,7 @@
 #include <CL/cl_gl.h>
 
 #include <string>
+#include <memory>
 
 /**
  * @brief A wrapper for cl_context.
@@ -106,5 +107,19 @@ private:
  * @brief This macro is used to ensure consistency when creating the same object in different places.
  */
 #define OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS PROGRAM_OPTIONS["clPlatform"].as<int>(), PROGRAM_OPTIONS["clDevice"].as<int>()
+
+/**
+ * @brief A global OpenCL context that can be used throughout the whole program.
+ *
+ * This is to avoid problems with GPU memory leaks that arise on some platforms due to
+ * clReleaseContext() not releasing all dedicated memory properly.
+ *
+ * This mitigates the problem as there are only two contexts created
+ * throughout the whole lifitime of the program:
+ * * this default context with generic parameters and
+ * * a second one, owned by SignalProcessor, that is used in order to facilitate sharing with OpenGL.
+ */
+
+extern std::unique_ptr<OpenCLContext> globalContext;
 
 #endif // OPENCLCONTEXT_H

@@ -14,7 +14,14 @@ SignalProcessor::SignalProcessor()
 
 	initializeOpenGLInterface();
 
-	context = new OpenCLContext(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS, glSharing ? QOpenGLContext::currentContext() : nullptr);
+	if (glSharing)
+	{
+		context = new OpenCLContext(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS, QOpenGLContext::currentContext());
+	}
+	else
+	{
+		context = globalContext.get();
+	}
 
 	commandQueue = clCreateCommandQueue(context->getCLContext(), context->getCLDevice(), 0, &err);
 	checkClErrorCode(err, "clCreateCommandQueue()");
@@ -64,7 +71,7 @@ void SignalProcessor::updateFilter()
 		return;
 	}
 
-	Filter filter(static_cast<unsigned int>(file->getSamplingFrequency()), file->getSamplingFrequency()); // Possibly could save this object so that it won't be created from scratch everytime.
+	Filter filter(context, static_cast<unsigned int>(file->getSamplingFrequency()), file->getSamplingFrequency()); // Possibly could save this object so that it won't be created from scratch everytime.
 	filter.setLowpass(getInfoTable()->getLowpassFrequency());
 	filter.setHighpass(getInfoTable()->getHighpassFrequency());
 	filter.setNotch(getInfoTable()->getNotch());
@@ -219,22 +226,24 @@ void SignalProcessor::changeFile(DataFile* file)
 		montageProcessor = new MontageProcessor(offset, blockSize, file->getChannelCount());
 
 		// Construct the cache.
-		int64_t memory = PROGRAM_OPTIONS["gpuMemorySize"].as<int64_t>();
+		int64_t memoryToUse = PROGRAM_OPTIONS["gpuMemorySize"].as<int64_t>();
 		cl_int err;
 
-		if (memory <= 0)
-		{
-			cl_ulong size;
+		cl_ulong maxMemorySize;
+		err = clGetDeviceInfo(context->getCLDevice(), CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &maxMemorySize, nullptr);
+		checkClErrorCode(err, "clGetDeviceInfo()");
 
-			err = clGetDeviceInfo(context->getCLDevice(), CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &size, nullptr);
-			checkClErrorCode(err, "clGetDeviceInfo()");
+		if (memoryToUse <= 0)
+			memoryToUse += maxMemorySize;
 
-			memory += size;
-		}
+		// Ensure the limit is within a reasonable interval.
+		memoryToUse = max<int64_t>(memoryToUse, maxMemorySize*0.1);
+		memoryToUse = min<int64_t>(memoryToUse, maxMemorySize*0.75);
 
-		memory -= tmpBlockSize + blockSize*sizeof(float)*500; // substract the sizes of the tmp buffer and the output buffer (for a realistically big montage)
+		memoryToUse -= tmpBlockSize + blockSize*sizeof(float)*2048; // substract the sizes of the tmp buffer and the output buffer (for a realistically big montage)
+		assert(memoryToUse > 0 && "There is no memory left for the GPU buffer.");
 
-		cache = new GPUCache(blockSize, offset, delay, memory, file, context, onlineFilter ? nullptr : filterProcessor);
+		cache = new GPUCache(blockSize, offset, delay, memoryToUse, file, context, onlineFilter ? nullptr : filterProcessor);
 
 		// Construct tmp buffer.
 		cl_mem_flags flags = CL_MEM_READ_WRITE;

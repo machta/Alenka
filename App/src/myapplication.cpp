@@ -61,6 +61,9 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 
 	PROGRAM_OPTIONS.logConfigFile();
 
+	// Initialize the global OpenCL context.
+	globalContext.reset(new OpenCLContext(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS));
+
 	// Set up the clFFT library.
 	clfftStatus errFFT;
 	clfftSetupData setupData;
@@ -92,12 +95,10 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 	QSurfaceFormat::setDefaultFormat(format);
 
 	// Process some of the command-line only options.
-	OpenCLContext context(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS);
-
 	stringstream ss;
 
-	ss << context.getPlatformInfo() << endl << endl;
-	ss << context.getDeviceInfo() << endl;
+	ss << globalContext->getPlatformInfo() << endl << endl;
+	ss << globalContext->getDeviceInfo() << endl;
 
 	logToFile(ss.str());
 

@@ -10,12 +10,11 @@ using namespace std;
 
 TrackCodeValidator::TrackCodeValidator()
 {
-	context = new OpenCLContext(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS);
+	context = globalContext.get();
 }
 
 TrackCodeValidator::~TrackCodeValidator()
 {
-	delete context;
 }
 
 bool TrackCodeValidator::validate(const QString& input, QString* errorMessage)

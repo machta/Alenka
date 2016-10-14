@@ -77,12 +77,16 @@ OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device, QOpenGL
 
 	delete[] platforms;
 	delete[] devices;
+
+	logToFile("OpenCLContext " << this << " created.");
 }
 
 OpenCLContext::~OpenCLContext()
 {
 	cl_int err = clReleaseContext(context);
 	checkClErrorCode(err, "clReleaseContext()");
+
+	logToFile("OpenCLContext " << this << " destroyed.");
 }
 
 string OpenCLContext::getPlatformInfo() const
@@ -250,3 +254,4 @@ string OpenCLContext::getDeviceInfo() const
 	return str;
 }
 
+std::unique_ptr<OpenCLContext> globalContext(nullptr);

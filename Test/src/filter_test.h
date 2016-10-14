@@ -4,7 +4,9 @@ BOOST_AUTO_TEST_CASE(simple)
 {
 	double answerLowpass[] = {-0.105969883127822, 0.0293291419087276, 0.220670858091272, 0.355969883127822, 0.355969883127822, 0.220670858091272, 0.0293291419087275, -0.105969883127822};
 
-	Filter filter(8, 200);
+        OpenCLContext context(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS);
+
+        Filter filter(&context, 8, 200);
 
 	filter.setLowpass(50);
 	filter.setHighpass(-1);
