@@ -51,7 +51,8 @@ SignalProcessor::~SignalProcessor()
 
 	destroyFileRelated();
 
-	delete context;
+	if (glSharing)
+		delete context;
 
 	err = clReleaseCommandQueue(commandQueue);
 	checkClErrorCode(err, "clReleaseCommandQueue()");
