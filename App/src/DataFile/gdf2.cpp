@@ -456,6 +456,10 @@ void GDF2::readGdfEventTable(int numberOfEvents, int eventTableMode)
 			uint16_t channel;
 			readFile(&channel);
 			int tmp = channel - 1;
+
+			if (tmp >= getChannelCount())
+				tmp = -1;
+
 			defaultEvents->setChannel(tmp, i);
 		}
 
