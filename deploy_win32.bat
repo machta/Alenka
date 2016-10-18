@@ -2,7 +2,7 @@
 :: If empty, use current directory.
 
 set folder=%1
-if [%folder%] == [] set folder=.\ZSBS_x86
+if [%folder%] == [] set folder=.\ZSBS-Windows-x86
 
 echo Deploying to %folder%
 
@@ -10,7 +10,7 @@ echo Deploying to %folder%
 mkdir %folder%
 
 :: App exe and shaders and cl sources
-copy build-ZSBS-Desktop_Qt_5_4_1_MSVC2013_OpenGL_32bit-Release\App\release\App.exe %folder%
+copy App\App.exe %folder%
 copy App\*.vert %folder%
 copy App\*.frag %folder%
 copy App\kernels.cl %folder%
@@ -23,11 +23,14 @@ copy App\edit.png %folder%
 copy App\clFFT.dll %folder%
 
 :: Qt dlls
-copy C:\Qt\5.4\msvc2013_opengl\bin\Qt5Core.dll %folder%
-copy C:\Qt\5.4\msvc2013_opengl\bin\Qt5Gui.dll %folder%
-copy C:\Qt\5.4\msvc2013_opengl\bin\icu*.dll %folder%
-copy C:\Qt\5.4\msvc2013_opengl\bin\Qt5Widgets.dll %folder%
+set qt_dir=C:\Qt\5.7\msvc2015
+
+copy %qt_dir%\bin\Qt5Core.dll %folder%
+copy %qt_dir%\bin\Qt5Gui.dll %folder%
+copy %qt_dir%\bin\icu*.dll %folder%
+copy %qt_dir%\bin\Qt5Widgets.dll %folder%
+
 mkdir %folder%\platforms
-copy C:\Qt\5.4\msvc2013_opengl\plugins\platforms\qwindows.dll %folder%\platforms
+copy %qt_dir%\plugins\platforms\qwindows.dll %folder%\platforms
 
 

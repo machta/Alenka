@@ -1,7 +1,7 @@
 include(win.build)
 
-LIBS += /LIBPATH:C:\boost_1_57_0\static_64\lib \
-	"C:/Program Files/clFFT-2.2.0-Windows-x64/lib64/import/clFFT.lib"
+LIBS += /LIBPATH:C:/boost/lib64-msvc-14.0 \
+	"C:/Program Files/clFFT-Windows-x64/lib64/import/clFFT.lib" \
+	opengl32.lib
 
-INCLUDEPATH += "C:/Program Files/clFFT-2.2.0-Windows-x64/include"
-
+INCLUDEPATH += "C:/Program Files/clFFT-Windows-x64/include"
