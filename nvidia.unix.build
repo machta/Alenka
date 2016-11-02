@@ -1,4 +1,0 @@
-include(unix.build)
-
-INCLUDEPATH += /opt/cuda-6.5/include/
-

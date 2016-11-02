@@ -1,6 +1,0 @@
-include(win32.build)
-
-LIBS += "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v6.5/lib/Win32/OpenCL.lib"
-
-INCLUDEPATH += "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v6.5/include"
-

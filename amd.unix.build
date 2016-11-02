@@ -1,3 +1,0 @@
-include(unix.build)
-
-INCLUDEPATH += $$(AMDAPPSDKROOT)/include
