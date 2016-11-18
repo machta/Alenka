@@ -2,47 +2,48 @@ CONFIG += c++11
 
 # ===============================================
 unix {
+	LIBS += -lclFFT \
+		-lOpenCL \
+		-lboost_program_options
 
-    LIBS += -lclFFT \
-	        -lOpenCL \
-			-lboost_program_options
+	QMAKE_CXXFLAGS += -std=c++11 -pedantic -Wall
 
-    QMAKE_CXXFLAGS += -pedantic -Wall
-
-    QMAKE_CXXFLAGS_DEBUG += -O0
+	QMAKE_CXXFLAGS_DEBUG += -O0
 	QMAKE_LFLAGS_DEBUG += -O0
 
-    QMAKE_CXXFLAGS_RELEASE += -O3
+	QMAKE_CXXFLAGS_RELEASE += -O3
 	QMAKE_LFLAGS_RELEASE += -O3
 
-    DEFINES += UNIX_BUILD
+	DEFINES += UNIX_BUILD
 }
 
 # ===============================================
 win32 {
-    CUDA_DIR = C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v8.0
+	CUDA_DIR = C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v8.0
 
-    contains(QMAKE_HOST.arch, x86_64) {
-	    CLFFT_DIR = C:/Program Files/clFFT
+	contains(QMAKE_HOST.arch, x86_64) {
+		CLFFT_DIR = C:/Program Files/clFFT
+
 		LIBS += /LIBPATH:C:/boost/lib64-msvc-14.0 \
-		        "$$CUDA_DIR"/lib/x64/OpenCL.lib \
-				"$$CLFFT_DIR"/lib64/import/clFFT.lib
+			"$$CUDA_DIR"/lib/x64/OpenCL.lib \
+			"$$CLFFT_DIR"/lib64/import/clFFT.lib
 	} else {
-	    CLFFT_DIR = "C:/Program Files (x86)/clFFT"
+		CLFFT_DIR = "C:/Program Files (x86)/clFFT"
+
 		LIBS += /LIBPATH:C:/boost/lib32-msvc-14.0 \
-		        "$$CUDA_DIR"/lib/Win32/OpenCL.lib \
-				"$$CLFFT_DIR"/lib/import/clFFT.lib
+			"$$CUDA_DIR"/lib/Win32/OpenCL.lib \
+			"$$CLFFT_DIR"/lib/import/clFFT.lib
 	}
 
-    INCLUDEPATH += C:/boost \
-	        "$$CLFFT_DIR"/include \
-			"C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v8.0/include"
+	INCLUDEPATH += C:/boost \
+		"$$CLFFT_DIR"/include \
+		"$$CUDA_DIR"/include
 
-    LIBS += opengl32.lib
+	LIBS += opengl32.lib
 
-    DEFINES += WIN_BUILD \
-	           _USE_MATH_DEFINES \
-			   _CRT_SECURE_NO_WARNINGS
+	DEFINES += WIN_BUILD \
+		_USE_MATH_DEFINES \
+		_CRT_SECURE_NO_WARNINGS
 
-    CONFIG += console
+	CONFIG += console
 }
