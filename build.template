@@ -1,3 +1,5 @@
+CONFIG += c++11
+
 # ===============================================
 unix {
 
@@ -5,7 +7,7 @@ unix {
 	        -lOpenCL \
 			-lboost_program_options
 
-    QMAKE_CXXFLAGS += -std=c++11 -pedantic -Wall
+    QMAKE_CXXFLAGS += -pedantic -Wall
 
     QMAKE_CXXFLAGS_DEBUG += -O0
 	QMAKE_LFLAGS_DEBUG += -O0
