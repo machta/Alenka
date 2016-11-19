@@ -33,6 +33,8 @@
 #include <string>
 #include <sstream>
 
+#include <QFile>
+
 /**
  * @brief Returns error code converted to a suitable form for printing.
  */
@@ -303,6 +305,17 @@ inline std::string readWholeTextFile(FILE* file)
 
 	string str(tmp);
 	delete[] tmp;
+	return str;
+}
+
+inline std::string readWholeTextFile(QFile* file)
+{
+	std::string str;
+
+	char c;
+	while (file->getChar(&c))
+		str.push_back(c);
+
 	return str;
 }
 

@@ -44,15 +44,9 @@ bool Montage::test(const string& source, OpenCLContext* context, string* errorMe
 
 string Montage::readHeader()
 {
-	FILE* file = fopen("montageHeader.cl", "rb");
-	checkNotErrorCode(file, nullptr, "File 'montageHeader.cl' could not be opened.");
-
-	string header = readWholeTextFile(file);
-
-	int err = fclose(file);
-	checkErrorCode(err, 0, "fclose()");
-
-	return header;
+	QFile file(":/montageHeader.cl");
+	file.open(QIODevice::ReadOnly);
+	return readWholeTextFile(&file);
 }
 
 string Montage::buildSource(const vector<string>& sources)

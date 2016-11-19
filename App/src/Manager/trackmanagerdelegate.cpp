@@ -28,7 +28,7 @@ QWidget* TrackManagerDelegate::createEditor(QWidget* parent, const QStyleOptionV
 	{
 		QLineEdit* lineEdit = new QLineEdit(parent);
 
-		QAction* action = lineEdit->addAction(QIcon("edit.png"), QLineEdit::TrailingPosition);
+		QAction* action = lineEdit->addAction(QIcon(":/edit.png"), QLineEdit::TrailingPosition);
 
 		connect(action, &QAction::triggered, [lineEdit] ()
 		{
@@ -51,7 +51,7 @@ QWidget* TrackManagerDelegate::createEditor(QWidget* parent, const QStyleOptionV
 	{
 		QLineEdit* lineEdit = new QLineEdit(parent);
 
-		QAction* action = lineEdit->addAction(QIcon("edit.png"), QLineEdit::TrailingPosition);
+		QAction* action = lineEdit->addAction(QIcon(":/edit.png"), QLineEdit::TrailingPosition);
 
 		connect(action, &QAction::triggered, [this, lineEdit] ()
 		{

@@ -129,33 +129,25 @@ void Canvas::initializeGL()
 
 	signalProcessor = new SignalProcessor;
 
-	FILE* signalVert = fopen("signal.vert", "rb");
-	checkNotErrorCode(signalVert, nullptr, "File 'signal.vert' could not be opened.");
+	QFile signalVertFile(":/signal.vert");
+	signalVertFile.open(QIODevice::ReadOnly);
+	string signalVert = readWholeTextFile(&signalVertFile);
 
-	FILE* eventVert = fopen("event.vert", "rb");
-	checkNotErrorCode(eventVert, nullptr, "File 'event.vert' could not be opened.");
+	QFile eventVertFile(":/event.vert");
+	eventVertFile.open(QIODevice::ReadOnly);
+	string eventVert = readWholeTextFile(&eventVertFile);
 
-	FILE* rectangleLineVert = fopen("rectangleLine.vert", "rb");
-	checkNotErrorCode(rectangleLineVert, nullptr, "File 'rectangleLine.vert' could not be opened.");
+	QFile rectangleLineVertFile(":/rectangleLine.vert");
+	rectangleLineVertFile.open(QIODevice::ReadOnly);
+	string rectangleLineVert = readWholeTextFile(&rectangleLineVertFile);
 
-	FILE* colorFrag = fopen("color.frag", "rb");
-	checkNotErrorCode(colorFrag, nullptr, "File 'color.frag could' not be opened.");
+	QFile colorFragFile(":/color.frag");
+	colorFragFile.open(QIODevice::ReadOnly);
+	string colorFrag = readWholeTextFile(&colorFragFile);
 
 	signalProgram = new OpenGLProgram(signalVert, colorFrag);
 	eventProgram = new OpenGLProgram(eventVert, colorFrag);
 	rectangleLineProgram = new OpenGLProgram(rectangleLineVert, colorFrag);
-
-	int err = fclose(signalVert);
-	checkErrorCode(err, 0, "fclose()");
-
-	err = fclose(eventVert);
-	checkErrorCode(err, 0, "fclose()");
-
-	err = fclose(rectangleLineVert);
-	checkErrorCode(err, 0, "fclose()");
-
-	err = fclose(colorFrag);
-	checkErrorCode(err, 0, "fclose()");
 
 	gl()->glEnable(GL_BLEND);
 	gl()->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

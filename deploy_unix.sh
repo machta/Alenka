@@ -1,22 +1,26 @@
-#/bin/bash
+#/bin/bash -x
 
-folder=$1
-if [ "$folder" == "" ]
+name=$1
+if [ "$name" == "" ]
 then
-folder=./ZSBS-Linux-x64
+name=ZSBS-Linux-x64
 fi
+
+folder=`mktemp -d -p .`
 
 echo -e Deploying to $folder'\n'
 
-mkdir -p $folder
+mkdir -p $folder/$name
 
 # Assume that the CD is the root of the project
 # and that there are two symbolic links to the executables.
 
-cp -v App/App $folder
-cp -v App/App.debug $folder
+cp -v App/App $folder/$name
+cp -v App/App.debug $folder/$name
 
-cp -v App/*.vert $folder
-cp -v App/*.frag $folder
-cp -v App/*.cl $folder
-cp -v App/edit.png $folder
+cd $folder
+zip -r $name.zip $name
+mv $name.zip ..
+cd -
+rm -r $folder
+

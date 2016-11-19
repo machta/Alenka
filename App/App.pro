@@ -79,10 +79,5 @@ SOURCES += \
 	src/Manager/trackmanager.cpp \
 	src/Manager/trackmanagerdelegate.cpp
 
-DISTFILES += \
-	kernels.cl \
-	montageHeader.cl \
-	color.frag \
-	event.vert \
-	signal.vert \
-	rectangleLine.vert
+RESOURCES += \
+    resources/resources.qrc

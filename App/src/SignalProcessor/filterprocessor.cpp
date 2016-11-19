@@ -14,13 +14,9 @@ FilterProcessor::FilterProcessor(unsigned int M, unsigned int blockWidth, unsign
 	cl_int err;
 	clfftStatus errFFT;
 
-	FILE* file = fopen("kernels.cl", "rb");
-	checkNotErrorCode(file, nullptr, "File 'kernels.cl' could not be opened.");
-
-	OpenCLProgram program(file, context);
-
-	int ierr = fclose(file);
-	checkErrorCode(ierr, 0, "fclose()");
+	QFile kernels(":/kernels.cl");
+	kernels.open(QIODevice::ReadOnly);
+	OpenCLProgram program(readWholeTextFile(&kernels), context);
 
 	filterKernel = program.createKernel("filter");
 	zeroKernel = program.createKernel("zero");
