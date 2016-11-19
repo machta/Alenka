@@ -1,9 +1,12 @@
-#/bin/bash -x
+#/bin/bash
+
+# Usage: ./deploy_unix.sh fileName
+# Output is fileName.zip in the current directory.
 
 name=$1
 if [ "$name" == "" ]
 then
-name=ZSBS-Linux-x64
+name=ZSBS-Linux
 fi
 
 folder=`mktemp -d -p .`
@@ -12,11 +15,11 @@ echo -e Deploying to $folder'\n'
 
 mkdir -p $folder/$name
 
-# Assume that the CD is the root of the project
-# and that there are two symbolic links to the executables.
+cp -v `find .. -type f -name App | grep 64 | grep Release` $folder/$name/App
+cp -v `find .. -type f -name App | grep 64 | grep Debug` $folder/$name/App.debug
 
-cp -v App/App $folder/$name
-cp -v App/App.debug $folder/$name
+cp -v `find .. -type f -name App | grep 32 | grep Release` $folder/$name/App
+cp -v `find .. -type f -name App | grep 32 | grep Debug` $folder/$name/App.debug
 
 cd $folder
 zip -r $name.zip $name
