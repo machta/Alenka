@@ -1,6 +1,7 @@
 #/bin/bash
 
 # Usage: ./deploy_unix.sh fileName
+#
 # Output is fileName.zip in the current directory.
 
 name=$1
