@@ -3,7 +3,7 @@
 
 #include "../DataFile/datafile.h"
 #include "../error.h"
-#include "../openclcontext.h"
+#include "openclcontext.h"
 #include "filterprocessor.h"
 
 #include <CL/cl_gl.h>
@@ -40,7 +40,7 @@ public:
 	 * @param availableMemory The maximum bytes available for the cache.
 	 * @param filterProcessor If nullptr, the cached blocks are not filtered.
 	 */
-	GPUCache(unsigned int blockSize, unsigned int offset, int delay, int64_t availableMemory, DataFile* file, OpenCLContext* context, FilterProcessor* filterProcessor);
+	GPUCache(unsigned int blockSize, unsigned int offset, int delay, int64_t availableMemory, DataFile* file, OpenCLContext* context, FilterProcessor<float>* filterProcessor);
 	~GPUCache();
 
 	/**
@@ -77,9 +77,10 @@ private:
 	int delay;
 	unsigned int capacity;
 	DataFile* file;
-	FilterProcessor* filterProcessor;
+	FilterProcessor<float>* filterProcessor;
 	cl_command_queue commandQueue;
 	std::vector<cl_mem> buffers;
+	cl_mem tmpMemBuffer;
 	std::vector<unsigned int> lastUsed;
 	std::vector<unsigned int> order;
 	std::map<int, unsigned int> indexMap;

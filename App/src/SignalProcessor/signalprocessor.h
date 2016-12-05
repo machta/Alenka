@@ -7,7 +7,7 @@
 #include "../DataFile/datafile.h"
 #include "../options.h"
 #include "gpucache.h"
-#include "../openclcontext.h"
+#include "openclcontext.h"
 #include "filterprocessor.h"
 #include "montageprocessor.h"
 
@@ -116,8 +116,9 @@ private:
 	InfoTable defaultInfoTable;
 	DataFile* file = nullptr;
 	OpenCLContext* context;
-	FilterProcessor* filterProcessor;
-	MontageProcessor* montageProcessor;
+	FilterProcessor<float>* filterProcessor;
+	MontageProcessor<float>* montageProcessor;
+	std::vector<Montage<float>*> montage;
 	GPUCache* cache;
 
 	bool onlineFilter;
@@ -179,6 +180,12 @@ private:
 	 * @brief This method actually (unlike setUpdateMontageFlag()) updates the MontageProcessor object.
 	 */
 	void updateMontage();
+	void deleteMontage()
+	{
+		for (auto e : montage)
+			delete e;
+		montage.clear();
+	}
 };
 
 #endif // SIGNALPROCESSOR_H

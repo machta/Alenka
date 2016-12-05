@@ -96,7 +96,7 @@ private:
 	double samplingFrequency = 1;
 	GLuint rectangleLineArray;
 	GLuint rectangleLineBuffer;
-	int eventMode = PROGRAM_OPTIONS["eventRenderMode"].as<int>();
+	int eventMode = 1/*PROGRAM_OPTIONS["eventRenderMode"].as<int>()*/;
 	bool isSelectingTrack = false;
 	bool isDrawingEvent = false;
 	bool isDrawingCross = false;

@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-#include "../SignalProcessor/filter.h"
+#include "filter.h"
 
 class QXmlStreamReader;
 class QXmlStreamWriter;
@@ -195,8 +195,8 @@ public slots:
 private:
 	int virtualWidth = 100000;
 	int position = 0;
-	double lowpassFrequency = Filter::LOWPASS_OFF_VALUE;
-	double highPassFrequency = Filter::HIGHPASS_OFF_VALUE;
+	double lowpassFrequency = 1000000;
+	double highPassFrequency = -1000000;
 	bool notch = false;
 	int selectedMontage = 0;
 	TimeMode timeMode = TimeMode::offset;

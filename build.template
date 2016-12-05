@@ -2,9 +2,15 @@ CONFIG += c++11
 
 # ===============================================
 unix {
+    SIGNAL_LIB = /home/machta/Documents/ZSBS/Alenka-Signal/build-Debug/install-dir
+
 	LIBS += -lclFFT \
 		-lOpenCL \
-		-lboost_program_options
+		-lboost_program_options \
+		-L$$SIGNAL_LIB/lib \
+		-lalenka-signal
+
+    INCLUDEPATH += $$SIGNAL_LIB/include
 
 	QMAKE_CXXFLAGS += -std=c++11 -pedantic -Wall
 

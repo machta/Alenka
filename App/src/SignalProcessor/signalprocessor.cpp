@@ -1,5 +1,7 @@
 #include "signalprocessor.h"
 
+#include "../myapplication.h"
+
 #include <algorithm>
 #include <stdexcept>
 
@@ -16,7 +18,7 @@ SignalProcessor::SignalProcessor()
 
 	if (glSharing)
 	{
-		context = new OpenCLContext(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS, QOpenGLContext::currentContext());
+		context = new OpenCLContext(PROGRAM_OPTIONS["clPlatform"].as<int>(), PROGRAM_OPTIONS["clDevice"].as<int>(), true);
 	}
 	else
 	{
@@ -49,6 +51,7 @@ SignalProcessor::~SignalProcessor()
 {
 	cl_int err;
 
+	deleteMontage();
 	destroyFileRelated();
 
 	if (glSharing)
@@ -72,10 +75,19 @@ void SignalProcessor::updateFilter()
 		return;
 	}
 
-	Filter filter(context, static_cast<unsigned int>(file->getSamplingFrequency()), file->getSamplingFrequency()); // Possibly could save this object so that it won't be created from scratch everytime.
+	int M = file->getSamplingFrequency()/* + 1*/;
+	Filter<float> filter(M, file->getSamplingFrequency()); // Possibly could save this object so that it won't be created from scratch everytime.
+
+	filter.lowpass(true);
 	filter.setLowpass(getInfoTable()->getLowpassFrequency());
+
+	filter.highpass(true);
 	filter.setHighpass(getInfoTable()->getHighpassFrequency());
-	filter.setNotch(getInfoTable()->getNotch());
+
+	filter.notch(getInfoTable()->getNotch());
+	filter.setNotch(50);
+
+	filterProcessor->changeSampleFilter(M, filter.computeSamples());
 
 	if (PROGRAM_OPTIONS.isSet("printFilter"))
 	{
@@ -84,18 +96,16 @@ void SignalProcessor::updateFilter()
 			FILE* file = fopen(PROGRAM_OPTIONS["printFilterFile"].as<string>().c_str(), "w");
 			checkNotErrorCode(file, nullptr, "File '" << PROGRAM_OPTIONS["printFilterFile"].as<string>() << "' could not be opened for writing.");
 
-			filter.printCoefficients(file);
+			filter.printCoefficients(file, filterProcessor->getCoefficients());
 
 			int err = fclose(file);
 			checkErrorCode(err, 0, "fclose()");
 		}
 		else
 		{
-			filter.printCoefficients(stderr);
+			filter.printCoefficients(stdout, filterProcessor->getCoefficients());
 		}
 	}
-
-	filterProcessor->change(&filter);
 
 	if (onlineFilter == false)
 	{
@@ -146,7 +156,8 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 
 	if (onlineFilter)
 	{
-		filterProcessor->process(processorTmpBuffer, commandQueue);
+		assert(false && "Fix this later!");
+		//filterProcessor->process(processorTmpBuffer, commandQueue);
 
 		printBuffer("after_filter.txt", processorTmpBuffer, commandQueue);
 
@@ -162,7 +173,7 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 		checkClErrorCode(err, "clEnqueueAcquireGLObjects()");
 	}
 
-	montageProcessor->process(processorTmpBuffer, processorOutputBuffer, commandQueue);
+	montageProcessor->process(montage, processorTmpBuffer, processorOutputBuffer, commandQueue);
 
 	printBuffer("after_montage.txt", processorOutputBuffer, commandQueue);
 
@@ -182,7 +193,7 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 		// Pull the data from CL buffer and copy it to the GL buffer.
 
 		unsigned int outputBlockSize = blockSize*trackCount; // Code-duplicity.
-		outputBlockSize *= PROGRAM_OPTIONS["eventRenderMode"].as<int>();
+		//outputBlockSize *= PROGRAM_OPTIONS["eventRenderMode"].as<int>();
 
 		err = clEnqueueReadBuffer(commandQueue, processorOutputBuffer, CL_TRUE, 0, outputBlockSize*sizeof(float), processorOutputBufferTmp, 0, nullptr, nullptr);
 		checkClErrorCode(err, "clGetMemObjectInfo");
@@ -213,18 +224,12 @@ void SignalProcessor::changeFile(DataFile* file)
 		int offset = M;
 		int delay = M/2 - 1;
 		blockSize = PROGRAM_OPTIONS["blockSize"].as<unsigned int>() - offset;
-		unsigned int tmpBlockSize = (blockSize + offset + 4)*file->getChannelCount();
-
-		// Check block sizes.
-		if (M%4 || (blockSize + offset)%4)
-		{
-			throw runtime_error("SignalProcessor requires both the filter length and block length to be multiples of 4");
-		}
+		unsigned int tmpBlockSize = (blockSize + offset)*file->getChannelCount();
 
 		// Construct the filter and montage processors.
-		filterProcessor = new FilterProcessor(M, blockSize + offset, file->getChannelCount(), context);
+		filterProcessor = new FilterProcessor<float>(blockSize + offset, file->getChannelCount(), context);
 
-		montageProcessor = new MontageProcessor(offset, blockSize, file->getChannelCount());
+		montageProcessor = new MontageProcessor<float>(offset, blockSize, file->getChannelCount());
 
 		// Construct the cache.
 		int64_t memoryToUse = PROGRAM_OPTIONS["gpuMemorySize"].as<int64_t>();
@@ -287,16 +292,17 @@ void SignalProcessor::updateMontage()
 
 	auto code = file->getMontageTable()->getTrackTables()->at(getInfoTable()->getSelectedMontage())->getCode();
 
-	Montage montage(code, context);
+	deleteMontage();
 
-	assert(montage.getNumberOfRows() > 0);
+	for (auto e : code)
+		montage.push_back(new Montage<float>(e, context)); // TODO: add header source
 
-	montageProcessor->change(&montage);
+	assert(montage.size() > 0);
 
 	releaseOutputBuffer();
 
 	unsigned int outputBlockSize = blockSize*trackCount; // Code-duplicity.
-	outputBlockSize *= PROGRAM_OPTIONS["eventRenderMode"].as<int>();
+	//outputBlockSize *= PROGRAM_OPTIONS["eventRenderMode"].as<int>();
 
 	cl_int err;
 

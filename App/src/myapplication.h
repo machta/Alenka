@@ -3,6 +3,8 @@
 
 #include <QApplication>
 
+#include <memory>
+
 class Options;
 
 /**
@@ -41,5 +43,8 @@ public:
 private:
 	Options* options = nullptr;
 };
+
+class OpenCLContext;
+extern std::unique_ptr<OpenCLContext> globalContext;
 
 #endif // MYAPPLICATION_H

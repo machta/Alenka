@@ -6,8 +6,6 @@
 #include <QLabel>
 #include <QMessageBox>
 
-#include "../SignalProcessor/montage.h"
-
 CodeEditDialog::CodeEditDialog(QWidget* parent) : QDialog(parent)
 {
 	setWindowFlags(Qt::Window);
@@ -19,7 +17,8 @@ CodeEditDialog::CodeEditDialog(QWidget* parent) : QDialog(parent)
 	box->addWidget(new QLabel("Input and output definition: \n\tin_type out = 0;\n\tin_type in(int);\nReserved names are of the form _*_ plus all OpenCL reserved names are forbidden.\nFunctions from montageHeader.cl file:", this)); // TODO: Move these to help sub dialog.
 
 	QTextEdit* header = new QTextEdit(this);
-	header->setPlainText(QString::fromStdString(Montage::readHeader()));
+	//header->setPlainText(QString::fromStdString(Montage::readHeader()));
+	header->setPlainText("The header is broken now.");
 	header->setReadOnly(true);
 	box->addWidget(header);
 

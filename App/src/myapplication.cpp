@@ -13,6 +13,8 @@
 
 using namespace std;
 
+unique_ptr<OpenCLContext> globalContext(nullptr);
+
 MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 {
 	try
@@ -62,7 +64,7 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 	PROGRAM_OPTIONS.logConfigFile();
 
 	// Initialize the global OpenCL context.
-	globalContext.reset(new OpenCLContext(OPENCL_CONTEXT_CONSTRUCTOR_PARAMETERS));
+	globalContext.reset(new OpenCLContext(PROGRAM_OPTIONS["clPlatform"].as<int>(), PROGRAM_OPTIONS["clDevice"].as<int>()));
 
 	// Set up the clFFT library.
 	clfftStatus errFFT;

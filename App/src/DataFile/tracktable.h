@@ -3,7 +3,7 @@
 
 #include <QAbstractTableModel>
 
-#include "../SignalProcessor/montage.h"
+#include "montage.h"
 #include "trackcodevalidator.h"
 
 #include <QColor>
