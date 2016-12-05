@@ -18,6 +18,7 @@ class QAbstractTableModel;
 class QActionGroup;
 class QLabel;
 class QAction;
+class SpikedetAnalysis;
 
 /**
  * @brief This class implements the top level window of the program.
@@ -56,6 +57,7 @@ private:
 	QLabel* timeStatusLabel;
 	QLabel* positionStatusLabel;
 	QLabel* cursorStatusLabel;
+	SpikedetAnalysis* spikedetAnalysis;
 
 	void connectModel(QAbstractTableModel* model, std::function<void ()> f);
 	void horizontalZoom(double factor);
@@ -92,6 +94,7 @@ private slots:
 	void updateCursorStatusLabel();
 	void updateMontageComboBox();
 	void updateEventTypeComboBox();
+	void runSpikedet();
 };
 
 #endif // SIGNALFILEBROWSERWINDOW_H

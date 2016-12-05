@@ -2,6 +2,8 @@ include(../build)
 
 TEMPLATE = app console
 
+CONFIG += c++11
+
 QT += widgets
 
 HEADERS += \
@@ -33,7 +35,9 @@ HEADERS += \
 	src/Manager/eventtypemanagerdelegate.h \
 	src/Manager/montagemanager.h \
 	src/Manager/trackmanager.h \
-	src/Manager/trackmanagerdelegate.h
+	src/Manager/trackmanagerdelegate.h \
+	src/spikedetanalysis.h \
+	src/spikedetsettingsdialog.h
 
 SOURCES += \
 	src/DataFile/gdf2.cpp \
@@ -65,7 +69,9 @@ SOURCES += \
 	src/Manager/eventtypemanagerdelegate.cpp \
 	src/Manager/montagemanager.cpp \
 	src/Manager/trackmanager.cpp \
-	src/Manager/trackmanagerdelegate.cpp
+	src/Manager/trackmanagerdelegate.cpp \
+	src/spikedetanalysis.cpp \
+	src/spikedetsettingsdialog.cpp
 
 RESOURCES += \
-    resources/resources.qrc
+	resources/resources.qrc

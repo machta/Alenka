@@ -7,7 +7,9 @@
 #include "Manager/eventmanager.h"
 #include "Manager/eventtypemanager.h"
 #include "Manager/montagemanager.h"
-//#include "SignalProcessor/filter.h"
+#include "spikedetanalysis.h"
+#include "myapplication.h"
+#include "spikedetsettingsdialog.h"
 
 #include <QAction>
 #include <QMenuBar>
@@ -113,6 +115,24 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	verticalZoomOutAction->setToolTip("Zoom out amplitudes of signals.");
 	verticalZoomOutAction->setStatusTip(verticalZoomOutAction->toolTip());
 	connect(verticalZoomOutAction, SIGNAL(triggered()), this, SLOT(verticalZoomOut()));
+
+	// Construct Spikedet actions.
+	QAction* runSpikedetAction = new QAction("Run Spikedet Analysis", this);
+	runSpikedetAction->setToolTip("Run Spikedet analysis on the current montage.");
+	runSpikedetAction->setStatusTip(runSpikedetAction->toolTip());
+	connect(runSpikedetAction, &QAction::triggered, [this] () { runSpikedet(); } );
+
+	QAction* spikedetSettingsAction = new QAction("Spikedet Settings", this);
+	spikedetSettingsAction->setToolTip("Change Spikedet settings.");
+	spikedetSettingsAction->setStatusTip(spikedetSettingsAction->toolTip());
+	connect(spikedetSettingsAction, &QAction::triggered, [this] ()
+	{
+		DETECTOR_SETTINGS settings = spikedetAnalysis->getSettings();
+		SpikedetSettingsDialog dialog(&settings, this);
+
+		if (dialog.exec() == QDialog::Accepted)
+			spikedetAnalysis->setSettings(settings);
+	});
 
 	// Construct Time Mode action group.
 	timeModeActionGroup = new QActionGroup(this);
@@ -241,6 +261,14 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	zoomToolBar->addAction(verticalZoomInAction);
 	zoomToolBar->addAction(verticalZoomOutAction);
 
+	// Construct Spikedet tool bar.
+	QToolBar* spikedetToolBar = addToolBar("Spikedet Tool Bar");
+	spikedetToolBar->setObjectName("Spikedet QToolBar");
+	spikedetToolBar->layout()->setSpacing(spacing);
+
+	spikedetToolBar->addAction(runSpikedetAction);
+	spikedetToolBar->addAction(spikedetSettingsAction);
+
 	// Construct File menu.
 	QMenu* fileMenu = menuBar()->addMenu("&File");
 
@@ -280,6 +308,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	windowMenu->addAction(filterToolBar->toggleViewAction());
 	windowMenu->addAction(selectToolBar->toggleViewAction());
 	windowMenu->addAction(zoomToolBar->toggleViewAction());
+	windowMenu->addAction(spikedetToolBar->toggleViewAction());
 
 	// Construct status bar.
 	timeModeStatusLabel = new QLabel(this);
@@ -313,6 +342,9 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	// Restore settings.
 	restoreGeometry(PROGRAM_OPTIONS.settings("SignalFileBrowserWindow geometry").toByteArray());
 	restoreState(PROGRAM_OPTIONS.settings("SignalFileBrowserWindow state").toByteArray());
+
+	// Set up Spikedet.
+	spikedetAnalysis = new SpikedetAnalysis(globalContext.get());
 }
 
 SignalFileBrowserWindow::~SignalFileBrowserWindow()
@@ -703,5 +735,46 @@ void SignalFileBrowserWindow::updateEventTypeComboBox()
 		}
 
 		emit it->selectedTypeChanged(index);
+	}
+}
+
+void SignalFileBrowserWindow::runSpikedet()
+{
+	if (file != nullptr)
+	{
+		spikedetAnalysis->runAnalysis(file, nullptr);
+
+		EventTypeTable* ett = file->getMontageTable()->getEventTypeTable();
+		int index = ett->rowCount();
+		ett->insertRowsBack(3);
+
+		ett->setName("Spikedet K1", index);
+		ett->setColor(QColor(0, 0, 255), index);
+
+		ett->setName("Spikedet K2", index + 1);
+		ett->setColor(QColor(0, 255, 0), index + 1);
+
+		ett->setName("Spikedet K3", index + 2);
+		ett->setColor(QColor(0, 255, 255), index + 2);
+
+		EventTable* et = file->getMontageTable()->getEventTables()->at(file->getInfoTable()->getSelectedMontage());
+		CDetectorOutput* out = spikedetAnalysis->getOutput();
+		assert(out != nullptr);
+
+		int count = out->m_pos.size();
+		assert(out->m_chan.size() == count);
+
+		int etIndex = et->rowCount();
+		et->insertRowsBack(count);
+
+		for (int i = 0; i < count; i++)
+		{
+			et->setLabel("Spike " + to_string(i), etIndex + i);
+			et->setType(index, etIndex + i);
+			et->setPosition(out->m_pos[i]*file->getSamplingFrequency(), etIndex + i);
+			et->setDuration(file->getSamplingFrequency()/20, etIndex + i);
+			//et->setDuration(out->m_dur[i]*file->getSamplingFrequency(), etIndex + i);
+			et->setChannel(out->m_chan[i] - 1, etIndex + i);
+		}
 	}
 }
