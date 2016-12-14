@@ -1,14 +1,21 @@
 # ===============================================
 unix {
-    SIGNAL_LIB = /home/machta/Documents/ZSBS/Alenka-Signal/build-Debug/install-dir
+	SIGNAL_LIB = /home/machta/Documents/ZSBS/Alenka-Signal/build-Debug/install-dir
+	FILE_LIB = /home/machta/Documents/ZSBS/Alenka-File/build-Debug/install-dir
 
 	LIBS += -lclFFT \
 		-lOpenCL \
 		-lboost_program_options \
 		-L$$SIGNAL_LIB/lib \
-		-lalenka-signal
+		-L$$FILE_LIB/lib \
+		-lalenka-signal \
+		-lalenka-file \
+		-lEDF \
+		-lGDF \
+		-lpugixml
 
-    INCLUDEPATH += $$SIGNAL_LIB/include
+	INCLUDEPATH += $$SIGNAL_LIB/include \
+		$$FILE_LIB/include
 
 	QMAKE_CXXFLAGS += -pedantic -Wall
 

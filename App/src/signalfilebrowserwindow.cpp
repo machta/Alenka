@@ -3,6 +3,7 @@
 #include "options.h"
 #include "signalviewer.h"
 #include "DataFile/gdf2.h"
+#include "DataFile/edftmp.h"
 #include "Manager/trackmanager.h"
 #include "Manager/eventmanager.h"
 #include "Manager/eventtypemanager.h"
@@ -413,7 +414,7 @@ void SignalFileBrowserWindow::mode(int m)
 
 void SignalFileBrowserWindow::openFile()
 {
-	QString fileName = QFileDialog::getOpenFileName(this, "Open File", "", "GDF file (*.gdf)");
+	QString fileName = QFileDialog::getOpenFileName(this, "Open File", "", "GDF file (*.gdf);;EDF file (*.edf)");
 
 	logToFile("Opening file '" << fileName.toStdString() << "'.");
 
@@ -426,27 +427,35 @@ void SignalFileBrowserWindow::openFile()
 	// Open the file.
 	delete file;
 
-	QFileInfo fi(fileName);
+	QFileInfo fileInfo(fileName);
 
-	if (fi.exists() == false)
+	if (fileInfo.exists() == false)
 	{
 		logToFileAndConsole("File '" + fileName.toStdString() + "' not found.");
 		return;
 	}
-	else if (fi.isReadable() == false)
+	else if (fileInfo.isReadable() == false)
 	{
 		logToFileAndConsole("File '" + fileName.toStdString() + "' cannot be read.");
 		return;
 	}
-	else if (fi.isWritable() == false)
+	else if (fileInfo.isWritable() == false)
 	{
 		logToFileAndConsole("File '" + fileName.toStdString() + "' cannot be written to.");
 		return;
 	}
 
-	file = new GDF2((fi.path() + QDir::separator() + fi.completeBaseName()).toStdString());
+	string stdFileName = (fileInfo.path() + QDir::separator() + fileInfo.completeBaseName()).toStdString();
+	if (fileInfo.suffix().toLower() == "gdf")
+	{
+		file = new GDF2(stdFileName);
+	}
+	else
+	{
+		file = new EdfTmp(stdFileName);
+	}
 
-	setWindowTitle(fi.fileName() + " - " + title);
+	setWindowTitle(fileInfo.fileName() + " - " + title);
 
 	InfoTable* it = file->getInfoTable();
 
