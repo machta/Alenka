@@ -751,8 +751,18 @@ void SignalFileBrowserWindow::runSpikedet()
 {
 	if (file != nullptr)
 	{
-		spikedetAnalysis->runAnalysis(file, nullptr);
+		// Build montage from code. (This is a code duplicity taken from SignalProcessor.)
+		vector<Montage<float>*> montage;
 
+		auto code = file->getMontageTable()->getTrackTables()->at(file->getInfoTable()->getSelectedMontage())->getCode();
+
+		for (auto e : code)
+			montage.push_back(new Montage<float>(e, globalContext.get())); // TODO: add header source
+
+		// Run Spikedet.
+		spikedetAnalysis->runAnalysis(file, montage);
+
+		// Process the output structure.
 		EventTypeTable* ett = file->getMontageTable()->getEventTypeTable();
 		int index = ett->rowCount();
 		ett->insertRowsBack(3);
@@ -771,19 +781,22 @@ void SignalFileBrowserWindow::runSpikedet()
 		assert(out != nullptr);
 
 		int count = out->m_pos.size();
-		assert(out->m_chan.size() == count);
-
-		int etIndex = et->rowCount();
-		et->insertRowsBack(count);
-
-		for (int i = 0; i < count; i++)
+		if (count > 0)
 		{
-			et->setLabel("Spike " + to_string(i), etIndex + i);
-			et->setType(index, etIndex + i);
-			et->setPosition(out->m_pos[i]*file->getSamplingFrequency(), etIndex + i);
-			et->setDuration(file->getSamplingFrequency()/20, etIndex + i);
-			//et->setDuration(out->m_dur[i]*file->getSamplingFrequency(), etIndex + i);
-			et->setChannel(out->m_chan[i] - 1, etIndex + i);
+			assert(out->m_chan.size() == count);
+
+			int etIndex = et->rowCount();
+			et->insertRowsBack(count);
+
+			for (int i = 0; i < count; i++)
+			{
+				et->setLabel("Spike " + to_string(i), etIndex + i);
+				et->setType(index, etIndex + i);
+				et->setPosition(out->m_pos[i]*file->getSamplingFrequency(), etIndex + i);
+				et->setDuration(file->getSamplingFrequency()/20, etIndex + i);
+				//et->setDuration(out->m_dur[i]*file->getSamplingFrequency(), etIndex + i);
+				et->setChannel(out->m_chan[i] - 1, etIndex + i);
+			}
 		}
 	}
 }

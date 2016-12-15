@@ -64,6 +64,20 @@ void EdfTmp::save()
 	DataFile::save();	
 }
 
+void EdfTmp::readData(std::vector<float>* data, int64_t firstSample, int64_t lastSample)
+{
+	lock_guard<mutex> lock(fileMutex);
+
+	file->readSignal(data->data(), firstSample, lastSample);
+}
+
+void EdfTmp::readData(std::vector<double>* data, int64_t firstSample, int64_t lastSample)
+{
+	lock_guard<mutex> lock(fileMutex);
+
+	file->readSignal(data->data(), firstSample, lastSample);
+}
+
 bool EdfTmp::load()
 {
 	if (DataFile::load() == false)
@@ -106,12 +120,4 @@ bool EdfTmp::load()
 	}
 
 	return true;
-}
-
-template<typename T>
-void EdfTmp::readDataLocal(vector<T>* data, int64_t firstSample, int64_t lastSample)
-{
-	lock_guard<mutex> lock(fileMutex);
-
-	file->readSignal(data->data(), firstSample, lastSample);
 }

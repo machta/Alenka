@@ -37,7 +37,7 @@ public:
 		return settings;
 	}
 
-	void runAnalysis(DataFile* file, Montage<float>* montage);
+	void runAnalysis(DataFile* file, const std::vector<Montage<float>*>& montage);
 
 private:
 	OpenCLContext* context;
