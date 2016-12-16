@@ -12,6 +12,9 @@
 #include "myapplication.h"
 #include "spikedetsettingsdialog.h"
 
+#include <AlenkaSignal/openclcontext.h>
+#include <AlenkaSignal/montage.h>
+
 #include <QAction>
 #include <QMenuBar>
 #include <QMenu>
@@ -128,7 +131,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	spikedetSettingsAction->setStatusTip(spikedetSettingsAction->toolTip());
 	connect(spikedetSettingsAction, &QAction::triggered, [this] ()
 	{
-		DETECTOR_SETTINGS settings = spikedetAnalysis->getSettings();
+		AlenkaSignal::DETECTOR_SETTINGS settings = spikedetAnalysis->getSettings();
 		SpikedetSettingsDialog dialog(&settings, this);
 
 		if (dialog.exec() == QDialog::Accepted)
@@ -752,12 +755,12 @@ void SignalFileBrowserWindow::runSpikedet()
 	if (file != nullptr)
 	{
 		// Build montage from code. (This is a code duplicity taken from SignalProcessor.)
-		vector<Montage<float>*> montage;
+		vector<AlenkaSignal::Montage<float>*> montage;
 
 		auto code = file->getMontageTable()->getTrackTables()->at(file->getInfoTable()->getSelectedMontage())->getCode();
 
 		for (auto e : code)
-			montage.push_back(new Montage<float>(e, globalContext.get())); // TODO: add header source
+			montage.push_back(new AlenkaSignal::Montage<float>(e, globalContext.get())); // TODO: add header source
 
 		// Run Spikedet.
 		spikedetAnalysis->runAnalysis(file, montage);
@@ -777,7 +780,7 @@ void SignalFileBrowserWindow::runSpikedet()
 		ett->setColor(QColor(0, 255, 255), index + 2);
 
 		EventTable* et = file->getMontageTable()->getEventTables()->at(file->getInfoTable()->getSelectedMontage());
-		CDetectorOutput* out = spikedetAnalysis->getOutput();
+		AlenkaSignal::CDetectorOutput* out = spikedetAnalysis->getOutput();
 		assert(out != nullptr);
 
 		int count = out->m_pos.size();

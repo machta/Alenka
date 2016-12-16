@@ -2,7 +2,7 @@
 
 #include "options.h"
 #include "signalviewer.h"
-#include "filter.h"
+//#include "filter.h"
 
 #include <QMatrix4x4>
 #include <QWheelEvent>

@@ -1,17 +1,21 @@
 #ifndef SPIKEDETANALYSIS_H
 #define SPIKEDETANALYSIS_H
 
-#include "spikedet.h"
+#include <AlenkaSignal/spikedet.h>
 
 class DataFile;
+
+namespace AlenkaSignal
+{
+class OpenCLContext;
 template<class T>
 class Montage;
-class OpenCLContext;
+}
 
 class SpikedetAnalysis
 {
 public:
-	SpikedetAnalysis(OpenCLContext* context) : context(context)
+	SpikedetAnalysis(AlenkaSignal::OpenCLContext* context) : context(context)
 	{}
 	~SpikedetAnalysis()
 	{
@@ -19,31 +23,31 @@ public:
 		delete discharges;
 	}
 
-	CDetectorOutput* getOutput()
+	AlenkaSignal::CDetectorOutput* getOutput()
 	{
 		return output;
 	}
-	CDischarges* getDischarges()
+	AlenkaSignal::CDischarges* getDischarges()
 	{
 		return discharges;
 	}
 
-	void setSettings(DETECTOR_SETTINGS s)
+	void setSettings(AlenkaSignal::DETECTOR_SETTINGS s)
 	{
 		settings = s;
 	}
-	DETECTOR_SETTINGS getSettings()
+	AlenkaSignal::DETECTOR_SETTINGS getSettings()
 	{
 		return settings;
 	}
 
-	void runAnalysis(DataFile* file, const std::vector<Montage<float>*>& montage);
+	void runAnalysis(DataFile* file, const std::vector<AlenkaSignal::Montage<float>*>& montage);
 
 private:
-	OpenCLContext* context;
-	DETECTOR_SETTINGS settings;
-	CDetectorOutput* output = nullptr;
-	CDischarges* discharges = nullptr;
+	AlenkaSignal::OpenCLContext* context;
+	AlenkaSignal::DETECTOR_SETTINGS settings;
+	AlenkaSignal::CDetectorOutput* output = nullptr;
+	AlenkaSignal::CDischarges* discharges = nullptr;
 };
 
 #endif // SPIKEDETANALYSIS_H

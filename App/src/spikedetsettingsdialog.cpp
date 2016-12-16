@@ -9,7 +9,7 @@
 
 using namespace std;
 
-SpikedetSettingsDialog::SpikedetSettingsDialog(DETECTOR_SETTINGS* settings, QWidget* parent) : QDialog(parent), settings(settings)
+SpikedetSettingsDialog::SpikedetSettingsDialog(AlenkaSignal::DETECTOR_SETTINGS* settings, QWidget* parent) : QDialog(parent), settings(settings)
 {
 	QVBoxLayout* box = new QVBoxLayout();
 

@@ -7,9 +7,6 @@
 #include "../DataFile/datafile.h"
 #include "../options.h"
 #include "gpucache.h"
-#include "openclcontext.h"
-#include "filterprocessor.h"
-#include "montageprocessor.h"
 
 #include <CL/cl_gl.h>
 
@@ -18,6 +15,17 @@
 #include <vector>
 #include <sstream>
 #include <cassert>
+
+namespace AlenkaSignal
+{
+class OpenCLContext;
+template<class T>
+class FilterProcessor;
+template<class T>
+class Montage;
+template<class T>
+class MontageProcessor;
+}
 
 /**
  * @brief A class used for retrieving the processed signal blocks.
@@ -115,10 +123,10 @@ private:
 	InfoTable* infoTable = nullptr;
 	InfoTable defaultInfoTable;
 	DataFile* file = nullptr;
-	OpenCLContext* context;
-	FilterProcessor<float>* filterProcessor;
-	MontageProcessor<float>* montageProcessor;
-	std::vector<Montage<float>*> montage;
+	AlenkaSignal::OpenCLContext* context;
+	AlenkaSignal::FilterProcessor<float>* filterProcessor;
+	AlenkaSignal::MontageProcessor<float>* montageProcessor;
+	std::vector<AlenkaSignal::Montage<float>*> montage;
 	GPUCache* cache;
 
 	bool onlineFilter;

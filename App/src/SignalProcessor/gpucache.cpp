@@ -1,11 +1,14 @@
 #include "gpucache.h"
 
+#include <AlenkaSignal/openclcontext.h>
+#include <AlenkaSignal/filterprocessor.h>
+
 #include <algorithm>
 #include <cassert>
 
 using namespace std;
 
-GPUCache::GPUCache(unsigned int blockSize, unsigned int offset, int delay, int64_t availableMemory, DataFile* file, OpenCLContext* context, FilterProcessor<float>* filterProcessor)
+GPUCache::GPUCache(unsigned int blockSize, unsigned int offset, int delay, int64_t availableMemory, DataFile* file, AlenkaSignal::OpenCLContext* context, AlenkaSignal::FilterProcessor<float>* filterProcessor)
 	: blockSize(blockSize), offset(offset), delay(delay), file(file), filterProcessor(filterProcessor)
 {
 	cl_int err;

@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-#include "filter.h"
+//#include "filter.h"
 
 class QXmlStreamReader;
 class QXmlStreamWriter;

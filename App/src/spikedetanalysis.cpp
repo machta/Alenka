@@ -1,11 +1,13 @@
 #include "spikedetanalysis.h"
 
 #include "DataFile/datafile.h"
-#include <openclcontext.h>
-#include <montage.h>
-#include <montageprocessor.h>
+
+#include <AlenkaSignal/openclcontext.h>
+#include <AlenkaSignal/montage.h>
+#include <AlenkaSignal/montageprocessor.h>
 
 using namespace std;
+using namespace AlenkaSignal;
 
 namespace
 {
@@ -16,7 +18,7 @@ class Loader : public SpikedetDataLoader<T>
 	const int BLOCK_LENGTH = 8*1024/*512*/;
 
 	DataFile* file;
-	const std::vector<Montage<T>*>& montage;
+	const vector<Montage<T>*>& montage;
 
 	MontageProcessor<T>* processor;
 	vector<T> tmpData;
@@ -25,7 +27,7 @@ class Loader : public SpikedetDataLoader<T>
 	cl_mem inBuffer = nullptr, outBuffer = nullptr;
 
 public:
-	Loader(DataFile* file, const std::vector<Montage<T>*>& montage, OpenCLContext* context) :
+	Loader(DataFile* file, const vector<Montage<T>*>& montage, OpenCLContext* context) :
 		file(file), montage(montage), inChannels(file->getChannelCount()), outChannels(montage.size())
 	{
 		processor = new MontageProcessor<T>(0, BLOCK_LENGTH, inChannels);
@@ -110,7 +112,7 @@ public:
 
 } // namespace
 
-void SpikedetAnalysis::runAnalysis(DataFile* file, const std::vector<Montage<float>*>& montage)
+void SpikedetAnalysis::runAnalysis(DataFile* file, const vector<Montage<float>*>& montage)
 {
 	assert(file != nullptr);
 

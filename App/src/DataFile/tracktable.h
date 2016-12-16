@@ -3,7 +3,7 @@
 
 #include <QAbstractTableModel>
 
-#include "montage.h"
+//#include "montage.h"
 #include "trackcodevalidator.h"
 
 #include <QColor>

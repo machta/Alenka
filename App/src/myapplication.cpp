@@ -2,7 +2,7 @@
 
 #include "options.h"
 #include "error.h"
-#include "openclcontext.h"
+#include <AlenkaSignal/openclcontext.h>
 
 #include <QSurfaceFormat>
 #include <QMessageBox>
@@ -13,7 +13,7 @@
 
 using namespace std;
 
-unique_ptr<OpenCLContext> globalContext(nullptr);
+unique_ptr<AlenkaSignal::OpenCLContext> globalContext(nullptr);
 
 MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 {
@@ -64,7 +64,7 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 	PROGRAM_OPTIONS.logConfigFile();
 
 	// Initialize the global OpenCL context.
-	globalContext.reset(new OpenCLContext(PROGRAM_OPTIONS["clPlatform"].as<int>(), PROGRAM_OPTIONS["clDevice"].as<int>()));
+	globalContext.reset(new AlenkaSignal::OpenCLContext(PROGRAM_OPTIONS["clPlatform"].as<int>(), PROGRAM_OPTIONS["clDevice"].as<int>()));
 
 	// Set up the clFFT library.
 	clfftStatus errFFT;

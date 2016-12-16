@@ -6,6 +6,10 @@
 #include <memory>
 
 class Options;
+namespace AlenkaSignal
+{
+class OpenCLContext;
+}
 
 /**
  * @brief This class initializes objects and libraries needed to run the program.
@@ -44,7 +48,6 @@ private:
 	Options* options = nullptr;
 };
 
-class OpenCLContext;
-extern std::unique_ptr<OpenCLContext> globalContext;
+extern std::unique_ptr<AlenkaSignal::OpenCLContext> globalContext;
 
 #endif // MYAPPLICATION_H

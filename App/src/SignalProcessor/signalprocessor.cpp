@@ -2,6 +2,12 @@
 
 #include "../myapplication.h"
 
+#include <AlenkaSignal/openclcontext.h>
+#include <AlenkaSignal/filter.h>
+#include <AlenkaSignal/filterprocessor.h>
+#include <AlenkaSignal/montage.h>
+#include <AlenkaSignal/montageprocessor.h>
+
 #include <algorithm>
 #include <stdexcept>
 
@@ -18,7 +24,7 @@ SignalProcessor::SignalProcessor()
 
 	if (glSharing)
 	{
-		context = new OpenCLContext(PROGRAM_OPTIONS["clPlatform"].as<int>(), PROGRAM_OPTIONS["clDevice"].as<int>(), true);
+		context = new AlenkaSignal::OpenCLContext(PROGRAM_OPTIONS["clPlatform"].as<int>(), PROGRAM_OPTIONS["clDevice"].as<int>(), true);
 	}
 	else
 	{
@@ -76,7 +82,7 @@ void SignalProcessor::updateFilter()
 	}
 
 	int M = file->getSamplingFrequency()/* + 1*/;
-	Filter<float> filter(M, file->getSamplingFrequency()); // Possibly could save this object so that it won't be created from scratch everytime.
+	AlenkaSignal::Filter<float> filter(M, file->getSamplingFrequency()); // Possibly could save this object so that it won't be created from scratch everytime.
 
 	filter.lowpass(true);
 	filter.setLowpass(getInfoTable()->getLowpassFrequency());
@@ -148,7 +154,7 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 	cl_event readyEvent = clCreateUserEvent(context->getCLContext(), &err);
 	checkClErrorCode(err, "clCreateUserEvent()");
 
-	OpenCLContext::enqueueBarrier(commandQueue, readyEvent);
+	AlenkaSignal::OpenCLContext::enqueueBarrier(commandQueue, readyEvent);
 
 	int index = cache->getAny(indexSet, processorTmpBuffer, readyEvent);
 
@@ -227,9 +233,9 @@ void SignalProcessor::changeFile(DataFile* file)
 		unsigned int tmpBlockSize = (blockSize + offset)*file->getChannelCount();
 
 		// Construct the filter and montage processors.
-		filterProcessor = new FilterProcessor<float>(blockSize + offset, file->getChannelCount(), context);
+		filterProcessor = new AlenkaSignal::FilterProcessor<float>(blockSize + offset, file->getChannelCount(), context);
 
-		montageProcessor = new MontageProcessor<float>(offset, blockSize, file->getChannelCount());
+		montageProcessor = new AlenkaSignal::MontageProcessor<float>(offset, blockSize, file->getChannelCount());
 
 		// Construct the cache.
 		int64_t memoryToUse = PROGRAM_OPTIONS["gpuMemorySize"].as<int64_t>();
@@ -295,7 +301,7 @@ void SignalProcessor::updateMontage()
 	deleteMontage();
 
 	for (auto e : code)
-		montage.push_back(new Montage<float>(e, context)); // TODO: add header source
+		montage.push_back(new AlenkaSignal::Montage<float>(e, context)); // TODO: add header source
 
 	assert(montage.size() > 0);
 

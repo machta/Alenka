@@ -3,8 +3,6 @@
 
 #include "../DataFile/datafile.h"
 #include "../error.h"
-#include "openclcontext.h"
-#include "filterprocessor.h"
 
 #include <CL/cl_gl.h>
 
@@ -18,6 +16,13 @@
 #include <atomic>
 #include <exception>
 #include <tuple>
+
+namespace AlenkaSignal
+{
+class OpenCLContext;
+template<class T>
+class FilterProcessor;
+}
 
 /**
  * @brief This class a LRU cache of data blocks on the GPU.
@@ -40,7 +45,7 @@ public:
 	 * @param availableMemory The maximum bytes available for the cache.
 	 * @param filterProcessor If nullptr, the cached blocks are not filtered.
 	 */
-	GPUCache(unsigned int blockSize, unsigned int offset, int delay, int64_t availableMemory, DataFile* file, OpenCLContext* context, FilterProcessor<float>* filterProcessor);
+	GPUCache(unsigned int blockSize, unsigned int offset, int delay, int64_t availableMemory, DataFile* file, AlenkaSignal::OpenCLContext* context, AlenkaSignal::FilterProcessor<float>* filterProcessor);
 	~GPUCache();
 
 	/**
@@ -77,7 +82,7 @@ private:
 	int delay;
 	unsigned int capacity;
 	DataFile* file;
-	FilterProcessor<float>* filterProcessor;
+	AlenkaSignal::FilterProcessor<float>* filterProcessor;
 	cl_command_queue commandQueue;
 	std::vector<cl_mem> buffers;
 	cl_mem tmpMemBuffer;

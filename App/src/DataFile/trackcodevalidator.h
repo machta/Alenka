@@ -1,8 +1,12 @@
 #ifndef TRACKCODEVALIDATOR_H
 #define TRACKCODEVALIDATOR_H
 
-class OpenCLContext;
 class QString;
+
+namespace AlenkaSignal
+{
+class OpenCLContext;
+}
 
 /**
  * @brief A convenience class for testing montage track code.
@@ -22,7 +26,7 @@ public:
 	bool validate(const QString& input, QString* errorMessage = nullptr);
 
 private:
-	OpenCLContext* context;
+	AlenkaSignal::OpenCLContext* context;
 };
 
 #endif // TRACKCODEVALIDATOR_H

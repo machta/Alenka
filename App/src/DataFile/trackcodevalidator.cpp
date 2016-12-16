@@ -1,9 +1,10 @@
 #include "trackcodevalidator.h"
 
 #include "../myapplication.h"
-#include "openclcontext.h"
 #include "../options.h"
-#include "montage.h"
+
+#include <AlenkaSignal/openclcontext.h>
+#include <AlenkaSignal/montage.h>
 
 #include <string>
 
