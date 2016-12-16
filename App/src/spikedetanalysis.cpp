@@ -6,6 +6,10 @@
 #include <AlenkaSignal/montage.h>
 #include <AlenkaSignal/montageprocessor.h>
 
+#include <QProgressDialog>
+
+#include <thread>
+
 using namespace std;
 using namespace AlenkaSignal;
 
@@ -112,7 +116,7 @@ public:
 
 } // namespace
 
-void SpikedetAnalysis::runAnalysis(DataFile* file, const vector<Montage<float>*>& montage)
+void SpikedetAnalysis::runAnalysis(DataFile* file, const vector<Montage<float>*>& montage, QProgressDialog* progress)
 {
 	assert(file != nullptr);
 
@@ -125,5 +129,25 @@ void SpikedetAnalysis::runAnalysis(DataFile* file, const vector<Montage<float>*>
 	delete discharges;
 	discharges = new CDischarges(file->getChannelCount());
 
-	spikedet.runAnalysis(&loader, output, discharges);
+	thread t([&] () { spikedet.runAnalysis(&loader, output, discharges); });
+
+	while (1)
+	{
+		this_thread::sleep_for(std::chrono::milliseconds(10));
+
+		int percentage = spikedet.progressPercentage();
+		progress->setValue(percentage);
+
+		if (progress->wasCanceled())
+		{
+			spikedet.cancel();
+			break;
+		}
+
+		if (percentage == 100)
+			break;
+	}
+
+	t.join();
+	progress->setValue(100);
 }

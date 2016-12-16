@@ -29,6 +29,7 @@
 #include <QLayout>
 #include <QInputDialog>
 #include <QLocale>
+#include <QProgressDialog>
 
 using namespace std;
 
@@ -763,7 +764,10 @@ void SignalFileBrowserWindow::runSpikedet()
 			montage.push_back(new AlenkaSignal::Montage<float>(e, globalContext.get())); // TODO: add header source
 
 		// Run Spikedet.
-		spikedetAnalysis->runAnalysis(file, montage);
+		QProgressDialog progress("Running Spikedet analysis", "Abort", 0, 100, this);
+		progress.setWindowModality(Qt::WindowModal);
+
+		spikedetAnalysis->runAnalysis(file, montage, &progress);
 
 		// Process the output structure.
 		EventTypeTable* ett = file->getMontageTable()->getEventTypeTable();
