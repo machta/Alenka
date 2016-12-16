@@ -783,7 +783,7 @@ void SignalFileBrowserWindow::runSpikedet()
 		AlenkaSignal::CDetectorOutput* out = spikedetAnalysis->getOutput();
 		assert(out != nullptr);
 
-		int count = out->m_pos.size();
+		unsigned int count = out->m_pos.size();
 		if (count > 0)
 		{
 			assert(out->m_chan.size() == count);
@@ -791,7 +791,7 @@ void SignalFileBrowserWindow::runSpikedet()
 			int etIndex = et->rowCount();
 			et->insertRowsBack(count);
 
-			for (int i = 0; i < count; i++)
+			for (unsigned int i = 0; i < count; i++)
 			{
 				et->setLabel("Spike " + to_string(i), etIndex + i);
 				et->setType(index, etIndex + i);

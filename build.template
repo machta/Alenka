@@ -1,7 +1,14 @@
+# Copy this file to "build" and change some of the values to suit your system.
+
 # ===============================================
 unix {
-	SIGNAL_LIB = /home/machta/Documents/ZSBS/Alenka-Signal/build-Debug/install-dir
-	FILE_LIB = /home/machta/Documents/ZSBS/Alenka-File/build-Debug/install-dir
+	Debug {
+		SIGNAL_LIB = /home/machta/Documents/ZSBS/Alenka-Signal/build-Debug/install-dir
+		FILE_LIB = /home/machta/Documents/ZSBS/Alenka-File/build-Debug/install-dir
+	} else {
+		SIGNAL_LIB = /home/machta/Documents/ZSBS/Alenka-Signal/build-Release/install-dir
+		FILE_LIB = /home/machta/Documents/ZSBS/Alenka-File/build-Release/install-dir
+	}
 
 	LIBS += -lclFFT \
 		-lOpenCL \
