@@ -17,7 +17,7 @@ Debug {
 		FILE_LIB = $$_PRO_FILE_PWD_/../../Alenka-File/build-Release-32/install-dir
 	}
 }
-message($$SIGNAL_LIB)
+
 INCLUDEPATH += $$SIGNAL_LIB/include $$FILE_LIB/include
 
 LIBS += \
