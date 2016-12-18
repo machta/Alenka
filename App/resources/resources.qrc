@@ -1,11 +1,13 @@
 <RCC>
-<qresource>
-	<file>color.frag</file>
-	<file>edit.png</file>
-	<file>event.vert</file>
-	<file>kernels.cl</file>
-	<file>montageHeader.cl</file>
-	<file>rectangleLine.vert</file>
-	<file>signal.vert</file>
-</qresource>
+    <qresource prefix="/">
+        <file>color.frag</file>
+        <file>event.vert</file>
+        <file>kernels.cl</file>
+        <file>montageHeader.cl</file>
+        <file>rectangleLine.vert</file>
+        <file>signal.vert</file>
+        <file>play-icon.png</file>
+        <file>settings-icon.png</file>
+        <file>edit-icon.png</file>
+    </qresource>
 </RCC>

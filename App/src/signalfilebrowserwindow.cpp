@@ -122,12 +122,12 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	connect(verticalZoomOutAction, SIGNAL(triggered()), this, SLOT(verticalZoomOut()));
 
 	// Construct Spikedet actions.
-	QAction* runSpikedetAction = new QAction("Run Spikedet Analysis", this);
+	QAction* runSpikedetAction = new QAction(QIcon(":/play-icon.png"), "Run Spikedet Analysis", this);
 	runSpikedetAction->setToolTip("Run Spikedet analysis on the current montage.");
 	runSpikedetAction->setStatusTip(runSpikedetAction->toolTip());
 	connect(runSpikedetAction, &QAction::triggered, [this] () { runSpikedet(); } );
 
-	QAction* spikedetSettingsAction = new QAction("Spikedet Settings", this);
+	QAction* spikedetSettingsAction = new QAction(QIcon(":/settings-icon.png"), "Spikedet Settings", this);
 	spikedetSettingsAction->setToolTip("Change Spikedet settings.");
 	spikedetSettingsAction->setStatusTip(spikedetSettingsAction->toolTip());
 	connect(spikedetSettingsAction, &QAction::triggered, [this] ()
@@ -314,6 +314,12 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	windowMenu->addAction(selectToolBar->toggleViewAction());
 	windowMenu->addAction(zoomToolBar->toggleViewAction());
 	windowMenu->addAction(spikedetToolBar->toggleViewAction());
+
+	// Construct Tools menu.
+	QMenu* toolsMenu = menuBar()->addMenu("&Tools");
+
+	toolsMenu->addAction(runSpikedetAction);
+	toolsMenu->addAction(spikedetSettingsAction);
 
 	// Construct status bar.
 	timeModeStatusLabel = new QLabel(this);

@@ -22,7 +22,7 @@ QWidget* EventTypeManagerDelegate::createEditor(QWidget* parent, const QStyleOpt
 	{
 		QLineEdit* lineEdit = new QLineEdit(parent);
 
-		QAction* action = lineEdit->addAction(QIcon(":/edit.png"), QLineEdit::TrailingPosition);
+		QAction* action = lineEdit->addAction(QIcon(":/edit-icon.png"), QLineEdit::TrailingPosition);
 
 		connect(action, &QAction::triggered, [this, lineEdit] ()
 		{
