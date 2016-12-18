@@ -63,3 +63,6 @@ App/doc
 # local copy of the build script
 build
 
+# external libraries subdirs
+Alenka-File
+Alenka-Signal

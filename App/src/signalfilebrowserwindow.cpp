@@ -771,8 +771,10 @@ void SignalFileBrowserWindow::runSpikedet()
 
 		// Run Spikedet.
 		QProgressDialog progress("Running Spikedet analysis", "Abort", 0, 100, this);
-		//progress.setMinimumDuration(0);
 		progress.setWindowModality(Qt::WindowModal);
+
+		progress.setMinimumDuration(0); // This is to show the dialog immediately.
+		progress.setValue(1);
 
 		spikedetAnalysis->runAnalysis(file, montage, &progress);
 
