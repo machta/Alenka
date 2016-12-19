@@ -2,7 +2,6 @@
     <qresource prefix="/">
         <file>color.frag</file>
         <file>event.vert</file>
-        <file>kernels.cl</file>
         <file>montageHeader.cl</file>
         <file>rectangleLine.vert</file>
         <file>signal.vert</file>
