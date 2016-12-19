@@ -20,6 +20,8 @@ CONFIG(debug, debug|release) {
 
 INCLUDEPATH += $$SIGNAL_LIB/include $$FILE_LIB/include
 
+DEFINES += CL_USE_DEPRECATED_OPENCL_1_2_APIS
+
 LIBS += \
 	-L$$SIGNAL_LIB/lib \
 	-L$$FILE_LIB/lib \

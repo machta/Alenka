@@ -88,7 +88,7 @@ public:
 
 			size_t origin[] = {0, 0, 0};
 			size_t rowLen = len*sizeof(T);
-			size_t inRegion[] = {rowLen, inChannels, 1};
+			size_t inRegion[] = {rowLen, static_cast<size_t>(inChannels), 1};
 
 			err = clEnqueueWriteBufferRect(queue, inBuffer, CL_FALSE, origin, origin, inRegion, BLOCK_LENGTH*sizeof(T), 0, 0, 0, tmpData.data(), 0, nullptr, nullptr); // SEGFAULT
 			checkClErrorCode(err, "clEnqueueWriteBufferRect()");
@@ -96,7 +96,7 @@ public:
 			processor->process(montage, inBuffer, outBuffer, queue);
 			//OpenCLContext::printBuffer("after_process.txt", outBuffer, queue);
 
-			size_t outRegion[] = {rowLen, outChannels, 1};
+			size_t outRegion[] = {rowLen, static_cast<size_t>(outChannels), 1};
 			size_t dataOrigin[] = {(sample - firstSample)*sizeof(T), 0, 0};
 
 			err =  clEnqueueReadBufferRect(queue, outBuffer, CL_FALSE, origin, dataOrigin, outRegion, BLOCK_LENGTH*sizeof(T), 0,

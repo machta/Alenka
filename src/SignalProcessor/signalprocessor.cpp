@@ -292,6 +292,20 @@ void SignalProcessor::destroyFileRelated()
 	}
 }
 
+void SignalProcessor::releaseOutputBuffer()
+{
+	if (processorOutputBuffer != nullptr)
+	{
+		cl_int err = clReleaseMemObject(processorOutputBuffer);
+		checkClErrorCode(err, "clReleaseMemObject()");
+
+		processorOutputBuffer = nullptr;
+	}
+
+	delete[] processorOutputBufferTmp;
+	processorOutputBufferTmp = nullptr;
+}
+
 void SignalProcessor::updateMontage()
 {
 	assert(ready());
@@ -349,4 +363,11 @@ void SignalProcessor::updateMontage()
 	}
 
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void SignalProcessor::deleteMontage()
+{
+	for (auto e : montage)
+		delete e;
+	montage.clear();
 }

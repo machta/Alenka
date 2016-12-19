@@ -170,30 +170,13 @@ private:
 
 		return ss.str();
 	}
-	void releaseOutputBuffer()
-	{
-		if (processorOutputBuffer != nullptr)
-		{
-			cl_int err = clReleaseMemObject(processorOutputBuffer);
-			checkClErrorCode(err, "clReleaseMemObject()");
-
-			processorOutputBuffer = nullptr;
-		}
-
-		delete[] processorOutputBufferTmp;
-		processorOutputBufferTmp = nullptr;
-	}
+	void releaseOutputBuffer();
 
 	/**
 	 * @brief This method actually (unlike setUpdateMontageFlag()) updates the MontageProcessor object.
 	 */
 	void updateMontage();
-	void deleteMontage()
-	{
-		for (auto e : montage)
-			delete e;
-		montage.clear();
-	}
+	void deleteMontage();
 };
 
 #endif // SIGNALPROCESSOR_H
