@@ -9,6 +9,7 @@
 #include <string>
 
 using namespace std;
+using namespace AlenkaSignal;
 
 TrackCodeValidator::TrackCodeValidator()
 {
@@ -21,19 +22,19 @@ TrackCodeValidator::~TrackCodeValidator()
 
 bool TrackCodeValidator::validate(const QString& input, QString* errorMessage)
 {
-	/*if (errorMessage == nullptr)
+	if (errorMessage == nullptr)
 	{
-		return Montage::test(input.toStdString(), context, nullptr);
+		return Montage<float>::test(input.toStdString(), context, nullptr);
 	}
 	else
 	{
 		string message;
 
-		bool result = Montage::test(input.toStdString(), context, &message);
+		bool result = Montage<float>::test(input.toStdString(), context, &message);
 
 		*errorMessage = QString::fromStdString(message);
 
 		return result;
-	}*/
-	return true; // TODO: fix this test
+	}
+	return true;
 }

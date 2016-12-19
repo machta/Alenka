@@ -305,7 +305,7 @@ void SignalProcessor::updateMontage()
 	string header = headerFile.readAll().toStdString();
 
 	for (auto e : code)
-		montage.push_back(new AlenkaSignal::Montage<float>(e, context, header)); // TODO: add header source
+		montage.push_back(new AlenkaSignal::Montage<float>(e, context, header));
 
 	assert(montage.size() > 0);
 

@@ -771,7 +771,7 @@ void SignalFileBrowserWindow::runSpikedet()
 		string header = headerFile.readAll().toStdString();
 
 		for (auto e : code)
-			montage.push_back(new AlenkaSignal::Montage<float>(e, globalContext.get(), header)); // TODO: add header source
+			montage.push_back(new AlenkaSignal::Montage<float>(e, globalContext.get(), header));
 
 		// Run Spikedet.
 		QProgressDialog progress("Running Spikedet analysis", "Abort", 0, 100, this);
