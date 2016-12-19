@@ -29,12 +29,11 @@ LIBS += \
 	-lclFFT \
 	-lEDF \
 	-lGDF \
-	-lpugixml \
-	-ldl
+	-lpugixml
 
 # ===============================================
 unix {
-	LIBS += -lboost_program_options
+	LIBS += -lboost_program_options -ldl
 
 	QMAKE_CXXFLAGS += -pedantic -Wall
 	QMAKE_LFLAGS += -fopenmp

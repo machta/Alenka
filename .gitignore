@@ -44,21 +44,23 @@ Thumbs.db
 # ----------------------------------------------------------------------------
 
 # config file
-*/options*.cfg
+options*.cfg
 
 # local excludes file
-excludes.txt
+.excludes.txt
 
 # log files and log dir
-App/*.log
-App/log
+*.log
+log
 
 # mont and info files
 *.mont
 *.info
 
 # doxygen documentation
-App/doc
+doc/html
+doc/latex
+doc/index.html
 
 # local copy of the build script
 build
