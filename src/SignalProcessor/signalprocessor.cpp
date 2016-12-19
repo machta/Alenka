@@ -300,8 +300,12 @@ void SignalProcessor::updateMontage()
 
 	deleteMontage();
 
+	QFile headerFile(":/montageHeader.cl");
+	headerFile.open(QIODevice::ReadOnly);
+	string header = headerFile.readAll().toStdString();
+
 	for (auto e : code)
-		montage.push_back(new AlenkaSignal::Montage<float>(e, context)); // TODO: add header source
+		montage.push_back(new AlenkaSignal::Montage<float>(e, context, header)); // TODO: add header source
 
 	assert(montage.size() > 0);
 

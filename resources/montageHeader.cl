@@ -4,9 +4,9 @@
  * The following example shows a custom function that sums the samples from
  * channels designated by the range [from, to].
  * @code{.cpp}
-in_type sum(int from, int to, PARA)
+float sum(int from, int to, PARA)
 {
-	in_type tmp = 0;
+	float tmp = 0;
 	for (int i = from; i <= to; ++i)
 	{
 		tmp += in(i);
@@ -29,16 +29,13 @@ in_type sum(int from, int to, PARA)
 out = sum(1, 3);
  * @endcode
  *
- * The in_type type represents the type of the input and output data.
- * This type is returned by in().
- *
  * @file
  */
  /// @cond
 
-in_type sum(int from, int to, PARA)
+float sum(int from, int to, PARA)
 {
-	in_type tmp = 0;
+	float tmp = 0;
 	for (int i = from; i <= to; ++i)
 	{
 		tmp += in(i);

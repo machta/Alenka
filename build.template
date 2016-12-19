@@ -2,19 +2,19 @@
 
 CONFIG(debug, debug|release) {
 	contains(QMAKE_HOST.arch, x86_64) {
-		SIGNAL_LIB = $$_PRO_FILE_PWD_/../Alenka-Signal/build-Debug-64/install-dir
-		FILE_LIB = $$_PRO_FILE_PWD_/../Alenka-File/build-Debug-64/install-dir
+		SIGNAL_LIB = $$_PRO_FILE_PWD_/Alenka-Signal/build-Debug-64/install-dir
+		FILE_LIB = $$_PRO_FILE_PWD_/Alenka-File/build-Debug-64/install-dir
 	} else {
-		SIGNAL_LIB = $$_PRO_FILE_PWD_/../Alenka-Signal/build-Debug-32/install-dir
-		FILE_LIB = $$_PRO_FILE_PWD_/../Alenka-File/build-Debug-32/install-dir
+		SIGNAL_LIB = $$_PRO_FILE_PWD_/Alenka-Signal/build-Debug-32/install-dir
+		FILE_LIB = $$_PRO_FILE_PWD_/Alenka-File/build-Debug-32/install-dir
 	}
 } else {
 	contains(QMAKE_HOST.arch, x86_64) {
-		SIGNAL_LIB = $$_PRO_FILE_PWD_/../Alenka-Signal/build-Release-64/install-dir
-		FILE_LIB = $$_PRO_FILE_PWD_/../Alenka-File/build-Release-64/install-dir
+		SIGNAL_LIB = $$_PRO_FILE_PWD_/Alenka-Signal/build-Release-64/install-dir
+		FILE_LIB = $$_PRO_FILE_PWD_/Alenka-File/build-Release-64/install-dir
 	} else {
-		SIGNAL_LIB = $$_PRO_FILE_PWD_/../Alenka-Signal/build-Release-32/install-dir
-		FILE_LIB = $$_PRO_FILE_PWD_/../Alenka-File/build-Release-32/install-dir
+		SIGNAL_LIB = $$_PRO_FILE_PWD_/Alenka-Signal/build-Release-32/install-dir
+		FILE_LIB = $$_PRO_FILE_PWD_/Alenka-File/build-Release-32/install-dir
 	}
 }
 
