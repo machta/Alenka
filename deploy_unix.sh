@@ -9,7 +9,7 @@
 name=$1
 if [ "$name" == "" ]
 then
-	name=ZSBS-Linux
+	name=Alenka-Linux
 fi
 
 folder=`mktemp -d -p .`
@@ -18,8 +18,8 @@ echo -e Deploying to $name'\n'
 
 mkdir -p $folder/$name
 
-cp -v `find .. -type f -name App | grep ZSBS | grep Release` $folder/$name/App
-cp -v `find .. -type f -name App | grep ZSBS | grep Debug` $folder/$name/App.debug
+cp -v `find .. -type f -name Alenka | grep Alenka | grep Release` $folder/$name/Alenka
+cp -v `find .. -type f -name Alenka | grep Alenka | grep Debug` $folder/$name/Alenka.debug
 
 cd $folder
 zip -r $name.zip $name

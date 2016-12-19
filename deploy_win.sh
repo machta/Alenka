@@ -9,7 +9,7 @@
 name=$1
 if [ "$name" == "" ]
 then
-    name=ZSBS-Windows
+    name=Alenka-Windows
 fi
 
 folder=`mktemp -d -p .`
@@ -20,8 +20,8 @@ echo -e Deploying to $name.zip and $name-32.zip'\n'
 mkdir -p $folder/$name/platforms
 mkdir -p $folder32/$name-32/platforms
 
-cp -v `find .. -name App.exe | grep ZSBS | grep 64 | grep Release` $folder/$name/App.exe
-cp -v `find .. -name App.exe | grep ZSBS | grep 32 | grep Release` $folder32/$name-32/App.exe
+cp -v `find .. -name Alenka.exe | grep Alenka | grep 64 | grep Release` $folder/$name/Alenka.exe
+cp -v `find .. -name Alenka.exe | grep Alenka | grep 32 | grep Release` $folder32/$name-32/Alenka.exe
 
 QT_DIR=C:/Qt/5.7/msvc2015_64
 cp -v $QT_DIR/bin/Qt5Core.dll $folder/$name
