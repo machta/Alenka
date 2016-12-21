@@ -58,6 +58,7 @@ private:
 	QLabel* positionStatusLabel;
 	QLabel* cursorStatusLabel;
 	SpikedetAnalysis* spikedetAnalysis;
+	double eventDuration = 0.1;
 
 	void connectModel(QAbstractTableModel* model, std::function<void ()> f);
 	void horizontalZoom(double factor);

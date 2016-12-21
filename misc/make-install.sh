@@ -10,17 +10,19 @@ cd Alenka-File
 for build in `ls build* -d`
 do
 	cd $build
-	cmake --build . --target install-alenka-file
+	cmake --build . --target install-alenka-file &
 	cd -
 done
 cd ..
+wait
 
 cd Alenka-Signal
 for build in `ls build* -d`
 do
         cd $build
-        cmake --build . --target install-alenka-signal
+        cmake --build . --target install-alenka-signal &
         cd -
 done
 cd ..
+wait
 

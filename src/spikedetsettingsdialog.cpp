@@ -9,7 +9,8 @@
 
 using namespace std;
 
-SpikedetSettingsDialog::SpikedetSettingsDialog(AlenkaSignal::DETECTOR_SETTINGS* settings, QWidget* parent) : QDialog(parent), settings(settings)
+SpikedetSettingsDialog::SpikedetSettingsDialog(AlenkaSignal::DETECTOR_SETTINGS* settings, double* eventDuration, QWidget* parent) :
+	QDialog(parent), settings(settings), eventDuration(eventDuration)
 {
 	QVBoxLayout* box = new QVBoxLayout();
 
@@ -130,4 +131,13 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(AlenkaSignal::DETECTOR_SETTINGS* 
 	spinBox->setValue(settings->m_decimation);
 	connect(spinBox, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [settings] (int val) { settings->m_decimation = val; });
 	grid->addRow(label, spinBox);
+
+	label = new QLabel("Spike event duration:");
+	label->setToolTip("in seconds");
+	doubleSpinBox = new QDoubleSpinBox();
+	doubleSpinBox->setDecimals(maxDecimals);
+	//doubleSpinBox->setMaximum();
+	doubleSpinBox->setValue(*eventDuration);
+	connect(doubleSpinBox, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [eventDuration] (double val) { *eventDuration = val; });
+	grid->addRow(label, doubleSpinBox);
 }

@@ -133,7 +133,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	connect(spikedetSettingsAction, &QAction::triggered, [this] ()
 	{
 		AlenkaSignal::DETECTOR_SETTINGS settings = spikedetAnalysis->getSettings();
-		SpikedetSettingsDialog dialog(&settings, this);
+		SpikedetSettingsDialog dialog(&settings, &eventDuration, this);
 
 		if (dialog.exec() == QDialog::Accepted)
 			spikedetAnalysis->setSettings(settings);
@@ -813,7 +813,7 @@ void SignalFileBrowserWindow::runSpikedet()
 				et->setLabel("Spike " + to_string(i), etIndex + i);
 				et->setType(index, etIndex + i);
 				et->setPosition(out->m_pos[i]*file->getSamplingFrequency(), etIndex + i);
-				et->setDuration(file->getSamplingFrequency()/20, etIndex + i);
+				et->setDuration(file->getSamplingFrequency()*eventDuration, etIndex + i);
 				//et->setDuration(out->m_dur[i]*file->getSamplingFrequency(), etIndex + i);
 				et->setChannel(out->m_chan[i] - 1, etIndex + i);
 			}
