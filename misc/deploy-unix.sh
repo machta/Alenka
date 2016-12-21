@@ -1,10 +1,9 @@
-#/bin/bash
+#!/bin/bash
 
-# Usage: ./deploy_unix.sh fileName
+# Usage: ./misc/deploy_unix.sh fileName
 #
-# This script make a ZIP archive of the Linux version of the program.
-# Output is fileName.zip in the current directory.
-# Build and package the 32-bit version separately.
+# This script makes a ZIP archive of the Linux version of the program.
+# You must build and package the 32-bit version separately (possibly on a different OS).
 
 name=$1
 if [ "$name" == "" ]

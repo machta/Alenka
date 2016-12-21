@@ -1,9 +1,8 @@
-#/bin/bash
+#!/bin/bash
 
-# Usage: ./deploy_unix.sh fileName
+# Usage: ./misc/deploy_unix.sh fileName
 #
-# This script make a ZIP archive of the Linux version of the program.
-# Output is fileName.zip and fileName-32.zip in the current directory.
+# This script makes a ZIP archive of the Windows version of the program.
 # Use Git Bash or a similar tool to run this.
 
 name=$1
