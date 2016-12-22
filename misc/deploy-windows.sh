@@ -1,9 +1,11 @@
 #!/bin/bash
 
-# Usage: ./misc/deploy_unix.sh fileName
+# Usage: ./misc/deploy-windows.sh fileName
 #
-# This script makes a ZIP archive of the Windows version of the program.
-# Use Git Bash or a similar tool to run this.
+# This script makes a standalone ZIP package for distribution on Windows.
+# Tested on Windows 7/10.
+# Use Git Bash or a similar tool to run this. This requires .NET for the archive creation.
+# If you don't have that, comment out the last line and make it manually.
 
 name=$1
 if [ "$name" == "" ]
@@ -41,3 +43,4 @@ powershell.exe -nologo -noprofile -command "& { Add-Type -A 'System.IO.Compressi
 
 rm -r $folder $folder32
 
+#TODO: make a README with installation instructions (Visual C++ runtime, drivers...)

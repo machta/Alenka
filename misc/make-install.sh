@@ -2,15 +2,20 @@
 
 # Usage: ./misc/make-install.sh
 #
-# Rebuilds the two subprojects. Use this when you make changes
-# and then want to build the main app.
+# This script rebuilds the two subprojects.
+# Use this when you make changes there and then want to build the main app.
 # Use Git Bash or a similar tool to run this on Windows.
 
 cd Alenka-File
 for build in `ls build* -d`
 do
 	cd $build
-	cmake --build . --target install-alenka-file &
+	if [ `echo $build | grep Release` ]
+	then
+		cmake --build . --config Release --target install-alenka-file &
+	else
+		cmake --build . --target install-alenka-file &
+	fi
 	cd -
 done
 cd ..
@@ -19,9 +24,14 @@ wait
 cd Alenka-Signal
 for build in `ls build* -d`
 do
-        cd $build
-        cmake --build . --target install-alenka-signal &
-        cd -
+	cd $build
+	if [ `echo $build | grep Release` ]
+	then
+		cmake --build . --config Release --target install-alenka-signal &
+	else
+		cmake --build . --target install-alenka-signal &
+	fi
+	cd -
 done
 cd ..
 wait
