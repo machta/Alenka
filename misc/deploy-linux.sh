@@ -17,13 +17,17 @@ folder=`mktemp -d -p .`
 echo -e Deploying to $name'\n'
 
 mkdir -p $folder/$name/platforms
+mkdir -p $folder/$name/xcbglintegrations
 
 cp -v `find .. -type f -name Alenka | grep Alenka | grep Release` $folder/$name/Alenka
 cp -v `find .. -type f -name Alenka | grep Alenka | grep Debug` $folder/$name/Alenka.debug
 
-PLUGIN=/opt/Qt/5.7/gcc_64/plugins/platforms/libqxcb.so
-cp -v $PLUGIN $folder/$name/platforms
-cp -v `ldd $folder/$name/Alenka $PLUGIN | grep -i qt | awk '{print $3}'` $folder/$name
+PLUGIN=/opt/Qt/5.7/gcc_64/plugins
+xcbglintegrations
+
+cp -v $PLUGIN/platforms/libqxcb.so $folder/$name/platforms
+cp -v $PLUGIN/xcbglintegrations/* $folder/$name/xcbglintegrations
+cp -v `ldd $folder/$name/Alenka $PLUGIN/platforms/libqxcb.so | grep -i qt | awk '{print $3}'` $folder/$name
 
 echo '#!/bin/sh
 
