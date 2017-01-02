@@ -5,7 +5,7 @@
 #include <QDateTime>
 #include <QDate>
 
-#include <Alenka-File/edf.h>
+#include <AlenkaFile/edf.h>
 
 #include <cstdlib>
 #include <algorithm>
