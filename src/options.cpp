@@ -2,8 +2,6 @@
 
 #include "error.h"
 
-#include <boost/spirit/home/support/detail/hold_any.hpp>
-
 #include <fstream>
 #include <cstdint>
 

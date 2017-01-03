@@ -1,21 +1,27 @@
 # Copy this file to "build" and change some of the values to suit your system.
 # Don't forget to define NDEBUG for a release build.
 
+SIGNAL_LIB = $$_PRO_FILE_PWD_/Alenka-Signal
+FILE_LIB = $$_PRO_FILE_PWD_/Alenka-File
+
+INCLUDEPATH += $$FILE_LIB/boost
+SOURCES += $$files($$FILE_LIB/boost/libs/program_options/src/*.cpp)
+
 CONFIG(debug, debug|release) {
 	contains(QMAKE_HOST.arch, x86_64) {
-		SIGNAL_LIB = $$_PRO_FILE_PWD_/Alenka-Signal/build-Debug-64/install-dir
-		FILE_LIB = $$_PRO_FILE_PWD_/Alenka-File/build-Debug-64/install-dir
+		SIGNAL_LIB = $$SIGNAL_LIB/build-Debug-64/install-dir
+		FILE_LIB = $$FILE_LIB/build-Debug-64/install-dir
 	} else {
-		SIGNAL_LIB = $$_PRO_FILE_PWD_/Alenka-Signal/build-Debug-32/install-dir
-		FILE_LIB = $$_PRO_FILE_PWD_/Alenka-File/build-Debug-32/install-dir
+		SIGNAL_LIB = $$SIGNAL_LIB/build-Debug-32/install-dir
+		FILE_LIB = $$FILE_LIB/build-Debug-32/install-dir
 	}
 } else {
 	contains(QMAKE_HOST.arch, x86_64) {
-		SIGNAL_LIB = $$_PRO_FILE_PWD_/Alenka-Signal/build-Release-64/install-dir
-		FILE_LIB = $$_PRO_FILE_PWD_/Alenka-File/build-Release-64/install-dir
+		SIGNAL_LIB = $$SIGNAL_LIB/build-Release-64/install-dir
+		FILE_LIB = $$FILE_LIB/build-Release-64/install-dir
 	} else {
-		SIGNAL_LIB = $$_PRO_FILE_PWD_/Alenka-Signal/build-Release-32/install-dir
-		FILE_LIB = $$_PRO_FILE_PWD_/Alenka-File/build-Release-32/install-dir
+		SIGNAL_LIB = $$SIGNAL_LIB/build-Release-32/install-dir
+		FILE_LIB = $$FILE_LIB/build-Release-32/install-dir
 	}
 }
 
@@ -39,7 +45,6 @@ LIBS += \
 # ===============================================
 unix {
 	LIBS += \
-		/usr/lib/x86_64-linux-gnu/libboost_program_options.a \
 		/usr/lib/gcc/x86_64-linux-gnu/5/libstdc++.a \
 		/usr/lib/gcc/x86_64-linux-gnu/5/libgomp.a \
 		-ldl
@@ -47,7 +52,7 @@ unix {
 	QMAKE_CXXFLAGS += -pedantic -Wall
 	QMAKE_LFLAGS += -fopenmp
 
-	QMAKE_CXXFLAGS_DEBUG += -O0
+	QMAKE_CXXFLAGS_DEBUG += -O0 -D_GLIBCXX_DEBUG
 	QMAKE_LFLAGS_DEBUG += -O0
 
 	QMAKE_CXXFLAGS_RELEASE += -O3
@@ -60,14 +65,6 @@ unix {
 win32 {
 	#OPENCL_DIR = C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v8.0
 	OPENCL_DIR = C:/Program Files (x86)/AMD APP SDK/3.0
-
-	contains(QMAKE_HOST.arch, x86_64) {
-		LIBS += -LC:/boost/lib64-msvc-14.0 -L"$$OPENCL_DIR"/lib/x86_64 # This is where OpenCL.lib is.
-	} else {
-		LIBS += -LC:/boost/lib32-msvc-14.0 -L"$$OPENCL_DIR"/lib/x86
-	}
-
-	INCLUDEPATH += C:/boost "$$OPENCL_DIR"/include
 
 	DEFINES += WIN_BUILD _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS
 

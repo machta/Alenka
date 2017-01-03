@@ -4,10 +4,9 @@ A Visualisation System for Biosignals
 ### Requirments
 * git
 * Qt 5.4+
-* Boost Program Options
 * OpenCL and OpenGL libraries (if you don't have the hardware for this use AMD APP SDK for a CPU implementation of OpenCL)
 
-On debian-like systems you can use: `sudo apt install git cmake-gui libboost-program-options-dev build-essential`
+On debian-like systems you can use: `sudo apt install git cmake-gui build-essential`
 
 Install Qt via the installer on their website.
 
