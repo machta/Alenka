@@ -1,6 +1,8 @@
 #ifndef TRACKCODEVALIDATOR_H
 #define TRACKCODEVALIDATOR_H
 
+#include <string>
+
 class QString;
 
 namespace AlenkaSignal
@@ -27,6 +29,7 @@ public:
 
 private:
 	AlenkaSignal::OpenCLContext* context;
+	std::string header;
 };
 
 #endif // TRACKCODEVALIDATOR_H
