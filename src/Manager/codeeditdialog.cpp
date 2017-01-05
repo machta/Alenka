@@ -5,6 +5,26 @@
 #include <QTextEdit>
 #include <QLabel>
 #include <QMessageBox>
+#include <QFile>
+
+#include <string>
+#include <regex>
+
+using namespace std;
+
+namespace
+{
+
+const regex commentre(R"((/\*([^*]|(\*+[^*/]))*\*+/)|(//.*))");
+
+string stripComments(const QString& code)
+{
+	return regex_replace(code.toStdString(), commentre, "");
+}
+
+QString headerString;
+
+}// namespace
 
 CodeEditDialog::CodeEditDialog(QWidget* parent) : QDialog(parent)
 {
@@ -14,11 +34,27 @@ CodeEditDialog::CodeEditDialog(QWidget* parent) : QDialog(parent)
 
 	QVBoxLayout* box = new QVBoxLayout;
 
-	box->addWidget(new QLabel("Input and output definition: \n\tin_type out = 0;\n\tin_type in(int);\nReserved names are of the form _*_ plus all OpenCL reserved names are forbidden.\nFunctions from montageHeader.cl file:", this)); // TODO: Move these to help sub dialog.
+	const char* help =
+R"(Input and output:
+	float out = 0;
+	float in(int channelIndex);
+
+Identifiers of the form "_*_" and all OpenCL reserved names and keywords are forbidden.
+
+Definitions included in the source code that you can use:)";
+
+	box->addWidget(new QLabel(help)); // TODO: Move these to help sub dialog.
+
+	if (headerString.isNull())
+	{
+		QFile headerFile(":/montageHeader.cl");
+		headerFile.open(QIODevice::ReadOnly);
+		headerString = stripComments(headerFile.readAll()).c_str();
+		headerString = headerString.trimmed();
+	}
 
 	QTextEdit* header = new QTextEdit(this);
-	//header->setPlainText(QString::fromStdString(Montage::readHeader()));
-	header->setPlainText("The header is broken now.");
+	header->setPlainText(headerString);
 	header->setReadOnly(true);
 	box->addWidget(header);
 
