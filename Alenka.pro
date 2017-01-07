@@ -38,7 +38,8 @@ HEADERS += \
 	src/Manager/trackmanagerdelegate.h \
 	src/spikedetanalysis.h \
 	src/spikedetsettingsdialog.h \
-	src/DataFile/edftmp.h
+	src/DataFile/edftmp.h \
+	src/SignalProcessor/kernelcache.h
 
 SOURCES += \
 	src/DataFile/gdf2.cpp \
@@ -73,7 +74,8 @@ SOURCES += \
 	src/Manager/trackmanagerdelegate.cpp \
 	src/spikedetanalysis.cpp \
 	src/spikedetsettingsdialog.cpp \
-	src/DataFile/edftmp.cpp
+	src/DataFile/edftmp.cpp \
+	src/SignalProcessor/kernelcache.cpp
 
 RESOURCES += \
 	resources/resources.qrc

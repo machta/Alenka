@@ -1,6 +1,7 @@
 #include "trackcodevalidator.h"
 
 #include "../myapplication.h"
+#include "../SignalProcessor/signalprocessor.h"
 
 #include <AlenkaSignal/openclcontext.h>
 #include <AlenkaSignal/montage.h>
@@ -24,15 +25,17 @@ TrackCodeValidator::~TrackCodeValidator()
 
 bool TrackCodeValidator::validate(const QString& input, QString* errorMessage)
 {
+	string code = SignalProcessor::simplifyMontage(input.toStdString());
+
 	if (errorMessage == nullptr)
 	{
-		return Montage<float>::test(input.toStdString(), context, nullptr, header);
+		return Montage<float>::test(code, context, nullptr, header);
 	}
 	else
 	{
 		string message;
 
-		bool result = Montage<float>::test(input.toStdString(), context, &message, header);
+		bool result = Montage<float>::test(code, context, &message, header);
 
 		*errorMessage = QString::fromStdString(message);
 

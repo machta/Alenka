@@ -51,7 +51,9 @@ unix {
 		/usr/lib/gcc/x86_64-linux-gnu/5/libgomp.a \
 		-ldl
 
-	QMAKE_CXXFLAGS += -pedantic -Wall
+	DEFINES += UNIX_BUILD
+
+	QMAKE_CXXFLAGS += -pedantic -Wall -fopenmp
 	QMAKE_LFLAGS += -fopenmp
 
 	QMAKE_CXXFLAGS_DEBUG += -O0 -D_GLIBCXX_DEBUG
@@ -59,8 +61,6 @@ unix {
 
 	QMAKE_CXXFLAGS_RELEASE += -O3
 	QMAKE_LFLAGS_RELEASE += -O3
-
-	DEFINES += UNIX_BUILD
 }
 
 # ===============================================
@@ -78,6 +78,8 @@ win32 {
 
 	DEFINES += WIN_BUILD _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS \
 		BOOST_PROGRAM_OPTIONS_NO_LIB # This stops Microsoft's linker from needing the static library.
+
+	QMAKE_CXXFLAGS += -openmp
 
 	CONFIG += console
 }

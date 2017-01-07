@@ -1,5 +1,7 @@
 #include "codeeditdialog.h"
 
+#include <AlenkaSignal/montage.h>
+
 #include <QDialogButtonBox>
 #include <QVBoxLayout>
 #include <QTextEdit>
@@ -8,19 +10,11 @@
 #include <QFile>
 
 #include <string>
-#include <regex>
 
 using namespace std;
 
 namespace
 {
-
-const regex commentre(R"((/\*([^*]|(\*+[^*/]))*\*+/)|(//.*))");
-
-string stripComments(const QString& code)
-{
-	return regex_replace(code.toStdString(), commentre, "");
-}
 
 QString headerString;
 
@@ -49,7 +43,7 @@ Definitions included in the source code that you can use:)";
 	{
 		QFile headerFile(":/montageHeader.cl");
 		headerFile.open(QIODevice::ReadOnly);
-		headerString = stripComments(headerFile.readAll()).c_str();
+		headerString = AlenkaSignal::Montage<float>::stripComments(headerFile.readAll().toStdString()).c_str();
 		headerString = headerString.trimmed();
 	}
 

@@ -1,6 +1,7 @@
 #include "signalprocessor.h"
 
 #include "../myapplication.h"
+#include "kernelcache.h"
 
 #include <AlenkaSignal/openclcontext.h>
 #include <AlenkaSignal/filter.h>
@@ -10,6 +11,7 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <chrono>
 
 using namespace std;
 
@@ -51,6 +53,11 @@ SignalProcessor::SignalProcessor()
 	glBindVertexArray(0);
 
 	gl();
+
+	kernelCache = new KernelCache();
+	QFile headerFile(":/montageHeader.cl");
+	headerFile.open(QIODevice::ReadOnly);
+	header = headerFile.readAll().toStdString();
 }
 
 SignalProcessor::~SignalProcessor()
@@ -70,6 +77,10 @@ SignalProcessor::~SignalProcessor()
 	glDeleteVertexArrays(2, vertexArrays);
 
 	gl();
+
+	kernelCache->shrink(0);
+	assert(kernelCache->size() == 0 && "Make sure the kernel cache is empty.");
+	delete kernelCache;
 }
 
 void SignalProcessor::updateFilter()
@@ -275,6 +286,12 @@ void SignalProcessor::changeFile(DataFile* file)
 	}
 }
 
+string SignalProcessor::simplifyMontage(const string& str)
+{
+	QString qstr = AlenkaSignal::Montage<float>::stripComments(str).c_str();
+	return qstr.simplified().toStdString();
+}
+
 void SignalProcessor::destroyFileRelated()
 {
 	if (file != nullptr)
@@ -308,20 +325,65 @@ void SignalProcessor::releaseOutputBuffer()
 
 void SignalProcessor::updateMontage()
 {
+	using namespace std::chrono;
 	assert(ready());
+
+#ifndef NDEBUG
+	auto start = high_resolution_clock::now(); // TODO: Remove this after the compilation time issue is solved.
+#endif
 
 	auto code = file->getMontageTable()->getTrackTables()->at(getInfoTable()->getSelectedMontage())->getCode();
 
 	deleteMontage();
 
-	QFile headerFile(":/montageHeader.cl");
-	headerFile.open(QIODevice::ReadOnly);
-	string header = headerFile.readAll().toStdString();
+	int capacity = max<int>(PROGRAM_OPTIONS["kernelCacheSize"].as<int>(), code.size());
+	if (kernelCache->size() > capacity)
+	{
+		kernelCache->shrink(capacity);
+		logToFileAndConsole("Shrinking kernel cache.");
+	}
+	assert(kernelCache->size() <= capacity);
 
-	for (auto e : code)
-		montage.push_back(new AlenkaSignal::Montage<float>(e, context, header));
+	vector<int> newMontageIndex;
+	vector<string> newMontageCode;
 
-	assert(montage.size() > 0);
+	for (unsigned int i = 0; i < code.size(); i++)
+	{
+		string str = simplifyMontage(code[i]);
+		AlenkaSignal::Montage<float>* ptr = kernelCache->find(str);
+		if (ptr == nullptr)
+		{
+			newMontageIndex.push_back(i);
+			newMontageCode.push_back(str);
+		}
+		montage.push_back(ptr);
+	}
+
+	assert(newMontageIndex.size() == newMontageCode.size());
+	mutex mtx;
+
+	// For some reason the compilation gets serialized for an Nvidia card.
+	//TODO: Figure out whether this is an OpenCL issue, and if yes, remove the parallel block and simplify this code.
+	#pragma omp parallel for
+	for (int i = 0; i < newMontageIndex.size(); i++)
+	{
+		AlenkaSignal::Montage<float>* m = new AlenkaSignal::Montage<float>(newMontageCode[i], context, header);
+
+		{
+			lock_guard<mutex> lock(mtx);
+			kernelCache->add(newMontageCode[i], m);
+			montage[newMontageIndex[i]] = m;
+		}
+	}
+
+	assert(montage.size() == code.size());
+	assert(kernelCache->size() >= static_cast<int>(montage.size()));
+
+#ifndef NDEBUG
+	auto end = high_resolution_clock::now();
+	nanoseconds time = end - start;
+	logToFileAndConsole("Need to compile " << newMontageIndex.size() << " montages: " << time.count()/1000/1000 << " ms");
+#endif
 
 	releaseOutputBuffer();
 
@@ -367,7 +429,5 @@ void SignalProcessor::updateMontage()
 
 void SignalProcessor::deleteMontage()
 {
-	for (auto e : montage)
-		delete e;
 	montage.clear();
 }

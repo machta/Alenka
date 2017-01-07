@@ -27,6 +27,8 @@ template<class T>
 class MontageProcessor;
 }
 
+class KernelCache;
+
 /**
  * @brief A class used for retrieving the processed signal blocks.
  *
@@ -119,6 +121,8 @@ public:
 		return file != nullptr && trackCount > 0;
 	}
 
+	static std::string simplifyMontage(const std::string& str);
+
 private:
 	InfoTable* infoTable = nullptr;
 	InfoTable defaultInfoTable;
@@ -128,6 +132,8 @@ private:
 	AlenkaSignal::MontageProcessor<float>* montageProcessor;
 	std::vector<AlenkaSignal::Montage<float>*> montage;
 	GPUCache* cache;
+	KernelCache* kernelCache;
+	std::string header;
 
 	bool onlineFilter;
 	bool glSharing;
