@@ -5,14 +5,7 @@
 
 using namespace std;
 
-OpenGLProgram::~OpenGLProgram()
-{
-	gl()->glDeleteProgram(program);
-
-	gl();
-}
-
-void OpenGLProgram::construct(const string& vertSource, const string& fragSource)
+OpenGLProgram::OpenGLProgram(const string& vertSource, const string& fragSource)
 {
 	initializeOpenGLInterface();
 
@@ -57,6 +50,13 @@ void OpenGLProgram::construct(const string& vertSource, const string& fragSource
 #endif
 
 	checkNotErrorCode(linkStatus, GL_FALSE, "OpenGLProgram link failed.");
+}
+
+OpenGLProgram::~OpenGLProgram()
+{
+	gl()->glDeleteProgram(program);
+
+	gl();
 }
 
 void OpenGLProgram::addShader(const string& sourceText, GLenum type)

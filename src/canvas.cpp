@@ -131,19 +131,19 @@ void Canvas::initializeGL()
 
 	QFile signalVertFile(":/signal.vert");
 	signalVertFile.open(QIODevice::ReadOnly);
-	string signalVert = readWholeTextFile(&signalVertFile);
+	string signalVert = signalVertFile.readAll().toStdString();
 
 	QFile eventVertFile(":/event.vert");
 	eventVertFile.open(QIODevice::ReadOnly);
-	string eventVert = readWholeTextFile(&eventVertFile);
+	string eventVert = eventVertFile.readAll().toStdString();
 
 	QFile rectangleLineVertFile(":/rectangleLine.vert");
 	rectangleLineVertFile.open(QIODevice::ReadOnly);
-	string rectangleLineVert = readWholeTextFile(&rectangleLineVertFile);
+	string rectangleLineVert = rectangleLineVertFile.readAll().toStdString();
 
 	QFile colorFragFile(":/color.frag");
 	colorFragFile.open(QIODevice::ReadOnly);
-	string colorFrag = readWholeTextFile(&colorFragFile);
+	string colorFrag = colorFragFile.readAll().toStdString();
 
 	signalProgram = new OpenGLProgram(signalVert, colorFrag);
 	eventProgram = new OpenGLProgram(eventVert, colorFrag);

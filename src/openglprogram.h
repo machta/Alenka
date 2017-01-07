@@ -14,21 +14,9 @@ class OpenGLProgram : public OpenGLInterface
 {
 public:
 	/**
-	 * @brief Constructor taking file streams as shader sources.
-	 */
-	OpenGLProgram(FILE* vertSource, FILE* fragSource)
-	{
-		construct(readWholeTextFile(vertSource), readWholeTextFile(fragSource));
-	}
-
-	/**
 	 * @brief Constructor taking strings as shader sources.
 	 */
-	OpenGLProgram(const std::string& vertSource, const std::string& fragSource)
-	{
-		construct(vertSource, fragSource);
-	}
-
+	OpenGLProgram(const std::string& vertSource, const std::string& fragSource);
 	~OpenGLProgram();
 
 	/**
@@ -41,11 +29,6 @@ public:
 
 private:
 	GLuint program;
-
-	/**
-	 * @brief Common constructor functionality.
-	 */
-	void construct(const std::string& vertSource, const std::string& fragSource);
 
 	/**
 	 * @brief Compile a shader and attach it to the program.

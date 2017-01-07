@@ -13,6 +13,8 @@
 #include <stdexcept>
 #include <chrono>
 
+#include <QFile>
+
 using namespace std;
 
 SignalProcessor::SignalProcessor()
@@ -365,7 +367,7 @@ void SignalProcessor::updateMontage()
 	// For some reason the compilation gets serialized for an Nvidia card.
 	//TODO: Figure out whether this is an OpenCL issue, and if yes, remove the parallel block and simplify this code.
 	#pragma omp parallel for
-	for (int i = 0; i < newMontageIndex.size(); i++)
+	for (unsigned int i = 0; i < newMontageIndex.size(); i++)
 	{
 		AlenkaSignal::Montage<float>* m = new AlenkaSignal::Montage<float>(newMontageCode[i], context, header);
 
