@@ -369,8 +369,9 @@ void SignalProcessor::updateMontage()
 
 	// For some reason the compilation gets serialized for an Nvidia card.
 	//TODO: Figure out whether this is an OpenCL issue, and if yes, remove the parallel block and simplify this code.
+	int iters = static_cast<int>(newMontageIndex.size());
 	#pragma omp parallel for
-	for (unsigned int i = 0; i < newMontageIndex.size(); i++)
+	for (int i = 0; i < iters; i++)
 	{
 		AlenkaSignal::Montage<float>* m = new AlenkaSignal::Montage<float>(newMontageCode[i], context, header);
 
