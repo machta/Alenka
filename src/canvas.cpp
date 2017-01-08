@@ -1,8 +1,16 @@
 #include "canvas.h"
 
+#include "openglprogram.h"
 #include "options.h"
+#include "error.h"
+#include "DataFile/datafile.h"
+#include "DataFile/eventtypetable.h"
+#include "DataFile/tracktable.h"
+#include "DataFile/eventtable.h"
+#include "DataFile/montagetable.h"
 #include "signalviewer.h"
-//#include "filter.h"
+#include "SignalProcessor/signalblock.h"
+#include "SignalProcessor/signalprocessor.h"
 
 #include <QMatrix4x4>
 #include <QWheelEvent>
@@ -494,6 +502,16 @@ void Canvas::focusInEvent(QFocusEvent* /*event*/)
 {
 }
 
+EventTable*Canvas::currentEventTable()
+{
+	return montageTable->getEventTables()->at(getInfoTable()->getSelectedMontage());
+}
+
+TrackTable*Canvas::currentTrackTable()
+{
+	return montageTable->getTrackTables()->at(getInfoTable()->getSelectedMontage());
+}
+
 void Canvas::drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& eventVector)
 {
 	gl()->glUseProgram(rectangleLineProgram->getGLProgram());
@@ -787,6 +805,14 @@ void Canvas::setUniformColor(GLuint program, const QColor& color, double opacity
 	gl()->glUniform4f(location, r, g, b, a);
 }
 
+void Canvas::checkGLMessages()
+{
+	for (const auto& m : log()->loggedMessages())
+	{
+		logToFile("OpenGL message: " << m.message().toStdString());
+	}
+}
+
 void Canvas::horizontalZoom(double factor)
 {
 	InfoTable* it = getInfoTable();
@@ -861,6 +887,24 @@ int Canvas::countHiddenTracks(int track)
 	return hidden;
 }
 
+void Canvas::updateFilter()
+{
+	assert(signalProcessor != nullptr);
+
+	makeCurrent();
+	signalProcessor->updateFilter();
+	doneCurrent();
+}
+
+void Canvas::selectMontage()
+{
+	connect(currentTrackTable(), SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SLOT(updateMontage(QModelIndex, QModelIndex)));
+	connect(currentTrackTable(), SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(updateMontage()));
+	connect(currentTrackTable(), SIGNAL(rowsRemoved(QModelIndex, int, int)), this, SLOT(updateMontage()));
+
+	updateMontage();
+}
+
 void Canvas::updateMontage(const QModelIndex &topLeft, const QModelIndex &bottomRight)
 {
 	if (bottomRight.row() - topLeft.row() >= 0)
@@ -879,4 +923,18 @@ void Canvas::updateMontage(const QModelIndex &topLeft, const QModelIndex &bottom
 			return;
 		}
 	}
+}
+
+void Canvas::updateMontage()
+{
+	assert(signalProcessor != nullptr);
+
+	makeCurrent();
+	signalProcessor->setUpdateMontageFlag();
+	doneCurrent();
+}
+
+bool Canvas::ready()
+{
+	return signalProcessor != nullptr && signalProcessor->ready();
 }

@@ -2,7 +2,6 @@
 
 #include "codeeditdialog.h"
 #include "../DataFile/tracktable.h"
-#include "../DataFile/trackcodevalidator.h"
 
 #include <QColorDialog>
 #include <QLineEdit>

@@ -1,21 +1,24 @@
 #ifndef CANVAS_H
 #define CANVAS_H
 
-#include <QOpenGLWidget>
 #include "openglinterface.h"
+#include "DataFile/infotable.h"
 
-#include "SignalProcessor/signalprocessor.h"
-#include "openglprogram.h"
-#include "DataFile/datafile.h"
-#include "DataFile/montagetable.h"
-#include "DataFile/eventtypetable.h"
-#include "DataFile/tracktable.h"
-#include "DataFile/eventtable.h"
+#include <QOpenGLWidget>
 
 #include <algorithm>
 #include <cassert>
 #include <vector>
 #include <tuple>
+
+class SignalProcessor;
+class SignalBlock;
+class OpenGLProgram;
+class DataFile;
+class EventTypeTable;
+class TrackTable;
+class EventTable;
+class MontageTable;
 
 /**
  * @brief This class implements GUI control for rendering signal data and events.
@@ -117,14 +120,8 @@ private:
 			return &defaultInfoTable;
 		}
 	}
-	EventTable* currentEventTable()
-	{
-		return montageTable->getEventTables()->at(getInfoTable()->getSelectedMontage());
-	}
-	TrackTable* currentTrackTable()
-	{
-		return montageTable->getTrackTables()->at(getInfoTable()->getSelectedMontage());
-	}
+	EventTable* currentEventTable();
+	TrackTable* currentTrackTable();
 	void drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& events);
 	void drawAllChannelEvent(int from, int to);
 	void drawTimeLines();
@@ -136,13 +133,7 @@ private:
 	void drawSignal(const SignalBlock& block);
 	void setUniformTrack(GLuint program, int track, int hidden, const SignalBlock& block);
 	void setUniformColor(GLuint program, const QColor& color, double opacity);
-	void checkGLMessages()
-	{
-		for (const auto& m : log()->loggedMessages())
-		{
-			logToFile("OpenGL message: " << m.message().toStdString());
-		}
-	}
+	void checkGLMessages();
 	void horizontalZoom(double factor);
 	void verticalZoom(double factor);
 	void trackZoom(double factor);
@@ -166,31 +157,10 @@ private:
 	}
 
 private slots:
-	void updateFilter()
-	{
-		assert(signalProcessor != nullptr);
-
-		makeCurrent();
-		signalProcessor->updateFilter();
-		doneCurrent();
-	}
-	void selectMontage()
-	{
-		connect(currentTrackTable(), SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SLOT(updateMontage(QModelIndex, QModelIndex)));
-		connect(currentTrackTable(), SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(updateMontage()));
-		connect(currentTrackTable(), SIGNAL(rowsRemoved(QModelIndex, int, int)), this, SLOT(updateMontage()));
-
-		updateMontage();
-	}
+	void updateFilter();
+	void selectMontage();
 	void updateMontage(const QModelIndex& topLeft, const QModelIndex& bottomRight);
-	void updateMontage()
-	{
-		assert(signalProcessor != nullptr);
-
-		makeCurrent();
-		signalProcessor->setUpdateMontageFlag();
-		doneCurrent();
-	}
+	void updateMontage();
 
 	/**
 	 * @brief Tests whether SignalProcessor is ready to return blocks.
@@ -198,10 +168,7 @@ private slots:
 	 * This method is used to skip some code that would break if no file is
 	 * open and/or the current montage is empty.
 	 */
-	bool ready()
-	{
-		return signalProcessor != nullptr && signalProcessor->ready();
-	}
+	bool ready();
 };
 
 #endif // CANVAS_H

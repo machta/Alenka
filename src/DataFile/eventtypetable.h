@@ -6,7 +6,6 @@
 #include <QColor>
 
 #include <string>
-#include <sstream>
 #include <cassert>
 #include <vector>
 

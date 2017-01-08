@@ -3,10 +3,8 @@
 
 #include <QDialog>
 
-#include "../DataFile/trackcodevalidator.h"
-
-class OpenCLContext;
 class QTextEdit;
+class TrackCodeValidator;
 
 /**
  * @brief Implements a dialog for entering more detailed montage track code.
@@ -34,7 +32,7 @@ public slots:
 
 private:
 	QTextEdit* editor;
-	TrackCodeValidator validator;
+	TrackCodeValidator* validator;
 };
 
 #endif // CODEEDITDIALOG_H

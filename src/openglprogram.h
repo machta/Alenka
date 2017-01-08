@@ -3,8 +3,6 @@
 
 #include "openglinterface.h"
 
-#include "error.h"
-
 #include <string>
 
 /**

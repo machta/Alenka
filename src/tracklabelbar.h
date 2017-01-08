@@ -4,10 +4,10 @@
 #include <QWidget>
 
 #include "DataFile/infotable.h"
-#include "DataFile/montagetable.h"
-#include "DataFile/tracktable.h"
 
 class DataFile;
+class MontageTable;
+class TrackTable;
 
 /**
  * @brief This class implements the GUI control responsible for displaying track names.
@@ -58,22 +58,8 @@ private:
 	}
 
 private slots:
-	void updateTrackTable()
-	{
-		trackTable = montageTable->getTrackTables()->at(getInfoTable()->getSelectedMontage());
-
-		connect(trackTable, SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SLOT(updateLabels(QModelIndex, QModelIndex)));
-		connect(trackTable, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(update()));
-		connect(trackTable, SIGNAL(rowsRemoved(QModelIndex, int, int)), this, SLOT(update()));
-	}
-	void updateLabels(const QModelIndex& topLeft, const QModelIndex& bottomRight)
-	{
-		int column = static_cast<int>(TrackTable::Column::label);
-		if (topLeft.column() <= column && column <= bottomRight.column())
-		{
-			update();
-		}
-	}
+	void updateTrackTable();
+	void updateLabels(const QModelIndex& topLeft, const QModelIndex& bottomRight);
 };
 
 #endif // TRACKLABELBAR_H

@@ -1,5 +1,7 @@
 #include "signalviewer.h"
 
+#include "canvas.h"
+#include "options.h"
 #include "DataFile/datafile.h"
 #include "tracklabelbar.h"
 
@@ -87,6 +89,13 @@ void SignalViewer::setVirtualWidth(int value)
 	resize(value);
 
 	setPosition(std::round(oldPosition*ratio - getInfoTable()->getPositionIndicator()*canvas->width()));
+
+	canvas->update();
+}
+
+void SignalViewer::setPosition(int value)
+{
+	scrollBar->setValue(value);
 
 	canvas->update();
 }

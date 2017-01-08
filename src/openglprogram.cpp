@@ -1,5 +1,7 @@
 #include "openglprogram.h"
 
+#include "error.h"
+
 #include <cstdio>
 #include <sstream>
 

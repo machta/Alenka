@@ -7,8 +7,6 @@
 #ifndef OPENGLINTERFACE_H
 #define OPENGLINTERFACE_H
 
-#include "error.h"
-
 #include <QOpenGLFunctions_3_2_Core>
 #include <QOpenGLFunctions_3_0>
 #include <QOpenGLFunctions_2_0>

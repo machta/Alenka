@@ -13,7 +13,6 @@ class EventTypeManager;
 class MontageManager;
 class QComboBox;
 class QCheckBox;
-class QDockWidget;
 class QAbstractTableModel;
 class QActionGroup;
 class QLabel;

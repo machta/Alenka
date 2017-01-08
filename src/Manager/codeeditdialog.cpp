@@ -1,6 +1,7 @@
 #include "codeeditdialog.h"
 
 #include <AlenkaSignal/montage.h>
+#include "../DataFile/trackcodevalidator.h"
 
 #include <QDialogButtonBox>
 #include <QVBoxLayout>
@@ -22,6 +23,8 @@ QString headerString;
 
 CodeEditDialog::CodeEditDialog(QWidget* parent) : QDialog(parent)
 {
+	validator = new TrackCodeValidator();
+
 	setWindowFlags(Qt::Window);
 	setMinimumWidth(500);
 	setMinimumHeight(500);
@@ -67,6 +70,7 @@ Definitions included in the source code that you can use:)";
 
 CodeEditDialog::~CodeEditDialog()
 {
+	delete validator;
 }
 
 QString CodeEditDialog::getText() const
@@ -96,7 +100,7 @@ void CodeEditDialog::done(int r)
 	{
 		QString message;
 
-		if (validator.validate(getText(), &message))
+		if (validator->validate(getText(), &message))
 		{
 			QDialog::done(r);
 		}

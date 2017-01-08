@@ -1,7 +1,10 @@
 #include "signalprocessor.h"
 
+#include "../DataFile/datafile.h"
+#include "../DataFile/tracktable.h"
 #include "../myapplication.h"
 #include "kernelcache.h"
+#include "signalblock.h"
 
 #include <AlenkaSignal/openclcontext.h>
 #include <AlenkaSignal/filter.h>

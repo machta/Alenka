@@ -1,12 +1,9 @@
 #include "datafile.h"
 
-#include "../error.h"
-
 #include <QCache>
 
 #include <cstdio>
 #include <mutex>
-#include <functional>
 
 #ifndef GDF2_H
 #define GDF2_H

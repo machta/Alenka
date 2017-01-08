@@ -3,13 +3,9 @@
 
 #include <QAbstractTableModel>
 
-//#include "montage.h"
-#include "trackcodevalidator.h"
-
 #include <QColor>
 
 #include <string>
-#include <sstream>
 #include <cassert>
 #include <vector>
 
@@ -17,6 +13,7 @@ class QXmlStreamReader;
 class QXmlStreamWriter;
 class EventTable;
 class DataFile;
+class TrackCodeValidator;
 
 /**
  * @brief A data structure for handling tracks.
@@ -91,10 +88,7 @@ public:
 	 * @param message [out]
 	 * @return True if the test succeeds.
 	 */
-	bool validateTrackCode(const QString& code, QString* message = nullptr)
-	{
-		return validator.validate(code, message);
-	}
+	bool validateTrackCode(const QString& code, QString* message = nullptr);
 
 	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override
 	{
@@ -214,7 +208,7 @@ private:
 
 	EventTable* eventTable;
 	std::vector<int> order;
-	TrackCodeValidator validator;
+	TrackCodeValidator* validator;
 };
 
 #endif // TRACKTABLE_H

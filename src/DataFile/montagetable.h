@@ -3,13 +3,9 @@
 
 #include <QAbstractTableModel>
 
-#include "tracktable.h"
-#include "eventtable.h"
-
 #include <QColor>
 
 #include <string>
-#include <sstream>
 #include <cassert>
 #include <vector>
 
@@ -17,6 +13,8 @@ class QXmlStreamReader;
 class QXmlStreamWriter;
 class EventTypeTable;
 class DataFile;
+class TrackTable;
+class EventTable;
 
 /**
  * @brief A data structure for handling montages.

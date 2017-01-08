@@ -1,16 +1,12 @@
 #include "datafile.h"
 
-#include "../error.h"
-
 #include <cstdio>
 #include <mutex>
-#include <functional>
 
 #ifndef EDFTMP_H
 #define EDFTMP_H
 
 class QDateTime;
-class QFile;
 
 namespace AlenkaFile
 {

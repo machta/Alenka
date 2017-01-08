@@ -1,5 +1,8 @@
 #include "gdf2.h"
 
+#include "tracktable.h"
+#include "eventtable.h"
+#include "../error.h"
 #include "../options.h"
 
 #include <QDateTime>

@@ -1,5 +1,6 @@
 #include "edftmp.h"
 
+#include "tracktable.h"
 #include "../options.h"
 
 #include <QDateTime>

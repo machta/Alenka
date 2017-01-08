@@ -1,11 +1,15 @@
 #include "montagetable.h"
 
+#include "tracktable.h"
+#include "eventtable.h"
+
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
 #include <QCollator>
 
 #include <algorithm>
 #include <functional>
+#include <sstream>
 
 using namespace std;
 

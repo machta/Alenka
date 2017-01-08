@@ -2,7 +2,6 @@
 #define SIGNALBLOCK_H
 
 #include "../openglinterface.h"
-#include "CL/cl_gl.h"
 
 #include <cinttypes>
 

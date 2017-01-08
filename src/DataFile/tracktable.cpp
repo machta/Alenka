@@ -1,6 +1,7 @@
 #include "tracktable.h"
 
 #include "eventtable.h"
+#include "trackcodevalidator.h"
 
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
@@ -9,15 +10,18 @@
 
 #include <algorithm>
 #include <functional>
+#include <sstream>
 
 using namespace std;
 
 TrackTable::TrackTable(DataFile* file, QObject* parent) : QAbstractTableModel(parent), file(file)
 {
+	validator = new TrackCodeValidator();
 }
 
 TrackTable::~TrackTable()
 {
+	delete validator;
 }
 
 void TrackTable::write(QXmlStreamWriter* xml) const
@@ -133,6 +137,11 @@ vector<string> TrackTable::getCode() const
 		}
 	}
 	return newCode;
+}
+
+bool TrackTable::validateTrackCode(const QString& code, QString* message)
+{
+	return validator->validate(code, message);
 }
 
 QVariant TrackTable::headerData(int section, Qt::Orientation orientation, int role) const

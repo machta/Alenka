@@ -3,8 +3,6 @@
 
 #include <QWidget>
 
-#include "canvas.h"
-#include "SignalProcessor/signalprocessor.h"
 #include "DataFile/infotable.h"
 
 #include <QScrollBar>
@@ -16,6 +14,7 @@ class DataFile;
 class TrackLabelBar;
 class QScrollBar;
 class QSplitter;
+class Canvas;
 
 /**
  * @brief This class implements the GUI control for browsing the DataFile's signal.
@@ -96,12 +95,7 @@ private:
 
 private slots:
 	void setVirtualWidth(int value);
-	void setPosition(int value)
-	{
-		scrollBar->setValue(value);
-
-		canvas->update();
-	}
+	void setPosition(int value);
 };
 
 #endif // SIGNALVIEWER_H

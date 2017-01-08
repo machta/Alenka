@@ -2,6 +2,7 @@
 
 #include "options.h"
 #include "DataFile/datafile.h"
+#include "DataFile/tracktable.h"
 #include "canvas.h"
 
 #include <QPainter>
@@ -85,5 +86,23 @@ void TrackLabelBar::paintEvent(QPaintEvent* /*event*/)
 		{
 			++hidden;
 		}
+	}
+}
+
+void TrackLabelBar::updateTrackTable()
+{
+	trackTable = montageTable->getTrackTables()->at(getInfoTable()->getSelectedMontage());
+
+	connect(trackTable, SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SLOT(updateLabels(QModelIndex, QModelIndex)));
+	connect(trackTable, SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(update()));
+	connect(trackTable, SIGNAL(rowsRemoved(QModelIndex, int, int)), this, SLOT(update()));
+}
+
+void TrackLabelBar::updateLabels(const QModelIndex& topLeft, const QModelIndex& bottomRight)
+{
+	int column = static_cast<int>(TrackTable::Column::label);
+	if (topLeft.column() <= column && column <= bottomRight.column())
+	{
+		update();
 	}
 }

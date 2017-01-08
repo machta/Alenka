@@ -3,9 +3,6 @@
 
 #include "../openglinterface.h"
 
-#include "signalblock.h"
-#include "../DataFile/datafile.h"
-#include "../options.h"
 #include "gpucache.h"
 
 #include <CL/cl_gl.h>
@@ -27,7 +24,9 @@ template<class T>
 class MontageProcessor;
 }
 
+class DataFile;
 class KernelCache;
+class SignalBlock;
 
 /**
  * @brief A class used for retrieving the processed signal blocks.

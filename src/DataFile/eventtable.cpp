@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <sstream>
 
 using namespace std;
 

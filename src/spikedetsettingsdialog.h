@@ -1,8 +1,6 @@
 #ifndef SPIKEDETSETTINGSDIALOG_H
 #define SPIKEDETSETTINGSDIALOG_H
 
-#include "DataFile/datafile.h"
-
 #include <AlenkaSignal/spikedet.h>
 
 #include <QDialog>

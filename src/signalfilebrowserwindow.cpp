@@ -1,9 +1,12 @@
 #include "signalfilebrowserwindow.h"
 
 #include "options.h"
+#include "error.h"
 #include "signalviewer.h"
 #include "DataFile/gdf2.h"
 #include "DataFile/edftmp.h"
+#include "DataFile/tracktable.h"
+#include "DataFile/eventtable.h"
 #include "Manager/trackmanager.h"
 #include "Manager/eventmanager.h"
 #include "Manager/eventtypemanager.h"
@@ -11,6 +14,7 @@
 #include "spikedetanalysis.h"
 #include "myapplication.h"
 #include "spikedetsettingsdialog.h"
+#include "canvas.h"
 
 #include <AlenkaSignal/openclcontext.h>
 #include <AlenkaSignal/montage.h>
