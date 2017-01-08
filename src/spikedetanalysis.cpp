@@ -16,39 +16,6 @@ using namespace AlenkaSignal;
 namespace
 {
 
-/*template<class T>
-class Loader : public SpikedetDataLoader<T>
-{
-	DataFile* file;
-	vector<T> tmpData;
-
-public:
-	Loader(DataFile* file) : file(file)
-	{
-	}
-	virtual ~Loader() override
-	{}
-
-	virtual void readSignal(T* data, int64_t firstSample, int64_t lastSample) override
-	{
-		int64_t len = (lastSample - firstSample + 1)*channelCount();
-		tmpData.resize(len);
-
-		file->readData(&tmpData, firstSample, lastSample);
-
-		for (int64_t i = 0; i < len; i++) // TODO: remove this needless copying after the new File lib is integrated
-			data[i] = tmpData[i];
-	}
-	virtual int64_t sampleCount() override
-	{
-		return file->getSamplesRecorded();
-	}
-	virtual int channelCount() override
-	{
-		return file->getChannelCount();
-	}
-};*/
-
 template<class T>
 class Loader : public SpikedetDataLoader<T>
 {
@@ -139,36 +106,6 @@ public:
 		//OpenCLContext::printBuffer("spikedet_loader_done.txt", data, (lastSample - firstSample + 1)*outChannels);
 	}
 
-	/*virtual void readSignal(T* data, int64_t firstSample, int64_t lastSample) override
-	{ // This version reads always the whole block from the file.
-		cl_int err;
-
-		for (int64_t sample = firstSample; sample <= lastSample; sample += BLOCK_LENGTH)
-		{
-			//OpenCLContext::printBuffer("spikedet_loader.txt", data, (lastSample - firstSample + 1)*outChannels);
-			int len = min<int>(BLOCK_LENGTH, lastSample - sample + 1);
-			assert(len >= 1);
-
-			file->readData(&tmpData, sample, sample + BLOCK_LENGTH - 1);
-
-			err = clEnqueueWriteBuffer(queue, inBuffer, CL_TRUE, 0, BLOCK_LENGTH*inChannels*sizeof(T), tmpData.data(), 0, nullptr, nullptr);
-			checkClErrorCode(err, "clEnqueueWriteBuffer()");
-
-			processor->process(montage, inBuffer, outBuffer, queue);
-			//OpenCLContext::printBuffer("after_process.txt", outBuffer, queue);
-
-			size_t origin[] = {0, 0, 0};
-			size_t dataOrigin[] = {(sample - firstSample)*sizeof(T), 0, 0};
-			size_t rowLen = len*sizeof(T);
-			size_t region[] = {rowLen, static_cast<size_t>(outChannels), 1};
-
-			err = clEnqueueReadBufferRect(queue, outBuffer, CL_TRUE, origin, dataOrigin, region, BLOCK_LENGTH*sizeof(T), 0,
-										   (lastSample - firstSample + 1)*sizeof(T), 0, data, 0, nullptr, nullptr);
-			checkClErrorCode(err, "clEnqueueReadBufferRect()");
-		}
-		//OpenCLContext::printBuffer("spikedet_loader_done.txt", data, (lastSample - firstSample + 1)*outChannels);
-	}*/
-
 	virtual int64_t sampleCount() override
 	{
 		return file->getSamplesRecorded();
@@ -192,7 +129,7 @@ void SpikedetAnalysis::runAnalysis(DataFile* file, const vector<Montage<float>*>
 	output = new CDetectorOutput;
 
 	delete discharges;
-	discharges = new CDischarges(file->getChannelCount());
+	discharges = new CDischarges(loader.channelCount());
 
 	thread t([&] () { spikedet.runAnalysis(&loader, output, discharges); });
 
