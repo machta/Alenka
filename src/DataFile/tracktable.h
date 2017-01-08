@@ -37,7 +37,7 @@ public:
 	 */
 	enum class Column
 	{
-		label, code, color, amplitude, hidden, size
+		id, label, code, color, amplitude, hidden, size
 	};
 
 	TrackTable(DataFile* file, QObject* parent = nullptr);
@@ -118,7 +118,12 @@ public:
 			return Qt::ItemIsEnabled;
 		}
 
-		return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
+		auto f = QAbstractTableModel::flags(index);
+
+		if (static_cast<Column>(index.column()) != Column::id)
+			f |= Qt::ItemIsEditable;
+
+		return  f;
 	}
 	virtual bool insertRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
 	virtual bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;

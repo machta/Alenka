@@ -141,6 +141,8 @@ QVariant TrackTable::headerData(int section, Qt::Orientation orientation, int ro
 	{
 		switch (static_cast<Column>(section))
 		{
+		case Column::id:
+			return "ID";
 		case Column::label:
 			return "Label";
 		case Column::code:
@@ -180,6 +182,8 @@ QVariant TrackTable::data(const QModelIndex& index, int role) const
 		{
 			switch (static_cast<Column>(index.column()))
 			{
+			case Column::id:
+				return row;
 			case Column::label:
 				return QString::fromStdString(label[row]);
 			case Column::code:
@@ -378,6 +382,9 @@ void TrackTable::sort(int column, Qt::SortOrder order)
 	{
 		switch (static_cast<Column>(column))
 		{
+		case Column::id:
+			predicate = less<int>();
+			break;
 		case Column::label:
 			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(label[a]), QString::fromStdString(label[b])) < 0; };
 			break;
@@ -401,6 +408,9 @@ void TrackTable::sort(int column, Qt::SortOrder order)
 	{
 		switch (static_cast<Column>(column))
 		{
+		case Column::id:
+			predicate = greater<int>();
+			break;
 		case Column::label:
 			predicate = [this, &collator] (int a, int b) { return collator.compare(QString::fromStdString(label[a]), QString::fromStdString(label[b])) > 0; };
 			break;
