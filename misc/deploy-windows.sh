@@ -38,16 +38,18 @@ cp -v $QT_DIR/bin/Qt5Widgets.dll $folder32/$name-32 &&
 cp -v $QT_DIR/plugins/platforms/qwindows.dll $folder32/$name-32/platforms &&
 libraries32=OK || libraries32=fail
 
-echo 'Visual C++ 2015 redistributable is required.
-
-Use "./Alenka" to launch the program or double-click.
-' > $folder/$name/README.txt
+README='Visual C++ 2015 redistributable is required.\r
+\r
+Use "./Alenka" to launch the program or double-click.\r
+'
+echo -e "$README" > $folder/$name/README.txt
+echo -e "$README" > $folder32/$name-32/README.txt
 
 # Make zip using .Net.
 rm -f "$name.zip" "$name-32.zip" &&
 powershell.exe -nologo -noprofile -command "& { Add-Type -A 'System.IO.Compression.FileSystem'; [IO.Compression.ZipFile]::CreateFromDirectory('$folder', '$name.zip'); }" &&
 powershell.exe -nologo -noprofile -command "& { Add-Type -A 'System.IO.Compression.FileSystem'; [IO.Compression.ZipFile]::CreateFromDirectory('$folder32', '$name-32.zip'); }" &&
-cd - && zip=OK || zip=fail
+zip=OK || zip=fail
 
 rm -r $folder $folder32
 
