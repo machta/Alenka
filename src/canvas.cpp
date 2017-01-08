@@ -343,6 +343,8 @@ void Canvas::wheelEvent(QWheelEvent* event)
 		}
 
 		update();
+		event->accept();
+		return;
 	}
 	else if (event->modifiers() & Qt::AltModifier)
 	{
@@ -359,6 +361,8 @@ void Canvas::wheelEvent(QWheelEvent* event)
 		emit getInfoTable()->positionIndicatorChanged(getInfoTable()->getPositionIndicator());
 
 		update();
+		event->accept();
+		return;
 	}
 	else if (event->modifiers() & Qt::ShiftModifier)
 	{
@@ -372,11 +376,11 @@ void Canvas::wheelEvent(QWheelEvent* event)
 		}
 
 		update();
+		event->accept();
+		return;
 	}
-	else
-	{
-		event->ignore();
-	}
+
+	event->ignore();
 }
 
 void Canvas::keyPressEvent(QKeyEvent* event)
