@@ -21,26 +21,42 @@ echo -e Deploying to $name.zip and $name-32.zip'\n'
 mkdir -p $folder/$name/platforms
 mkdir -p $folder32/$name-32/platforms
 
-cp -v `find .. -name Alenka.exe | grep Alenka | grep 64 | grep Release` $folder/$name/Alenka.exe
-cp -v `find .. -name Alenka.exe | grep Alenka | grep 32 | grep Release` $folder32/$name-32/Alenka.exe
+cp -v `find .. -name Alenka.exe | grep Alenka | grep 64 | grep Release | grep 5.7` $folder/$name/Alenka.exe && alenka=OK || alenka=fail
+cp -v `find .. -name Alenka.exe | grep Alenka | grep 32 | grep Release | grep 5.7` $folder32/$name-32/Alenka.exe && alenka32=OK || alenka32=fail
 
-QT_DIR=C:/Qt/5.7/msvc2015_64
-cp -v $QT_DIR/bin/Qt5Core.dll $folder/$name
-cp -v $QT_DIR/bin/Qt5Gui.dll $folder/$name
-cp -v $QT_DIR/bin/Qt5Widgets.dll $folder/$name
-cp -v $QT_DIR/plugins/platforms/qwindows.dll $folder/$name/platforms
+QT_DIR=C:/Qt/5.7/msvc2015_64 &&
+cp -v $QT_DIR/bin/Qt5Core.dll $folder/$name &&
+cp -v $QT_DIR/bin/Qt5Gui.dll $folder/$name &&
+cp -v $QT_DIR/bin/Qt5Widgets.dll $folder/$name &&
+cp -v $QT_DIR/plugins/platforms/qwindows.dll $folder/$name/platforms &&
+libraries=OK || libraries=fail
 
-QT_DIR=C:/Qt/5.7/msvc2015
-cp -v $QT_DIR/bin/Qt5Core.dll $folder32/$name-32
-cp -v $QT_DIR/bin/Qt5Gui.dll $folder32/$name-32
-cp -v $QT_DIR/bin/Qt5Widgets.dll $folder32/$name-32
-cp -v $QT_DIR/plugins/platforms/qwindows.dll $folder32/$name-32/platforms
+QT_DIR=C:/Qt/5.7/msvc2015 &&
+cp -v $QT_DIR/bin/Qt5Core.dll $folder32/$name-32 &&
+cp -v $QT_DIR/bin/Qt5Gui.dll $folder32/$name-32 &&
+cp -v $QT_DIR/bin/Qt5Widgets.dll $folder32/$name-32 &&
+cp -v $QT_DIR/plugins/platforms/qwindows.dll $folder32/$name-32/platforms &&
+libraries32=OK || libraries32=fail
 
-#zip -r $name.zip $name
-rm -f "$name.zip" "$name-32.zip"
-powershell.exe -nologo -noprofile -command "& { Add-Type -A 'System.IO.Compression.FileSystem'; [IO.Compression.ZipFile]::CreateFromDirectory('$folder', '$name.zip'); }"
-powershell.exe -nologo -noprofile -command "& { Add-Type -A 'System.IO.Compression.FileSystem'; [IO.Compression.ZipFile]::CreateFromDirectory('$folder32', '$name-32.zip'); }"
+echo 'Visual C++ 2015 redistributable is required.
+
+Use "./Alenka" to launch the program or double-click.
+' > $folder/$name/README.txt
+
+# Make zip using .Net.
+rm -f "$name.zip" "$name-32.zip" &&
+powershell.exe -nologo -noprofile -command "& { Add-Type -A 'System.IO.Compression.FileSystem'; [IO.Compression.ZipFile]::CreateFromDirectory('$folder', '$name.zip'); }" &&
+powershell.exe -nologo -noprofile -command "& { Add-Type -A 'System.IO.Compression.FileSystem'; [IO.Compression.ZipFile]::CreateFromDirectory('$folder32', '$name-32.zip'); }" &&
+cd - && zip=OK || zip=fail
 
 rm -r $folder $folder32
 
-#TODO: make a README with installation instructions (Visual C++ runtime, drivers...)
+echo
+echo ========= Deployment summary =========
+echo "Library                 Status"
+echo ======================================
+echo "Alenka                  $alenka"
+echo "Alenka 32-bit           $alenka32"
+echo "DLL libraries           $libraries"
+echo "DLL libraries 32-bit    $libraries32"
+echo "zip                     $zip"

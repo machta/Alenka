@@ -20,15 +20,14 @@ echo -e Deploying to $name'\n'
 mkdir -p $folder/$name/platforms
 mkdir -p $folder/$name/xcbglintegrations
 
-cp -v `find .. -type f -name Alenka | grep Alenka | grep Release | grep 5.7` $folder/$name/Alenka
-cp -v `find .. -type f -name Alenka | grep Alenka | grep Debug | grep 5.7` $folder/$name/Alenka.debug
+cp -v `find .. -type f -name Alenka | grep Alenka | grep Release | grep 5.7` $folder/$name/Alenka && alenka=OK || alenka=fail
+cp -v `find .. -type f -name Alenka | grep Alenka | grep Debug | grep 5.7` $folder/$name/Alenka.debug && alenkaDebug=OK || alenkaDebug=fail
 
-PLUGIN=/opt/Qt/5.7/gcc_64/plugins
-xcbglintegrations
-
-cp -v $PLUGIN/platforms/libqxcb.so $folder/$name/platforms
-cp -v $PLUGIN/xcbglintegrations/* $folder/$name/xcbglintegrations
-cp -v `ldd $folder/$name/Alenka $PLUGIN/platforms/libqxcb.so | grep -i qt | awk '{print $3}'` $folder/$name
+PLUGIN=/opt/Qt/5.7/gcc_64/plugins &&
+cp -v $PLUGIN/platforms/libqxcb.so $folder/$name/platforms &&
+cp -v $PLUGIN/xcbglintegrations/* $folder/$name/xcbglintegrations &&
+cp -v $(realpath `ldd $folder/$name/Alenka $PLUGIN/platforms/libqxcb.so | grep -i qt | awk '{print $3}'` | sort | uniq) $folder/$name &&
+libraries=OK || libraries=fail
 
 echo '#!/bin/sh
 
@@ -45,10 +44,18 @@ echo 'This is a standalone package.
 Use "./runAlenka" to launch the program.
 ' > $folder/$name/README
 
-cd $folder
-zip -r $name.zip $name
-mv $name.zip ..
-cd -
+cd $folder &&
+zip -r $name.zip $name &&
+mv $name.zip .. &&
+cd - && zip=OK || zip=fail
 
 rm -r $folder
 
+echo
+echo ========= Deployment summary =========
+echo "Library                 Status"
+echo ======================================
+echo "Alenka                  $alenka"
+echo "Alenka.debug            $alenkaDebug"
+echo "shared libraries        $libraries"
+echo "zip                     $zip"
