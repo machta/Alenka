@@ -530,18 +530,18 @@ void SignalFileBrowserWindow::openFile()
 	connect(it, SIGNAL(positionIndicatorChanged(double)), this, SLOT(updatePositionStatusLabel()));
 	connect(signalViewer->getCanvas(), SIGNAL(cursorPositionSampleChanged(int)), this, SLOT(updateCursorStatusLabel()));
 
-	// Connect slot SignalViewer::update() to make sure that the SignalViewer gets updated when needed.
-	connect(it, SIGNAL(virtualWidthChanged(int)), signalViewer, SLOT(update()));
-	connect(it, SIGNAL(positionChanged(int)), signalViewer, SLOT(update()));
-	connect(it, SIGNAL(lowpassFrequencyChanged(double)), signalViewer, SLOT(update()));
-	connect(it, SIGNAL(highpassFrequencyChanged(double)), signalViewer, SLOT(update()));
-	connect(it, SIGNAL(notchChanged(bool)), signalViewer, SLOT(update()));
-	connect(it, SIGNAL(selectedMontageChanged(int)), signalViewer, SLOT(update()));
-	connect(it, SIGNAL(timeLineIntervalChanged(double)), signalViewer, SLOT(update()));
-	connect(it, SIGNAL(positionIndicatorChanged(double)), signalViewer, SLOT(update()));
+	// Connect slot SignalViewer::updateSignalViewer() to make sure that the SignalViewer gets updated when needed.
+	connect(it, SIGNAL(virtualWidthChanged(int)), signalViewer, SLOT(updateSignalViewer()));
+	connect(it, SIGNAL(positionChanged(int)), signalViewer, SLOT(updateSignalViewer()));
+	connect(it, SIGNAL(lowpassFrequencyChanged(double)), signalViewer, SLOT(updateSignalViewer()));
+	connect(it, SIGNAL(highpassFrequencyChanged(double)), signalViewer, SLOT(updateSignalViewer()));
+	connect(it, SIGNAL(notchChanged(bool)), signalViewer, SLOT(updateSignalViewer()));
+	connect(it, SIGNAL(selectedMontageChanged(int)), signalViewer, SLOT(updateSignalViewer()));
+	connect(it, SIGNAL(timeLineIntervalChanged(double)), signalViewer, SLOT(updateSignalViewer()));
+	connect(it, SIGNAL(positionIndicatorChanged(double)), signalViewer, SLOT(updateSignalViewer()));
 
-	connectModel(file->getMontageTable(), [this] () { signalViewer->update(); });
-	connectModel(file->getEventTypeTable(), [this] () { signalViewer->update(); });
+	connectModel(file->getMontageTable(), [this] () { signalViewer->updateSignalViewer(); });
+	connectModel(file->getEventTypeTable(), [this] () { signalViewer->updateSignalViewer(); });
 
 	// Update the View submenus.
 	connect(it, SIGNAL(timeModeChanged(int)), this, SLOT(updateTimeMode(int)));
@@ -567,7 +567,7 @@ void SignalFileBrowserWindow::closeFile()
 	signalViewer->changeFile(nullptr);
 	eventManager->changeFile(nullptr);
 
-	signalViewer->update();
+	signalViewer->updateSignalViewer();
 }
 
 void SignalFileBrowserWindow::saveFile()
@@ -650,11 +650,11 @@ void SignalFileBrowserWindow::updateManagers(int value)
 {
 	TrackTable* tt = file->getMontageTable()->getTrackTables()->at(value);
 	trackManager->setModel(tt);
-	connectModel(tt, [this] () { signalViewer->update(); });
+	connectModel(tt, [this] () { signalViewer->updateSignalViewer(); });
 
 	EventTable* et = file->getMontageTable()->getEventTables()->at(value);
 	eventManager->setModel(et);
-	connectModel(et, [this] () { signalViewer->update(); });
+	connectModel(et, [this] () { signalViewer->updateSignalViewer(); });
 }
 
 void SignalFileBrowserWindow::horizontalZoomIn()

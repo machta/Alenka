@@ -61,6 +61,12 @@ void SignalViewer::changeFile(DataFile* file)
 	}
 }
 
+void SignalViewer::updateSignalViewer()
+{
+	canvas->update(); // For some reason in Qt 5.7 the child canvas doesn't get updated. So I do it here explicitly.
+	update();
+}
+
 void SignalViewer::resize(int virtualWidth)
 {
 	int page = canvas->width();

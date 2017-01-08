@@ -48,7 +48,8 @@ signals:
 	void virtualWidthChanged(int);
 	void positionChanged(int);
 
-public slots:	
+public slots:
+	void updateSignalViewer();
 
 protected:
 	virtual void resizeEvent(QResizeEvent* /*event*/) override
