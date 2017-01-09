@@ -26,7 +26,7 @@ cp -v `find .. -type f -name Alenka | grep Alenka | grep Debug | grep 5.7` $fold
 PLUGIN=/opt/Qt/5.7/gcc_64/plugins &&
 cp -v $PLUGIN/platforms/libqxcb.so $folder/$name/platforms &&
 cp -v $PLUGIN/xcbglintegrations/* $folder/$name/xcbglintegrations &&
-cp -v $(realpath `ldd $folder/$name/Alenka $PLUGIN/platforms/libqxcb.so | grep -i qt | awk '{print $3}'` | sort | uniq) $folder/$name &&
+cp -v $(realpath -s `ldd $folder/$name/Alenka $PLUGIN/platforms/libqxcb.so | grep -i qt | awk '{print $3}'` | sort | uniq) $folder/$name &&
 libraries=OK || libraries=fail
 
 echo '#!/bin/sh
