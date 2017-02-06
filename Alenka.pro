@@ -4,7 +4,7 @@ TEMPLATE = app console
 
 CONFIG += c++11
 
-QT += widgets
+QT += widgets websockets
 
 HEADERS += \
 	src/DataFile/datafile.h \
@@ -39,7 +39,10 @@ HEADERS += \
 	src/spikedetanalysis.h \
 	src/spikedetsettingsdialog.h \
 	src/DataFile/edftmp.h \
-	src/SignalProcessor/kernelcache.h
+	src/SignalProcessor/kernelcache.h \
+	src/Sync/syncserver.h \
+    src/Sync/syncclient.h \
+    src/Sync/syncdialog.h
 
 SOURCES += \
 	src/DataFile/gdf2.cpp \
@@ -75,7 +78,10 @@ SOURCES += \
 	src/spikedetanalysis.cpp \
 	src/spikedetsettingsdialog.cpp \
 	src/DataFile/edftmp.cpp \
-	src/SignalProcessor/kernelcache.cpp
+	src/SignalProcessor/kernelcache.cpp \
+	src/Sync/syncserver.cpp \
+    src/Sync/syncclient.cpp \
+    src/Sync/syncdialog.cpp
 
 RESOURCES += \
 	resources/resources.qrc

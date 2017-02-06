@@ -18,6 +18,9 @@ class QActionGroup;
 class QLabel;
 class QAction;
 class SpikedetAnalysis;
+class SyncServer;
+class SyncClient;
+class SyncDialog;
 
 /**
  * @brief This class implements the top level window of the program.
@@ -58,6 +61,9 @@ private:
 	QLabel* cursorStatusLabel;
 	SpikedetAnalysis* spikedetAnalysis;
 	double eventDuration = 0.1;
+	SyncServer* syncServer;
+	SyncClient* syncClient;
+	SyncDialog* syncDialog;
 
 	void connectModel(QAbstractTableModel* model, std::function<void ()> f);
 	void horizontalZoom(double factor);

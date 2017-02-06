@@ -15,6 +15,9 @@
 #include "myapplication.h"
 #include "spikedetsettingsdialog.h"
 #include "canvas.h"
+#include "Sync/syncserver.h"
+#include "Sync/syncclient.h"
+#include "Sync/syncdialog.h"
 
 #include <AlenkaSignal/openclcontext.h>
 #include <AlenkaSignal/montage.h>
@@ -203,6 +206,14 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 		}
 	});
 
+	// Construct SyncDialog.
+	syncServer = new SyncServer();
+	syncClient = new SyncClient();
+	syncDialog = new SyncDialog(syncServer, syncClient, this);
+
+	QAction* showSyncDialog = new QAction("Show Sync Dialog", this);
+	connect(showSyncDialog, SIGNAL(triggered(bool)), syncDialog, SLOT(show()));
+
 	// Tool bars.
 	const int spacing = 3;
 
@@ -324,6 +335,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 	toolsMenu->addAction(runSpikedetAction);
 	toolsMenu->addAction(spikedetSettingsAction);
+	toolsMenu->addAction(showSyncDialog);
 
 	// Construct status bar.
 	timeModeStatusLabel = new QLabel(this);
