@@ -101,6 +101,8 @@ private slots:
 	void updateMontageComboBox();
 	void updateEventTypeComboBox();
 	void runSpikedet();
+	void receiveSyncMessage(const QByteArray& message);
+	void sendSyncMessage();
 };
 
 #endif // SIGNALFILEBROWSERWINDOW_H

@@ -42,11 +42,29 @@ using namespace std;
 
 namespace
 {
+
 const double horizontalZoomFactor = 1.3;
 const double verticalZoomFactor = 1.3;
 
 const char* title = "Signal File Browser";
+
+double byteArray2Double(const char* data)
+{
+	return *reinterpret_cast<const double*>(data);
 }
+
+int byteArray2int(const char* data)
+{
+	return *reinterpret_cast<const int*>(data);
+}
+
+void unpackMessage(const QByteArray& message, int* position)
+{
+	assert(message.size() >= (int)sizeof(int));
+	*position = byteArray2int(message.data());
+}
+
+} // namespace
 
 SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(parent)
 {
@@ -213,6 +231,11 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 	QAction* showSyncDialog = new QAction("Show Sync Dialog", this);
 	connect(showSyncDialog, SIGNAL(triggered(bool)), syncDialog, SLOT(show()));
+
+	connect(syncServer, SIGNAL(messageReceived(QByteArray)), this, SLOT(receiveSyncMessage(QByteArray)));
+	connect(syncClient, SIGNAL(messageReceived(QByteArray)), this, SLOT(receiveSyncMessage(QByteArray)));
+
+	// TODO: filter the stupid ssl warnings from debug output.
 
 	// Tool bars.
 	const int spacing = 3;
@@ -563,6 +586,9 @@ void SignalFileBrowserWindow::openFile()
 		setTimeLineIntervalAction->setStatusTip(setTimeLineIntervalAction->toolTip());
 	});
 
+	// Connect Sync.
+	connect(it, SIGNAL(positionChanged(int)), this, SLOT(sendSyncMessage()));
+
 	// Emit all signals to ensure there are no uninitialized controls.
 	it->emitAllSignals();
 }
@@ -834,5 +860,31 @@ void SignalFileBrowserWindow::runSpikedet()
 				et->setChannel(out->m_chan[i] - 1, etIndex + i);
 			}
 		}
+	}
+}
+
+void SignalFileBrowserWindow::receiveSyncMessage(const QByteArray& message)
+{
+	int position;
+	unpackMessage(message, &position);
+
+	if (file)
+	{
+		cerr << "Received position: " << position << endl;
+		file->getInfoTable()->setPosition(position);
+	}
+}
+
+void SignalFileBrowserWindow::sendSyncMessage()
+{
+	if (file)
+	{
+		int position = file->getInfoTable()->getPosition();
+		cerr << "Sending position: " << position << endl;
+
+		QByteArray message(reinterpret_cast<char*>(&position), sizeof(int));
+
+		syncServer->sendMessage(message);
+		syncClient->sendMessage(message);
 	}
 }

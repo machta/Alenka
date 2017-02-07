@@ -26,17 +26,19 @@ private:
 	QComboBox* combo;
 	QWidget* serverControls;
 	QWidget* clientControls;
+	QLineEdit* serverPortEdit;
 	QLineEdit* clientPortEdit;
-	QLineEdit* severPortEdit;
-	QLineEdit* serverIpEdit;
-	QPushButton* connectButton;
+	QLineEdit* clientIpEdit;
 	QPushButton* launchButton;
+	QPushButton* connectButton;
 
 	void buildServerControls();
 	void buildClientControls();
 
 private slots:
 	void activateControls(const QString &text);
+	void launchServer();
+	void connectClient();
 };
 
 #endif // SYNCDIALOG_H

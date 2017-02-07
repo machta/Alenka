@@ -17,7 +17,7 @@ public:
 	{}
 	~SyncServer();
 
-	void launch(int port);
+	int launch(int port);
 	int shutDown();
 	int connectionCount() const
 	{

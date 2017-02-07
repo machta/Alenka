@@ -13,7 +13,7 @@ public:
 	explicit SyncClient(QObject* parent = nullptr) : QObject(parent)
 	{}
 	~SyncClient();
-	void connectToServer(QUrl url, int port);
+	int connectToServer(QUrl url, int port);
 	void disconnect();
 
 signals:

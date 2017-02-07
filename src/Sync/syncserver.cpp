@@ -4,6 +4,7 @@
 #include <QtWebSockets/QWebSocketServer>
 
 #include <cassert>
+#include <iostream>
 
 using namespace std;
 
@@ -17,22 +18,26 @@ SyncServer::~SyncServer()
 	delete server;
 }
 
-void SyncServer::launch(int port)
+int SyncServer::launch(int port)
 {
 	assert(server == nullptr);
 
-	server = new QWebSocketServer("", QWebSocketServer::SecureMode);
+	server = new QWebSocketServer("", QWebSocketServer::NonSecureMode);
 
-	server->listen(QHostAddress::Any, port);
+	bool result = server->listen(QHostAddress::Any, port);
 
-	connect(server, &QWebSocketServer::newConnection, [this] ()
-	{
+	if (!result)
+		return 1;
+
+	connect(server, &QWebSocketServer::newConnection, [this] () {
 		auto socket = server->nextPendingConnection();
 		assert(socket);
 
 		sockets.push_back(socket);
 		connect(socket, SIGNAL(binaryMessageReceived(QByteArray)), this, SIGNAL(messageReceived(QByteArray)));
 	});
+
+	return 0;
 }
 
 int SyncServer::shutDown()
@@ -43,10 +48,14 @@ int SyncServer::shutDown()
 		delete server;
 		server = nullptr;
 	}
+	return 0;
 }
 
 int SyncServer::sendMessage(const QByteArray& message)
 {
+	if (server == nullptr)
+		return 0;
+
 	sockets = deleteClosedSockets(sockets);
 
 	for (QWebSocket* e : sockets)
