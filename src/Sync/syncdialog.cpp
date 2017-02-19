@@ -15,6 +15,7 @@
 #include <QNetworkInterface>
 #include <QFont>
 #include <QGridLayout>
+#include <QFormLayout>
 
 SyncDialog::SyncDialog(SyncServer* server, SyncClient* client, QWidget* parent) : QDialog(parent),
 	server(server), client(client)
@@ -46,7 +47,7 @@ void SyncDialog::buildServerControls()
 	QVBoxLayout* box = new QVBoxLayout();
 	QGridLayout* grid = new QGridLayout();
 
-	QLabel* label = new QLabel("IP of this device:");
+	QLabel* label = new QLabel("Network interface IPs of this device:");
 	label->setToolTip("Use this to connect with the client over LAN");
 	grid->addWidget(label, 0, 0);
 
@@ -83,6 +84,14 @@ void SyncDialog::buildServerControls()
 	connect(button, SIGNAL(clicked(bool)), this, SLOT(shutDownServer()));
 
 	box->addWidget(buttonBox);
+
+	QFormLayout* status = new QFormLayout();
+	font.setPointSize(15);
+	serverStatus = new QLabel("Server Ready");
+	serverStatus->setFont(font);
+	status->addRow("Status: ", serverStatus);
+	box->addLayout(status);
+
 	serverControls = new QWidget();
 	serverControls->setLayout(box);
 }
@@ -117,9 +126,22 @@ void SyncDialog::buildClientControls()
 	QPushButton* button = new QPushButton("Disconnect");
 	buttonBox->addButton(button, QDialogButtonBox::ActionRole);
 	connect(button, SIGNAL(clicked(bool)), this, SLOT(disconnectClient()));
-	connect(client, &SyncClient::serverDisconnected, [this] () { changeEnableControls(true); });
+	connect(client, &SyncClient::serverDisconnected, [this] () {
+		changeEnableControls(true);
+
+		clientStatus->setText("Client Disconnected");
+		clientStatus->setStyleSheet("QLabel { color : red; }");
+	});
 
 	box->addWidget(buttonBox);
+
+	QFormLayout* status = new QFormLayout();
+	font.setPointSize(15);
+	clientStatus = new QLabel("Client Ready");
+	clientStatus->setFont(font);
+	status->addRow("Status: ", clientStatus);
+	box->addLayout(status);
+
 	clientControls = new QWidget();
 	clientControls->setLayout(box);
 }
@@ -153,6 +175,9 @@ void SyncDialog::launchServer()
 	if (ok)
 	{
 		changeEnableControls(false);
+
+		serverStatus->setText("Server Running");
+		serverStatus->setStyleSheet("QLabel { color : green; }");
 	}
 	else
 	{
@@ -165,6 +190,9 @@ void SyncDialog::shutDownServer()
 	server->shutDown();
 
 	changeEnableControls(true);
+
+	serverStatus->setText("Server Ready");
+	serverStatus->setStyleSheet("QLabel { color : black; }");
 }
 
 void SyncDialog::connectClient()
@@ -187,6 +215,9 @@ void SyncDialog::connectClient()
 	else
 	{
 		changeEnableControls(false);
+
+		clientStatus->setText("Client Connected");
+		clientStatus->setStyleSheet("QLabel { color : green; }");
 	}
 }
 
@@ -195,6 +226,9 @@ void SyncDialog::disconnectClient()
 	client->disconnectServer();
 
 	changeEnableControls(true);
+
+	clientStatus->setText("Client Ready");
+	clientStatus->setStyleSheet("QLabel { color : black; }");
 }
 
 void SyncDialog::changeEnableControls(bool enable)

@@ -8,6 +8,7 @@ class QLineEdit;
 class QPushButton;
 class SyncServer;
 class SyncClient;
+class QLabel;
 
 class SyncDialog : public QDialog
 {
@@ -31,6 +32,8 @@ private:
 	QLineEdit* clientIpEdit;
 	QPushButton* launchButton;
 	QPushButton* connectButton;
+	QLabel* serverStatus;
+	QLabel* clientStatus;
 
 	void buildServerControls();
 	void buildClientControls();

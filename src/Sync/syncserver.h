@@ -35,6 +35,9 @@ private:
 
 	std::vector<QWebSocket*> deleteClosedSockets(const std::vector<QWebSocket*>& sockets);
 	void closeSocket(QWebSocket* socket);
+
+private slots:
+	void broadcastMessage(const QByteArray& message);
 };
 
 #endif // SYNCSERVER_H

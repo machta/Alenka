@@ -53,15 +53,17 @@ double byteArray2Double(const char* data)
 	return *reinterpret_cast<const double*>(data);
 }
 
-int byteArray2int(const char* data)
+void unpackMessage(const QByteArray& message, double* timePossition, double* samplePixelRatio)
 {
-	return *reinterpret_cast<const int*>(data);
+	assert(message.size() >= (int)sizeof(double)*2);
+	*timePossition = byteArray2Double(message.data());
+	*samplePixelRatio = byteArray2Double(message.data() + sizeof(double));
 }
 
-void unpackMessage(const QByteArray& message, int* position)
+QByteArray packMessage(double timePossition, double samplePixelRatio)
 {
-	assert(message.size() >= (int)sizeof(int));
-	*position = byteArray2int(message.data());
+	double data[2] = {timePossition, samplePixelRatio};
+	return QByteArray(reinterpret_cast<char*>(data), sizeof(double)*2);
 }
 
 } // namespace
@@ -232,6 +234,10 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	QAction* showSyncDialog = new QAction("Show Sync Dialog", this);
 	connect(showSyncDialog, SIGNAL(triggered(bool)), syncDialog, SLOT(show()));
 
+	synchronize = new QAction("Synchronize", this);
+	synchronize->setCheckable(true);
+	synchronize->setChecked(true);
+
 	connect(syncServer, SIGNAL(messageReceived(QByteArray)), this, SLOT(receiveSyncMessage(QByteArray)));
 	connect(syncClient, SIGNAL(messageReceived(QByteArray)), this, SLOT(receiveSyncMessage(QByteArray)));
 
@@ -358,7 +364,10 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 	toolsMenu->addAction(runSpikedetAction);
 	toolsMenu->addAction(spikedetSettingsAction);
+	toolsMenu->addSeparator();
+
 	toolsMenu->addAction(showSyncDialog);
+	toolsMenu->addAction(synchronize);
 
 	// Construct status bar.
 	timeModeStatusLabel = new QLabel(this);
@@ -459,6 +468,11 @@ void SignalFileBrowserWindow::mode(int m)
 		updatePositionStatusLabel();
 		updateCursorStatusLabel();
 	}
+}
+
+bool SignalFileBrowserWindow::shouldSynchronizeView()
+{
+	return synchronize->isChecked();
 }
 
 void SignalFileBrowserWindow::openFile()
@@ -865,37 +879,38 @@ void SignalFileBrowserWindow::runSpikedet()
 
 void SignalFileBrowserWindow::receiveSyncMessage(const QByteArray& message)
 {
-	int position;
-	unpackMessage(message, &position);
-
-	if (file)
+	if (file && shouldSynchronizeView())
 	{
-		cerr << "Received position: " << position << endl;
+		double timePosition;
+		unpackMessage(message, &timePosition, &timePosition);
 
-		if (file->getInfoTable()->getPosition() != position)
-		{
-			file->getInfoTable()->setPosition(position);
-			syncMessageReceivedFlag = true;
-		}
+		double ratio = static_cast<double>(file->getSamplesRecorded())/file->getInfoTable()->getVirtualWidth();
+		int position = timePosition*file->getSamplingFrequency()/ratio;
+
+		cerr << "Received position: " << timePosition << endl;
+
+		lastPositionReceived = position;
+		file->getInfoTable()->setPosition(position);
 	}
 }
 
 void SignalFileBrowserWindow::sendSyncMessage()
 {
-	if (file)
+	if (file && shouldSynchronizeView())
 	{
 		int position = file->getInfoTable()->getPosition();
-		cerr << "Sending position: " << position << endl;
 
-		QByteArray message(reinterpret_cast<char*>(&position), sizeof(int));
+		if (position != lastPositionReceived) // This is to break the message deadlock.
+		{
+			double ratio = static_cast<double>(file->getSamplesRecorded())/file->getInfoTable()->getVirtualWidth();
+			double timePosition = position*ratio/file->getSamplingFrequency();
 
-		syncServer->sendMessage(message);
+			cerr << "Sending position: " << timePosition << endl;
 
-		// This is to break the message deadlock.
-		// TODO: Make this primitive solution more robust and sophisticated.
-		if (syncMessageReceivedFlag)
-			syncMessageReceivedFlag = false;
-		else
+			QByteArray message = packMessage(timePosition, timePosition);
+
+			syncServer->sendMessage(message);
 			syncClient->sendMessage(message);
+		}
 	}
 }

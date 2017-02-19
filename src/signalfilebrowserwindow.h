@@ -64,12 +64,14 @@ private:
 	SyncServer* syncServer;
 	SyncClient* syncClient;
 	SyncDialog* syncDialog;
-	bool syncMessageReceivedFlag = false;
+	int lastPositionReceived = -1000;
+	QAction* synchronize;
 
 	void connectModel(QAbstractTableModel* model, std::function<void ()> f);
 	void horizontalZoom(double factor);
 	void verticalZoom(double factor);
 	void mode(int m);
+	bool shouldSynchronizeView();
 
 private slots:
 	void openFile();

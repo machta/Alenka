@@ -8,6 +8,12 @@
 
 using namespace std;
 
+void sendMessageThroughSocket(const QByteArray& message, QWebSocket* socket)
+{
+	auto bytesSent = socket->sendBinaryMessage(message);
+	assert(bytesSent == message.size() && "Server failed to send the message.");
+}
+
 SyncServer::SyncServer(QObject* parent) : QObject(parent)
 {
 	server = new QWebSocketServer("", QWebSocketServer::NonSecureMode);
@@ -18,6 +24,7 @@ SyncServer::SyncServer(QObject* parent) : QObject(parent)
 
 		sockets.push_back(socket);
 		connect(socket, SIGNAL(binaryMessageReceived(QByteArray)), this, SIGNAL(messageReceived(QByteArray)));
+		connect(socket, SIGNAL(binaryMessageReceived(QByteArray)), this, SLOT(broadcastMessage(QByteArray)));
 	});
 }
 
@@ -51,8 +58,7 @@ int SyncServer::sendMessage(const QByteArray& message)
 
 	for (QWebSocket* e : sockets)
 	{
-		auto bytesSent = e->sendBinaryMessage(message);
-		assert(bytesSent == message.size() && "Server failed to send the message.");
+		sendMessageThroughSocket(message, e);
 	}
 
 	return 0;
@@ -78,5 +84,19 @@ vector<QWebSocket*> SyncServer::deleteClosedSockets(const vector<QWebSocket*>& s
 void SyncServer::closeSocket(QWebSocket* socket)
 {
 	disconnect(socket, SIGNAL(binaryMessageReceived(QByteArray)), this, SIGNAL(messageReceived(QByteArray)));
+	disconnect(socket, SIGNAL(binaryMessageReceived(QByteArray)), this, SLOT(broadcastMessage(QByteArray)));
 	delete socket;
+}
+
+void SyncServer::broadcastMessage(const QByteArray& message)
+{
+	QObject* signalSender = sender();
+
+	sockets = deleteClosedSockets(sockets);
+
+	for (QWebSocket* e : sockets)
+	{
+		if (e != signalSender)
+			sendMessageThroughSocket(message, e);
+	}
 }
