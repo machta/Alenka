@@ -13,8 +13,7 @@ class SyncServer : public QObject
 	Q_OBJECT
 
 public:
-	explicit SyncServer(QObject* parent = nullptr) : QObject(parent)
-	{}
+	explicit SyncServer(QObject* parent = nullptr);
 	~SyncServer();
 
 	int launch(int port);
@@ -31,10 +30,11 @@ public slots:
 	int sendMessage(const QByteArray& message);
 
 private:
-	QWebSocketServer* server = nullptr;
+	QWebSocketServer* server;
 	std::vector<QWebSocket*> sockets;
 
 	std::vector<QWebSocket*> deleteClosedSockets(const std::vector<QWebSocket*>& sockets);
+	void closeSocket(QWebSocket* socket);
 };
 
 #endif // SYNCSERVER_H

@@ -12,8 +12,12 @@
 #include <QDialogButtonBox>
 #include <QMessageBox>
 #include <QUrl>
+#include <QNetworkInterface>
+#include <QFont>
+#include <QGridLayout>
 
-SyncDialog::SyncDialog(SyncServer* server, SyncClient* client, QWidget* parent) : QDialog(parent), server(server), client(client)
+SyncDialog::SyncDialog(SyncServer* server, SyncClient* client, QWidget* parent) : QDialog(parent),
+	server(server), client(client)
 {
 	setWindowTitle("Synchronization Manager");
 	QVBoxLayout* box = new QVBoxLayout();
@@ -36,29 +40,38 @@ SyncDialog::SyncDialog(SyncServer* server, SyncClient* client, QWidget* parent) 
 
 void SyncDialog::buildServerControls()
 {
-	serverControls = new QWidget();
-	QVBoxLayout* box = new QVBoxLayout();
+	QFont font;
+	font.setPointSize(18);
 
-	QHBoxLayout* hbox = new QHBoxLayout();
-	QVBoxLayout* vbox = new QVBoxLayout();
+	QVBoxLayout* box = new QVBoxLayout();
+	QGridLayout* grid = new QGridLayout();
 
 	QLabel* label = new QLabel("IP of this device:");
-	label->setToolTip("Use this to connect with the client");
-	vbox->addWidget(label);
+	label->setToolTip("Use this to connect with the client over LAN");
+	grid->addWidget(label, 0, 0);
 
-	QLineEdit* lineEdit = new QLineEdit("...");
-	lineEdit->setEnabled(false);
-	vbox->addWidget(lineEdit);
+	QString ipAddresses;
+	int ipCount = 0;
+	for (const QHostAddress& address : QNetworkInterface::allAddresses())
+	{
+		if (address.protocol() == QAbstractSocket::IPv4Protocol && address != QHostAddress(QHostAddress::LocalHost))
+		{
+			if (ipCount++ > 0)
+				ipAddresses += '\n';
+			 ipAddresses += address.toString();
+		}
+	}
+	QLabel* ipLabel = new QLabel(ipAddresses);
+	ipLabel->setText(ipAddresses);
+	ipLabel->setFont(font);
+	grid->addWidget(ipLabel, 1, 0);
 
-	hbox->addLayout(vbox);
-	vbox = new QVBoxLayout();
-
-	vbox->addWidget(new QLabel("Port:"));
+	grid->addWidget(new QLabel("Port:"), 0, 1);
 	serverPortEdit = new QLineEdit("1234");
-	vbox->addWidget(serverPortEdit);
-	hbox->addLayout(vbox);
+	serverPortEdit->setFont(font);
+	grid->addWidget(serverPortEdit, 1, 1, Qt::AlignTop);
 
-	box->addLayout(hbox);
+	box->addLayout(grid);
 	QDialogButtonBox* buttonBox = new QDialogButtonBox();
 
 	launchButton = new QPushButton("Launch");
@@ -67,34 +80,34 @@ void SyncDialog::buildServerControls()
 
 	QPushButton* button = new QPushButton("Shut down");
 	buttonBox->addButton(button, QDialogButtonBox::ActionRole);
+	connect(button, SIGNAL(clicked(bool)), this, SLOT(shutDownServer()));
 
 	box->addWidget(buttonBox);
+	serverControls = new QWidget();
 	serverControls->setLayout(box);
 }
 
 void SyncDialog::buildClientControls()
 {
-	clientControls = new QWidget();
+	QFont font;
+	font.setPointSize(18);
+
 	QVBoxLayout* box = new QVBoxLayout();
+	QGridLayout* grid = new QGridLayout();
 
-	QHBoxLayout* hbox = new QHBoxLayout();
-	QVBoxLayout* vbox = new QVBoxLayout();
-
-	QLabel* label = new QLabel("Server address (IP):");
-	label->setToolTip("Web address e.g. http://example.com, or 10.0.0.10");
-	vbox->addWidget(label);
+	QLabel* label = new QLabel("Server address or IP:");
+	label->setToolTip("Web address e.g. ws://example.com, or 10.0.0.10 (Note that you must use the WebSocket protocol.)");
+	grid->addWidget(label, 0, 0);
 	clientIpEdit = new QLineEdit("ws://localhost");
-	vbox->addWidget(clientIpEdit);
+	clientIpEdit->setFont(font);
+	grid->addWidget(clientIpEdit, 1, 0);
 
-	hbox->addLayout(vbox);
-	vbox = new QVBoxLayout();
-
-	vbox->addWidget(new QLabel("Port:"));
+	grid->addWidget(new QLabel("Port:"), 0, 1);
 	clientPortEdit = new QLineEdit("1234");
-	vbox->addWidget(clientPortEdit);
-	hbox->addLayout(vbox);
+	clientPortEdit->setFont(font);
+	grid->addWidget(clientPortEdit, 1, 1);
 
-	box->addLayout(hbox);
+	box->addLayout(grid);
 	QDialogButtonBox* buttonBox = new QDialogButtonBox();
 
 	connectButton = new QPushButton("Connect");
@@ -103,8 +116,11 @@ void SyncDialog::buildClientControls()
 
 	QPushButton* button = new QPushButton("Disconnect");
 	buttonBox->addButton(button, QDialogButtonBox::ActionRole);
+	connect(button, SIGNAL(clicked(bool)), this, SLOT(disconnectClient()));
+	connect(client, &SyncClient::serverDisconnected, [this] () { changeEnableControls(true); });
 
 	box->addWidget(buttonBox);
+	clientControls = new QWidget();
 	clientControls->setLayout(box);
 }
 
@@ -136,14 +152,19 @@ void SyncDialog::launchServer()
 
 	if (ok)
 	{
-		combo->setEnabled(false);
-		serverPortEdit->setEnabled(false);
-		launchButton->setEnabled(false);
+		changeEnableControls(false);
 	}
 	else
 	{
 		QMessageBox::critical(this, "Error", "Server launch failed.");
 	}
+}
+
+void SyncDialog::shutDownServer()
+{
+	server->shutDown();
+
+	changeEnableControls(true);
 }
 
 void SyncDialog::connectClient()
@@ -156,7 +177,7 @@ void SyncDialog::connectClient()
 
 	if (ok && url.isValid())
 	{
-		result = client->connectToServer(url, port);
+		result = client->connectServer(url, port);
 	}
 
 	if (result)
@@ -165,14 +186,25 @@ void SyncDialog::connectClient()
 	}
 	else
 	{
-		combo->setEnabled(false);
-		clientIpEdit->setEnabled(false);
-		clientPortEdit->setEnabled(false);
-		connectButton->setEnabled(false);
+		changeEnableControls(false);
 	}
+}
 
-	/*int dummy = 0;
-	for (int i = 0; i < 1000000000; i++)
-		dummy++;
-	client->sendMessage(QByteArray("bla bla"));*/
+void SyncDialog::disconnectClient()
+{
+	client->disconnectServer();
+
+	changeEnableControls(true);
+}
+
+void SyncDialog::changeEnableControls(bool enable)
+{
+	combo->setEnabled(enable);
+
+	serverPortEdit->setEnabled(enable);
+	launchButton->setEnabled(enable);
+
+	clientIpEdit->setEnabled(enable);
+	clientPortEdit->setEnabled(enable);
+	connectButton->setEnabled(enable);
 }

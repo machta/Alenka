@@ -871,7 +871,12 @@ void SignalFileBrowserWindow::receiveSyncMessage(const QByteArray& message)
 	if (file)
 	{
 		cerr << "Received position: " << position << endl;
-		file->getInfoTable()->setPosition(position);
+
+		if (file->getInfoTable()->getPosition() != position)
+		{
+			file->getInfoTable()->setPosition(position);
+			syncMessageReceivedFlag = true;
+		}
 	}
 }
 
@@ -885,6 +890,12 @@ void SignalFileBrowserWindow::sendSyncMessage()
 		QByteArray message(reinterpret_cast<char*>(&position), sizeof(int));
 
 		syncServer->sendMessage(message);
-		syncClient->sendMessage(message);
+
+		// This is to break the message deadlock.
+		// TODO: Make this primitive solution more robust and sophisticated.
+		if (syncMessageReceivedFlag)
+			syncMessageReceivedFlag = false;
+		else
+			syncClient->sendMessage(message);
 	}
 }

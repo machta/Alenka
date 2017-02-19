@@ -64,6 +64,7 @@ private:
 	SyncServer* syncServer;
 	SyncClient* syncClient;
 	SyncDialog* syncDialog;
+	bool syncMessageReceivedFlag = false;
 
 	void connectModel(QAbstractTableModel* model, std::function<void ()> f);
 	void horizontalZoom(double factor);

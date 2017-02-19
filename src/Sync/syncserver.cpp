@@ -8,26 +8,9 @@
 
 using namespace std;
 
-SyncServer::~SyncServer()
+SyncServer::SyncServer(QObject* parent) : QObject(parent)
 {
-	shutDown();
-
-	for (QWebSocket* e : sockets)
-		delete e;
-
-	delete server;
-}
-
-int SyncServer::launch(int port)
-{
-	assert(server == nullptr);
-
 	server = new QWebSocketServer("", QWebSocketServer::NonSecureMode);
-
-	bool result = server->listen(QHostAddress::Any, port);
-
-	if (!result)
-		return 1;
 
 	connect(server, &QWebSocketServer::newConnection, [this] () {
 		auto socket = server->nextPendingConnection();
@@ -36,32 +19,40 @@ int SyncServer::launch(int port)
 		sockets.push_back(socket);
 		connect(socket, SIGNAL(binaryMessageReceived(QByteArray)), this, SIGNAL(messageReceived(QByteArray)));
 	});
+}
 
-	return 0;
+SyncServer::~SyncServer()
+{
+	shutDown();
+	delete server;
+}
+
+int SyncServer::launch(int port)
+{
+	bool result = server->listen(QHostAddress::Any, port);
+	return result ? 0 : 1;
 }
 
 int SyncServer::shutDown()
 {
-	if (server)
-	{
+	for (QWebSocket* e : sockets)
+		closeSocket(e);
+	sockets.clear();
+
+	if (server->isListening())
 		server->close();
-		delete server;
-		server = nullptr;
-	}
+
 	return 0;
 }
 
 int SyncServer::sendMessage(const QByteArray& message)
 {
-	if (server == nullptr)
-		return 0;
-
 	sockets = deleteClosedSockets(sockets);
 
 	for (QWebSocket* e : sockets)
 	{
 		auto bytesSent = e->sendBinaryMessage(message);
-		assert(bytesSent == message.size());
+		assert(bytesSent == message.size() && "Server failed to send the message.");
 	}
 
 	return 0;
@@ -78,9 +69,14 @@ vector<QWebSocket*> SyncServer::deleteClosedSockets(const vector<QWebSocket*>& s
 		}
 		else
 		{
-			delete e;
-			disconnect(e, SIGNAL(binaryMessageReceived(QByteArray)), this, SIGNAL(messageReceived(QByteArray)));
+			closeSocket(e);
 		}
 	}
 	return active;
+}
+
+void SyncServer::closeSocket(QWebSocket* socket)
+{
+	disconnect(socket, SIGNAL(binaryMessageReceived(QByteArray)), this, SIGNAL(messageReceived(QByteArray)));
+	delete socket;
 }

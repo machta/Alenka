@@ -7,23 +7,27 @@
 
 using namespace std;
 
+SyncClient::SyncClient(QObject* parent) : QObject(parent)
+{
+	socket = new QWebSocket();
+}
+
 SyncClient::~SyncClient()
 {
-	disconnect();
+	disconnectServer();
 	delete socket;
 }
 
-int SyncClient::connectToServer(QUrl url, int port)
+int SyncClient::connectServer(QUrl url, int port)
 {
-	assert(socket == nullptr);
 	assert(url.isValid());
-
-	socket = new QWebSocket();
 
 	cerr << "Error " << socket->error() << " " << socket->errorString().toStdString() << endl;
 
-	connect(socket, SIGNAL(binaryMessageReceived(QByteArray)), this, SIGNAL(messageReceived(QByteArray)));
-	connect(socket, SIGNAL(disconnected()), this, SIGNAL(disconnected()));
+	connect(socket, SIGNAL(binaryMessageReceived(QByteArray)), this, SIGNAL(messageReceived(QByteArray)));	
+	connect(socket, SIGNAL(disconnected()), this, SIGNAL(serverDisconnected()));
+	connect(socket, SIGNAL(disconnected()), this, SLOT(disconnectServer()));
+
 	connect(socket, &QWebSocket::connected, [] () {
 		cerr << "Client connected" << endl;
 	});
@@ -37,27 +41,23 @@ int SyncClient::connectToServer(QUrl url, int port)
 	return 0;
 }
 
-void SyncClient::disconnect()
+void SyncClient::disconnectServer()
 {
-	if (socket)
+	if (socket->isValid())
 	{
 		socket->close();
-		delete socket;
-		socket = nullptr;
 	}
 }
 
 int SyncClient::sendMessage(const QByteArray& message)
 {
-	if (socket == nullptr)
+	if (!socket->isValid())
 		return 0;
-
-	assert(socket != nullptr);
 
 	if (socket->isValid())
 	{
 		auto bytesSent = socket->sendBinaryMessage(message);
-		assert(bytesSent == message.size());
+		assert(bytesSent == message.size() && "Client failed to send the message.");
 		return 0;
 	}
 	else

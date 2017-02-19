@@ -10,21 +10,20 @@ class SyncClient : public QObject
 	Q_OBJECT
 
 public:
-	explicit SyncClient(QObject* parent = nullptr) : QObject(parent)
-	{}
+	explicit SyncClient(QObject* parent = nullptr);
 	~SyncClient();
-	int connectToServer(QUrl url, int port);
-	void disconnect();
+	int connectServer(QUrl url, int port);
 
 signals:
 	void messageReceived(const QByteArray& message);
-	void disconnected();
+	void serverDisconnected();
 
 public slots:
 	int sendMessage(const QByteArray& message);
+	void disconnectServer();
 
 private:
-	QWebSocket* socket = nullptr;
+	QWebSocket* socket;
 };
 
 #endif // SYNCCLIENT_H

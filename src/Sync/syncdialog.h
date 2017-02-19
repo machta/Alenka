@@ -38,7 +38,10 @@ private:
 private slots:
 	void activateControls(const QString &text);
 	void launchServer();
+	void shutDownServer();
 	void connectClient();
+	void disconnectClient();
+	void changeEnableControls(bool enable);
 };
 
 #endif // SYNCDIALOG_H
