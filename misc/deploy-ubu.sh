@@ -25,7 +25,6 @@ echo '#!/bin/sh
 
 DIR=`dirname $0`
 export LD_LIBRARY_PATH=$DIR:$AMDAPPSDKROOT/lib/x86_64/sdk:$LD_LIBRARY_PATH
-export LC_NUMERIC=en_US.UTF-8
 ' | tee $folder/$name/runAlenka > $folder/$name/runAlenka.debug
 echo '$DIR/Alenka "$@"' >> $folder/$name/runAlenka
 echo '$DIR/Alenka.debug "$@"' >> $folder/$name/runAlenka.debug
