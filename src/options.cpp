@@ -10,19 +10,21 @@ using namespace boost::program_options;
 
 Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS")
 {
+	const char* configDefault = "options.cfg";
+
 	// Definition of the available options.
 	options_description commandLineOnly("Command line options");
 	commandLineOnly.add_options()
 	("help", "help message")
-	("config,c", value<string>()->default_value("options.cfg"), "config file")
+	("config,c", value<string>()->default_value(configDefault), "config file")
 	("printFilter", "should the filter coefficients be printed (every time they are computed)")
 	("printBuffers", "print the values in buffers during signal processing")
 	("clInfo", "print OpenCL platform and device info")
 	("glInfo", "print OpenGL info")
 	;
 
-	options_description other("Configuration");
-	other.add_options()
+	options_description configuration("Configuration");
+	configuration.add_options()
 	("locale", value<string>()->default_value("en_us"), "the locale to be use; mostly controls decimal number format")
 	("uncalibrated", value<bool>()->default_value(false), "assume uncalibrated data in gdf files")
 	("clPlatform", value<int>()->default_value(0), "OpenCL platform id")
@@ -42,9 +44,27 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("kernelCacheSize", value<int>()->default_value(2048), "maximum number of montage kernels that can be cached")
 	;
 
+	options_description spikedet("Spikedet");
+	spikedet.add_options()
+	("fl", value<int>(), "lowpass filter frequency")
+	("fh", value<int>(), "highpass filter frequency")
+	("k1", value<double>(), "K1")
+	("k2", value<double>(), "K2")
+	("k3", value<double>(), "K3")
+	("w", value<int>(), "winsize")
+	("n", value<double>(), "noverlap")
+	("buf", value<int>(), "buffering")
+	("h", value<int>(), "main hum. freq.")
+	("dt", value<double>(), "discharge tol.")
+	("pt", value<double>(), "polyspike union time")
+	("dec", value<int>(), "decimation")
+	("sed", value<double>(), "spike event duration in seconds")
+	;
+
+	// TODO: Write some info on the first line (like "Usage: ./Alenka", version, some description what this program does).
 	// Parse the input.
-	options_description all("Allowed options");
-	all.add(commandLineOnly).add(other);
+	options_description all("");
+	all.add(commandLineOnly).add(configuration).add(spikedet);
 
 	store(parse_command_line(argc, argv, all), vm);
 	notify(vm);
@@ -53,12 +73,19 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 
 	if (ifs.good())
 	{
-		store(parse_config_file(ifs, other), vm);
+		store(parse_config_file(ifs, configuration), vm);
 		notify(vm);
 	}
 	else
 	{
-		logToFileAndConsole("Config file '" << vm["config"].as<string>() << "' not found.");
+		if (vm["config"].as<string>() == configDefault)
+		{
+			logToFile("Config file '" << vm["config"].as<string>() << "' not found.");
+		}
+		else
+		{
+			logToFileAndConsole("Config file '" << vm["config"].as<string>() << "' not found.");
+		}
 	}
 
 	desc.add(all);

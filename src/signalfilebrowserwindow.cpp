@@ -66,6 +66,48 @@ QByteArray packMessage(double timePossition, double samplePixelRatio)
 	return QByteArray(reinterpret_cast<char*>(data), sizeof(double)*2);
 }
 
+void loadSpikedetOptions(AlenkaSignal::DETECTOR_SETTINGS* settings, double* eventDuration)
+{
+	if (PROGRAM_OPTIONS.isSet("fl"))
+		settings->m_band_low = PROGRAM_OPTIONS["fl"].as<int>();
+
+	if (PROGRAM_OPTIONS.isSet("fh"))
+		settings->m_band_high = PROGRAM_OPTIONS["fh"].as<int>();
+
+	if (PROGRAM_OPTIONS.isSet("k1"))
+		settings->m_k1 = PROGRAM_OPTIONS["k1"].as<double>();
+
+	if (PROGRAM_OPTIONS.isSet("k2"))
+		settings->m_k2 = PROGRAM_OPTIONS["k2"].as<double>();
+
+	if (PROGRAM_OPTIONS.isSet("k3"))
+		settings->m_k3 = PROGRAM_OPTIONS["k3"].as<double>();
+
+	if (PROGRAM_OPTIONS.isSet("w"))
+		settings->m_winsize = PROGRAM_OPTIONS["w"].as<int>();
+
+	if (PROGRAM_OPTIONS.isSet("n"))
+		settings->m_noverlap = PROGRAM_OPTIONS["n"].as<double>();
+
+	if (PROGRAM_OPTIONS.isSet("buf"))
+		settings->m_buffering = PROGRAM_OPTIONS["buf"].as<int>();
+
+	if (PROGRAM_OPTIONS.isSet("h"))
+		settings->m_main_hum_freq = PROGRAM_OPTIONS["h"].as<int>();
+
+	if (PROGRAM_OPTIONS.isSet("dt"))
+		settings->m_discharge_tol = PROGRAM_OPTIONS["dt"].as<double>();
+
+	if (PROGRAM_OPTIONS.isSet("pt"))
+		settings->m_polyspike_union_time = PROGRAM_OPTIONS["pt"].as<double>();
+
+	if (PROGRAM_OPTIONS.isSet("dec"))
+		settings->m_decimation = PROGRAM_OPTIONS["dec"].as<int>();
+
+	if (PROGRAM_OPTIONS.isSet("sed"))
+		*eventDuration = PROGRAM_OPTIONS["sed"].as<double>();
+}
+
 } // namespace
 
 SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(parent)
@@ -404,6 +446,10 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 	// Set up Spikedet.
 	spikedetAnalysis = new SpikedetAnalysis(globalContext.get());
+
+	auto settings = spikedetAnalysis->getSettings();
+	loadSpikedetOptions(&settings, &eventDuration);
+	spikedetAnalysis->setSettings(settings);
 }
 
 SignalFileBrowserWindow::~SignalFileBrowserWindow()
