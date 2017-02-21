@@ -107,9 +107,14 @@ void SyncDialog::buildClientControls()
 	QLabel* label = new QLabel("Server address or IP:");
 	label->setToolTip("Web address e.g. ws://example.com, or 10.0.0.10 (Note that you must use the WebSocket protocol.)");
 	grid->addWidget(label, 0, 0);
-	clientIpEdit = new QLineEdit("ws://localhost");
+	QHBoxLayout* hbox = new QHBoxLayout();
+	label = new QLabel("ws://");
+	label->setFont(font);
+	hbox->addWidget(label);
+	clientIpEdit = new QLineEdit("localhost");
 	clientIpEdit->setFont(font);
-	grid->addWidget(clientIpEdit, 1, 0);
+	hbox->addWidget(clientIpEdit);
+	grid->addLayout(hbox, 1, 0);
 
 	grid->addWidget(new QLabel("Port:"), 0, 1);
 	clientPortEdit = new QLineEdit("1234");
@@ -200,7 +205,7 @@ void SyncDialog::connectClient()
 	bool ok;
 	int port = clientPortEdit->text().toInt(&ok);
 
-	QUrl url(clientIpEdit->text());
+	QUrl url("ws://" + clientIpEdit->text());
 	int result = 1;
 
 	if (ok && url.isValid())
