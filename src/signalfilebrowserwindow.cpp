@@ -648,6 +648,7 @@ void SignalFileBrowserWindow::openFile()
 
 	// Connect Sync.
 	connect(it, SIGNAL(positionChanged(int)), this, SLOT(sendSyncMessage()));
+	connect(it, SIGNAL(positionIndicatorChanged(double)), this, SLOT(sendSyncMessage()));
 
 	// Emit all signals to ensure there are no uninitialized controls.
 	it->emitAllSignals();
@@ -933,9 +934,12 @@ void SignalFileBrowserWindow::receiveSyncMessage(const QByteArray& message)
 		double ratio = static_cast<double>(file->getSamplesRecorded())/file->getInfoTable()->getVirtualWidth();
 		int position = timePosition*file->getSamplingFrequency()/ratio;
 
-		cerr << "Received position: " << timePosition << endl;
+#ifndef NDEBUG
+		cerr << "Received position: " << position << " " << timePosition << endl;
+#endif
 
 		lastPositionReceived = position;
+		position -= signalViewer->getCanvas()->width()*file->getInfoTable()->getPositionIndicator();
 		file->getInfoTable()->setPosition(position);
 	}
 }
@@ -945,13 +949,16 @@ void SignalFileBrowserWindow::sendSyncMessage()
 	if (file && shouldSynchronizeView())
 	{
 		int position = file->getInfoTable()->getPosition();
+		position += signalViewer->getCanvas()->width()*file->getInfoTable()->getPositionIndicator();
 
 		if (position != lastPositionReceived) // This is to break the message deadlock.
 		{
 			double ratio = static_cast<double>(file->getSamplesRecorded())/file->getInfoTable()->getVirtualWidth();
 			double timePosition = position*ratio/file->getSamplingFrequency();
 
-			cerr << "Sending position: " << timePosition << endl;
+#ifndef NDEBUG
+			cerr << "Sending position: " << position << " " << timePosition << endl;
+#endif
 
 			QByteArray message = packMessage(timePosition, timePosition);
 
