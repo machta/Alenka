@@ -12,7 +12,6 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 {
 	const char* configDefault = "options.cfg";
 
-	// Definition of the available options.
 	options_description commandLineOnly("Command line options");
 	commandLineOnly.add_options()
 	("help", "help message")
@@ -61,14 +60,17 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("sed", value<double>(), "spike event duration in seconds")
 	;
 
-	// TODO: Write some info on the first line (like "Usage: ./Alenka", version, some description what this program does).
-	// Parse the input.
-	options_description all("");
-	all.add(commandLineOnly).add(configuration).add(spikedet);
+	configuration.add(spikedet);
 
+	// TODO: Write some info on the first line (like "Usage: ./Alenka", version, some description what this program does).
+	options_description all("");
+	all.add(commandLineOnly).add(configuration);
+
+	// Parse the command-line input.
 	store(parse_command_line(argc, argv, all), vm);
 	notify(vm);
 
+	// Parse the config file.
 	ifstream ifs(vm["config"].as<string>());
 
 	if (ifs.good())
@@ -88,9 +90,10 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 		}
 	}
 
-	desc.add(all);
-
 	validateValues();
+
+	// Store for later.
+	desc.add(all);
 }
 
 void Options::validateValues()
