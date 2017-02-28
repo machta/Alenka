@@ -53,17 +53,15 @@ double byteArray2Double(const char* data)
 	return *reinterpret_cast<const double*>(data);
 }
 
-void unpackMessage(const QByteArray& message, double* timePossition, double* samplePixelRatio)
+void unpackMessage(const QByteArray& message, double* timePossition)
 {
-	assert(message.size() >= (int)sizeof(double)*2);
+	assert(message.size() == (int)sizeof(double));
 	*timePossition = byteArray2Double(message.data());
-	*samplePixelRatio = byteArray2Double(message.data() + sizeof(double));
 }
 
-QByteArray packMessage(double timePossition, double samplePixelRatio)
+QByteArray packMessage(double timePossition)
 {
-	double data[2] = {timePossition, samplePixelRatio};
-	return QByteArray(reinterpret_cast<char*>(data), sizeof(double)*2);
+	return QByteArray(reinterpret_cast<char*>(&timePossition), sizeof(double));
 }
 
 void loadSpikedetOptions(AlenkaSignal::DETECTOR_SETTINGS* settings, double* eventDuration)
@@ -929,9 +927,9 @@ void SignalFileBrowserWindow::receiveSyncMessage(const QByteArray& message)
 	if (file && shouldSynchronizeView())
 	{
 		double timePosition;
-		unpackMessage(message, &timePosition, &timePosition);
+		unpackMessage(message, &timePosition);
 
-		double ratio = static_cast<double>(file->getSamplesRecorded())/file->getInfoTable()->getVirtualWidth();
+		const double ratio = static_cast<double>(file->getSamplesRecorded())/file->getInfoTable()->getVirtualWidth();
 		int position = timePosition*file->getSamplingFrequency()/ratio;
 
 #ifndef NDEBUG
@@ -948,22 +946,37 @@ void SignalFileBrowserWindow::sendSyncMessage()
 {
 	if (file && shouldSynchronizeView())
 	{
-		int position = file->getInfoTable()->getPosition();
-		position += signalViewer->getCanvas()->width()*file->getInfoTable()->getPositionIndicator();
+		const int position = file->getInfoTable()->getPosition() +
+			signalViewer->getCanvas()->width()*file->getInfoTable()->getPositionIndicator();
 
-		if (position != lastPositionReceived) // This is to break the message deadlock.
+		const double ratio = static_cast<double>(file->getSamplesRecorded())/file->getInfoTable()->getVirtualWidth();
+		const int epsilon = max<int>(3, file->getSamplingFrequency()/50/ratio);
+
+		// This condition is to break the message deadlock. This comes about because the source of the signal that trigers
+		// this method cannot be distinguished between user input and received sync message.
+
+		// When the current position is very close (within a small fraction of a second) to the last received position,
+		// you are most likely just repeating what the server already has. So there is no need to send this information.
+		if (position < (lastPositionReceived - epsilon) || position > (lastPositionReceived + epsilon))
 		{
-			double ratio = static_cast<double>(file->getSamplesRecorded())/file->getInfoTable()->getVirtualWidth();
-			double timePosition = position*ratio/file->getSamplingFrequency();
-
+			const double timePosition = position*ratio/file->getSamplingFrequency();
 #ifndef NDEBUG
 			cerr << "Sending position: " << position << " " << timePosition << endl;
 #endif
 
-			QByteArray message = packMessage(timePosition, timePosition);
+			QByteArray message = packMessage(timePosition);
 
 			syncServer->sendMessage(message);
 			syncClient->sendMessage(message);
 		}
+#ifndef NDEBUG
+		else
+		{
+			cerr << "Message skipped: " << position << endl;
+		}
+#endif
+
+		// Reset to the default value, so that the message is skipped at most once.
+		lastPositionReceived = lastPositionReceivedDefault;
 	}
 }

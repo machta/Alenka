@@ -64,7 +64,8 @@ private:
 	SyncServer* syncServer;
 	SyncClient* syncClient;
 	SyncDialog* syncDialog;
-	int lastPositionReceived = -1000;
+	const int lastPositionReceivedDefault = -1000*1000*1000;
+	int lastPositionReceived = lastPositionReceivedDefault;
 	QAction* synchronize;
 
 	void connectModel(QAbstractTableModel* model, std::function<void ()> f);

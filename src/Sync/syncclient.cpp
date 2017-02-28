@@ -22,6 +22,7 @@ int SyncClient::connectServer(QUrl url, int port)
 {
 	assert(url.isValid());
 
+	// TODO: Redirect these error messages to log or drop them altogether.
 	cerr << "Error " << socket->error() << " " << socket->errorString().toStdString() << endl;
 
 	connect(socket, SIGNAL(binaryMessageReceived(QByteArray)), this, SIGNAL(messageReceived(QByteArray)));	
