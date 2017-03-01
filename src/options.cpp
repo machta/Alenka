@@ -28,7 +28,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("uncalibrated", value<bool>()->default_value(false), "assume uncalibrated data in gdf files")
 	("clPlatform", value<int>()->default_value(0), "OpenCL platform id")
 	("clDevice", value<int>()->default_value(0), "OpenCL device id to be used in SignalProcessor")
-	("window", value<string>(), "window function to be used on FIR coefficients (hamming | blackman)")
+	("window", value<string>()->default_value("none"), "window function to be used on FIR coefficients (none | hamming | blackman)")
 	("blockSize", value<unsigned int>()->default_value(32*1024), "size of one block of signal data")
 	("gpuMemorySize", value<int64_t>()->default_value(0), "the maximum amount of GPU memory used; if <= 0 then the value is relative to the implementation defined maximum, otherwise it is absolute")
 	("dataFileCacheSize", value<int64_t>()->default_value(0), "maximum total memory used by the data file cache; zero means don't use cache")
@@ -98,23 +98,15 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 
 void Options::validateValues()
 {
-	stringstream ss;
-
-	int mode = get("eventRenderMode").as<int>();
+	const int mode = get("eventRenderMode").as<int>();
 	if (mode != 1 && mode != 2)
 	{
-		ss << mode;
-		throw validation_error(validation_error::invalid_option_value, "eventRenderMode", ss.str());
+		throw validation_error(validation_error::invalid_option_value, "eventRenderMode", to_string(mode));
 	}
 
-	if (isSet("window"))
-	{
-		string window = get("window").as<string>();
-		if (window != "hamming" && window != "blackman")
-		{
-			throw validation_error(validation_error::invalid_option_value, "window", window);
-		}
-	}
+	const string window = get("window").as<string>();
+	if (window != "none" && window != "hamming" && window != "blackman")
+		throw validation_error(validation_error::invalid_option_value, "window", window);
 }
 
 void Options::logConfigFile() const

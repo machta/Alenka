@@ -20,6 +20,23 @@
 
 using namespace std;
 
+namespace
+{
+
+AlenkaSignal::WindowFunction resolveWindow()
+{
+	string window = PROGRAM_OPTIONS["window"].as<string>();
+
+	if (window == "hamming")
+		return AlenkaSignal::WindowFunction::Hamming;
+	else if (window == "blackman")
+		return AlenkaSignal::WindowFunction::Blackman;
+
+	return AlenkaSignal::WindowFunction::None;
+}
+
+} // namespace
+
 SignalProcessor::SignalProcessor()
 {
 	onlineFilter = PROGRAM_OPTIONS["onlineFilter"].as<bool>();
@@ -249,7 +266,7 @@ void SignalProcessor::changeFile(DataFile* file)
 		unsigned int tmpBlockSize = (blockSize + offset)*file->getChannelCount();
 
 		// Construct the filter and montage processors.
-		filterProcessor = new AlenkaSignal::FilterProcessor<float>(blockSize + offset, file->getChannelCount(), context);
+		filterProcessor = new AlenkaSignal::FilterProcessor<float>(blockSize + offset, file->getChannelCount(), context, resolveWindow());
 
 		montageProcessor = new AlenkaSignal::MontageProcessor<float>(offset, blockSize, file->getChannelCount());
 
