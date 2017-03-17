@@ -2,7 +2,6 @@
 #define CANVAS_H
 
 #include "openglinterface.h"
-#include "DataFile/infotable.h"
 
 #include <QOpenGLWidget>
 
@@ -11,14 +10,13 @@
 #include <vector>
 #include <tuple>
 
+namespace AlenkaFile
+{
+class DataFile;
+}
 class SignalProcessor;
 class SignalBlock;
 class OpenGLProgram;
-class DataFile;
-class EventTypeTable;
-class TrackTable;
-class EventTable;
-class MontageTable;
 
 /**
  * @brief This class implements GUI control for rendering signal data and events.
@@ -42,7 +40,7 @@ public:
 	 * @brief Notifies this object that the DataFile changed.
 	 * @param file Pointer to the data file. nullptr means file was closed.
 	 */
-	void changeFile(DataFile* file);
+	void changeFile(AlenkaFile::DataFile* file);
 
 	int getCursorPositionSample() const
 	{
@@ -87,10 +85,7 @@ protected:
 	virtual void focusInEvent(QFocusEvent* event) override;
 
 private:
-	InfoTable* infoTable = nullptr;
-	InfoTable defaultInfoTable;
-	MontageTable* montageTable = nullptr;
-	EventTypeTable* eventTypeTable = nullptr;
+	AlenkaFile::DataFile* file;
 	SignalProcessor* signalProcessor = nullptr;
 	OpenGLProgram* signalProgram = nullptr;
 	OpenGLProgram* eventProgram = nullptr;
@@ -108,20 +103,9 @@ private:
 	int eventEnd;
 	int cursorSample = 0;
 	int cursorTrack = 0;
+	std::vector<QMetaObject::Connection> openFileConnections;
+	std::vector<QMetaObject::Connection> montageConnections;
 
-	InfoTable* getInfoTable()
-	{
-		if (infoTable != nullptr)
-		{
-			return infoTable;
-		}
-		else
-		{
-			return &defaultInfoTable;
-		}
-	}
-	EventTable* currentEventTable();
-	TrackTable* currentTrackTable();
 	void drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& events);
 	void drawAllChannelEvent(int from, int to);
 	void drawTimeLines();
@@ -159,7 +143,7 @@ private:
 private slots:
 	void updateFilter();
 	void selectMontage();
-	void updateMontage(const QModelIndex& topLeft, const QModelIndex& bottomRight);
+	void updateMontage(int row, int col);
 	void updateMontage();
 
 	/**

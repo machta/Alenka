@@ -14,8 +14,7 @@ class Montage;
 class KernelCache
 {
 public:
-	KernelCache()
-	{}
+	KernelCache() {}
 
 	void add(const std::string& code, AlenkaSignal::Montage<float>* montage)
 	{

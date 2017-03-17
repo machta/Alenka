@@ -3,10 +3,11 @@
 #include "options.h"
 #include "error.h"
 #include <AlenkaSignal/openclcontext.h>
+#include <clFFT.h>
 
 #include <QSurfaceFormat>
 #include <QMessageBox>
-#include <clFFT.h>
+#include <QLoggingCategory>
 
 #include <stdexcept>
 #include <string>
@@ -17,6 +18,9 @@ unique_ptr<AlenkaSignal::OpenCLContext> globalContext(nullptr);
 
 MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 {
+	// Disable the stupid ssl warning.
+	QLoggingCategory::setFilterRules("qt.network.ssl=false");
+
 	try
 	{
 		// Set up the global options object.
@@ -33,7 +37,7 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 		LOG_FILE.open(logFileName);
 		checkErrorCode(LOG_FILE.good(), true, "Could not open log file '" + string(logFileName) + "' for writing.");
 	}
-	catch (std::exception& e)
+	catch (exception& e)
 	{
 		QMessageBox::critical(nullptr, "Exception caught", QString::fromStdString(e.what()));
 		abort();
@@ -52,9 +56,8 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 		for (int i = 0; i < argc; ++i)
 		{
 			if (i != 0)
-			{
 				ss << " ";
-			}
+
 			ss << argv[i];
 		}
 
@@ -108,12 +111,12 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 	{
 		cout << PROGRAM_OPTIONS.getDescription() << endl;
 
-		std::exit(EXIT_SUCCESS);
+		exit(EXIT_SUCCESS);
 	}
 	else if (PROGRAM_OPTIONS.isSet("clInfo"))
 	{
 		cout << ss.str();
-		std::exit(EXIT_SUCCESS);
+		exit(EXIT_SUCCESS);
 	}
 
 	// Set locale.
@@ -135,7 +138,7 @@ bool MyApplication::notify(QObject* receiver, QEvent* event)
 	{
 		return QApplication::notify(receiver, event);
 	}
-	catch (std::exception& e)
+	catch (exception& e)
 	{
 		logToFileAndConsole("Exception caught: " << e.what());
 	}

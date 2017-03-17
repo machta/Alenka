@@ -3,11 +3,10 @@
 
 #include <QWidget>
 
-#include "DataFile/infotable.h"
-
+namespace AlenkaFile
+{
 class DataFile;
-class MontageTable;
-class TrackTable;
+}
 
 /**
  * @brief This class implements the GUI control responsible for displaying track names.
@@ -18,13 +17,12 @@ class TrackLabelBar : public QWidget
 
 public:
 	explicit TrackLabelBar(QWidget* parent = nullptr);
-	~TrackLabelBar();
 
 	/**
 	 * @brief Notifies this object that the DataFile changed.
 	 * @param file Pointer to the data file. nullptr means file was closed.
 	 */
-	void changeFile(DataFile* file);
+	void changeFile(AlenkaFile::DataFile* file);
 
 signals:
 
@@ -39,27 +37,13 @@ protected:
 	virtual void paintEvent(QPaintEvent* event) override;
 
 private:
-	InfoTable* infoTable = nullptr;
-	InfoTable defaultInfoTable;
-	MontageTable* montageTable = nullptr;
-	TrackTable* trackTable;
+	AlenkaFile::DataFile* file = nullptr;
 	int selectedTrack = -1;
-
-	InfoTable* getInfoTable()
-	{
-		if (infoTable != nullptr)
-		{
-			return infoTable;
-		}
-		else
-		{
-			return &defaultInfoTable;
-		}
-	}
+	std::vector<QMetaObject::Connection> trackConnections;
 
 private slots:
-	void updateTrackTable();
-	void updateLabels(const QModelIndex& topLeft, const QModelIndex& bottomRight);
+	void updateTrackTable(int row);
+	void updateLabels(int col);
 };
 
 #endif // TRACKLABELBAR_H

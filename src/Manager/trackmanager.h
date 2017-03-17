@@ -11,8 +11,10 @@ class TrackManager : public Manager
 	Q_OBJECT
 
 public:
-	explicit TrackManager(QWidget* parent = nullptr);
-	virtual ~TrackManager();
+	explicit TrackManager(QWidget* parent = nullptr) : Manager(parent) {}
+
+protected slots:
+	virtual void insertRowBack() override;
 };
 
 #endif // TRACKMANAGER_H

@@ -3,10 +3,7 @@
 
 #include <QObject>
 
-//#include "filter.h"
-
-class QXmlStreamReader;
-class QXmlStreamWriter;
+#include <string>
 
 /**
  * @brief A class for handling program wide used information stored in .info files.
@@ -24,18 +21,15 @@ public:
 		samples, offset, real, size
 	};
 
-	InfoTable();
-	~InfoTable();
+	/**
+	 * @brief Writes info file.
+	 */
+	void writeXML(const std::string& filePath) const;
 
 	/**
-	 * @brief Writes an infoTable element.
+	 * @brief Reads info file.
 	 */
-	void write(QXmlStreamWriter* xml) const;
-
-	/**
-	 * @brief Parses the infoTable element.
-	 */
-	void read(QXmlStreamReader* xml);
+	void readXML(const std::string& filePath);
 
 	/**
 	 * @brief Emit all signals defined by this class.

@@ -1,16 +1,22 @@
 #include "trackmanager.h"
 
-#include "../DataFile/tracktable.h"
-#include "trackmanagerdelegate.h"
+#include <AlenkaFile/datafile.h>
+#include "../signalfilebrowserwindow.h"
 
-#include <QTableView>
-#include <QPushButton>
+using namespace AlenkaFile;
 
-TrackManager::TrackManager(QWidget* parent) : Manager(parent)
+namespace
 {
-	tableView->setItemDelegate(new TrackManagerDelegate(tableView));
+
+AbstractTrackTable* currentTrackTable(DataModel dataModel)
+{
+	return dataModel.montageTable->trackTable(SignalFileBrowserWindow::infoTable.getSelectedMontage());
 }
 
-TrackManager::~TrackManager()
+} // namespace
+
+void TrackManager::insertRowBack()
 {
+	int rc = currentTrackTable(file->getDataModel())->rowCount();
+	currentTrackTable(file->getDataModel())->insertRows(rc);
 }

@@ -1,16 +1,8 @@
 #include "eventtypemanager.h"
 
-#include "../DataFile/eventtypetable.h"
-#include "eventtypemanagerdelegate.h"
+#include <AlenkaFile/datafile.h>
 
-#include <QTableView>
-#include <QPushButton>
-
-EventTypeManager::EventTypeManager(QWidget* parent) : Manager(parent)
+void EventTypeManager::insertRowBack()
 {
-	tableView->setItemDelegate(new EventTypeManagerDelegate(tableView));
-}
-
-EventTypeManager::~EventTypeManager()
-{
+	file->getDataModel().eventTypeTable->insertRows(file->getDataModel().eventTypeTable->rowCount());
 }

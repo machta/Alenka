@@ -1,9 +1,7 @@
 #include "eventmanager.h"
 
-#include "../DataFile/datafile.h"
-#include "../DataFile/eventtable.h"
-#include "../DataFile/infotable.h"
-#include "eventmanagerdelegate.h"
+#include "../signalfilebrowserwindow.h"
+#include <AlenkaFile/datafile.h>
 #include "../canvas.h"
 
 #include <QTableView>
@@ -13,11 +11,20 @@
 #include <algorithm>
 
 using namespace std;
+using namespace AlenkaFile;
+
+namespace
+{
+
+AbstractEventTable* currentEventTable(DataModel dataModel)
+{
+	return dataModel.montageTable->eventTable(SignalFileBrowserWindow::infoTable.getSelectedMontage());
+}
+
+} // namespace
 
 EventManager::EventManager(QWidget* parent) : Manager(parent)
 {
-	tableView->setItemDelegate(new EventManagerDelegate(tableView));
-
 	QAction* goToAction = new QAction("Go To", this);
 	goToAction->setShortcut(QKeySequence("g"));
 	goToAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
@@ -29,25 +36,31 @@ EventManager::EventManager(QWidget* parent) : Manager(parent)
 	addButton(goToButton);
 }
 
-EventManager::~EventManager()
+void EventManager::insertRowBack()
 {
+	int rc = currentEventTable(file->getDataModel())->rowCount();
+	currentEventTable(file->getDataModel())->insertRows(rc);
 }
 
 void EventManager::goToEvent()
 {
-	auto index = tableView->selectionModel()->currentIndex();
+	auto currentIndex = tableView->selectionModel()->currentIndex();
 
-	if (index.isValid() && file != nullptr)
+	if (file && currentIndex.isValid())
 	{
-		double ratio = static_cast<double>(file->getSamplesRecorded())/file->getInfoTable()->getVirtualWidth();
+		InfoTable& it = SignalFileBrowserWindow::infoTable;
 
-		double position = tableView->model()->data(tableView->model()->index(index.row(), static_cast<int>(EventTable::Column::position)), Qt::EditRole).toInt();
+		double ratio = static_cast<double>(file->getSamplesRecorded())/it.getVirtualWidth();
+		int col = static_cast<int>(Event::Index::position);
+		auto index = tableView->model()->index(currentIndex.row(), col);
+
+		double position = tableView->model()->data(index, Qt::EditRole).toInt();
 		position /= ratio;
-		position -= canvas->width()*file->getInfoTable()->getPositionIndicator();
+		position -= canvas->width()*it.getPositionIndicator();
 
 		int intPosition = position;
-		intPosition = min(max(0, intPosition), file->getInfoTable()->getVirtualWidth() - canvas->width() - 1);
+		intPosition = min(max(0, intPosition), it.getVirtualWidth() - canvas->width() - 1);
 
-		file->getInfoTable()->setPosition(intPosition);
+		it.setPosition(intPosition);
 	}
 }

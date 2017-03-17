@@ -38,16 +38,19 @@ int SyncClient::connectServer(QUrl url, int port)
 
 	cerr << "Error " << socket->error() << " " << socket->errorString().toStdString() << endl;
 
-	//return socket->isValid() ? 0 : 1;
 	return 0;
+}
+
+bool SyncClient::isValid()
+{
+	return socket->isValid();
 }
 
 void SyncClient::disconnectServer()
 {
 	if (socket->isValid())
-	{
 		socket->close();
-	}
+	socket->disconnect();
 }
 
 int SyncClient::sendMessage(const QByteArray& message)
@@ -57,7 +60,7 @@ int SyncClient::sendMessage(const QByteArray& message)
 
 	if (socket->isValid())
 	{
-		auto bytesSent = socket->sendBinaryMessage(message);
+		auto bytesSent = socket->sendBinaryMessage(message); (void)bytesSent;
 		assert(bytesSent == message.size() && "Client failed to send the message.");
 		return 0;
 	}

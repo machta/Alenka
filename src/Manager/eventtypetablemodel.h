@@ -8,13 +8,12 @@ class EventTypeTableModel : public TableModel
 	Q_OBJECT
 
 public:
-	EventTypeTableModel(InfoTable* infoTable, AlenkaFile::DataModel dataModel, QObject* parent = nullptr);
+	explicit EventTypeTableModel(AlenkaFile::DataFile* file, QObject* parent = nullptr);
+	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override;
 
 protected:
-	virtual void insertRowBack() override
-	{
-		dataModel.eventTypeTable->insertRows(dataModel.eventTypeTable->rowCount());
-	}
+	virtual void insertRowBack() override;
+	virtual void removeRowsFromDataModel(int row, int count) override;
 };
 
 

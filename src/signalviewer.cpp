@@ -2,11 +2,16 @@
 
 #include "canvas.h"
 #include "options.h"
-#include "DataFile/datafile.h"
+#include <AlenkaFile/datafile.h>
 #include "tracklabelbar.h"
+#include "signalfilebrowserwindow.h"
 
+#include <QScrollBar>
 #include <QVBoxLayout>
 #include <QSplitter>
+
+#include <algorithm>
+#include <cmath>
 
 using namespace std;
 
@@ -39,25 +44,31 @@ SignalViewer::~SignalViewer()
 	PROGRAM_OPTIONS.settings("SignalViewer splitter state", splitter->saveState());
 }
 
-void SignalViewer::changeFile(DataFile* file)
+void SignalViewer::changeFile(AlenkaFile::DataFile* file)
 {
 	canvas->changeFile(file);
 	trackLabelBar->changeFile(file);
 
-	if (file != nullptr)
+	this->file = file;
+
+	if (file)
 	{
-		infoTable = file->getInfoTable();
+		auto c = connect(scrollBar, SIGNAL(valueChanged(int)), &SignalFileBrowserWindow::infoTable, SLOT(setPosition(int)));
+		openFileConnections.push_back(c);
+		c = connect(&SignalFileBrowserWindow::infoTable, SIGNAL(positionChanged(int)), this, SLOT(setPosition(int)));
+		openFileConnections.push_back(c);
 
-		connect(scrollBar, SIGNAL(valueChanged(int)), infoTable, SLOT(setPosition(int)));
-		connect(infoTable, SIGNAL(positionChanged(int)), this, SLOT(setPosition(int)));
+		c = connect(&SignalFileBrowserWindow::infoTable, SIGNAL(virtualWidthChanged(int)), this, SLOT(setVirtualWidth(int)));
+		openFileConnections.push_back(c);
 
-		connect(infoTable, SIGNAL(virtualWidthChanged(int)), this, SLOT(setVirtualWidth(int)));
-
-		connect(canvas, SIGNAL(cursorPositionTrackChanged(int)), trackLabelBar, SLOT(setSelectedTrack(int)));
+		c = connect(canvas, SIGNAL(cursorPositionTrackChanged(int)), trackLabelBar, SLOT(setSelectedTrack(int)));
+		openFileConnections.push_back(c);
 	}
 	else
 	{
-		infoTable = nullptr;
+		for (auto e : openFileConnections)
+			disconnect(e);
+		openFileConnections.clear();
 	}
 }
 
@@ -67,34 +78,48 @@ void SignalViewer::updateSignalViewer()
 	update();
 }
 
+void SignalViewer::resizeEvent(QResizeEvent*)
+{
+	resize(SignalFileBrowserWindow::infoTable.getVirtualWidth());
+}
+
+void SignalViewer::wheelEvent(QWheelEvent* event)
+{
+	scrollBar->event(reinterpret_cast<QEvent*>(event));
+}
+
+void SignalViewer::keyPressEvent(QKeyEvent* event)
+{
+	scrollBar->event(reinterpret_cast<QEvent*>(event));
+}
+
+void SignalViewer::keyReleaseEvent(QKeyEvent* event)
+{
+	scrollBar->event(reinterpret_cast<QEvent*>(event));
+}
+
 void SignalViewer::resize(int virtualWidth)
 {
-	int page = canvas->width();
+	int pageWidth = canvas->width();
 
-	scrollBar->setRange(0, virtualWidth - page - 1);
-	scrollBar->setPageStep(page);
-	scrollBar->setSingleStep(std::max(1, page/20));
+	scrollBar->setRange(0, virtualWidth - pageWidth - 1);
+	scrollBar->setPageStep(pageWidth);
+	scrollBar->setSingleStep(max(1, pageWidth/20));
+}
+
+int SignalViewer::virtualWidthFromScrollBar()
+{
+	return scrollBar->maximum() + scrollBar->pageStep() + 1 - scrollBar->minimum();
 }
 
 void SignalViewer::setVirtualWidth(int value)
 {
-	// This version mantains the position of the left canvas edge.
-//	double relPosition = scrollBar->value();
-//	relPosition /= virtualWidthFromScrollBar();
-
-//	resize(value);
-
-//	setPosition(std::round(relPosition*value));
-
-//	canvas->update();
-
 	// This version makes sure that the position indicator stays at the same time.
-	double oldPosition = scrollBar->value() + getInfoTable()->getPositionIndicator()*canvas->width();
+	double oldPosition = scrollBar->value() + SignalFileBrowserWindow::infoTable.getPositionIndicator()*canvas->width();
 	double ratio = static_cast<double>(value)/virtualWidthFromScrollBar();
 
 	resize(value);
-
-	setPosition(std::round(oldPosition*ratio - getInfoTable()->getPositionIndicator()*canvas->width()));
+	setPosition(round(oldPosition*ratio - SignalFileBrowserWindow::infoTable.getPositionIndicator()*canvas->width()));
 
 	canvas->update();
 }
@@ -102,6 +127,5 @@ void SignalViewer::setVirtualWidth(int value)
 void SignalViewer::setPosition(int value)
 {
 	scrollBar->setValue(value);
-
 	canvas->update();
 }

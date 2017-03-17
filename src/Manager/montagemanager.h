@@ -11,8 +11,10 @@ class MontageManager : public Manager
 	Q_OBJECT
 
 public:
-	explicit MontageManager(QWidget* parent = nullptr);
-	virtual ~MontageManager();
+	explicit MontageManager(QWidget* parent = nullptr) : Manager(parent) {}
+
+protected slots:
+	virtual void insertRowBack() override;
 };
 
 #endif // MONTAGEMANAGER_H

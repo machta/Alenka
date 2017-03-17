@@ -1,6 +1,6 @@
 #include "spikedetanalysis.h"
 
-#include "DataFile/datafile.h"
+#include <AlenkaFile/datafile.h>
 
 #include <AlenkaSignal/openclcontext.h>
 #include <AlenkaSignal/montage.h>
@@ -21,7 +21,7 @@ class Loader : public SpikedetDataLoader<T>
 {
 	const int BLOCK_LENGTH = 8*1024/*512*/;
 
-	DataFile* file;
+	AlenkaFile::DataFile* file;
 	const vector<Montage<T>*>& montage;
 
 	MontageProcessor<T>* processor;
@@ -31,7 +31,7 @@ class Loader : public SpikedetDataLoader<T>
 	cl_mem inBuffer = nullptr, outBuffer = nullptr;
 
 public:
-	Loader(DataFile* file, const vector<Montage<T>*>& montage, OpenCLContext* context) :
+	Loader(AlenkaFile::DataFile* file, const vector<Montage<T>*>& montage, OpenCLContext* context) :
 		file(file), montage(montage), inChannels(file->getChannelCount()), outChannels(montage.size())
 	{
 		processor = new MontageProcessor<T>(0, BLOCK_LENGTH, inChannels);
@@ -56,18 +56,18 @@ public:
 
 		cl_int err;
 
-		if (queue != nullptr)
+		if (queue)
 		{
 			err = clReleaseCommandQueue(queue);
 			checkClErrorCode(err, "clReleaseCommandQueue()");
 		}
 
-		if (inBuffer != nullptr)
+		if (inBuffer)
 		{
 			err = clReleaseMemObject(inBuffer);
 			checkClErrorCode(err, "clReleaseMemObject()");
 		}
-		if (outBuffer != nullptr)
+		if (outBuffer)
 		{
 			err = clReleaseMemObject(outBuffer);
 			checkClErrorCode(err, "clReleaseMemObject()");
@@ -84,13 +84,14 @@ public:
 			int len = min<int>(BLOCK_LENGTH, lastSample - sample + 1);
 			assert(len >= 1);
 
-			file->readData(&tmpData, sample, sample + len - 1);
+			file->readSignal(tmpData.data(), sample, sample + len - 1);
 
 			size_t origin[] = {0, 0, 0};
 			size_t rowLen = len*sizeof(T);
 			size_t inRegion[] = {rowLen, static_cast<size_t>(inChannels), 1};
 
-			err = clEnqueueWriteBufferRect(queue, inBuffer, CL_TRUE, origin, origin, inRegion, BLOCK_LENGTH*sizeof(T), 0, 0, 0, tmpData.data(), 0, nullptr, nullptr); // SEGFAULT
+			err = clEnqueueWriteBufferRect(queue, inBuffer, CL_TRUE, origin, origin, inRegion,
+				BLOCK_LENGTH*sizeof(T), 0, 0, 0, tmpData.data(), 0, nullptr, nullptr); // SEGFAULT
 			checkClErrorCode(err, "clEnqueueWriteBufferRect()");
 
 			processor->process(montage, inBuffer, outBuffer, queue);
@@ -99,8 +100,8 @@ public:
 			size_t outRegion[] = {rowLen, static_cast<size_t>(outChannels), 1};
 			size_t dataOrigin[] = {(sample - firstSample)*sizeof(T), 0, 0};
 
-			err =  clEnqueueReadBufferRect(queue, outBuffer, CL_TRUE, origin, dataOrigin, outRegion, BLOCK_LENGTH*sizeof(T), 0,
-											(lastSample - firstSample + 1)*sizeof(T), 0, data, 0, nullptr, nullptr);
+			err = clEnqueueReadBufferRect(queue, outBuffer, CL_TRUE, origin, dataOrigin, outRegion,
+				BLOCK_LENGTH*sizeof(T), 0, (lastSample - firstSample + 1)*sizeof(T), 0, data, 0, nullptr, nullptr);
 			checkClErrorCode(err, "clEnqueueReadBufferRect()");
 		}
 		//OpenCLContext::printBuffer("spikedet_loader_done.txt", data, (lastSample - firstSample + 1)*outChannels);
@@ -118,9 +119,9 @@ public:
 
 } // namespace
 
-void SpikedetAnalysis::runAnalysis(DataFile* file, const vector<Montage<float>*>& montage, QProgressDialog* progress)
+void SpikedetAnalysis::runAnalysis(AlenkaFile::DataFile* file, const vector<Montage<float>*>& montage, QProgressDialog* progress)
 {
-	assert(file != nullptr);
+	assert(file);
 
 	Spikedet<float> spikedet(file->getSamplingFrequency(), montage.size(), settings, context);
 	Loader<float> loader(file, montage, context);
@@ -131,7 +132,9 @@ void SpikedetAnalysis::runAnalysis(DataFile* file, const vector<Montage<float>*>
 	delete discharges;
 	discharges = new CDischarges(loader.channelCount());
 
-	thread t([&] () { spikedet.runAnalysis(&loader, output, discharges); });
+	thread t([&] () {
+		spikedet.runAnalysis(&loader, output, discharges);
+	});
 
 	while (1)
 	{

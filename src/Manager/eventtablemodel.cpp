@@ -1,6 +1,8 @@
 #include "eventtablemodel.h"
 
-#include "../DataFile/datafile.h"
+#include <AlenkaFile/datafile.h>
+#include "../signalfilebrowserwindow.h"
+#include "../DataModel/vitnessdatamodel.h"
 
 #include <QLocale>
 #include <QComboBox>
@@ -11,18 +13,25 @@ using namespace AlenkaFile;
 namespace
 {
 
-class Label : public StringTableColumn
+AbstractTrackTable* currentTrackTable(DataModel dataModel)
+{
+	return dataModel.montageTable->trackTable(SignalFileBrowserWindow::infoTable.getSelectedMontage());
+}
+
+AbstractEventTable* currentEventTable(DataModel dataModel)
+{
+	return dataModel.montageTable->eventTable(SignalFileBrowserWindow::infoTable.getSelectedMontage());
+}
+
+class Label : public TableColumn
 {
 public:
-	Label(InfoTable* infoTable, DataModel dataModel) : StringTableColumn("Label", infoTable, dataModel)
-	{}
+	Label(DataModel dataModel) : TableColumn("Label", dataModel) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
 		if (role == Qt::DisplayRole || role == Qt::EditRole)
-		{
-			return QString::fromStdString(dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->row(row).label);
-		}
+			return QString::fromStdString(currentEventTable(dataModel)->row(row).label);
 
 		return QVariant();
 	}
@@ -31,9 +40,9 @@ public:
 	{
 		if (role == Qt::EditRole)
 		{
-			Event e = dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->row(row);
+			Event e = currentEventTable(dataModel)->row(row);
 			e.label = value.toString().toStdString();
-			dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->row(row, e);
+			currentEventTable(dataModel)->row(row, e);
 			return true;
 		}
 
@@ -44,21 +53,18 @@ public:
 class Type : public TableColumn
 {
 public:
-	Type(InfoTable* infoTable, DataModel dataModel) : TableColumn("Type", infoTable, dataModel)
-	{}
+	Type(DataModel dataModel) : TableColumn("Type", dataModel) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
-		if (role == Qt::DisplayRole)
-		{
-			return dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->row(row).type;
-		}
+		int type = currentEventTable(dataModel)->row(row).type;
 
-		if (role == Qt::EditRole)
-		{
-			int type = dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->row(row).type;
-			return QString::fromStdString(type < 0 ?  NO_TYPE_STRING : dataModel.eventTypeTable->row(type).name);
-		}
+		if (role == Qt::DisplayRole)
+			return QString::fromStdString(type < 0 ? NO_TYPE_STRING : dataModel.eventTypeTable->row(type).name);
+		else if (role == Qt::EditRole)
+			return type;
+		else if (role == Qt::DecorationRole && 0 <= type)
+			return SignalFileBrowserWindow::array2color(dataModel.eventTypeTable->row(type).color);
 
 		return QVariant();
 	}
@@ -67,9 +73,9 @@ public:
 	{
 		if (role == Qt::EditRole)
 		{
-			Event e = dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->row(row);
+			Event e = currentEventTable(dataModel)->row(row);
 			e.type = value.toInt();
-			dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->row(row, e);
+			currentEventTable(dataModel)->row(row, e);
 			return true;
 		}
 
@@ -95,7 +101,7 @@ public:
 	{
 		QComboBox* combo = reinterpret_cast<QComboBox*>(editor);
 		int i = index.data(Qt::EditRole).toInt();
-		combo->setCurrentIndex(i < 0 ? 0 : i + 1);
+		combo->setCurrentIndex(i + 1);
 		return true;
 	}
 	virtual bool setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override
@@ -109,20 +115,16 @@ public:
 class Position : public TableColumn
 {
 public:
-	Position(InfoTable* infoTable, DataModel dataModel) : TableColumn("Position", infoTable, dataModel)
-	{}
+	Position(DataModel dataModel, DataFile* file) : TableColumn("Position", dataModel), file(file) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
-//		if (role == Qt::DisplayRole)
-//		{
-//			file->sampleToDateTimeString(position[row]);
-//		}
+		int position = currentEventTable(dataModel)->row(row).position;
 
-		if (role == Qt::DisplayRole || role == Qt::EditRole)
-		{
-			return dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->row(row).position;
-		}
+		if (role == Qt::DisplayRole)
+			return SignalFileBrowserWindow::sampleToDateTimeString(file, position);
+		else if (role == Qt::EditRole)
+			return position;
 
 		return QVariant();
 	}
@@ -131,33 +133,32 @@ public:
 	{
 		if (role == Qt::EditRole)
 		{
-			Event e = dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->row(row);
+			Event e = currentEventTable(dataModel)->row(row);
 			e.position = value.toDouble();
-			dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->row(row, e);
+			currentEventTable(dataModel)->row(row, e);
 			return true;
 		}
 
 		return false;
 	}
+
+private:
+	DataFile* file;
 };
 
 class Duration : public TableColumn
 {
 public:
-	Duration(InfoTable* infoTable, DataModel dataModel) : TableColumn("Duration", infoTable, dataModel)
-	{}
+	Duration(DataModel dataModel, DataFile* file) : TableColumn("Duration", dataModel), file(file) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
-//		if (role == Qt::DisplayRole)
-//		{
-//			file->sampleToDateTimeString(duration[row]);
-//		}
+		int duration = currentEventTable(dataModel)->row(row).duration;
 
-		if (role == Qt::DisplayRole || role == Qt::EditRole)
-		{
-			return dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->row(row).duration;
-		}
+		if (role == Qt::DisplayRole)
+			return SignalFileBrowserWindow::sampleToDateTimeString(file, duration);
+		else if (role == Qt::EditRole)
+			return duration;
 
 		return QVariant();
 	}
@@ -166,25 +167,27 @@ public:
 	{
 		if (role == Qt::EditRole)
 		{
-			Event e = dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->row(row);
+			Event e = currentEventTable(dataModel)->row(row);
 			e.duration = value.toDouble();
-			dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->row(row, e);
+			currentEventTable(dataModel)->row(row, e);
 			return true;
 		}
 
 		return false;
 	}
+
+private:
+	DataFile* file;
 };
 
 class Channel : public TableColumn
 {
 public:
-	Channel(InfoTable* infoTable, DataModel dataModel) : TableColumn("Channel", infoTable, dataModel)
-	{}
+	Channel(DataModel dataModel) : TableColumn("Channel", dataModel) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
-		int channel = dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->row(row).channel;
+		int channel = currentEventTable(dataModel)->row(row).channel;
 
 		if (role == Qt::DisplayRole)
 		{
@@ -198,14 +201,18 @@ public:
 			}
 			else
 			{
-				str = dataModel.montageTable->trackTable(infoTable->getSelectedMontage())->row(channel).label;
+				str = currentTrackTable(dataModel)->row(channel).label;
 			}
+
 			return QString::fromStdString(str);
 		}
-
-		if (role == Qt::DisplayRole || role == Qt::EditRole)
+		else if (role == Qt::EditRole)
 		{
 			return channel;
+		}
+		else if (role == Qt::DecorationRole && 0 <= channel)
+		{
+			return SignalFileBrowserWindow::array2color(currentTrackTable(dataModel)->row(channel).color);
 		}
 
 		return QVariant();
@@ -215,9 +222,9 @@ public:
 	{
 		if (role == Qt::EditRole)
 		{
-			Event e = dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->row(row);
+			Event e = currentEventTable(dataModel)->row(row);
 			e.channel = value.toInt();
-			dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->row(row, e);
+			currentEventTable(dataModel)->row(row, e);
 			return true;
 		}
 
@@ -232,10 +239,9 @@ public:
 
 		combo->addItem(NO_CHANNEL_STRING.c_str());
 		combo->addItem(ALL_CHANNEL_STRING.c_str());
-		for (int i = 0; i < dataModel.montageTable->trackTable(infoTable->getSelectedMontage())->rowCount(); ++i)
-		{
-			combo->addItem(QString::fromStdString(dataModel.montageTable->trackTable(infoTable->getSelectedMontage())->row(i).label));
-		}
+
+		for (int i = 0; i < currentTrackTable(dataModel)->rowCount(); ++i)
+			combo->addItem(QString::fromStdString(currentTrackTable(dataModel)->row(i).label));
 
 		*widget = combo;
 		return true;
@@ -244,7 +250,7 @@ public:
 	{
 		QComboBox* combo = reinterpret_cast<QComboBox*>(editor);
 		int i = index.data(Qt::EditRole).toInt();
-		combo->setCurrentIndex(i < -1 ? 0 : i + 1);
+		combo->setCurrentIndex(i + 2);
 		return true;
 	}
 	virtual bool setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override
@@ -255,18 +261,15 @@ public:
 	}
 };
 
-class Description: public StringTableColumn
+class Description: public TableColumn
 {
 public:
-	Description(InfoTable* infoTable, DataModel dataModel) : StringTableColumn("Description", infoTable, dataModel)
-	{}
+	Description(DataModel dataModel) : TableColumn("Description", dataModel) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
 		if (role == Qt::DisplayRole || role == Qt::EditRole)
-		{
-			return QString::fromStdString(dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->row(row).description);
-		}
+			return QString::fromStdString(currentEventTable(dataModel)->row(row).description);
 
 		return QVariant();
 	}
@@ -275,9 +278,9 @@ public:
 	{
 		if (role == Qt::EditRole)
 		{
-			Event e = dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->row(row);
+			Event e = currentEventTable(dataModel)->row(row);
 			e.description= value.toString().toStdString();
-			dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->row(row, e);
+			currentEventTable(dataModel)->row(row, e);
 			return true;
 		}
 
@@ -287,12 +290,53 @@ public:
 
 } // namespace
 
-EventTableModel::EventTableModel(InfoTable* infoTable, DataModel dataModel, QObject* parent) : TableModel(infoTable, dataModel, parent)
+EventTableModel::EventTableModel(DataFile* file, QObject* parent) : TableModel(file, parent)
 {
-	columns.push_back(new Label(infoTable, dataModel));
-	columns.push_back(new Type(infoTable, dataModel));
-	columns.push_back(new Position(infoTable, dataModel));
-	columns.push_back(new Duration(infoTable, dataModel));
-	columns.push_back(new Channel(infoTable, dataModel));
-	columns.push_back(new Description(infoTable, dataModel));
+	columns.push_back(new Label(file->getDataModel()));
+	columns.push_back(new Type(file->getDataModel()));
+	columns.push_back(new Position(file->getDataModel(), file));
+	columns.push_back(new Duration(file->getDataModel(), file));
+	columns.push_back(new Channel(file->getDataModel()));
+	columns.push_back(new Description(file->getDataModel()));
+
+	connect(&SignalFileBrowserWindow::infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(setSelectedMontage(int)));
+	setSelectedMontage(SignalFileBrowserWindow::infoTable.getSelectedMontage());
+
+	connect(&SignalFileBrowserWindow::infoTable, SIGNAL(timeModeChanged(int)), this, SLOT(beginEndReset()));
+}
+
+int EventTableModel::rowCount(const QModelIndex& parent) const
+{
+	(void)parent;
+	return currentEventTable(file->getDataModel())->rowCount();
+}
+
+void EventTableModel::removeRowsFromDataModel(int row, int count)
+{
+	currentEventTable(file->getDataModel())->removeRows(row, count);
+}
+
+void EventTableModel::insertRowBack()
+{
+	int rc = currentEventTable(file->getDataModel())->rowCount();
+	currentEventTable(file->getDataModel())->insertRows(rc);
+}
+
+void EventTableModel::setSelectedMontage(int i)
+{
+	beginResetModel();
+
+	for (auto e : montageTableConnections)
+		disconnect(e);
+	montageTableConnections.clear();
+
+	auto vitness = VitnessEventTable::vitness(file->getDataModel().montageTable->eventTable(i));
+
+	auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(emitDataChanged(int, int)));
+	montageTableConnections.push_back(c);
+
+	c = connect(vitness, SIGNAL(rowsInserted(int, int)), this, SLOT(insertDataModelRows(int, int)));
+	montageTableConnections.push_back(c);
+
+	endResetModel();
 }

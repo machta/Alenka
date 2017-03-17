@@ -23,8 +23,10 @@ class Montage;
 template<class T>
 class MontageProcessor;
 }
-
+namespace AlenkaFile
+{
 class DataFile;
+}
 class KernelCache;
 class SignalBlock;
 
@@ -81,15 +83,6 @@ public:
 	 */
 	void setUpdateMontageFlag();
 
-//	unsigned int getCapacity() const
-//	{
-//		if (ready() == false)
-//		{
-//			return -1;
-//		}
-//		return cache->getCapacity();
-//	}
-
 	/**
 	 * @brief Returns any block from indexSet ready to be used for rendering.
 	 * @param indexSet Requested block indexes.
@@ -110,22 +103,20 @@ public:
 	 * @brief Notifies this object that the DataFile changed.
 	 * @param file Pointer to the data file. nullptr means file was closed.
 	 */
-	void changeFile(DataFile* file);
+	void changeFile(AlenkaFile::DataFile* file);
 
 	/**
 	 * @brief Returns true if this object is ready for full operation.
 	 */
 	bool ready() const
 	{
-		return file != nullptr && trackCount > 0;
+		return file && trackCount > 0;
 	}
 
 	static std::string simplifyMontage(const std::string& str);
 
 private:
-	InfoTable* infoTable = nullptr;
-	InfoTable defaultInfoTable;
-	DataFile* file = nullptr;
+	AlenkaFile::DataFile* file = nullptr;
 	AlenkaSignal::OpenCLContext* context;
 	AlenkaSignal::FilterProcessor<float>* filterProcessor;
 	AlenkaSignal::MontageProcessor<float>* montageProcessor;
@@ -148,17 +139,6 @@ private:
 	GLuint vertexArrays[2];
 	GLuint glBuffer;
 
-	InfoTable* getInfoTable()
-	{
-		if (infoTable != nullptr)
-		{
-			return infoTable;
-		}
-		else
-		{
-			return &defaultInfoTable;
-		}
-	}
 	void destroyFileRelated();
 	std::string indexSetToString(const std::set<int>& indexSet)
 	{

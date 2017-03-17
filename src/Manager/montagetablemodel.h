@@ -8,13 +8,12 @@ class MontageTableModel : public TableModel
 	Q_OBJECT
 
 public:
-	MontageTableModel(InfoTable* infoTable, AlenkaFile::DataModel dataModel, QObject* parent = nullptr);
+	explicit MontageTableModel(AlenkaFile::DataFile* file, QObject* parent = nullptr);
+	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override;
 
 protected:
-	virtual void insertRowBack() override
-	{
-		dataModel.montageTable->insertRows(dataModel.montageTable->rowCount());
-	}
+	virtual void insertRowBack() override;
+	virtual void removeRowsFromDataModel(int row, int count) override;
 };
 
 #endif // MONTAGETABLEMODEL_H

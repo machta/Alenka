@@ -1,7 +1,7 @@
 #include "codeeditdialog.h"
 
 #include <AlenkaSignal/montage.h>
-#include "../DataFile/trackcodevalidator.h"
+#include "../DataModel/trackcodevalidator.h"
 
 #include <QDialogButtonBox>
 #include <QVBoxLayout>
@@ -19,7 +19,7 @@ namespace
 
 QString headerString;
 
-}// namespace
+} // namespace
 
 CodeEditDialog::CodeEditDialog(QWidget* parent) : QDialog(parent)
 {

@@ -3,15 +3,17 @@
 
 #include <AlenkaSignal/spikedet.h>
 
-class DataFile;
-class QProgressDialog;
-
 namespace AlenkaSignal
 {
 class OpenCLContext;
 template<class T>
 class Montage;
 }
+namespace AlenkaFile
+{
+class DataFile;
+}
+class QProgressDialog;
 
 class SpikedetAnalysis
 {
@@ -42,7 +44,7 @@ public:
 		return settings;
 	}
 
-	void runAnalysis(DataFile* file, const std::vector<AlenkaSignal::Montage<float>*>& montage, QProgressDialog* progress);
+	void runAnalysis(AlenkaFile::DataFile* file, const std::vector<AlenkaSignal::Montage<float>*>& montage, QProgressDialog* progress);
 
 private:
 	AlenkaSignal::OpenCLContext* context;

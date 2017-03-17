@@ -5,6 +5,8 @@
 #include <QLineEdit>
 #include <QAction>
 
+#include <cassert>
+
 using namespace std;
 
 namespace
@@ -13,8 +15,7 @@ namespace
 class Delegate : public QStyledItemDelegate
 {
 public:
-	Delegate(std::vector<TableColumn*>* columns, QObject* parent = nullptr) : QStyledItemDelegate(parent), columns(columns)
-	{}
+	explicit Delegate(std::vector<TableColumn*>* columns, QObject* parent = nullptr) : QStyledItemDelegate(parent), columns(columns) {}
 
 	virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override
 	{
@@ -41,15 +42,17 @@ private:
 
 } // namespace
 
-std::function<bool (int, int)> StringTableColumn::sortPredicate(Qt::SortOrder order) const
+bool BoolTableColumn::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index, QWidget** widget) const
 {
-	QCollator collator;
-	collator.setNumericMode(true);
+	(void)parent; (void)option;
 
-	if (order == Qt::AscendingOrder)
-		return [this, &collator] (int a, int b) { return collator.compare(data(a).toString(), data(b).toString()) < 0; };
-	else
-		return [this, &collator] (int a, int b) { return collator.compare(data(a).toString(), data(b).toString()) > 0; };
+	const_cast<QAbstractItemModel*>(index.model())->setData(index, !index.data(Qt::EditRole).toBool());
+
+	// TODO: Decide whether to turn this back on, or leave it out.
+	//emit const_cast<TrackManagerDelegate*>(this)->closeEditor(nullptr);
+
+	*widget = nullptr;
+	return true;
 }
 
 bool ColorTableColumn::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index, QWidget** widget) const
@@ -59,17 +62,17 @@ bool ColorTableColumn::createEditor(QWidget* parent, const QStyleOptionViewItem&
 	QLineEdit* lineEdit = new QLineEdit(parent);
 	QAction* action = lineEdit->addAction(QIcon(":/edit-icon.png"), QLineEdit::TrailingPosition);
 
-	lineEdit->connect(action, &QAction::triggered, [this, lineEdit] ()
-	{
+	lineEdit->connect(action, &QAction::triggered, [lineEdit] () {
 		QColor color;
 		color.setNamedColor(lineEdit->text());
 
-		color = QColorDialog::getColor(color, lineEdit); // There is a bug in Qt implementation that selects a bad initial color. (https://bugreports.qt.io/browse/QTBUG-44154) TODO: check if this is still true in the new version
+		color = QColorDialog::getColor(color, lineEdit);
 
 		if (color.isValid())
 		{
 			lineEdit->setText(color.name());
 
+			// TODO: Decide whether to turn this back on, or leave it out.
 			//emit const_cast<TrackManagerDelegate*>(this)->commitData(lineEdit);
 			//emit const_cast<TrackManagerDelegate*>(this)->closeEditor(lineEdit);
 		}
@@ -79,7 +82,7 @@ bool ColorTableColumn::createEditor(QWidget* parent, const QStyleOptionViewItem&
 	return true;
 }
 
-TableModel::TableModel(InfoTable* infoTable, AlenkaFile::DataModel dataModel, QObject* parent) : QAbstractTableModel(parent), infoTable(infoTable), dataModel(dataModel)
+TableModel::TableModel(AlenkaFile::DataFile* file, QObject* parent) : QAbstractTableModel(parent), file(file)
 {
 	delegate = new Delegate(&columns);
 }
@@ -89,28 +92,30 @@ TableModel::~TableModel()
 	delete delegate;
 }
 
-bool TableModel::insertRows(int row, int count, const QModelIndex& parent)
+bool TableModel::removeRows(int row, int count, const QModelIndex& parent)
 {
 	(void)parent;
-	if (count >= 1 && row == rowCount())
+
+	if (count > 0)
 	{
-		int row = rowCount();
+		int rowLast = row + count - 1;
+		assert(rowLast < rowCount());
 
-		beginInsertRows(QModelIndex(), row, row + count - 1);
-
-		for (int i = 0; i < count; ++i)
-		{
-			insertRowBack();
-
-			rowOrder.push_back(rowOrder.size());
-		}
-
-		endInsertRows();
+		beginRemoveRows(QModelIndex(), row, rowLast);
+		removeRowsFromDataModel(row, count);
+		endRemoveRows();
 
 		return true;
 	}
-	else
+
+	return false;
+}
+
+void TableModel::insertDataModelRows(int row, int count)
+{
+	if (0 < count)
 	{
-		return false;
+		beginInsertRows(QModelIndex(), row, row + count - 1);
+		endInsertRows();
 	}
 }

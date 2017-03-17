@@ -30,6 +30,7 @@ SyncDialog::SyncDialog(SyncServer* server, SyncClient* client, QWidget* parent) 
 
 	buildServerControls();
 	buildClientControls();
+
 	box->addWidget(serverControls);
 	box->addWidget(clientControls);
 	clientControls->hide();
@@ -209,9 +210,7 @@ void SyncDialog::connectClient()
 	int result = 1;
 
 	if (ok && url.isValid())
-	{
 		result = client->connectServer(url, port);
-	}
 
 	if (result)
 	{

@@ -56,7 +56,7 @@ protected:
 	 */
 	QOpenGLFunctions_type* gl(const char* file = "", int line = 0)
 	{
-		assert(functions != nullptr);
+		assert(functions);
 
 		checkGLErrors();
 
@@ -81,7 +81,7 @@ protected:
 	 */
 	QOpenGLDebugLogger* log()
 	{
-		assert(logger != nullptr);
+		assert(logger);
 
 		checkGLErrors();
 

@@ -3,24 +3,26 @@
 #include "options.h"
 #include "error.h"
 #include "signalviewer.h"
-#include "DataFile/gdf2.h"
-#include "DataFile/edftmp.h"
-#include "DataFile/tracktable.h"
-#include "DataFile/eventtable.h"
-#include "Manager/trackmanager.h"
-#include "Manager/eventmanager.h"
-#include "Manager/eventtypemanager.h"
-#include "Manager/montagemanager.h"
 #include "spikedetanalysis.h"
 #include "myapplication.h"
 #include "spikedetsettingsdialog.h"
 #include "canvas.h"
+#include "Manager/trackmanager.h"
+#include "Manager/eventmanager.h"
+#include "Manager/eventtypemanager.h"
+#include "Manager/montagemanager.h"
+#include "Manager/eventtypetablemodel.h"
+#include "Manager/montagetablemodel.h"
+#include "Manager/eventtablemodel.h"
+#include "Manager/tracktablemodel.h"
 #include "Sync/syncserver.h"
 #include "Sync/syncclient.h"
 #include "Sync/syncdialog.h"
-
+#include "DataModel/vitnessdatamodel.h"
 #include <AlenkaSignal/openclcontext.h>
 #include <AlenkaSignal/montage.h>
+#include <AlenkaFile/gdf2.h>
+#include <AlenkaFile/edf.h>
 
 #include <QAction>
 #include <QMenuBar>
@@ -37,8 +39,12 @@
 #include <QInputDialog>
 #include <QLocale>
 #include <QProgressDialog>
+#include <QDateTime>
+
+#include <locale>
 
 using namespace std;
+using namespace AlenkaFile;
 
 namespace
 {
@@ -104,6 +110,16 @@ void loadSpikedetOptions(AlenkaSignal::DETECTOR_SETTINGS* settings, double* even
 
 	if (PROGRAM_OPTIONS.isSet("sed"))
 		*eventDuration = PROGRAM_OPTIONS["sed"].as<double>();
+}
+
+void executeWithCLocale(function<void ()> code)
+{
+	std::locale localeCopy;
+	std::locale::global(std::locale("C"));
+
+	code();
+
+	std::locale::global(localeCopy);
 }
 
 } // namespace
@@ -238,9 +254,9 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	timeLineOffAction->setStatusTip(timeLineOffAction->toolTip());
 	connect(timeLineOffAction, &QAction::triggered, [this] ()
 	{
-		if (file != nullptr)
+		if (file)
 		{
-			file->getInfoTable()->setTimeLineInterval(0);
+			infoTable.setTimeLineInterval(0);
 		}
 	});
 
@@ -248,9 +264,9 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	setTimeLineIntervalAction->setActionGroup(timeLineIntervalActionGroup);
 	connect(setTimeLineIntervalAction, &QAction::triggered, [this] ()
 	{
-		if (file != nullptr)
+		if (file)
 		{
-			double value = file->getInfoTable()->getTimeLineInterval();
+			double value = infoTable.getTimeLineInterval();
 			if (value == 0)
 			{
 				value = 1;
@@ -261,7 +277,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 			if (ok)
 			{
-				file->getInfoTable()->setTimeLineInterval(value);
+				infoTable.setTimeLineInterval(value);
 			}
 		}
 	});
@@ -452,7 +468,57 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 SignalFileBrowserWindow::~SignalFileBrowserWindow()
 {
-	delete file;
+	closeFile();
+
+	delete spikedetAnalysis;
+}
+
+InfoTable SignalFileBrowserWindow::infoTable;
+
+QDateTime SignalFileBrowserWindow::sampleToDate(DataFile* file, int sample)
+{
+	int timeOffset = round(sample/file->getSamplingFrequency()*1000);
+
+	QDateTime date = QDateTime::fromTime_t(file->getStartDate());
+	date = date.addMSecs(timeOffset);
+
+	return date;
+}
+
+QDateTime SignalFileBrowserWindow::sampleToOffset(DataFile* file, int sample)
+{
+	int timeOffset = round(sample/file->getSamplingFrequency()*1000);
+
+	QDateTime date(QDate(1970, 1, 1));
+	date = date.addMSecs(timeOffset);
+
+	return date;
+}
+
+QString SignalFileBrowserWindow::sampleToDateTimeString(DataFile* file, int sample, InfoTable::TimeMode mode)
+{
+	QLocale locale;
+
+	if (mode == InfoTable::TimeMode::size)
+	{
+		mode = infoTable.getTimeMode();
+	}
+
+	if (mode == InfoTable::TimeMode::samples)
+	{
+		return QString::number(sample);
+	}
+	else if (mode == InfoTable::TimeMode::offset)
+	{
+		QDateTime date = sampleToOffset(file, sample);
+		return QString::number(date.date().day() - 1) + "d " + date.toString("hh:mm:ss" + QString(locale.decimalPoint()) + "zzz");
+	}
+	else if (mode == InfoTable::TimeMode::real)
+	{
+		return sampleToDate(file, sample).toString("d.M.yyyy hh:mm:ss" + QString(locale.decimalPoint()) + "zzz");
+	}
+
+	return QString();
 }
 
 void SignalFileBrowserWindow::closeEvent(QCloseEvent* event)
@@ -464,50 +530,46 @@ void SignalFileBrowserWindow::closeEvent(QCloseEvent* event)
 	QMainWindow::closeEvent(event);
 }
 
-void SignalFileBrowserWindow::connectModel(QAbstractTableModel* model, std::function<void ()> f)
+void SignalFileBrowserWindow::connectVitness(DataModelVitness* vitness, std::function<void ()> f)
 {
-	connect(model, &QAbstractTableModel::dataChanged, f);
-	connect(model, &QAbstractTableModel::rowsInserted, f);
-	connect(model, &QAbstractTableModel::rowsRemoved, f);
+	auto c = connect(vitness, &DataModelVitness::valueChanged, f);
+	openFileConnections.push_back(c);
+	c = connect(vitness, &DataModelVitness::rowsInserted, f);
+	openFileConnections.push_back(c);
+	c = connect(vitness, &DataModelVitness::rowsRemoved, f);
+	openFileConnections.push_back(c);
 }
 
 void SignalFileBrowserWindow::horizontalZoom(double factor)
 {
-	if (file != nullptr)
-	{
-		InfoTable* it = file->getInfoTable();
-		it->setVirtualWidth(it->getVirtualWidth()*factor);
-	}
+	if (file)
+		infoTable.setVirtualWidth(infoTable.getVirtualWidth()*factor);
 }
 
 void SignalFileBrowserWindow::verticalZoom(double factor)
 {
-	if (file != nullptr)
+	if (file)
 	{
-		TrackTable* tt = file->getMontageTable()->getTrackTables()->at(file->getInfoTable()->getSelectedMontage());
+		AbstractTrackTable* tt = file->getDataModel().montageTable->trackTable(infoTable.getSelectedMontage());
 
 		for (int i = 0; i < tt->rowCount(); ++i)
 		{
-			double value = tt->getAmplitude(i)*factor;
-			value = value != 0 ? value : -0.000001;
-			tt->setAmplitude(value, i);
-		}
+			Track t = tt->row(i);
 
-		emit tt->dataChanged(tt->index(0, static_cast<int>(TrackTable::Column::amplitude)), tt->index(tt->rowCount() - 1, static_cast<int>(TrackTable::Column::amplitude)));
+			double value = t.amplitude*factor;
+			value = value != 0 ? value : -0.000001;
+			t.amplitude = value;
+
+			tt->row(i, t);
+		}
 	}
 }
 
 void SignalFileBrowserWindow::mode(int m)
 {
-	if (file != nullptr)
+	if (file)
 	{
-		InfoTable* it = file->getInfoTable();
-		EventTable* et = file->getMontageTable()->getEventTables()->at(it->getSelectedMontage());
-
-		it->setTimeMode(static_cast<InfoTable::TimeMode>(m));
-
-		et->emitColumnChanged(EventTable::Column::position);
-		et->emitColumnChanged(EventTable::Column::duration);
+		infoTable.setTimeMode(static_cast<InfoTable::TimeMode>(m));
 
 		updatePositionStatusLabel();
 		updateCursorStatusLabel();
@@ -523,16 +585,10 @@ void SignalFileBrowserWindow::openFile()
 {
 	QString fileName = QFileDialog::getOpenFileName(this, "Open File", "", "GDF file (*.gdf);;EDF file (*.edf)");
 
-	logToFile("Opening file '" << fileName.toStdString() << "'.");
-
 	if (fileName.isNull())
-	{
-		// No file was selected.
-		return;
-	}
+		return; // No file was selected.
 
-	// Open the file.
-	delete file;
+	closeFile();
 
 	QFileInfo fileInfo(fileName);
 
@@ -552,29 +608,42 @@ void SignalFileBrowserWindow::openFile()
 		return;
 	}
 
-	string stdFileName = (fileInfo.path() + QDir::separator() + fileInfo.completeBaseName()).toStdString();
+	logToFile("Opening file '" << fileName.toStdString() << "'.");
+
+	string stdFileName = fileName.toStdString();
 	if (fileInfo.suffix().toLower() == "gdf")
 	{
 		file = new GDF2(stdFileName);
 	}
 	else
 	{
-		file = new EdfTmp(stdFileName);
+		file = new EDF(stdFileName);
 	}
+
+	dataModel = new DataModel;
+	dataModel->eventTypeTable = new VitnessEventTypeTable();
+	dataModel->montageTable = new VitnessMontageTable();
+
+	file->setDataModel(*dataModel);	
+
+	executeWithCLocale([this] () {
+		file->load();
+		infoTable.readXML(file->getFilePath() + ".info");
+	});
 
 	setWindowTitle(fileInfo.fileName() + " - " + title);
 
-	InfoTable* it = file->getInfoTable();
-
 	// Check for any values in InfoTable that could make trouble.
-	if (it->getSelectedMontage() < 0 || it->getSelectedMontage() >= file->getMontageTable()->rowCount())
-	{
-		it->setSelectedMontage(0);
-	}
+	if (infoTable.getSelectedMontage() < 0 || infoTable.getSelectedMontage() >= file->getDataModel().montageTable->rowCount())
+		infoTable.setSelectedMontage(0);
 
 	// Pass the file to the child widgets.
-	signalViewer->changeFile(file);
+	trackManager->changeFile(file);
 	eventManager->changeFile(file);
+	eventTypeManager->changeFile(file);
+	montageManager->changeFile(file);
+
+	signalViewer->changeFile(file);
 
 	// Update Filter tool bar.
 	QStringList comboOptions;
@@ -582,74 +651,117 @@ void SignalFileBrowserWindow::openFile()
 	comboOptions << "---" << "0" << "5" << "10";
 
 	for (int i = 50; i <= file->getSamplingFrequency()/2; i *= 2)
-	{
 		comboOptions << QString::number(i);
-	}
+
+	QMetaObject::Connection c;
 
 	lowpassComboBox->clear();
 	lowpassComboBox->addItems(comboOptions);
-	connect(lowpassComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(lowpassComboBoxUpdate(QString)));
-	connect(it, SIGNAL(lowpassFrequencyChanged(double)), this, SLOT(lowpassComboBoxUpdate(double)));
+	c = connect(lowpassComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(lowpassComboBoxUpdate(QString)));
+	openFileConnections.push_back(c);
+	c = connect(&infoTable, SIGNAL(lowpassFrequencyChanged(double)), this, SLOT(lowpassComboBoxUpdate(double)));
+	openFileConnections.push_back(c);
 
 	highpassComboBox->clear();
 	highpassComboBox->addItems(comboOptions);
-	connect(highpassComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(highpassComboBoxUpdate(QString)));
-	connect(it, SIGNAL(highpassFrequencyChanged(double)), this, SLOT(highpassComboBoxUpdate(double)));
+	c = connect(highpassComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(highpassComboBoxUpdate(QString)));
+	openFileConnections.push_back(c);
+	c = connect(&infoTable, SIGNAL(highpassFrequencyChanged(double)), this, SLOT(highpassComboBoxUpdate(double)));
+	openFileConnections.push_back(c);
 
-	connect(notchCheckBox, SIGNAL(toggled(bool)), it, SLOT(setNotch(bool)));
-	connect(it, SIGNAL(notchChanged(bool)), notchCheckBox, SLOT(setChecked(bool)));
+	c = connect(notchCheckBox, SIGNAL(toggled(bool)), &infoTable, SLOT(setNotch(bool)));
+	openFileConnections.push_back(c);
+	c = connect(&infoTable, SIGNAL(notchChanged(bool)), notchCheckBox, SLOT(setChecked(bool)));
+	openFileConnections.push_back(c);
+
+	// Set up table models and managers.
+	eventTypeTable = new EventTypeTableModel(file);
+	eventTypeManager->setModel(eventTypeTable);
+
+	montageTable = new MontageTableModel(file);
+	montageManager->setModel(montageTable);
+
+	eventTable = new EventTableModel(file);
+	eventManager->setModel(eventTable);
+
+	trackTable = new TrackTableModel(file);
+	trackManager->setModel(trackTable);
 
 	// Update the Select tool bar.
-	connectModel(file->getMontageTable(), [this] () { updateMontageComboBox(); });
+	connectVitness(VitnessMontageTable::vitness(dataModel->montageTable), [this] () { updateMontageComboBox(); });
+	openFileConnections.push_back(c);
 	updateMontageComboBox();
-	connect(montageComboBox, SIGNAL(currentIndexChanged(int)), it, SLOT(setSelectedMontage(int)));
-	connect(it, SIGNAL(selectedMontageChanged(int)), montageComboBox, SLOT(setCurrentIndex(int)));
 
-	connectModel(file->getEventTypeTable(), [this] () { updateEventTypeComboBox(); });
+	c = connect(montageComboBox, SIGNAL(currentIndexChanged(int)), &infoTable, SLOT(setSelectedMontage(int)));
+	openFileConnections.push_back(c);
+	c = connect(&infoTable, SIGNAL(selectedMontageChanged(int)), montageComboBox, SLOT(setCurrentIndex(int)));
+	openFileConnections.push_back(c);
+
+	connectVitness(VitnessEventTypeTable::vitness(dataModel->eventTypeTable), [this] () { updateEventTypeComboBox(); });
 	updateEventTypeComboBox();
-	connect(eventTypeComboBox, SIGNAL(currentIndexChanged(int)), it, SLOT(setSelectedType(int)));
-	connect(it, SIGNAL(selectedTypeChanged(int)), eventTypeComboBox, SLOT(setCurrentIndex(int)));
 
-	// Update the managers.
-	eventTypeManager->setModel(file->getEventTypeTable());
-	montageManager->setModel(file->getMontageTable());
+	c = connect(eventTypeComboBox, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [] (int index) {
+		infoTable.setSelectedType(index - 1);
+	});
+	openFileConnections.push_back(c);
 
-	connect(it, SIGNAL(selectedMontageChanged(int)), this, SLOT(updateManagers(int)));
+	c = connect(&infoTable, &InfoTable::selectedTypeChanged, [this] (int value){
+		eventTypeComboBox->setCurrentIndex(value + 1);
+	});
+	openFileConnections.push_back(c);
 
 	// Update the status bar.
-	timeStatusLabel->setText("Start: " + file->sampleToDateTimeString(0, InfoTable::TimeMode::real) + " Total time: " + file->sampleToDateTimeString(file->getSamplesRecorded(), InfoTable::TimeMode::offset));
+	QString str = "Start: " + sampleToDateTimeString(file, 0, InfoTable::TimeMode::real);
+	str += " Total time: " + sampleToDateTimeString(file, file->getSamplesRecorded(), InfoTable::TimeMode::offset);
+	timeStatusLabel->setText(str);
 
-	connect(it, SIGNAL(positionChanged(int)), this, SLOT(updatePositionStatusLabel()));
-	connect(it, SIGNAL(positionIndicatorChanged(double)), this, SLOT(updatePositionStatusLabel()));
-	connect(signalViewer->getCanvas(), SIGNAL(cursorPositionSampleChanged(int)), this, SLOT(updateCursorStatusLabel()));
+	c = connect(&infoTable, SIGNAL(positionChanged(int)), this, SLOT(updatePositionStatusLabel()));
+	openFileConnections.push_back(c);
+	c = connect(&infoTable, SIGNAL(positionIndicatorChanged(double)), this, SLOT(updatePositionStatusLabel()));
+	openFileConnections.push_back(c);
+	c = connect(signalViewer->getCanvas(), SIGNAL(cursorPositionSampleChanged(int)), this, SLOT(updateCursorStatusLabel()));
+	openFileConnections.push_back(c);
 
 	// Connect slot SignalViewer::updateSignalViewer() to make sure that the SignalViewer gets updated when needed.
-	connect(it, SIGNAL(virtualWidthChanged(int)), signalViewer, SLOT(updateSignalViewer()));
-	connect(it, SIGNAL(positionChanged(int)), signalViewer, SLOT(updateSignalViewer()));
-	connect(it, SIGNAL(lowpassFrequencyChanged(double)), signalViewer, SLOT(updateSignalViewer()));
-	connect(it, SIGNAL(highpassFrequencyChanged(double)), signalViewer, SLOT(updateSignalViewer()));
-	connect(it, SIGNAL(notchChanged(bool)), signalViewer, SLOT(updateSignalViewer()));
-	connect(it, SIGNAL(selectedMontageChanged(int)), signalViewer, SLOT(updateSignalViewer()));
-	connect(it, SIGNAL(timeLineIntervalChanged(double)), signalViewer, SLOT(updateSignalViewer()));
-	connect(it, SIGNAL(positionIndicatorChanged(double)), signalViewer, SLOT(updateSignalViewer()));
+	c = connect(&infoTable, SIGNAL(virtualWidthChanged(int)), signalViewer, SLOT(updateSignalViewer()));
+	openFileConnections.push_back(c);
+	c = connect(&infoTable, SIGNAL(positionChanged(int)), signalViewer, SLOT(updateSignalViewer()));
+	openFileConnections.push_back(c);
+	c = connect(&infoTable, SIGNAL(lowpassFrequencyChanged(double)), signalViewer, SLOT(updateSignalViewer()));
+	openFileConnections.push_back(c);
+	c = connect(&infoTable, SIGNAL(highpassFrequencyChanged(double)), signalViewer, SLOT(updateSignalViewer()));
+	openFileConnections.push_back(c);
+	c = connect(&infoTable, SIGNAL(notchChanged(bool)), signalViewer, SLOT(updateSignalViewer()));
+	openFileConnections.push_back(c);
+	c = connect(&infoTable, SIGNAL(selectedMontageChanged(int)), signalViewer, SLOT(updateSignalViewer()));
+	openFileConnections.push_back(c);
+	c = connect(&infoTable, SIGNAL(timeLineIntervalChanged(double)), signalViewer, SLOT(updateSignalViewer()));
+	openFileConnections.push_back(c);
+	c = connect(&infoTable, SIGNAL(positionIndicatorChanged(double)), signalViewer, SLOT(updateSignalViewer()));
+	openFileConnections.push_back(c);
 
-	connectModel(file->getMontageTable(), [this] () { signalViewer->updateSignalViewer(); });
-	connectModel(file->getEventTypeTable(), [this] () { signalViewer->updateSignalViewer(); });
+	connectVitness(VitnessMontageTable::vitness(dataModel->montageTable), [this] () { signalViewer->updateSignalViewer(); });
+	connectVitness(VitnessEventTypeTable::vitness(dataModel->eventTypeTable), [this] () { signalViewer->updateSignalViewer(); });
+	c = connect(&infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(updateManagers(int)));
+	openFileConnections.push_back(c);
 
 	// Update the View submenus.
-	connect(it, SIGNAL(timeModeChanged(int)), this, SLOT(updateTimeMode(int)));
-	connect(it, &InfoTable::timeLineIntervalChanged, [this] (double value)
+	c = connect(&infoTable, SIGNAL(timeModeChanged(int)), this, SLOT(updateTimeMode(int)));
+	c = connect(&infoTable, &InfoTable::timeLineIntervalChanged, [this] (double value)
 	{
 		setTimeLineIntervalAction->setToolTip("The time line interval is " + locale().toString(value) + " s.");
 		setTimeLineIntervalAction->setStatusTip(setTimeLineIntervalAction->toolTip());
 	});
+	openFileConnections.push_back(c);
 
 	// Connect Sync.
-	connect(it, SIGNAL(positionChanged(int)), this, SLOT(sendSyncMessage()));
-	connect(it, SIGNAL(positionIndicatorChanged(double)), this, SLOT(sendSyncMessage()));
+	c = connect(&infoTable, SIGNAL(positionChanged(int)), this, SLOT(sendSyncMessage()));
+	openFileConnections.push_back(c);
+	c = connect(&infoTable, SIGNAL(positionIndicatorChanged(double)), this, SLOT(sendSyncMessage()));
+	openFileConnections.push_back(c);
 
 	// Emit all signals to ensure there are no uninitialized controls.
-	it->emitAllSignals();
+	infoTable.emitAllSignals();
 }
 
 void SignalFileBrowserWindow::closeFile()
@@ -658,11 +770,40 @@ void SignalFileBrowserWindow::closeFile()
 
 	setWindowTitle(title);
 
-	delete file;
-	file = nullptr;
+	for (auto e : openFileConnections)
+		disconnect(e);
+	openFileConnections.clear();
+
+	montageComboBox->clear();
+	eventTypeComboBox->clear();
+
+	if (file)
+	{
+		executeWithCLocale([this] () {
+			infoTable.writeXML(file->getFilePath() + ".info");
+		});
+	}
 
 	signalViewer->changeFile(nullptr);
+
+	trackManager->changeFile(nullptr);
 	eventManager->changeFile(nullptr);
+	eventTypeManager->changeFile(nullptr);
+	montageManager->changeFile(nullptr);
+
+	delete eventTypeTable; eventTypeTable = nullptr;
+	delete montageTable; montageTable = nullptr;
+	delete eventTable; eventTable = nullptr;
+	delete trackTable; trackTable= nullptr;
+
+	if (dataModel)
+	{
+		delete dataModel->eventTypeTable;
+		delete dataModel->montageTable;
+	}
+	delete dataModel; dataModel = nullptr;
+
+	delete file; file = nullptr;
 
 	signalViewer->updateSignalViewer();
 }
@@ -671,87 +812,68 @@ void SignalFileBrowserWindow::saveFile()
 {
 	logToFile("Saving file.");
 
-	if (file != nullptr)
+	if (file)
 	{
-		file->save();
+		executeWithCLocale([this] () {
+			file->save();
+		});
 	}
 }
 
 void SignalFileBrowserWindow::lowpassComboBoxUpdate(const QString& text)
 {
-	if (file != nullptr)
+	if (file)
 	{
 		bool ok;
 		double tmp = locale().toDouble(text, &ok);
 
 		if (ok)
-		{
-			file->getInfoTable()->setLowpassFrequency(tmp);
-		}
+			infoTable.setLowpassFrequency(tmp);
 		else
-		{
-			file->getInfoTable()->setLowpassFrequency(1000000); // TODO: properly turn of/on
-		}
+			infoTable.setLowpassFrequency(1000000); // TODO: properly turn of/on
 	}
 }
 
 void SignalFileBrowserWindow::lowpassComboBoxUpdate(double value)
 {
-	if (file != nullptr)
+	if (file)
 	{
 		if (value < 0 || value > file->getSamplingFrequency()/2)
-		{
 			lowpassComboBox->setCurrentIndex(0);
-		}
 		else
-		{
 			lowpassComboBox->setCurrentText(locale().toString(value, 'f', 2));
-		}
 	}
 }
 
 void SignalFileBrowserWindow::highpassComboBoxUpdate(const QString& text)
 {
-	if (file != nullptr)
+	if (file)
 	{
 		bool ok;
 		double tmp = locale().toDouble(text, &ok);
 
 		if (ok)
-		{
-			file->getInfoTable()->setHighpassFrequency(tmp);
-		}
+			infoTable.setHighpassFrequency(tmp);
 		else
-		{
-			file->getInfoTable()->setHighpassFrequency(-1000000); // TODO: properly turn of/on
-		}
+			infoTable.setHighpassFrequency(-1000000); // TODO: properly turn of/on
 	}
 }
 
 void SignalFileBrowserWindow::highpassComboBoxUpdate(double value)
 {
-	if (file != nullptr)
+	if (file)
 	{
 		if (value < 0 || value > file->getSamplingFrequency()/2)
-		{
 			highpassComboBox->setCurrentIndex(0);
-		}
 		else
-		{
 			highpassComboBox->setCurrentText(locale().toString(value, 'f', 2));
-		}
 	}
 }
 
 void SignalFileBrowserWindow::updateManagers(int value)
 {
-	TrackTable* tt = file->getMontageTable()->getTrackTables()->at(value);
-	trackManager->setModel(tt);
-	connectModel(tt, [this] () { signalViewer->updateSignalViewer(); });
-
-	EventTable* et = file->getMontageTable()->getEventTables()->at(value);
-	eventManager->setModel(et);
-	connectModel(et, [this] () { signalViewer->updateSignalViewer(); });
+	connectVitness(VitnessTrackTable::vitness(dataModel->montageTable->trackTable(value)), [this] () { signalViewer->updateSignalViewer(); });
+	connectVitness(VitnessEventTable::vitness(dataModel->montageTable->eventTable(value)), [this] () { signalViewer->updateSignalViewer(); });
 }
 
 void SignalFileBrowserWindow::horizontalZoomIn()
@@ -784,95 +906,68 @@ void SignalFileBrowserWindow::updateTimeMode(int mode)
 
 void SignalFileBrowserWindow::updatePositionStatusLabel()
 {
-	InfoTable* it = file->getInfoTable();
+	double ratio = static_cast<double>(file->getSamplesRecorded())/infoTable.getVirtualWidth();
+	double position = (infoTable.getPosition() + infoTable.getPositionIndicator()*signalViewer->getCanvas()->width())*ratio;
 
-	double ratio = static_cast<double>(file->getSamplesRecorded())/it->getVirtualWidth();
-	double position = (it->getPosition() + it->getPositionIndicator()*signalViewer->getCanvas()->width())*ratio;
-
-	positionStatusLabel->setText("Position: " + file->sampleToDateTimeString(round(position)));
+	positionStatusLabel->setText("Position: " + sampleToDateTimeString(file, round(position)));
 }
 
 void SignalFileBrowserWindow::updateCursorStatusLabel()
 {
-	cursorStatusLabel->setText("Cursor at: " + file->sampleToDateTimeString(signalViewer->getCanvas()->getCursorPositionSample()));
+	cursorStatusLabel->setText("Cursor at: " + sampleToDateTimeString(file, signalViewer->getCanvas()->getCursorPositionSample()));
 }
 
 void SignalFileBrowserWindow::updateMontageComboBox()
 {
-	if (file != nullptr)
+	if (file)
 	{
-		MontageTable* mt = file->getMontageTable();
-		InfoTable* it = file->getInfoTable();
-
+		AbstractMontageTable* montageTable = file->getDataModel().montageTable;
 		int itemCount = montageComboBox->count();
-		int index = montageComboBox->currentIndex();
+		int selectedMontage = infoTable.getSelectedMontage();
 
-		for (int i = 0; i < mt->rowCount(); ++i)
-		{
-			montageComboBox->addItem(QString::fromStdString(mt->getName(i)));
-		}
+		for (int i = 0; i < montageTable->rowCount(); ++i)
+			montageComboBox->addItem(QString::fromStdString(montageTable->row(i).name));
 
 		for (int i = 0; i < itemCount; ++i)
-		{
 			montageComboBox->removeItem(0);
-		}
 
-		if (index >= mt->rowCount())
-		{
-			index = mt->rowCount() - 1;
-			it->setSelectedMontage(index);
-		}
-
-		emit it->selectedMontageChanged(index);
+		infoTable.setSelectedMontage(min(selectedMontage, montageTable->rowCount() - 1));
 	}
 }
 
 void SignalFileBrowserWindow::updateEventTypeComboBox()
 {
-	if (file != nullptr)
+	if (file)
 	{
-		EventTypeTable* ett = file->getEventTypeTable();
-		InfoTable* it = file->getInfoTable();
-
+		AbstractEventTypeTable* eventTypeTable = file->getDataModel().eventTypeTable;
 		int itemCount = eventTypeComboBox->count();
-		int index = eventTypeComboBox->currentIndex();
+		int selectedType = infoTable.getSelectedType();
 
 		eventTypeComboBox->addItem("<No Type>");
-		for (int i = 0; i < ett->rowCount(); ++i)
-		{
-			eventTypeComboBox->addItem(QString::fromStdString(ett->getName(i)));
-		}
+		for (int i = 0; i < eventTypeTable->rowCount(); ++i)
+			eventTypeComboBox->addItem(QString::fromStdString(eventTypeTable->row(i).name));
 
 		for (int i = 0; i < itemCount; ++i)
-		{
 			eventTypeComboBox->removeItem(0);
-		}
 
-		if (index > ett->rowCount())
-		{
-			index = ett->rowCount();
-			it->setSelectedType(index);
-		}
-
-		emit it->selectedTypeChanged(index);
+		infoTable.setSelectedType(min(selectedType, eventTypeTable->rowCount() - 1));
 	}
 }
 
 void SignalFileBrowserWindow::runSpikedet()
 {
-	if (file != nullptr)
+	if (file)
 	{
-		// Build montage from code. (This is a code duplicity taken from SignalProcessor.)
+		// Build montage from code.
 		vector<AlenkaSignal::Montage<float>*> montage;
-
-		auto code = file->getMontageTable()->getTrackTables()->at(file->getInfoTable()->getSelectedMontage())->getCode();
 
 		QFile headerFile(":/montageHeader.cl");
 		headerFile.open(QIODevice::ReadOnly);
 		string header = headerFile.readAll().toStdString();
 
-		for (auto e : code)
-			montage.push_back(new AlenkaSignal::Montage<float>(e, globalContext.get(), header));
+		AbstractTrackTable* tt = file->getDataModel().montageTable->trackTable(infoTable.getSelectedMontage());
+		for (int i = 0; i < tt->rowCount(); ++i)
+			montage.push_back(new AlenkaSignal::Montage<float>(tt->row(i).code, globalContext.get(), header));
 
 		// Run Spikedet.
 		QProgressDialog progress("Running Spikedet analysis", "Abort", 0, 100, this);
@@ -883,40 +978,46 @@ void SignalFileBrowserWindow::runSpikedet()
 
 		spikedetAnalysis->runAnalysis(file, montage, &progress);
 
-		// Process the output structure.
-		EventTypeTable* ett = file->getMontageTable()->getEventTypeTable();
+		// Add three new event types for the different levels of spike events.
+		AbstractEventTypeTable* ett = file->getDataModel().eventTypeTable;
 		int index = ett->rowCount();
-		ett->insertRowsBack(3);
+		ett->insertRows(index, 3);
 
-		ett->setName("Spikedet K1", index);
-		ett->setColor(QColor(0, 0, 255), index);
+		QColor colors[3] = {QColor(0, 0, 255), QColor(0, 255, 0), QColor(0, 255, 255)};
+		for (int i = 0; i < 3; ++i)
+		{
+			EventType et = ett->row(index + i);
+			et.name = "Spikedet K" + to_string(i + 1);
+			SignalFileBrowserWindow::color2array(colors[i], et.color);
+			ett->row(index + i, et);
+		}
 
-		ett->setName("Spikedet K2", index + 1);
-		ett->setColor(QColor(0, 255, 0), index + 1);
+		// Process the output structure.
+		AbstractEventTable* et = file->getDataModel().montageTable->eventTable(infoTable.getSelectedMontage());
 
-		ett->setName("Spikedet K3", index + 2);
-		ett->setColor(QColor(0, 255, 255), index + 2);
-
-		EventTable* et = file->getMontageTable()->getEventTables()->at(file->getInfoTable()->getSelectedMontage());
 		AlenkaSignal::CDetectorOutput* out = spikedetAnalysis->getOutput();
-		assert(out != nullptr);
-
+		assert(out);
 		unsigned int count = out->m_pos.size();
+
 		if (count > 0)
 		{
 			assert(out->m_chan.size() == count);
 
 			int etIndex = et->rowCount();
-			et->insertRowsBack(count);
+			et->insertRows(etIndex, count);
 
 			for (unsigned int i = 0; i < count; i++)
 			{
-				et->setLabel("Spike " + to_string(i), etIndex + i);
-				et->setType(index, etIndex + i);
-				et->setPosition(out->m_pos[i]*file->getSamplingFrequency(), etIndex + i);
-				et->setDuration(file->getSamplingFrequency()*eventDuration, etIndex + i);
-				//et->setDuration(out->m_dur[i]*file->getSamplingFrequency(), etIndex + i);
-				et->setChannel(out->m_chan[i] - 1, etIndex + i);
+				Event e = et->row(etIndex + i);
+
+				e.label = "Spike " + to_string(i);
+				e.type = index + (out->m_con[i] == 0.5 ? 1 : 0); // TODO: Figure out what should be used as the third type.
+				e.position = out->m_pos[i]*file->getSamplingFrequency();
+				e.duration = file->getSamplingFrequency()*eventDuration;
+				//e.duration = out->m_dur[i]*file->getSamplingFrequency();
+				e.channel = out->m_chan[i] - 1;
+
+				et->row(etIndex + i, e);
 			}
 		}
 	}
@@ -929,7 +1030,7 @@ void SignalFileBrowserWindow::receiveSyncMessage(const QByteArray& message)
 		double timePosition;
 		unpackMessage(message, &timePosition);
 
-		const double ratio = static_cast<double>(file->getSamplesRecorded())/file->getInfoTable()->getVirtualWidth();
+		const double ratio = static_cast<double>(file->getSamplesRecorded())/infoTable.getVirtualWidth();
 		int position = timePosition*file->getSamplingFrequency()/ratio;
 
 #ifndef NDEBUG
@@ -937,8 +1038,8 @@ void SignalFileBrowserWindow::receiveSyncMessage(const QByteArray& message)
 #endif
 
 		lastPositionReceived = position;
-		position -= signalViewer->getCanvas()->width()*file->getInfoTable()->getPositionIndicator();
-		file->getInfoTable()->setPosition(position);
+		position -= signalViewer->getCanvas()->width()*infoTable.getPositionIndicator();
+		infoTable.setPosition(position);
 	}
 }
 
@@ -946,10 +1047,9 @@ void SignalFileBrowserWindow::sendSyncMessage()
 {
 	if (file && shouldSynchronizeView())
 	{
-		const int position = file->getInfoTable()->getPosition() +
-			signalViewer->getCanvas()->width()*file->getInfoTable()->getPositionIndicator();
+		const int position = infoTable.getPosition() + signalViewer->getCanvas()->width()*infoTable.getPositionIndicator();
 
-		const double ratio = static_cast<double>(file->getSamplesRecorded())/file->getInfoTable()->getVirtualWidth();
+		const double ratio = static_cast<double>(file->getSamplesRecorded())/infoTable.getVirtualWidth();
 		const int epsilon = max<int>(3, file->getSamplingFrequency()/50/ratio);
 
 		// This condition is to break the message deadlock. This comes about because the source of the signal that trigers
@@ -961,9 +1061,9 @@ void SignalFileBrowserWindow::sendSyncMessage()
 		{
 			const double timePosition = position*ratio/file->getSamplingFrequency();
 #ifndef NDEBUG
-			cerr << "Sending position: " << position << " " << timePosition << endl;
+			if (syncServer->connectionCount() > 0 || syncClient->isValid())
+				cerr << "Sending position: " << position << " " << timePosition << endl;
 #endif
-
 			QByteArray message = packMessage(timePosition);
 
 			syncServer->sendMessage(message);

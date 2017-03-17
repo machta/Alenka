@@ -1,7 +1,7 @@
 #include "signalprocessor.h"
 
-#include "../DataFile/datafile.h"
-#include "../DataFile/tracktable.h"
+#include "../signalfilebrowserwindow.h"
+#include <AlenkaFile/datafile.h>
 #include "../myapplication.h"
 #include "kernelcache.h"
 #include "signalblock.h"
@@ -19,6 +19,7 @@
 #include <QFile>
 
 using namespace std;
+using namespace AlenkaFile;
 
 namespace
 {
@@ -33,6 +34,11 @@ AlenkaSignal::WindowFunction resolveWindow()
 		return AlenkaSignal::WindowFunction::Blackman;
 
 	return AlenkaSignal::WindowFunction::None;
+}
+
+AbstractTrackTable* getTrackTable(DataFile* file)
+{
+	return file->getDataModel().montageTable->trackTable(SignalFileBrowserWindow::infoTable.getSelectedMontage());
 }
 
 } // namespace
@@ -109,21 +115,19 @@ void SignalProcessor::updateFilter()
 {
 	using namespace std;
 
-	if (file == nullptr)
-	{
+	if (!file)
 		return;
-	}
 
 	int M = file->getSamplingFrequency()/* + 1*/;
 	AlenkaSignal::Filter<float> filter(M, file->getSamplingFrequency()); // Possibly could save this object so that it won't be created from scratch everytime.
 
 	filter.lowpass(true);
-	filter.setLowpass(getInfoTable()->getLowpassFrequency());
+	filter.setLowpass(SignalFileBrowserWindow::infoTable.getLowpassFrequency());
 
 	filter.highpass(true);
-	filter.setHighpass(getInfoTable()->getHighpassFrequency());
+	filter.setHighpass(SignalFileBrowserWindow::infoTable.getHighpassFrequency());
 
-	filter.notch(getInfoTable()->getNotch());
+	filter.notch(SignalFileBrowserWindow::infoTable.getNotch());
 	filter.setNotch(50);
 
 	filterProcessor->changeSampleFilter(M, filter.computeSamples());
@@ -154,21 +158,18 @@ void SignalProcessor::updateFilter()
 
 void SignalProcessor::setUpdateMontageFlag()
 {
-	if (file == nullptr)
+	if (file)
 	{
-		return;
+		trackCount = 0;
+		for (int i = 0; i < getTrackTable(file)->rowCount(); ++i)
+		{
+			if (getTrackTable(file)->row(i).hidden == false)
+				++trackCount;
+		}
+
+		if (trackCount > 0)
+			updateMontageFlag = true;
 	}
-
-	TrackTable* tt = file->getMontageTable()->getTrackTables()->at(getInfoTable()->getSelectedMontage());
-
-	auto code = tt->getCode();
-
-	if ((trackCount = code.size()) == 0)
-	{
-		return;
-	}
-
-	updateMontageFlag = true;
 }
 
 SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
@@ -241,7 +242,7 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 		gl()->glBufferData(GL_ARRAY_BUFFER, outputBlockSize*sizeof(float), processorOutputBufferTmp, GL_STATIC_DRAW);
 	}
 
-	auto fromTo = DataFile::blockIndexToSampleRange(index, getBlockSize());
+	auto fromTo = GPUCache::blockIndexToSampleRange(index, getBlockSize());
 	return SignalBlock(index, fromTo.first, fromTo.second, vertexArrays);
 }
 
@@ -251,14 +252,8 @@ void SignalProcessor::changeFile(DataFile* file)
 
 	this->file = file;
 
-	if (file == nullptr)
+	if (file)
 	{
-		infoTable = nullptr;
-	}
-	else
-	{
-		infoTable = file->getInfoTable();
-
 		int M = file->getSamplingFrequency();
 		int offset = M;
 		int delay = M/2 - 1;
@@ -316,7 +311,7 @@ string SignalProcessor::simplifyMontage(const string& str)
 
 void SignalProcessor::destroyFileRelated()
 {
-	if (file != nullptr)
+	if (file)
 	{
 		file = nullptr;
 
@@ -333,7 +328,7 @@ void SignalProcessor::destroyFileRelated()
 
 void SignalProcessor::releaseOutputBuffer()
 {
-	if (processorOutputBuffer != nullptr)
+	if (processorOutputBuffer)
 	{
 		cl_int err = clReleaseMemObject(processorOutputBuffer);
 		checkClErrorCode(err, "clReleaseMemObject()");
@@ -354,11 +349,9 @@ void SignalProcessor::updateMontage()
 	auto start = high_resolution_clock::now(); // TODO: Remove this after the compilation time issue is solved.
 #endif
 
-	auto code = file->getMontageTable()->getTrackTables()->at(getInfoTable()->getSelectedMontage())->getCode();
-
 	deleteMontage();
 
-	int capacity = max<int>(PROGRAM_OPTIONS["kernelCacheSize"].as<int>(), code.size());
+	int capacity = max<int>(PROGRAM_OPTIONS["kernelCacheSize"].as<int>(), getTrackTable(file)->rowCount());
 	if (kernelCache->size() > capacity)
 	{
 		kernelCache->shrink(capacity);
@@ -369,11 +362,17 @@ void SignalProcessor::updateMontage()
 	vector<int> newMontageIndex;
 	vector<string> newMontageCode;
 
-	for (unsigned int i = 0; i < code.size(); i++)
+	for (int i = 0; i < getTrackTable(file)->rowCount(); i++)
 	{
-		string str = simplifyMontage(code[i]);
+		Track t = getTrackTable(file)->row(i);
+
+		if (t.hidden)
+			continue;
+
+		string str = simplifyMontage(t.code);
+
 		AlenkaSignal::Montage<float>* ptr = kernelCache->find(str);
-		if (ptr == nullptr)
+		if (!ptr)
 		{
 			newMontageIndex.push_back(i);
 			newMontageCode.push_back(str);
@@ -385,7 +384,7 @@ void SignalProcessor::updateMontage()
 	mutex mtx;
 
 	// For some reason the compilation gets serialized for an Nvidia card.
-	//TODO: Figure out whether this is an OpenCL issue, and if yes, remove the parallel block and simplify this code.
+	// TODO: Figure out whether this is an OpenCL issue, and if yes, remove the parallel block and simplify this code.
 	int iters = static_cast<int>(newMontageIndex.size());
 	#pragma omp parallel for
 	for (int i = 0; i < iters; i++)
@@ -399,13 +398,21 @@ void SignalProcessor::updateMontage()
 		}
 	}
 
-	assert(montage.size() == code.size());
-	assert(kernelCache->size() >= static_cast<int>(montage.size()));
+	assert(static_cast<int>(montage.size()) == trackCount);
 
 #ifndef NDEBUG
 	auto end = high_resolution_clock::now();
 	nanoseconds time = end - start;
-	logToFileAndConsole("Need to compile " << newMontageIndex.size() << " montages: " << time.count()/1000/1000 << " ms");
+	int size = newMontageIndex.size();
+	string str = "Need to compile " + to_string(size) + " montages: " + to_string(static_cast<double>(time.count())/1000/1000) + " ms";
+	if (size > 0)
+	{
+		logToFileAndConsole(str);
+	}
+	else
+	{
+		logToFile(str);
+	}
 #endif
 
 	releaseOutputBuffer();
@@ -443,7 +450,7 @@ void SignalProcessor::updateMontage()
 		processorOutputBuffer = clCreateBuffer(context->getCLContext(), flags, outputBlockSize*sizeof(float), nullptr, &err);
 		checkClErrorCode(err, "clCreateBuffer");
 
-		assert(processorOutputBufferTmp == nullptr && "Make sure the buffer does't leak.");
+		assert(!processorOutputBufferTmp && "Make sure the buffer does't leak.");
 		processorOutputBufferTmp = new float[outputBlockSize];
 	}
 

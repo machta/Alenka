@@ -20,18 +20,11 @@ TrackCodeValidator::TrackCodeValidator()
 	header = headerFile.readAll().toStdString();
 }
 
-TrackCodeValidator::~TrackCodeValidator()
-{}
-
 bool TrackCodeValidator::validate(const QString& input, QString* errorMessage)
 {
 	string code = SignalProcessor::simplifyMontage(input.toStdString());
 
-	if (errorMessage == nullptr)
-	{
-		return Montage<float>::test(code, context, nullptr, header);
-	}
-	else
+	if (errorMessage)
 	{
 		string message;
 
@@ -41,5 +34,10 @@ bool TrackCodeValidator::validate(const QString& input, QString* errorMessage)
 
 		return result;
 	}
+	else
+	{
+		return Montage<float>::test(code, context, nullptr, header);
+	}
+
 	return true;
 }

@@ -3,14 +3,12 @@
 
 #include <QWidget>
 
-#include "DataFile/infotable.h"
+#include <vector>
 
-#include <QScrollBar>
-
-#include <algorithm>
-#include <cmath>
-
+namespace AlenkaFile
+{
 class DataFile;
+}
 class TrackLabelBar;
 class QScrollBar;
 class QSplitter;
@@ -42,7 +40,7 @@ public:
 	 * @brief Notifies this object that the DataFile changed.
 	 * @param file Pointer to the data file. nullptr means file was closed.
 	 */
-	void changeFile(DataFile* file);
+	void changeFile(AlenkaFile::DataFile* file);
 
 signals:
 	void virtualWidthChanged(int);
@@ -52,47 +50,21 @@ public slots:
 	void updateSignalViewer();
 
 protected:
-	virtual void resizeEvent(QResizeEvent* /*event*/) override
-	{
-		resize(getInfoTable()->getVirtualWidth());
-	}
-	virtual void wheelEvent(QWheelEvent* event) override
-	{
-		scrollBar->event(reinterpret_cast<QEvent*>(event));
-	}
-	virtual void keyPressEvent(QKeyEvent* event) override
-	{
-		scrollBar->event(reinterpret_cast<QEvent*>(event));
-	}
-	virtual void keyReleaseEvent(QKeyEvent* event) override
-	{
-		scrollBar->event(reinterpret_cast<QEvent*>(event));
-	}
+	virtual void resizeEvent(QResizeEvent* /*event*/) override;
+	virtual void wheelEvent(QWheelEvent* event) override;
+	virtual void keyPressEvent(QKeyEvent* event) override;
+	virtual void keyReleaseEvent(QKeyEvent* event) override;
 
 private:
-	InfoTable* infoTable = nullptr;
-	InfoTable defaultInfoTable;
+	AlenkaFile::DataFile* file;
 	QSplitter* splitter;
 	Canvas* canvas;
 	QScrollBar* scrollBar;
 	TrackLabelBar* trackLabelBar;
+	std::vector<QMetaObject::Connection> openFileConnections;
 
-	InfoTable* getInfoTable()
-	{
-		if (infoTable != nullptr)
-		{
-			return infoTable;
-		}
-		else
-		{
-			return &defaultInfoTable;
-		}
-	}
 	void resize(int virtualWidth);
-	int virtualWidthFromScrollBar()
-	{
-		return scrollBar->maximum() + scrollBar->pageStep() + 1 - scrollBar->minimum();
-	}
+	int virtualWidthFromScrollBar();
 
 private slots:
 	void setVirtualWidth(int value);

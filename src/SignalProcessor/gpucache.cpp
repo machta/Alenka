@@ -8,7 +8,41 @@
 
 using namespace std;
 
-GPUCache::GPUCache(unsigned int blockSize, unsigned int offset, int delay, int64_t availableMemory, DataFile* file, AlenkaSignal::OpenCLContext* context, AlenkaSignal::FilterProcessor<float>* filterProcessor)
+namespace
+{
+
+/**
+ * @brief Tries to find an element common to the map keys in a and the set elements in b.
+ * @param index [out]
+ * @param cacheIndex [out]
+ * @return True if a common element was found.
+ */
+bool findCommon(const std::map<int, unsigned int>& a, const std::set<int>& b, int* index, unsigned int* cacheIndex)
+{
+	auto aI = a.begin();
+	auto bI = b.begin();
+
+	while (aI != a.end() && bI != b.end())
+	{
+		if (aI->first == *bI)
+		{
+			*index = aI->first;
+			*cacheIndex = aI->second;
+			return true;
+		}
+
+		if (aI->first < *bI)
+			++aI;
+		else
+			++bI;
+	}
+
+	return false;
+}
+
+} // namespace
+
+GPUCache::GPUCache(unsigned int blockSize, unsigned int offset, int delay, int64_t availableMemory, AlenkaFile::DataFile* file, AlenkaSignal::OpenCLContext* context, AlenkaSignal::FilterProcessor<float>* filterProcessor)
 	: blockSize(blockSize), offset(offset), delay(delay), file(file), filterProcessor(filterProcessor)
 {
 	cl_int err;
@@ -150,9 +184,9 @@ void GPUCache::loaderThreadFunction()
 
 				lock.unlock();
 
-				auto fromTo = file->blockIndexToSampleRange(index, blockSize);
+				auto fromTo = blockIndexToSampleRange(index, blockSize);
 
-				if (tmpBufferEvent != nullptr)
+				if (tmpBufferEvent)
 				{
 					err = clWaitForEvents(1, &tmpBufferEvent);
 					checkClErrorCode(err, "clWaitForEvents()");
@@ -161,7 +195,7 @@ void GPUCache::loaderThreadFunction()
 					checkClErrorCode(err, "clReleaseEvent()");
 				}
 
-				file->readData(&tmpBuffer, fromTo.first - offset + delay, fromTo.second + delay);
+				file->readSignal(tmpBuffer.data(), fromTo.first - offset + delay, fromTo.second + delay);
 
 				printBuffer("after_readData.txt", tmpBuffer.data(), tmpBuffer.size());
 
@@ -179,7 +213,7 @@ void GPUCache::loaderThreadFunction()
 
 				printBuffer("after_writeBuffer.txt", tmpMemBuffer, commandQueue);
 
-				if (filterProcessor != nullptr)
+				if (filterProcessor)
 				{
 					//clFinish(commandQueue);
 					filterProcessor->process(tmpMemBuffer, buffers[cacheIndex], commandQueue);
@@ -208,7 +242,7 @@ void GPUCache::loaderThreadFunction()
 
 void GPUCache::enqueuCopy(cl_mem source, cl_mem destination, cl_event readyEvent)
 {
-	if (destination != nullptr)
+	if (destination)
 	{
 		cl_int err;
 		cl_event event;

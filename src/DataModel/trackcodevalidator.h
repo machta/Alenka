@@ -17,7 +17,6 @@ class TrackCodeValidator
 {
 public:
 	TrackCodeValidator();
-	~TrackCodeValidator();
 
 	/**
 	 * @brief Test the code in input.

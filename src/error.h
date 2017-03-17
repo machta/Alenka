@@ -74,13 +74,12 @@ void CNEC(T val, std::string message, const char* file, int line)
 const char* getTimeString(std::time_t t)
 {
 	(void)getTimeString;
-	using namespace std;
 
-	string tmp = asctime(localtime(&t));
+	std::string tmp = asctime(localtime(&t));
+
 	if (tmp.back() == '\n')
-	{
 		tmp.pop_back();
-	}
+
 	return tmp.c_str();
 }
 
@@ -104,9 +103,7 @@ template<class... T>
 inline void printBuffer(T... p)
 {
 	if (PROGRAM_OPTIONS.isSet("printBuffers"))
-	{
 		AlenkaSignal::OpenCLContext::printBuffer(p...);
-	}
 }
 
 /**
@@ -144,6 +141,6 @@ extern std::mutex LOG_FILE_MUTEX;
  *
  * message_ works the same as for logToFile().
  */
-#define logToFileAndConsole(message_) logToFile(message_); logToStream(message_, std::cerr)
+#define logToFileAndConsole(message_) { logToFile(message_); logToStream(message_, std::cerr); }
 
 #endif // ERROR_H

@@ -3,7 +3,6 @@
 
 #include "manager.h"
 
-class DataFile;
 class Canvas;
 
 /**
@@ -15,7 +14,6 @@ class EventManager : public Manager
 
 public:
 	explicit EventManager(QWidget* parent = nullptr);
-	virtual ~EventManager();
 
 	/**
 	 * @brief Sets the pointer to Canvas.
@@ -25,18 +23,11 @@ public:
 		this->canvas = canvas;
 	}
 
-	/**
-	 * @brief Notifies this object that the DataFile changed.
-	 * @param file Pointer to the data file. nullptr means file was closed.
-	 */
-	void changeFile(DataFile* file)
-	{
-		this->file = file;
-	}
+protected slots:
+	virtual void insertRowBack() override;
 
 private:
 	const Canvas* canvas = nullptr;
-	DataFile* file = nullptr;
 
 private slots:
 	/**

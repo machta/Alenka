@@ -1,15 +1,8 @@
 #include "montagemanager.h"
 
-#include "../DataFile/montagetable.h"
+#include <AlenkaFile/datafile.h>
 
-#include <QTableView>
-#include <QPushButton>
-
-MontageManager::MontageManager(QWidget* parent) : Manager(parent)
+void MontageManager::insertRowBack()
 {
-
-}
-
-MontageManager::~MontageManager()
-{
+	file->getDataModel().montageTable->insertRows(file->getDataModel().montageTable->rowCount());
 }

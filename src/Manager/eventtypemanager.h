@@ -11,8 +11,10 @@ class EventTypeManager : public Manager
 	Q_OBJECT
 
 public:
-	explicit EventTypeManager(QWidget* parent = nullptr);
-	virtual ~EventTypeManager();
+	explicit EventTypeManager(QWidget* parent = nullptr) : Manager(parent) {}
+
+protected slots:
+	virtual void insertRowBack() override;
 };
 
 #endif // EVENTTYPEMANAGER_H

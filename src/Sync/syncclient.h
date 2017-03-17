@@ -12,7 +12,9 @@ class SyncClient : public QObject
 public:
 	explicit SyncClient(QObject* parent = nullptr);
 	~SyncClient();
+
 	int connectServer(QUrl url, int port);
+	bool isValid();
 
 signals:
 	void messageReceived(const QByteArray& message);

@@ -1,11 +1,18 @@
 #ifndef SIGNALFILEBROWSERWINDOW_H
 #define SIGNALFILEBROWSERWINDOW_H
 
+#include "DataModel/infotable.h"
+
 #include <QMainWindow>
 
 #include <functional>
+#include <vector>
 
+namespace AlenkaFile
+{
 class DataFile;
+class DataModel;
+}
 class SignalViewer;
 class TrackManager;
 class EventManager;
@@ -21,6 +28,8 @@ class SpikedetAnalysis;
 class SyncServer;
 class SyncClient;
 class SyncDialog;
+class TableModel;
+class DataModelVitness;
 
 /**
  * @brief This class implements the top level window of the program.
@@ -33,15 +42,28 @@ public:
 	explicit SignalFileBrowserWindow(QWidget* parent = nullptr);
 	~SignalFileBrowserWindow();
 
-signals:
-
-public slots:
+	static InfoTable infoTable;
+	static QColor array2color(unsigned char* c)
+	{
+		QColor color;
+		color.setRgb(c[0], c[1], c[2]);
+		return color;
+	}
+	static void color2array(const QColor& color, unsigned char* c)
+	{
+		c[0] = color.red();
+		c[1] = color.green();
+		c[2] = color.blue();
+	}
+	static QDateTime sampleToDate(AlenkaFile::DataFile* file, int sample);
+	static QDateTime sampleToOffset(AlenkaFile::DataFile* file, int sample);
+	static QString sampleToDateTimeString(AlenkaFile::DataFile* file, int sample, InfoTable::TimeMode mode = InfoTable::TimeMode::size);
 
 protected:
 	void closeEvent(QCloseEvent* event) override;
 
 private:
-	DataFile* file = nullptr;
+	AlenkaFile::DataFile* file = nullptr;
 	SignalViewer* signalViewer;
 	TrackManager* trackManager;
 	EventManager* eventManager;
@@ -67,8 +89,14 @@ private:
 	const int lastPositionReceivedDefault = -1000*1000*1000;
 	int lastPositionReceived = lastPositionReceivedDefault;
 	QAction* synchronize;
+	TableModel* eventTypeTable = nullptr;
+	TableModel* montageTable = nullptr;
+	TableModel* eventTable = nullptr;
+	TableModel* trackTable = nullptr;
+	AlenkaFile::DataModel* dataModel = nullptr;
+	std::vector<QMetaObject::Connection> openFileConnections;
 
-	void connectModel(QAbstractTableModel* model, std::function<void ()> f);
+	void connectVitness(DataModelVitness* vitness, std::function<void ()> f);
 	void horizontalZoom(double factor);
 	void verticalZoom(double factor);
 	void mode(int m);

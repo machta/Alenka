@@ -3,20 +3,25 @@
 
 #include "tablemodel.h"
 
+#include <vector>
+
 class TrackTableModel : public TableModel
 {
 	Q_OBJECT
 
 public:
-	TrackTableModel(InfoTable* infoTable, AlenkaFile::DataModel dataModel, QObject* parent = nullptr);
+	explicit TrackTableModel(AlenkaFile::DataFile* file, QObject* parent = nullptr);
+	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override;
 
 protected:
-	virtual void insertRowBack() override
-	{
-		int rc = dataModel.montageTable->trackTable(infoTable->getSelectedMontage())->rowCount();
-		dataModel.montageTable->trackTable(infoTable->getSelectedMontage())->insertRows(rc);
-	}
-};
+	virtual void insertRowBack() override;
+	virtual void removeRowsFromDataModel(int row, int count) override;
 
+private slots:
+	void setSelectedMontage(int i);
+
+private:
+	std::vector<QMetaObject::Connection> trackTableConnections;
+};
 
 #endif // TRACKTABLEMODEL_H

@@ -3,14 +3,12 @@
 #include "openglprogram.h"
 #include "options.h"
 #include "error.h"
-#include "DataFile/datafile.h"
-#include "DataFile/eventtypetable.h"
-#include "DataFile/tracktable.h"
-#include "DataFile/eventtable.h"
-#include "DataFile/montagetable.h"
+#include <AlenkaFile/datafile.h>
 #include "signalviewer.h"
 #include "SignalProcessor/signalblock.h"
 #include "SignalProcessor/signalprocessor.h"
+#include "signalfilebrowserwindow.h"
+#include "DataModel/vitnessdatamodel.h"
 
 #include <QMatrix4x4>
 #include <QWheelEvent>
@@ -23,13 +21,88 @@
 #include <set>
 
 using namespace std;
+using namespace AlenkaFile;
 
 namespace
 {
+
 const double horizontalZoomFactor = 1.3;
 const double verticalZoomFactor = 1.3;
 const double trackZoomFactor = 1.3;
+
+void getEventTypeColorOpacity(DataFile* file, int type, QColor* color, double* opacity)
+{
+	assert(color && opacity);
+	EventType et = file->getDataModel().eventTypeTable->row(type);
+	*color = SignalFileBrowserWindow::array2color(et.color);
+	*opacity = et.opacity;
 }
+
+AbstractTrackTable* getTrackTable(DataFile* file)
+{
+	return file->getDataModel().montageTable->trackTable(SignalFileBrowserWindow::infoTable.getSelectedMontage());
+}
+
+AbstractEventTable* getEventTable(DataFile* file)
+{
+	return file->getDataModel().montageTable->eventTable(SignalFileBrowserWindow::infoTable.getSelectedMontage());
+}
+
+void zoom(double factor, AbstractTrackTable* trackTable, int i)
+{
+	Track t = trackTable->row(i);
+	double value = t.amplitude*factor;
+	value = value != 0 ? value : -0.000001;
+	t.amplitude = value;
+	trackTable->row(i, t);
+}
+
+/**
+ * @brief A convenience function for resolving blocks needed to cover a sample range.
+ * @param range The sample range.
+ * @param blockSize The size of the blocks constant for all blocks.
+ */
+pair<int64_t, int64_t> sampleRangeToBlockRange(pair<int64_t, int64_t> range, unsigned int blockSize)
+{
+	int64_t from = range.first;
+	int64_t	to = range.second;
+
+	from /= blockSize - 1;
+	to = (to - 1)/(blockSize - 1);
+
+	return make_pair(from, to);
+}
+
+void getEventsForRendering(DataFile* file, int firstSample, int lastSample, vector<tuple<int, int, int>>* allChannelEvents, vector<tuple<int, int, int, int>>* singleChannelEvents)
+{
+	AbstractEventTable* eventTable = getEventTable(file);
+
+	for (int i = 0; i < eventTable->rowCount(); ++i)
+	{
+		Event e = eventTable->row(i);
+
+		if (e.position <= lastSample && firstSample <= e.position + e.duration - 1 && e.type >= 0 && e.channel >= -1 &&
+			file->getDataModel().eventTypeTable->row(e.type).hidden == false)
+		{
+			if (e.channel == - 1)
+			{
+				allChannelEvents->emplace_back(e.type, e.position, e.duration);
+			}
+			else
+			{
+				if (getTrackTable(file)->row(e.channel).hidden == false)
+					singleChannelEvents->emplace_back(e.type, e.channel, e.position, e.duration);
+			}
+		}
+	}
+
+	sort(allChannelEvents->begin(), allChannelEvents->end(), [] (tuple<int, int, int> a, tuple<int, int, int> b) { return get<0>(a) < get<0>(b); });
+
+	stable_sort(singleChannelEvents->begin(), singleChannelEvents->end(), [] (tuple<int, int, int, int> a, tuple<int, int, int, int> b) { return get<1>(a) < get<1>(b); });
+	stable_sort(singleChannelEvents->begin(), singleChannelEvents->end(), [] (tuple<int, int, int, int> a, tuple<int, int, int, int> b) { return get<0>(a) < get<0>(b); });
+}
+
+} // namespace
 
 Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent)
 {
@@ -56,34 +129,37 @@ Canvas::~Canvas()
 
 void Canvas::changeFile(DataFile* file)
 {
-	assert(signalProcessor != nullptr);
+	assert(signalProcessor);
 
 	makeCurrent();
 
+	this->file = file;
 	signalProcessor->changeFile(file);
 
-	if (file == nullptr)
+	if (file)
 	{
-		infoTable = nullptr;
-		montageTable = nullptr;
-		eventTypeTable = nullptr;
-	}
-	else
-	{
-		infoTable = file->getInfoTable();
-		montageTable = file->getMontageTable();
-		eventTypeTable = file->getEventTypeTable();
+		auto c = connect(&SignalFileBrowserWindow::infoTable, SIGNAL(lowpassFrequencyChanged(double)), this, SLOT(updateFilter()));
+		openFileConnections.push_back(c);
+		c = connect(&SignalFileBrowserWindow::infoTable, SIGNAL(highpassFrequencyChanged(double)), this, SLOT(updateFilter()));
+		openFileConnections.push_back(c);
+		c = connect(&SignalFileBrowserWindow::infoTable, SIGNAL(notchChanged(bool)), this, SLOT(updateFilter()));
 
-		connect(infoTable, SIGNAL(lowpassFrequencyChanged(double)), this, SLOT(updateFilter()));
-		connect(infoTable, SIGNAL(highpassFrequencyChanged(double)), this, SLOT(updateFilter()));
-		connect(infoTable, SIGNAL(notchChanged(bool)), this, SLOT(updateFilter()));
 
-		connect(infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(selectMontage()));
+		c = connect(&SignalFileBrowserWindow::infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(selectMontage()));
+		openFileConnections.push_back(c);
+		//selectMontage();
 
-		connect(infoTable, SIGNAL(positionChanged(int)), this, SLOT(updateCursor()));
+		c = connect(&SignalFileBrowserWindow::infoTable, SIGNAL(positionChanged(int)), this, SLOT(updateCursor()));
+		openFileConnections.push_back(c);
 
 		samplesRecorded = file->getSamplesRecorded();
 		samplingFrequency = file->getSamplingFrequency();
+	}
+	else
+	{
+		for (auto e : openFileConnections)
+			disconnect(e);
+		openFileConnections.clear();
 	}
 
 	doneCurrent();
@@ -94,9 +170,7 @@ QColor Canvas::modifySelectionColor(const QColor& color)
 	double colorComponents[3] = {color.redF(), color.greenF(), color.blueF()};
 
 	for (int i = 0; i < 3; ++i)
-	{
 		colorComponents[i] += colorComponents[i] > 0.5 ? -0.45 : 0.45;
-	}
 
 	QColor newColor(color);
 	newColor.setRedF(colorComponents[0]);
@@ -111,8 +185,8 @@ void Canvas::updateCursor()
 	{
 		QPoint pos = mapFromGlobal(QCursor::pos());
 
-		double ratio = samplesRecorded/getInfoTable()->getVirtualWidth();
-		int sample = round((pos.x() + getInfoTable()->getPosition())*ratio);
+		double ratio = samplesRecorded/SignalFileBrowserWindow::infoTable.getVirtualWidth();
+		int sample = round((pos.x() + SignalFileBrowserWindow::infoTable.getPosition())*ratio);
 
 		double trackHeigth = static_cast<double>(height())/signalProcessor->getTrackCount();
 		int track = static_cast<int>(pos.y()/trackHeigth);
@@ -123,7 +197,6 @@ void Canvas::updateCursor()
 		if (isDrawingEvent)
 		{
 			eventEnd = sample;
-
 			update();
 		}
 	}
@@ -184,14 +257,10 @@ void Canvas::initializeGL()
 
 #if defined GL_2_0
 	const GLubyte* str = gl()->glGetString(GL_EXTENSIONS);
-	if (str == nullptr)
-	{
-		ss << "Extensions:" << endl;
-	}
-	else
-	{
+	if (str)
 		ss << "Extensions: " << str << endl;
-	}
+	else
+		ss << "Extensions:" << endl;
 #else
 	GLint extensions;
 	gl()->glGetIntegerv(GL_NUM_EXTENSIONS, &extensions);
@@ -209,7 +278,7 @@ void Canvas::initializeGL()
 	if (PROGRAM_OPTIONS.isSet("glInfo"))
 	{
 		cout << ss.str();
-		std::exit(EXIT_SUCCESS);
+		exit(EXIT_SUCCESS);
 	}
 
 	checkGLMessages();
@@ -231,10 +300,10 @@ void Canvas::paintGL()
 	if (ready())
 	{
 		// Calculate the transformMatrix.
-		double ratio = samplesRecorded/getInfoTable()->getVirtualWidth();
+		double ratio = samplesRecorded/SignalFileBrowserWindow::infoTable.getVirtualWidth();
 
 		QMatrix4x4 matrix;
-		matrix.ortho(QRectF(getInfoTable()->getPosition()*ratio, 0, width()*ratio, height()));
+		matrix.ortho(QRectF(SignalFileBrowserWindow::infoTable.getPosition()*ratio, 0, width()*ratio, height()));
 
 		gl()->glUseProgram(signalProgram->getGLProgram());
 
@@ -263,22 +332,20 @@ void Canvas::paintGL()
 		gl()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
 
 		// Create the data block range needed.
-		int firstSample = static_cast<unsigned int>(floor(getInfoTable()->getPosition()*ratio));
-		int lastSample = static_cast<unsigned int>(ceil((getInfoTable()->getPosition() + width())*ratio));
+		int firstSample = static_cast<unsigned int>(floor(SignalFileBrowserWindow::infoTable.getPosition()*ratio));
+		int lastSample = static_cast<unsigned int>(ceil((SignalFileBrowserWindow::infoTable.getPosition() + width())*ratio));
 
-		auto fromTo = DataFile::sampleRangeToBlockRange(make_pair(firstSample, lastSample), signalProcessor->getBlockSize());
+		auto fromTo = sampleRangeToBlockRange(make_pair(firstSample, lastSample), signalProcessor->getBlockSize());
 
 		set<int> indexSet;
 
 		for (int i = fromTo.first; i <= fromTo.second; ++i)
-		{
 			indexSet.insert(i);
-		}
 
 		// Get events.
 		vector<tuple<int, int, int>> allChannelEvents;
 		vector<tuple<int, int, int, int>> singleChannelEvents;
-		currentEventTable()->getEventsForRendering(firstSample, lastSample, &allChannelEvents, &singleChannelEvents);
+		getEventsForRendering(file, firstSample, lastSample, &allChannelEvents, &singleChannelEvents);
 
 		// Draw.
 		drawTimeLines();
@@ -334,13 +401,9 @@ void Canvas::wheelEvent(QWheelEvent* event)
 	if (event->modifiers() & Qt::ControlModifier)
 	{
 		if (isUp)
-		{
 			trackZoom(trackZoomFactor);
-		}
 		else
-		{
 			trackZoom(1/trackZoomFactor);
-		}
 
 		update();
 		event->accept();
@@ -349,16 +412,12 @@ void Canvas::wheelEvent(QWheelEvent* event)
 	else if (event->modifiers() & Qt::AltModifier)
 	{
 		if (isUp)
-		{
 			horizontalZoom(horizontalZoomFactor);
-		}
 		else
-		{
 			horizontalZoom(1/horizontalZoomFactor);
-		}
 
 		updateCursor();
-		emit getInfoTable()->positionIndicatorChanged(getInfoTable()->getPositionIndicator());
+		emit SignalFileBrowserWindow::infoTable.positionIndicatorChanged(SignalFileBrowserWindow::infoTable.getPositionIndicator());
 
 		update();
 		event->accept();
@@ -367,13 +426,9 @@ void Canvas::wheelEvent(QWheelEvent* event)
 	else if (event->modifiers() & Qt::ShiftModifier)
 	{
 		if (isUp)
-		{
 			verticalZoom(verticalZoomFactor);
-		}
 		else
-		{
 			verticalZoom(1/verticalZoomFactor);
-		}
 
 		update();
 		event->accept();
@@ -395,7 +450,7 @@ void Canvas::keyPressEvent(QKeyEvent* event)
 	}
 	else if (event->key() == Qt::Key_C)
 	{
-		isDrawingCross = !isDrawingCross; // Perhaps promote this to an action?
+		isDrawingCross = !isDrawingCross; // TODO: Perhaps promote this to an action?
 		update();
 	}
 	else if (ready() && event->key() == Qt::Key_T)
@@ -405,8 +460,7 @@ void Canvas::keyPressEvent(QKeyEvent* event)
 
 		if (0 <= indicator && indicator <= 1)
 		{
-			getInfoTable()->setPositionIndicator(indicator);
-
+			SignalFileBrowserWindow::infoTable.setPositionIndicator(indicator);
 			update();
 		}
 	}
@@ -421,7 +475,6 @@ void Canvas::keyReleaseEvent(QKeyEvent* event)
 	if (event->key() == Qt::Key_Control)
 	{
 		isSelectingTrack = false;
-
 		update();
 	}
 }
@@ -433,9 +486,7 @@ void Canvas::mouseMoveEvent(QMouseEvent* /*event*/)
 		updateCursor();
 
 		if (isSelectingTrack || isDrawingEvent || isDrawingCross)
-		{
 			update();
-		}
 	}
 }
 
@@ -449,17 +500,13 @@ void Canvas::mousePressEvent(QMouseEvent* event)
 			{
 				isDrawingEvent = true;
 
-				double ratio = samplesRecorded/getInfoTable()->getVirtualWidth();
-				eventStart = eventEnd = (event->pos().x() + getInfoTable()->getPosition())*ratio;
+				double ratio = samplesRecorded/SignalFileBrowserWindow::infoTable.getVirtualWidth();
+				eventStart = eventEnd = (event->pos().x() + SignalFileBrowserWindow::infoTable.getPosition())*ratio;
 
 				if (event->modifiers() == Qt::ShiftModifier)
-				{
 					eventTrack = -1;
-				}
 				else if (event->modifiers() == Qt::ControlModifier)
-				{
 					eventTrack = cursorTrack;
-				}
 
 				isSelectingTrack = false;
 
@@ -506,17 +553,7 @@ void Canvas::focusInEvent(QFocusEvent* /*event*/)
 {
 }
 
-EventTable*Canvas::currentEventTable()
-{
-	return montageTable->getEventTables()->at(getInfoTable()->getSelectedMontage());
-}
-
-TrackTable*Canvas::currentTrackTable()
-{
-	return montageTable->getTrackTables()->at(getInfoTable()->getSelectedMontage());
-}
-
-void Canvas::drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& eventVector)
+void Canvas::drawAllChannelEvents(const vector<tuple<int, int, int>>& eventVector)
 {
 	gl()->glUseProgram(rectangleLineProgram->getGLProgram());
 	glBindVertexArray(rectangleLineArray);
@@ -537,7 +574,9 @@ void Canvas::drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& 
 		else
 		{
 			type = get<0>(eventVector[event]);
-			setUniformColor(rectangleLineProgram->getGLProgram(), eventTypeTable->getColor(type), eventTypeTable->getOpacity(type));
+			QColor color; double opacity;
+			getEventTypeColorOpacity(file, type, &color, &opacity);
+			setUniformColor(rectangleLineProgram->getGLProgram(), color, opacity);
 		}
 	}
 
@@ -547,11 +586,10 @@ void Canvas::drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& 
 		{
 			QColor color(Qt::blue);
 			double opacity = 0.5;
-			int type = getInfoTable()->getSelectedType() - 1;
+			int type = SignalFileBrowserWindow::infoTable.getSelectedType();
 			if (type != -1)
 			{
-				color = eventTypeTable->getColor(type);
-				opacity = eventTypeTable->getOpacity(type);
+				getEventTypeColorOpacity(file, type, &color, &opacity);
 			}
 			setUniformColor(rectangleLineProgram->getGLProgram(), color, opacity);
 
@@ -578,7 +616,7 @@ void Canvas::drawAllChannelEvent(int from, int to)
 
 void Canvas::drawTimeLines()
 {
-	double interval = getInfoTable()->getTimeLineInterval();
+	double interval = SignalFileBrowserWindow::infoTable.getTimeLineInterval();
 
 	gl()->glUseProgram(rectangleLineProgram->getGLProgram());
 	glBindVertexArray(rectangleLineArray);
@@ -586,10 +624,10 @@ void Canvas::drawTimeLines()
 
 	setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::green), 1);
 
-	double ratio = samplesRecorded/getInfoTable()->getVirtualWidth();
+	double ratio = samplesRecorded/SignalFileBrowserWindow::infoTable.getVirtualWidth();
 	interval *= samplingFrequency;
 
-	double position = getInfoTable()->getPosition()*ratio;
+	double position = SignalFileBrowserWindow::infoTable.getPosition()*ratio;
 	double end = position + width()*ratio;
 
 	int nextPosition = ceil(position/interval)*interval;
@@ -613,8 +651,8 @@ void Canvas::drawPositionIndicator()
 
 	setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::blue), 1);
 
-	double ratio = samplesRecorded/getInfoTable()->getVirtualWidth();
-	double position = (getInfoTable()->getPosition() + width()*getInfoTable()->getPositionIndicator())*ratio;
+	double ratio = samplesRecorded/SignalFileBrowserWindow::infoTable.getVirtualWidth();
+	double position = (SignalFileBrowserWindow::infoTable.getPosition() + width()*SignalFileBrowserWindow::infoTable.getPositionIndicator())*ratio;
 
 	drawTimeLine(position);
 }
@@ -634,9 +672,9 @@ void Canvas::drawCross()
 
 	setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::black), 1);
 
-	double ratio = samplesRecorded/getInfoTable()->getVirtualWidth();
+	double ratio = samplesRecorded/SignalFileBrowserWindow::infoTable.getVirtualWidth();
 
-	double position = (getInfoTable()->getPosition() + pos.x())*ratio;
+	double position = (SignalFileBrowserWindow::infoTable.getPosition() + pos.x())*ratio;
 
 	float data[8] = {static_cast<float>(position), 0, static_cast<float>(position), static_cast<float>(height()), 0, static_cast<float>(pos.y()), static_cast<float>(samplesRecorded), static_cast<float>(pos.y())};
 
@@ -661,7 +699,9 @@ void Canvas::drawSingleChannelEvents(const SignalBlock& block, const vector<tupl
 
 	glBindVertexArray(block.getArray());
 
+	AbstractTrackTable* trackTable = getTrackTable(file);
 	int event = 0, type = -1, track = -1, hidden = 0;
+
 	while (event < static_cast<int>(eventVector.size()))
 	{
 		if (type == get<0>(eventVector[event]))
@@ -678,15 +718,13 @@ void Canvas::drawSingleChannelEvents(const SignalBlock& block, const vector<tupl
 			else
 			{
 				track = get<1>(eventVector[event]);
-				assert(currentTrackTable()->getHidden(track) == false);
+				assert(trackTable->row(track).hidden == false);
 
 				hidden = 0;
 				for (int i = 0; i < track; ++i)
 				{
-					if (currentTrackTable()->getHidden(i))
-					{
+					if (trackTable->row(i).hidden)
 						++hidden;
-					}
 				}
 
 				setUniformTrack(eventProgram->getGLProgram(), track, hidden, block);
@@ -695,7 +733,9 @@ void Canvas::drawSingleChannelEvents(const SignalBlock& block, const vector<tupl
 		else
 		{
 			type = get<0>(eventVector[event]);
-			setUniformColor(eventProgram->getGLProgram(), eventTypeTable->getColor(type), eventTypeTable->getOpacity(type));
+			QColor color; double opacity;
+			getEventTypeColorOpacity(file, type, &color, &opacity);
+			setUniformColor(eventProgram->getGLProgram(), color, opacity);
 		}
 	}
 
@@ -711,20 +751,15 @@ void Canvas::drawSingleChannelEvents(const SignalBlock& block, const vector<tupl
 
 			QColor color(Qt::blue);
 			double opacity = 0.5;
-			int type = getInfoTable()->getSelectedType() - 1;
+			int type = SignalFileBrowserWindow::infoTable.getSelectedType();
 			if (type != -1)
-			{
-				color = eventTypeTable->getColor(type);
-				opacity = eventTypeTable->getOpacity(type);
-			}
+				getEventTypeColorOpacity(file, type, &color, &opacity);
 			setUniformColor(eventProgram->getGLProgram(), color, opacity);
 
 			int start = eventStart, end = eventEnd;
 
 			if (end < start)
-			{
 				swap(start, end);
-			}
 
 			drawSingleChannelEvent(block, track, start, end);
 		}
@@ -768,12 +803,9 @@ void Canvas::drawSignal(const SignalBlock& block)
 
 		setUniformTrack(signalProgram->getGLProgram(), track + hidden, hidden, block);
 
-		QColor color = currentTrackTable()->getColor(track + hidden);
-
+		QColor color = SignalFileBrowserWindow::array2color(getTrackTable(file)->row(track + hidden).color);
 		if (isSelectingTrack && track == cursorTrack)
-		{
 			color = modifySelectionColor(color);
-		}
 
 		setUniformColor(signalProgram->getGLProgram(), color, 1);
 
@@ -790,7 +822,7 @@ void Canvas::setUniformTrack(GLuint program, int track, int hidden, const Signal
 
 	location = gl()->glGetUniformLocation(program, "yScale");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-	float yScale = currentTrackTable()->getAmplitude(track);
+	float yScale = getTrackTable(file)->row(track).amplitude;
 	gl()->glUniform1f(location, yScale*height());
 
 	location = gl()->glGetUniformLocation(program, "bufferOffset");
@@ -812,80 +844,64 @@ void Canvas::setUniformColor(GLuint program, const QColor& color, double opacity
 void Canvas::checkGLMessages()
 {
 	for (const auto& m : log()->loggedMessages())
-	{
 		logToFile("OpenGL message: " << m.message().toStdString());
-	}
 }
 
 void Canvas::horizontalZoom(double factor)
 {
-	InfoTable* it = getInfoTable();
-	it->setVirtualWidth(it->getVirtualWidth()*factor);
+	SignalFileBrowserWindow::infoTable.setVirtualWidth(SignalFileBrowserWindow::infoTable.getVirtualWidth()*factor);
 }
 
 void Canvas::verticalZoom(double factor)
 {
-	if (montageTable != nullptr)
+	if (file)
 	{
-		TrackTable* tt = montageTable->getTrackTables()->at(getInfoTable()->getSelectedMontage());
+		AbstractTrackTable* trackTable = getTrackTable(file);
 
-		for (int i = 0; i < tt->rowCount(); ++i)
-		{
-			double value = tt->getAmplitude(i)*factor;
-			value = value != 0 ? value : -0.000001;
-			tt->setAmplitude(value, i);
-		}
-
-		emit tt->emitColumnChanged(TrackTable::Column::amplitude);
+		for (int i = 0; i < trackTable->rowCount(); ++i)
+			zoom(factor, trackTable, i);
 	}
 }
 
 void Canvas::trackZoom(double factor)
 {
-	if (montageTable != nullptr)
+	if (file)
 	{
-		TrackTable* tt = montageTable->getTrackTables()->at(getInfoTable()->getSelectedMontage());
-
 		int track = cursorTrack;
-
 		track += countHiddenTracks(track);
 
-		double value = tt->getAmplitude(track)*factor;
-		value = value != 0 ? value : -0.000001;
-		tt->setAmplitude(value, track);
-
-		emit tt->emitColumnChanged(TrackTable::Column::amplitude);
+		zoom(factor, getTrackTable(file), track);
 	}
 }
 
 void Canvas::addEvent(int channel)
 {
-	EventTable* et = montageTable->getEventTables()->at(getInfoTable()->getSelectedMontage());
+	AbstractEventTable* eventTable = getEventTable(file);
 
-	int index = et->rowCount();
-	et->insertRowsBack();
+	int index = eventTable->rowCount();
+	eventTable->insertRows(index);
 
-	et->setChannel(channel + countHiddenTracks(channel), index);
+	Event e = eventTable->row(index);
+
+	e.type = SignalFileBrowserWindow::infoTable.getSelectedType();
 	if (eventEnd < eventStart)
-	{
 		swap(eventStart, eventEnd);
-	}
-	et->setPosition(eventStart, index);
-	et->setDuration(eventEnd - eventStart + 1, index);
+	e.position = eventStart;
+	e.duration = eventEnd - eventStart + 1;
+	e.channel = channel + countHiddenTracks(channel);
+
+	eventTable->row(index, e);
 }
 
 int Canvas::countHiddenTracks(int track)
 {
 	int hidden = 0;
 	int i = 0;
+
 	while (i - hidden <= track)
 	{
-		if (currentTrackTable()->getHidden(i))
-		{
+		if (getTrackTable(file)->row(i++).hidden)
 			++hidden;
-		}
-
-		++i;
 	}
 
 	return hidden;
@@ -893,7 +909,7 @@ int Canvas::countHiddenTracks(int track)
 
 void Canvas::updateFilter()
 {
-	assert(signalProcessor != nullptr);
+	assert(signalProcessor);
 
 	makeCurrent();
 	signalProcessor->updateFilter();
@@ -902,36 +918,33 @@ void Canvas::updateFilter()
 
 void Canvas::selectMontage()
 {
-	connect(currentTrackTable(), SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SLOT(updateMontage(QModelIndex, QModelIndex)));
-	connect(currentTrackTable(), SIGNAL(rowsInserted(QModelIndex, int, int)), this, SLOT(updateMontage()));
-	connect(currentTrackTable(), SIGNAL(rowsRemoved(QModelIndex, int, int)), this, SLOT(updateMontage()));
+	for (auto e : montageConnections)
+		disconnect(e);
+	montageConnections.clear();
+
+	auto vitness = VitnessTrackTable::vitness(getTrackTable(file));
+
+	auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(updateMontage(int, int)));
+	montageConnections.push_back(c);
+	c = connect(vitness, SIGNAL(rowsInserted(int, int)), this, SLOT(updateMontage()));
+	montageConnections.push_back(c);
+	c = connect(vitness, SIGNAL(rowsRemoved(int, int)), this, SLOT(updateMontage()));
+	montageConnections.push_back(c);
 
 	updateMontage();
 }
 
-void Canvas::updateMontage(const QModelIndex &topLeft, const QModelIndex &bottomRight)
+void Canvas::updateMontage(int row, int col)
 {
-	if (bottomRight.row() - topLeft.row() >= 0)
-	{
-		int column = static_cast<int>(TrackTable::Column::code);
-		if (topLeft.column() <= column && column <= bottomRight.column())
-		{
-			updateMontage();
-			return;
-		}
-
-		column = static_cast<int>(TrackTable::Column::hidden);
-		if (topLeft.column() <= column && column <= bottomRight.column())
-		{
-			updateMontage();
-			return;
-		}
-	}
+	(void)row;
+	Track::Index column = static_cast<Track::Index>(col);
+	if (column == Track::Index::code || column == Track::Index::hidden)
+		updateMontage();
 }
 
 void Canvas::updateMontage()
 {
-	assert(signalProcessor != nullptr);
+	assert(signalProcessor);
 
 	makeCurrent();
 	signalProcessor->setUpdateMontageFlag();
@@ -940,5 +953,5 @@ void Canvas::updateMontage()
 
 bool Canvas::ready()
 {
-	return signalProcessor != nullptr && signalProcessor->ready();
+	return signalProcessor && signalProcessor->ready();
 }

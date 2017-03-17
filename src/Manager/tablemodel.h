@@ -1,15 +1,14 @@
 #ifndef TABLEMODEL_H
 #define TABLEMODEL_H
 
-#include <AlenkaFile/datamodel.h>
-#include "../DataFile/infotable.h"
+#include <AlenkaFile/datafile.h>
+#include "../DataModel/infotable.h"
 
 #include <QAbstractTableModel>
 #include <QStyledItemDelegate>
 #include <QColor>
 
 #include <string>
-#include <cassert>
 #include <vector>
 #include <functional>
 
@@ -20,12 +19,12 @@ const std::string ALL_CHANNEL_STRING = "<All>";
 class TableColumn
 {
 public:
-	TableColumn(const QString& header, InfoTable* infoTable, AlenkaFile::DataModel dataModel) : header(header), infoTable(infoTable), dataModel(dataModel)
-	{}
+	TableColumn(const QString& header, AlenkaFile::DataModel dataModel) : header(header), dataModel(dataModel) {}
+	virtual ~TableColumn() {}
 
 	virtual QVariant headerData() const
 	{
-		return QString(header);
+		return header;
 	}
 
 	virtual QVariant data(int row, int role = Qt::DisplayRole) const = 0;
@@ -33,14 +32,6 @@ public:
 	virtual Qt::ItemFlags flags() const
 	{
 		return Qt::ItemIsEditable;
-	}
-
-	virtual std::function<bool (int, int)> sortPredicate(Qt::SortOrder order) const
-	{
-		if (order == Qt::AscendingOrder)
-			return [this] (int a, int b) { return data(a) < data(b); };
-		else
-			return [this] (int a, int b) { return data(a) > data(b); };
 	}
 
 	virtual bool createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index, QWidget** widget) const
@@ -61,43 +52,21 @@ public:
 
 protected:
 	QString header;
-	InfoTable* infoTable;
 	AlenkaFile::DataModel dataModel;
-};
-
-class StringTableColumn : public TableColumn
-{
-public:
-	StringTableColumn(const QString& header, InfoTable* infoTable, AlenkaFile::DataModel dataModel) : TableColumn(header, infoTable, dataModel)
-	{}
-
-	virtual std::function<bool (int, int)> sortPredicate(Qt::SortOrder order) const override;
 };
 
 class BoolTableColumn : public TableColumn
 {
 public:
-	BoolTableColumn(const QString& header, InfoTable* infoTable, AlenkaFile::DataModel dataModel) : TableColumn(header, infoTable, dataModel)
-	{}
+	BoolTableColumn(const QString& header, AlenkaFile::DataModel dataModel) : TableColumn(header, dataModel) {}
 
-	virtual bool createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index, QWidget** widget) const override
-	{
-		(void)parent; (void)option;
-
-		const_cast<QAbstractItemModel*>(index.model())->setData(index, !index.data(Qt::EditRole).toBool());
-
-		//emit const_cast<TrackManagerDelegate*>(this)->closeEditor(nullptr);
-
-		*widget = nullptr;
-		return true;
-	}
+	virtual bool createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index, QWidget** widget) const override;
 };
 
 class ColorTableColumn : public TableColumn
 {
 public:
-	ColorTableColumn(const QString& header, InfoTable* infoTable, AlenkaFile::DataModel dataModel) : TableColumn(header, infoTable, dataModel)
-	{}
+	ColorTableColumn(const QString& header, AlenkaFile::DataModel dataModel) : TableColumn(header, dataModel) {}
 
 	virtual bool createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index, QWidget** widget) const override;
 };
@@ -107,14 +76,10 @@ class TableModel : public QAbstractTableModel
 	Q_OBJECT
 
 public:
-	TableModel(InfoTable* infoTable, AlenkaFile::DataModel dataModel, QObject* parent = nullptr);
+	explicit TableModel(AlenkaFile::DataFile* file, QObject* parent = nullptr);
 	~TableModel();
 
-	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override
-	{
-		(void)parent;
-		return rowOrder.size();
-	}
+	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override = 0;
 	virtual int columnCount(const QModelIndex& parent = QModelIndex()) const override
 	{
 		(void)parent;
@@ -122,45 +87,33 @@ public:
 	}
 	virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override
 	{
-		(void)orientation; (void)role;
-		return columns[section]->headerData();
+		if (role == Qt::DisplayRole && orientation == Qt::Horizontal && 0 <= section && section < columnCount())
+			return columns[section]->headerData();
+
+		return QVariant();
 	}
 	virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override
 	{
-		int row = rowOrder[index.row()];
-		return columns[index.column()]->data(row, role);
+		if (index.isValid() && index.row() < rowCount() && index.column() < columnCount())
+			return columns[index.column()]->data(index.row(), role);
+
+		return QVariant();
 	}
 	virtual bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override
 	{
-		int row = rowOrder[index.row()];
-		return columns[index.column()]->setData(row, value, role);
+		if (index.isValid() && index.row() < rowCount() && index.column() < columnCount())
+			return columns[index.column()]->setData(index.row(), value, role);
+
+		return false;
 	}
 	virtual Qt::ItemFlags flags(const QModelIndex& index) const override
 	{
 		if (!index.isValid())
 			return Qt::ItemIsEnabled;
-		else
-			return QAbstractTableModel::flags(index) | columns[index.column()]->flags();
+
+		return QAbstractTableModel::flags(index) | columns[index.column()]->flags();
 	}
-	virtual bool insertRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
-	virtual bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override
-	{
-		(void)row; (void)count; (void)parent;
-		// TODO: implement this
-		return false;
-	}
-	virtual void sort(int column, Qt::SortOrder order) override
-	{
-		std::function<bool (int, int)> predicate = columns[column]->sortPredicate(order);
-
-		emit layoutAboutToBeChanged();
-
-		std::sort(this->rowOrder.begin(), this->rowOrder.end(), predicate);
-
-		changePersistentIndex(index(0, 0), index(rowCount() - 1, columnCount() - 1));
-
-		emit layoutChanged();
-	}
+	virtual bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
 
 	QStyledItemDelegate* getDelegate()
 	{
@@ -175,12 +128,20 @@ public slots:
 	}
 
 protected:
-	InfoTable* infoTable;
-	AlenkaFile::DataModel dataModel;
+	AlenkaFile::DataFile* file;
 	std::vector<TableColumn*> columns;
-	std::vector<int> rowOrder;
 
 	virtual void insertRowBack() = 0;
+	virtual void removeRowsFromDataModel(int row, int count) = 0;
+
+protected slots:
+	void emitDataChanged(int row, int col)
+	{
+		QModelIndex i = index(row, col);
+		emit dataChanged(i, i);
+	}
+
+	void insertDataModelRows(int row, int count);
 
 private:
 	QStyledItemDelegate* delegate;

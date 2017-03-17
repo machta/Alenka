@@ -1,7 +1,7 @@
 #ifndef GPUCACHE_H
 #define GPUCACHE_H
 
-#include "../DataFile/datafile.h"
+#include <AlenkaFile/datafile.h>
 #include "../error.h"
 
 #include <CL/cl_gl.h>
@@ -45,7 +45,7 @@ public:
 	 * @param availableMemory The maximum bytes available for the cache.
 	 * @param filterProcessor If nullptr, the cached blocks are not filtered.
 	 */
-	GPUCache(unsigned int blockSize, unsigned int offset, int delay, int64_t availableMemory, DataFile* file, AlenkaSignal::OpenCLContext* context, AlenkaSignal::FilterProcessor<float>* filterProcessor);
+	GPUCache(unsigned int blockSize, unsigned int offset, int delay, int64_t availableMemory, AlenkaFile::DataFile* file, AlenkaSignal::OpenCLContext* context, AlenkaSignal::FilterProcessor<float>* filterProcessor);
 	~GPUCache();
 
 	/**
@@ -76,12 +76,32 @@ public:
 		reverseIndexMap.clear();
 	}
 
+	 /**
+	 * @brief Returns the range of samples corresponding to the block index.
+	 *
+	 * This method ensures that adjacent blocks overlap by one sample.
+	 * @param index Index of the block.
+	 * @param blockSize The size of the blocks constant for all blocks.
+	 */
+	static std::pair<std::int64_t, std::int64_t> blockIndexToSampleRange(int index, unsigned int blockSize)
+	{
+		using namespace std;
+
+		int64_t from = index*blockSize;
+		int64_t	to = (index + 1)*blockSize - 1;
+
+		from -= index;
+		to -= index;
+
+		return make_pair(from, to);
+	}
+
 private:
 	unsigned int blockSize;
 	int offset;
 	int delay;
 	unsigned int capacity;
-	DataFile* file;
+	AlenkaFile::DataFile* file;
 	AlenkaSignal::FilterProcessor<float>* filterProcessor;
 	cl_command_queue commandQueue;
 	std::vector<cl_mem> buffers;
@@ -105,39 +125,6 @@ private:
 	 * blocks one by one until it runs out of work. Then it sleeps.
 	 */
 	void loaderThreadFunction();
-
-	/**
-	 * @brief Tries to find an element common to the map keys in a and the set elements in b.
-	 * @param index [out]
-	 * @param cacheIndex [out]
-	 * @return True if a common element was found.
-	 */
-	bool findCommon(const std::map<int, unsigned int>& a, const std::set<int>& b, int* index, unsigned int* cacheIndex)
-	{
-		auto aI = a.begin();
-		auto bI = b.begin();
-
-		while (aI != a.end() && bI != b.end())
-		{
-			if (aI->first == *bI)
-			{
-				*index = aI->first;
-				*cacheIndex = aI->second;
-				return true;
-			}
-
-			if (aI->first < *bI)
-			{
-				++aI;
-			}
-			else
-			{
-				++bI;
-			}
-		}
-
-		return false;
-	}
 
 	/**
 	 * @brief Enqueues command for copying of buffers.

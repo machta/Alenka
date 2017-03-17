@@ -10,7 +10,7 @@ using namespace std;
 
 void sendMessageThroughSocket(const QByteArray& message, QWebSocket* socket)
 {
-	auto bytesSent = socket->sendBinaryMessage(message);
+	auto bytesSent = socket->sendBinaryMessage(message); (void)bytesSent;
 	assert(bytesSent == message.size() && "Server failed to send the message.");
 }
 
@@ -70,13 +70,9 @@ vector<QWebSocket*> SyncServer::deleteClosedSockets(const vector<QWebSocket*>& s
 	for (QWebSocket* e : sockets)
 	{
 		if(e->isValid())
-		{
 			active.push_back(e);
-		}
 		else
-		{
 			closeSocket(e);
-		}
 	}
 	return active;
 }

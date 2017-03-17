@@ -3,19 +3,30 @@
 
 #include "tablemodel.h"
 
+#include <vector>
+
 class EventTableModel : public TableModel
 {
 	Q_OBJECT
 
 public:
-	EventTableModel(InfoTable* infoTable, AlenkaFile::DataModel dataModel, QObject* parent = nullptr);
+	explicit EventTableModel(AlenkaFile::DataFile* file, QObject* parent = nullptr);
+	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override;
 
 protected:
-	virtual void insertRowBack() override
+	virtual void insertRowBack() override;
+	virtual void removeRowsFromDataModel(int row, int count) override;
+
+private slots:
+	void setSelectedMontage(int i);
+	void beginEndReset()
 	{
-		int rc = dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->rowCount();
-		dataModel.montageTable->eventTable(infoTable->getSelectedMontage())->insertRows(rc);
+		beginResetModel();
+		endResetModel();
 	}
+
+private:
+	std::vector<QMetaObject::Connection> montageTableConnections;
 };
 
 #endif // EVENTTABLEMODEL_H

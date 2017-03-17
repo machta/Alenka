@@ -116,12 +116,11 @@ void Options::logConfigFile() const
 
 	if (ifs.good())
 	{
-		stringstream ss;
+		string str;
 		while (ifs.peek() != EOF)
-		{
-			ss.put(ifs.get());
-		}
-		logToFile("Config file '" << fileName << "':\n" << ss.str());
+			str.push_back(ifs.get());
+
+		logToFile("Config file '" << fileName << "':\n" << str);
 	}
 }
 

@@ -19,11 +19,8 @@ int64_t memoryAvailable = PROGRAM_OPTIONS["dataFileCacheSize"].as<int64_t>();
 #include <boost/program_options.hpp>
 
 #include <QSettings>
-#include <QString>
-#include <QVariant>
 
 #include <string>
-#include <sstream>
 #include <stdexcept>
 
 /**
@@ -62,16 +59,10 @@ public:
 	 */
 	const boost::program_options::variable_value& get(const std::string& key) const
 	{
-		using namespace std;
-
 		if (isSet(key))
-		{
 			return vm[key];
-		}
 		else
-		{
-			throw runtime_error("Option '" + key + "' has no value.");
-		}
+			throw std::runtime_error("Option '" + key + "' has no value.");
 	}
 
 	/**

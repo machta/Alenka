@@ -1,6 +1,8 @@
 #include "manager.h"
 
 #include "../myapplication.h"
+#include "tablemodel.h"
+#include "sortproxymodel.h"
 
 #include <QTableView>
 #include <QPushButton>
@@ -17,6 +19,42 @@
 
 using namespace std;
 
+namespace
+{
+
+QString replaceTabsAndNewLines(const QString& string)
+{
+	QString newString = string;
+
+	for (auto& e : newString)
+	{
+		if (e == '\t' || e == '\n')
+			e = ' ';
+	}
+
+	return newString;
+}
+
+vector<string> splitStringToLines(const string& str)
+{
+	stringstream textStream(str);
+	vector<string> lines;
+
+	while (textStream.good())
+	{
+		lines.emplace_back("");
+		getline(textStream, lines.back());
+	}
+
+	// Ignore last empty row.
+	if (lines.size() >= 1 && lines.back() == "")
+		lines.pop_back();
+
+	return lines;
+}
+
+} // namespace
+
 Manager::Manager(QWidget* parent) : QWidget(parent, Qt::Window)
 {
 	// Construct the table widget.
@@ -31,9 +69,7 @@ Manager::Manager(QWidget* parent) : QWidget(parent, Qt::Window)
 
 	// Add some actions to the tableView.
 	QAction* addRowAction = new QAction("Add Row", this);
-	//addRowAction->setShortcut(QKeySequence());
-	//addRowAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
-	connect(addRowAction, SIGNAL(triggered()), this, SLOT(addRow()));
+	connect(addRowAction, SIGNAL(triggered()), this, SLOT(insertRowBack()));
 	tableView->addAction(addRowAction);
 
 	QAction* removeRowsAction = new QAction("Remove Rows", this);
@@ -49,8 +85,6 @@ Manager::Manager(QWidget* parent) : QWidget(parent, Qt::Window)
 	tableView->addAction(copyAction);
 
 	QAction* copyHtmlAction = new QAction("Copy HTML", this);
-	//copyHtmlAction->setShortcut(QKeySequence());
-	//copyHtmlAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
 	connect(copyHtmlAction, SIGNAL(triggered()), this, SLOT(copyHtml()));
 	tableView->addAction(copyHtmlAction);
 
@@ -62,7 +96,7 @@ Manager::Manager(QWidget* parent) : QWidget(parent, Qt::Window)
 
 	// Construct other.
 	QPushButton* addRowButton = new QPushButton("Add Row", this);
-	connect(addRowButton, SIGNAL(clicked()), this, SLOT(addRow()));
+	connect(addRowButton, SIGNAL(clicked()), this, SLOT(insertRowBack()));
 
 	QPushButton* removeRowButton = new QPushButton("Remove Rows", this);
 	connect(removeRowButton, SIGNAL(clicked()), this, SLOT(removeRows()));
@@ -78,13 +112,14 @@ Manager::Manager(QWidget* parent) : QWidget(parent, Qt::Window)
 	setLayout(box1);
 }
 
-Manager::~Manager()
+void Manager::setModel(TableModel* model)
 {
-}
+	QSortFilterProxyModel* proxyModel = new SortProxyModel(model);
+	proxyModel->setDynamicSortFilter(false);
+	proxyModel->setSourceModel(model);
+	tableView->setModel(proxyModel);
 
-void Manager::setModel(QAbstractTableModel* model)
-{
-	tableView->setModel(model);
+	tableView->setItemDelegate(model->getDelegate());
 
 	tableView->sortByColumn(tableView->horizontalHeader()->sortIndicatorSection(), tableView->horizontalHeader()->sortIndicatorOrder());
 }
@@ -113,11 +148,6 @@ map<pair<int, int>, QString> Manager::textOfSelection()
 	}
 
 	return cells;
-}
-
-void Manager::addRow()
-{
-	tableView->model()->insertRow(tableView->model()->rowCount());
 }
 
 void Manager::removeRows()
@@ -151,7 +181,7 @@ void Manager::copy()
 	auto iter = cells.begin();
 	if (iter != cells.end())
 	{
-		text += replaceTabsAndBreaks(iter->second);
+		text += replaceTabsAndNewLines(iter->second);
 	}
 
 	int lastRow = iter->first.first;
@@ -169,7 +199,7 @@ void Manager::copy()
 			text += "\t";
 		}
 
-		text += replaceTabsAndBreaks(iter->second);
+		text += replaceTabsAndNewLines(iter->second);
 
 		++iter;
 	}
@@ -219,8 +249,6 @@ void Manager::copyHtml()
 
 void Manager::paste()
 {
-	QAbstractItemModel* model = tableView->model();
-
 	int startRow, startColumn;
 
 	auto index = tableView->selectionModel()->currentIndex();
@@ -234,36 +262,16 @@ void Manager::paste()
 		startRow = startColumn = 0;
 	}
 
-	// Split the input into rows.
-	stringstream textStream(MyApplication::clipboard()->text().toStdString());
-	vector<string> lines;
-
-	while (textStream.good())
-	{
-		lines.emplace_back("");
-		getline(textStream, lines.back());
-	}
-
-	// Ignore last empty row.
-	if (lines.size() >= 1 && lines.back() == "")
-	{
-		lines.pop_back();
-	}
-
-	// Insert rows back.
+	QAbstractItemModel* model = tableView->model();
+	vector<string> lines = splitStringToLines(MyApplication::clipboard()->text().toStdString());
 	int rowsToInsert = startRow + lines.size() - model->rowCount();
-	if (rowsToInsert > 0)
-	{
-		bool res = model->insertRows(model->rowCount(), rowsToInsert);
 
-		assert(res == true); (void)res;
-	}
+	for (int i = 0; i < rowsToInsert; ++i)
+		insertRowBack();
 
-	// Process cells.
 	for (unsigned int row = 0; row < lines.size(); ++row)
 	{
 		stringstream lineStream(lines[row]);
-
 		int column = 0;
 
 		while (lineStream.good())
@@ -273,7 +281,8 @@ void Manager::paste()
 
 			if (startColumn + column < model->columnCount())
 			{
-				model->setData(model->index(startRow + row, startColumn + column), QVariant(QString::fromStdString(cell)));
+				auto val = QVariant(QString::fromStdString(cell));
+				model->setData(model->index(startRow + row, startColumn + column), val);
 			}
 
 			++column;
