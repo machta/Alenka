@@ -1,7 +1,7 @@
 #include "tracktablemodel.h"
 
 #include "codeeditdialog.h"
-#include "../signalfilebrowserwindow.h"
+#include "../DataModel/opendatafile.h"
 #include "../DataModel/vitnessdatamodel.h"
 #include "../DataModel/trackcodevalidator.h"
 
@@ -17,15 +17,15 @@ using namespace AlenkaFile;
 namespace
 {
 
-AbstractTrackTable* currentTrackTable(DataModel dataModel)
+AbstractTrackTable* currentTrackTable(DataModel* dataModel)
 {
-	return dataModel.montageTable->trackTable(SignalFileBrowserWindow::infoTable.getSelectedMontage());
+	return dataModel->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
 }
 
 class Id : public TableColumn
 {
 public:
-	Id(DataModel dataModel) : TableColumn("ID", dataModel) {}
+	Id(DataModel* dataModel) : TableColumn("ID", dataModel) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
@@ -50,7 +50,7 @@ public:
 class Label : public TableColumn
 {
 public:
-	Label(DataModel dataModel) : TableColumn("Label", dataModel) {}
+	Label(DataModel* dataModel) : TableColumn("Label", dataModel) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
@@ -77,7 +77,7 @@ public:
 class Code : public TableColumn
 {
 public:
-	Code(DataModel dataModel) : TableColumn("Code", dataModel)
+	Code(DataModel* dataModel) : TableColumn("Code", dataModel)
 	{
 		validator = new TrackCodeValidator();
 	}
@@ -162,7 +162,7 @@ private:
 class Color : public ColorTableColumn
 {
 public:
-	Color(DataModel dataModel) : ColorTableColumn("Color", dataModel) {}
+	Color(DataModel* dataModel) : ColorTableColumn("Color", dataModel) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
@@ -182,7 +182,7 @@ public:
 		if (role == Qt::EditRole)
 		{
 			Track t = currentTrackTable(dataModel)->row(row);
-			SignalFileBrowserWindow::color2array(value.value<QColor>(), t.color);
+			DataModel::color2array(value.value<QColor>(), t.color);
 			currentTrackTable(dataModel)->row(row, t);
 			return true;
 		}
@@ -194,7 +194,7 @@ public:
 class Amplitude : public TableColumn
 {
 public:
-	Amplitude(DataModel dataModel) : TableColumn("Amplitude", dataModel) {}
+	Amplitude(DataModel* dataModel) : TableColumn("Amplitude", dataModel) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
@@ -250,7 +250,7 @@ public:
 class Hidden : public BoolTableColumn
 {
 public:
-	Hidden(DataModel dataModel) : BoolTableColumn("Hidden", dataModel) {}
+	Hidden(DataModel* dataModel) : BoolTableColumn("Hidden", dataModel) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
@@ -285,8 +285,8 @@ TrackTableModel::TrackTableModel(DataFile* file, QObject* parent) : TableModel(f
 	columns.push_back(new Amplitude(file->getDataModel()));
 	columns.push_back(new Hidden(file->getDataModel()));
 
-	connect(&SignalFileBrowserWindow::infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(setSelectedMontage(int)));
-	setSelectedMontage(SignalFileBrowserWindow::infoTable.getSelectedMontage());
+	connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(setSelectedMontage(int)));
+	setSelectedMontage(OpenDataFile::infoTable.getSelectedMontage());
 }
 
 int TrackTableModel::rowCount(const QModelIndex& parent) const
@@ -305,9 +305,9 @@ void TrackTableModel::insertRowBack()
 void TrackTableModel::removeRowsFromDataModel(int row, int count)
 {
 	// Update the channels of events to point to correct tracks after the rows are removed.
-	for (int i = 0; i < file->getDataModel().montageTable->rowCount(); ++i)
+	for (int i = 0; i < file->getDataModel()->montageTable()->rowCount(); ++i)
 	{
-		AbstractEventTable* eventTable = file->getDataModel().montageTable->eventTable(i);
+		AbstractEventTable* eventTable = file->getDataModel()->montageTable()->eventTable(i);
 
 		for (int j = 0; j < eventTable->rowCount(); ++j)
 		{
@@ -333,7 +333,7 @@ void TrackTableModel::setSelectedMontage(int i)
 		disconnect(e);
 	trackTableConnections.clear();
 
-	auto vitness = VitnessTrackTable::vitness(file->getDataModel().montageTable->trackTable(i));
+	auto vitness = VitnessTrackTable::vitness(file->getDataModel()->montageTable()->trackTable(i));
 
 	auto c = connect(vitness, &DataModelVitness::valueChanged, [this] (int row, int col) {
 		emitDataChanged(row, col + 1);

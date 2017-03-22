@@ -1,6 +1,6 @@
 #include "eventmanager.h"
 
-#include "../signalfilebrowserwindow.h"
+#include "../DataModel/opendatafile.h"
 #include <AlenkaFile/datafile.h>
 #include "../canvas.h"
 
@@ -16,9 +16,9 @@ using namespace AlenkaFile;
 namespace
 {
 
-AbstractEventTable* currentEventTable(DataModel dataModel)
+AbstractEventTable* currentEventTable(DataModel* dataModel)
 {
-	return dataModel.montageTable->eventTable(SignalFileBrowserWindow::infoTable.getSelectedMontage());
+	return dataModel->montageTable()->eventTable(OpenDataFile::infoTable.getSelectedMontage());
 }
 
 } // namespace
@@ -42,13 +42,14 @@ void EventManager::insertRowBack()
 	currentEventTable(file->getDataModel())->insertRows(rc);
 }
 
+// TODO: Don't constrain goto to the dimensions of the slider, but rather make sure time line is always correctly positioned.
 void EventManager::goToEvent()
 {
 	auto currentIndex = tableView->selectionModel()->currentIndex();
 
 	if (file && currentIndex.isValid())
 	{
-		InfoTable& it = SignalFileBrowserWindow::infoTable;
+		InfoTable& it = OpenDataFile::infoTable;
 
 		double ratio = static_cast<double>(file->getSamplesRecorded())/it.getVirtualWidth();
 		int col = static_cast<int>(Event::Index::position);

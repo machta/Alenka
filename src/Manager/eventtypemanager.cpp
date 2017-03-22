@@ -4,5 +4,5 @@
 
 void EventTypeManager::insertRowBack()
 {
-	file->getDataModel().eventTypeTable->insertRows(file->getDataModel().eventTypeTable->rowCount());
+	file->getDataModel()->eventTypeTable()->insertRows(file->getDataModel()->eventTypeTable()->rowCount());
 }

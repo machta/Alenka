@@ -1,6 +1,7 @@
 #include "eventtablemodel.h"
 
 #include <AlenkaFile/datafile.h>
+#include "../DataModel/opendatafile.h"
 #include "../signalfilebrowserwindow.h"
 #include "../DataModel/vitnessdatamodel.h"
 
@@ -13,20 +14,20 @@ using namespace AlenkaFile;
 namespace
 {
 
-AbstractTrackTable* currentTrackTable(DataModel dataModel)
+AbstractTrackTable* currentTrackTable(DataModel* dataModel)
 {
-	return dataModel.montageTable->trackTable(SignalFileBrowserWindow::infoTable.getSelectedMontage());
+	return dataModel->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
 }
 
-AbstractEventTable* currentEventTable(DataModel dataModel)
+AbstractEventTable* currentEventTable(DataModel* dataModel)
 {
-	return dataModel.montageTable->eventTable(SignalFileBrowserWindow::infoTable.getSelectedMontage());
+	return dataModel->montageTable()->eventTable(OpenDataFile::infoTable.getSelectedMontage());
 }
 
 class Label : public TableColumn
 {
 public:
-	Label(DataModel dataModel) : TableColumn("Label", dataModel) {}
+	Label(DataModel* dataModel) : TableColumn("Label", dataModel) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
@@ -53,18 +54,18 @@ public:
 class Type : public TableColumn
 {
 public:
-	Type(DataModel dataModel) : TableColumn("Type", dataModel) {}
+	Type(DataModel* dataModel) : TableColumn("Type", dataModel) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
 		int type = currentEventTable(dataModel)->row(row).type;
 
 		if (role == Qt::DisplayRole)
-			return QString::fromStdString(type < 0 ? NO_TYPE_STRING : dataModel.eventTypeTable->row(type).name);
+			return QString::fromStdString(type < 0 ? NO_TYPE_STRING : dataModel->eventTypeTable()->row(type).name);
 		else if (role == Qt::EditRole)
 			return type;
 		else if (role == Qt::DecorationRole && 0 <= type)
-			return SignalFileBrowserWindow::array2color(dataModel.eventTypeTable->row(type).color);
+			return DataModel::array2color<QColor>(dataModel->eventTypeTable()->row(type).color);
 
 		return QVariant();
 	}
@@ -89,9 +90,9 @@ public:
 		QComboBox* combo = new QComboBox(parent);
 
 		combo->addItem(NO_TYPE_STRING.c_str());
-		for (int i = 0; i < dataModel.eventTypeTable->rowCount(); ++i)
+		for (int i = 0; i < dataModel->eventTypeTable()->rowCount(); ++i)
 		{
-			combo->addItem(QString::fromStdString(dataModel.eventTypeTable->row(i).name));
+			combo->addItem(QString::fromStdString(dataModel->eventTypeTable()->row(i).name));
 		}
 
 		*widget = combo;
@@ -115,7 +116,7 @@ public:
 class Position : public TableColumn
 {
 public:
-	Position(DataModel dataModel, DataFile* file) : TableColumn("Position", dataModel), file(file) {}
+	Position(DataModel* dataModel, DataFile* file) : TableColumn("Position", dataModel), file(file) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
@@ -149,7 +150,7 @@ private:
 class Duration : public TableColumn
 {
 public:
-	Duration(DataModel dataModel, DataFile* file) : TableColumn("Duration", dataModel), file(file) {}
+	Duration(DataModel* dataModel, DataFile* file) : TableColumn("Duration", dataModel), file(file) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
@@ -183,7 +184,7 @@ private:
 class Channel : public TableColumn
 {
 public:
-	Channel(DataModel dataModel) : TableColumn("Channel", dataModel) {}
+	Channel(DataModel* dataModel) : TableColumn("Channel", dataModel) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
@@ -212,7 +213,7 @@ public:
 		}
 		else if (role == Qt::DecorationRole && 0 <= channel)
 		{
-			return SignalFileBrowserWindow::array2color(currentTrackTable(dataModel)->row(channel).color);
+			return DataModel::array2color<QColor>(currentTrackTable(dataModel)->row(channel).color);
 		}
 
 		return QVariant();
@@ -264,7 +265,7 @@ public:
 class Description: public TableColumn
 {
 public:
-	Description(DataModel dataModel) : TableColumn("Description", dataModel) {}
+	Description(DataModel* dataModel) : TableColumn("Description", dataModel) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
@@ -299,10 +300,10 @@ EventTableModel::EventTableModel(DataFile* file, QObject* parent) : TableModel(f
 	columns.push_back(new Channel(file->getDataModel()));
 	columns.push_back(new Description(file->getDataModel()));
 
-	connect(&SignalFileBrowserWindow::infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(setSelectedMontage(int)));
-	setSelectedMontage(SignalFileBrowserWindow::infoTable.getSelectedMontage());
+	connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(setSelectedMontage(int)));
+	setSelectedMontage(OpenDataFile::infoTable.getSelectedMontage());
 
-	connect(&SignalFileBrowserWindow::infoTable, SIGNAL(timeModeChanged(int)), this, SLOT(beginEndReset()));
+	connect(&OpenDataFile::infoTable, SIGNAL(timeModeChanged(int)), this, SLOT(beginEndReset()));
 }
 
 int EventTableModel::rowCount(const QModelIndex& parent) const
@@ -330,7 +331,7 @@ void EventTableModel::setSelectedMontage(int i)
 		disconnect(e);
 	montageTableConnections.clear();
 
-	auto vitness = VitnessEventTable::vitness(file->getDataModel().montageTable->eventTable(i));
+	auto vitness = VitnessEventTable::vitness(file->getDataModel()->montageTable()->eventTable(i));
 
 	auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(emitDataChanged(int, int)));
 	montageTableConnections.push_back(c);

@@ -1,16 +1,16 @@
 #include "trackmanager.h"
 
 #include <AlenkaFile/datafile.h>
-#include "../signalfilebrowserwindow.h"
+#include "../DataModel/opendatafile.h"
 
 using namespace AlenkaFile;
 
 namespace
 {
 
-AbstractTrackTable* currentTrackTable(DataModel dataModel)
+AbstractTrackTable* currentTrackTable(DataModel* dataModel)
 {
-	return dataModel.montageTable->trackTable(SignalFileBrowserWindow::infoTable.getSelectedMontage());
+	return dataModel->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
 }
 
 } // namespace

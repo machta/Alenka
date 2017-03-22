@@ -1,6 +1,6 @@
 #include "tracklabelbar.h"
 
-#include "signalfilebrowserwindow.h"
+#include "DataModel/opendatafile.h"
 #include "options.h"
 #include <AlenkaFile/datafile.h>
 #include "DataModel/vitnessdatamodel.h"
@@ -18,7 +18,7 @@ TrackLabelBar::TrackLabelBar(QWidget* parent) : QWidget(parent)
 	setMinimumWidth(0);
 	setMaximumWidth(300);
 
-	connect(&SignalFileBrowserWindow::infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(updateTrackTable(int)));
+	connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(updateTrackTable(int)));
 }
 
 void TrackLabelBar::changeFile(DataFile* file)
@@ -31,7 +31,7 @@ void TrackLabelBar::paintEvent(QPaintEvent* /*event*/)
 	if (!file)
 		return;
 
-	AbstractTrackTable* trackTable = file->getDataModel().montageTable->trackTable(SignalFileBrowserWindow::infoTable.getSelectedMontage());
+	AbstractTrackTable* trackTable = file->getDataModel()->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
 
 	int totalTracks = 0;
 	for (int i = 0; i < trackTable->rowCount(); ++i)
@@ -57,7 +57,7 @@ void TrackLabelBar::paintEvent(QPaintEvent* /*event*/)
 
 		if (t.hidden == false)
 		{
-			QColor color = SignalFileBrowserWindow::array2color(t.color);
+			QColor color = DataModel::array2color<QColor>(t.color);
 			if (track == selectedTrack)
 				color = Canvas::modifySelectionColor(color);
 			painter.setPen(color);
@@ -84,7 +84,7 @@ void TrackLabelBar::updateTrackTable(int row)
 			disconnect(e);
 		trackConnections.clear();
 
-		auto vitness = VitnessTrackTable::vitness(file->getDataModel().montageTable->trackTable(row));
+		auto vitness = VitnessTrackTable::vitness(file->getDataModel()->montageTable()->trackTable(row));
 
 		auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(updateLabels(int)));
 		trackConnections.push_back(c);

@@ -42,19 +42,6 @@ public:
 	explicit SignalFileBrowserWindow(QWidget* parent = nullptr);
 	~SignalFileBrowserWindow();
 
-	static InfoTable infoTable;
-	static QColor array2color(unsigned char* c)
-	{
-		QColor color;
-		color.setRgb(c[0], c[1], c[2]);
-		return color;
-	}
-	static void color2array(const QColor& color, unsigned char* c)
-	{
-		c[0] = color.red();
-		c[1] = color.green();
-		c[2] = color.blue();
-	}
 	static QDateTime sampleToDate(AlenkaFile::DataFile* file, int sample);
 	static QDateTime sampleToOffset(AlenkaFile::DataFile* file, int sample);
 	static QString sampleToDateTimeString(AlenkaFile::DataFile* file, int sample, InfoTable::TimeMode mode = InfoTable::TimeMode::size);

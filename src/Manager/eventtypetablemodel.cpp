@@ -15,12 +15,12 @@ namespace
 class Id : public TableColumn
 {
 public:
-	Id(DataModel dataModel) : TableColumn("ID", dataModel) {}
+	Id(DataModel* dataModel) : TableColumn("ID", dataModel) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
 		if (role == Qt::DisplayRole || role == Qt::EditRole)
-			return dataModel.eventTypeTable->row(row).id;
+			return dataModel->eventTypeTable()->row(row).id;
 
 		return QVariant();
 	}
@@ -29,9 +29,9 @@ public:
 	{
 		if (role == Qt::EditRole)
 		{
-			EventType et = dataModel.eventTypeTable->row(row);
+			EventType et = dataModel->eventTypeTable()->row(row);
 			et.id = value.toInt();
-			dataModel.eventTypeTable->row(row, et);
+			dataModel->eventTypeTable()->row(row, et);
 			return true;
 		}
 
@@ -42,12 +42,12 @@ public:
 class Name : public TableColumn
 {
 public:
-	Name(DataModel dataModel) : TableColumn("Name", dataModel) {}
+	Name(DataModel* dataModel) : TableColumn("Name", dataModel) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
 		if (role == Qt::DisplayRole || role == Qt::EditRole)
-			return QString::fromStdString(dataModel.eventTypeTable->row(row).name);
+			return QString::fromStdString(dataModel->eventTypeTable()->row(row).name);
 
 		return QVariant();
 	}
@@ -56,9 +56,9 @@ public:
 	{
 		if (role == Qt::EditRole)
 		{
-			EventType et = dataModel.eventTypeTable->row(row);
+			EventType et = dataModel->eventTypeTable()->row(row);
 			et.name = value.toString().toStdString();
-			dataModel.eventTypeTable->row(row, et);
+			dataModel->eventTypeTable()->row(row, et);
 			return true;
 		}
 
@@ -69,11 +69,11 @@ public:
 class Opacity : public TableColumn
 {
 public:
-	Opacity(DataModel dataModel) : TableColumn("Opacity", dataModel) {}
+	Opacity(DataModel* dataModel) : TableColumn("Opacity", dataModel) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
-		double opacity = dataModel.eventTypeTable->row(row).opacity*100;
+		double opacity = dataModel->eventTypeTable()->row(row).opacity*100;
 
 		if (role == Qt::DisplayRole)
 		{
@@ -92,7 +92,7 @@ public:
 	{
 		if (role == Qt::EditRole)
 		{
-			EventType et = dataModel.eventTypeTable->row(row);
+			EventType et = dataModel->eventTypeTable()->row(row);
 
 			bool ok;
 			double tmp = value.toDouble(&ok)/100;
@@ -110,7 +110,7 @@ public:
 			}
 
 			et.opacity = tmp;
-			dataModel.eventTypeTable->row(row, et);
+			dataModel->eventTypeTable()->row(row, et);
 			return true;
 		}
 
@@ -121,13 +121,13 @@ public:
 class Color : public ColorTableColumn
 {
 public:
-	Color(DataModel dataModel) : ColorTableColumn("Color", dataModel) {}
+	Color(DataModel* dataModel) : ColorTableColumn("Color", dataModel) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
 		if (role == Qt::DisplayRole || role == Qt::EditRole || role == Qt::DecorationRole)
 		{
-			auto colorArray = dataModel.eventTypeTable->row(row).color;
+			auto colorArray = dataModel->eventTypeTable()->row(row).color;
 			QColor color;
 			color.setRgb(colorArray[0], colorArray[1], colorArray[2]);
 			return color;
@@ -140,9 +140,9 @@ public:
 	{
 		if (role == Qt::EditRole)
 		{
-			EventType et = dataModel.eventTypeTable->row(row);
-			SignalFileBrowserWindow::color2array(value.value<QColor>(), et.color);
-			dataModel.eventTypeTable->row(row, et);
+			EventType et = dataModel->eventTypeTable()->row(row);
+			DataModel::color2array(value.value<QColor>(), et.color);
+			dataModel->eventTypeTable()->row(row, et);
 			return true;
 		}
 
@@ -153,12 +153,12 @@ public:
 class Hidden : public BoolTableColumn
 {
 public:
-	Hidden(DataModel dataModel) : BoolTableColumn("Hidden", dataModel) {}
+	Hidden(DataModel* dataModel) : BoolTableColumn("Hidden", dataModel) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
 		if (role == Qt::DisplayRole || role == Qt::EditRole)
-			return dataModel.eventTypeTable->row(row).hidden;
+			return dataModel->eventTypeTable()->row(row).hidden;
 
 		return QVariant();
 	}
@@ -167,9 +167,9 @@ public:
 	{
 		if (role == Qt::EditRole)
 		{
-			EventType et = dataModel.eventTypeTable->row(row);
+			EventType et = dataModel->eventTypeTable()->row(row);
 			et.hidden = value.toBool();
-			dataModel.eventTypeTable->row(row, et);
+			dataModel->eventTypeTable()->row(row, et);
 			return true;
 		}
 
@@ -187,7 +187,7 @@ EventTypeTableModel::EventTypeTableModel(DataFile* file, QObject* parent) : Tabl
 	columns.push_back(new Color(file->getDataModel()));
 	columns.push_back(new Hidden(file->getDataModel()));
 
-	auto vitness = VitnessEventTypeTable::vitness(file->getDataModel().eventTypeTable);
+	auto vitness = VitnessEventTypeTable::vitness(file->getDataModel()->eventTypeTable());
 	connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(emitDataChanged(int, int)));
 	connect(vitness, SIGNAL(rowsInserted(int, int)), this, SLOT(insertDataModelRows(int, int)));
 }
@@ -195,20 +195,20 @@ EventTypeTableModel::EventTypeTableModel(DataFile* file, QObject* parent) : Tabl
 int EventTypeTableModel::rowCount(const QModelIndex& parent) const
 {
 	(void)parent;
-	return file->getDataModel().eventTypeTable->rowCount();
+	return file->getDataModel()->eventTypeTable()->rowCount();
 }
 
 void EventTypeTableModel::insertRowBack()
 {
-	file->getDataModel().eventTypeTable->insertRows(file->getDataModel().eventTypeTable->rowCount());
+	file->getDataModel()->eventTypeTable()->insertRows(file->getDataModel()->eventTypeTable()->rowCount());
 }
 
 void EventTypeTableModel::removeRowsFromDataModel(int row, int count)
 {
 	// Update the types of events to point to correct event types after the rows are removed.
-	for (int i = 0; i < file->getDataModel().montageTable->rowCount(); ++i)
+	for (int i = 0; i < file->getDataModel()->montageTable()->rowCount(); ++i)
 	{
-		AbstractEventTable* eventTable = file->getDataModel().montageTable->eventTable(i);
+		AbstractEventTable* eventTable = file->getDataModel()->montageTable()->eventTable(i);
 
 		for (int j = 0; j < eventTable->rowCount(); ++j)
 		{
@@ -223,5 +223,5 @@ void EventTypeTableModel::removeRowsFromDataModel(int row, int count)
 		}
 	}
 
-	file->getDataModel().eventTypeTable->removeRows(row, count);
+	file->getDataModel()->eventTypeTable()->removeRows(row, count);
 }

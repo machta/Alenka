@@ -4,5 +4,5 @@
 
 void MontageManager::insertRowBack()
 {
-	file->getDataModel().montageTable->insertRows(file->getDataModel().montageTable->rowCount());
+	file->getDataModel()->montageTable()->insertRows(file->getDataModel()->montageTable()->rowCount());
 }

@@ -19,7 +19,7 @@ const std::string ALL_CHANNEL_STRING = "<All>";
 class TableColumn
 {
 public:
-	TableColumn(const QString& header, AlenkaFile::DataModel dataModel) : header(header), dataModel(dataModel) {}
+	TableColumn(const QString& header, AlenkaFile::DataModel* dataModel) : header(header), dataModel(dataModel) {}
 	virtual ~TableColumn() {}
 
 	virtual QVariant headerData() const
@@ -52,13 +52,13 @@ public:
 
 protected:
 	QString header;
-	AlenkaFile::DataModel dataModel;
+	AlenkaFile::DataModel* dataModel;
 };
 
 class BoolTableColumn : public TableColumn
 {
 public:
-	BoolTableColumn(const QString& header, AlenkaFile::DataModel dataModel) : TableColumn(header, dataModel) {}
+	BoolTableColumn(const QString& header, AlenkaFile::DataModel* dataModel) : TableColumn(header, dataModel) {}
 
 	virtual bool createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index, QWidget** widget) const override;
 };
@@ -66,7 +66,7 @@ public:
 class ColorTableColumn : public TableColumn
 {
 public:
-	ColorTableColumn(const QString& header, AlenkaFile::DataModel dataModel) : TableColumn(header, dataModel) {}
+	ColorTableColumn(const QString& header, AlenkaFile::DataModel* dataModel) : TableColumn(header, dataModel) {}
 
 	virtual bool createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index, QWidget** widget) const override;
 };

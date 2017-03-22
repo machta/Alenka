@@ -14,12 +14,12 @@ namespace
 class Name : public TableColumn
 {
 public:
-	Name(DataModel dataModel) : TableColumn("Name", dataModel) {}
+	Name(DataModel* dataModel) : TableColumn("Name", dataModel) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
 		if (role == Qt::DisplayRole || role == Qt::EditRole)
-			return QString::fromStdString(dataModel.montageTable->row(row).name);
+			return QString::fromStdString(dataModel->montageTable()->row(row).name);
 
 		return QVariant();
 	}
@@ -28,9 +28,9 @@ public:
 	{
 		if (role == Qt::EditRole)
 		{
-			Montage m = dataModel.montageTable->row(row);
+			Montage m = dataModel->montageTable()->row(row);
 			m.name = value.toString().toStdString();
-			dataModel.montageTable->row(row, m);
+			dataModel->montageTable()->row(row, m);
 			return true;
 		}
 
@@ -41,12 +41,12 @@ public:
 class Save : public BoolTableColumn
 {
 public:
-	Save(DataModel dataModel) : BoolTableColumn("Save", dataModel) {}
+	Save(DataModel* dataModel) : BoolTableColumn("Save", dataModel) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
 		if (role == Qt::DisplayRole || role == Qt::EditRole)
-			return dataModel.montageTable->row(row).save;
+			return dataModel->montageTable()->row(row).save;
 
 		return QVariant();
 	}
@@ -55,9 +55,9 @@ public:
 	{
 		if (role == Qt::EditRole)
 		{
-			Montage m = dataModel.montageTable->row(row);
+			Montage m = dataModel->montageTable()->row(row);
 			m.save = value.toBool();
-			dataModel.montageTable->row(row, m);
+			dataModel->montageTable()->row(row, m);
 			return true;
 		}
 
@@ -72,7 +72,7 @@ MontageTableModel::MontageTableModel(DataFile* file, QObject* parent) : TableMod
 	columns.push_back(new Name(file->getDataModel()));
 	columns.push_back(new Save(file->getDataModel()));
 
-	auto vitness = VitnessMontageTable::vitness(file->getDataModel().montageTable);
+	auto vitness = VitnessMontageTable::vitness(file->getDataModel()->montageTable());
 	connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(emitDataChanged(int, int)));
 	connect(vitness, SIGNAL(rowsInserted(int, int)), this, SLOT(insertDataModelRows(int, int)));
 }
@@ -80,15 +80,15 @@ MontageTableModel::MontageTableModel(DataFile* file, QObject* parent) : TableMod
 int MontageTableModel::rowCount(const QModelIndex& parent) const
 {
 	(void)parent;
-	return file->getDataModel().montageTable->rowCount();
+	return file->getDataModel()->montageTable()->rowCount();
 }
 
 void MontageTableModel::insertRowBack()
 {
-	file->getDataModel().montageTable->insertRows(file->getDataModel().montageTable->rowCount());
+	file->getDataModel()->montageTable()->insertRows(file->getDataModel()->montageTable()->rowCount());
 }
 
 void MontageTableModel::removeRowsFromDataModel(int row, int count)
 {
-	file->getDataModel().montageTable->removeRows(row, count);
+	file->getDataModel()->montageTable()->removeRows(row, count);
 }

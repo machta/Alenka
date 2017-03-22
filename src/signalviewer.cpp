@@ -4,7 +4,7 @@
 #include "options.h"
 #include <AlenkaFile/datafile.h>
 #include "tracklabelbar.h"
-#include "signalfilebrowserwindow.h"
+#include "DataModel/opendatafile.h"
 
 #include <QScrollBar>
 #include <QVBoxLayout>
@@ -53,12 +53,12 @@ void SignalViewer::changeFile(AlenkaFile::DataFile* file)
 
 	if (file)
 	{
-		auto c = connect(scrollBar, SIGNAL(valueChanged(int)), &SignalFileBrowserWindow::infoTable, SLOT(setPosition(int)));
+		auto c = connect(scrollBar, SIGNAL(valueChanged(int)), &OpenDataFile::infoTable, SLOT(setPosition(int)));
 		openFileConnections.push_back(c);
-		c = connect(&SignalFileBrowserWindow::infoTable, SIGNAL(positionChanged(int)), this, SLOT(setPosition(int)));
+		c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int)), this, SLOT(setPosition(int)));
 		openFileConnections.push_back(c);
 
-		c = connect(&SignalFileBrowserWindow::infoTable, SIGNAL(virtualWidthChanged(int)), this, SLOT(setVirtualWidth(int)));
+		c = connect(&OpenDataFile::infoTable, SIGNAL(virtualWidthChanged(int)), this, SLOT(setVirtualWidth(int)));
 		openFileConnections.push_back(c);
 
 		c = connect(canvas, SIGNAL(cursorPositionTrackChanged(int)), trackLabelBar, SLOT(setSelectedTrack(int)));
@@ -80,7 +80,7 @@ void SignalViewer::updateSignalViewer()
 
 void SignalViewer::resizeEvent(QResizeEvent*)
 {
-	resize(SignalFileBrowserWindow::infoTable.getVirtualWidth());
+	resize(OpenDataFile::infoTable.getVirtualWidth());
 }
 
 void SignalViewer::wheelEvent(QWheelEvent* event)
@@ -115,11 +115,11 @@ int SignalViewer::virtualWidthFromScrollBar()
 void SignalViewer::setVirtualWidth(int value)
 {
 	// This version makes sure that the position indicator stays at the same time.
-	double oldPosition = scrollBar->value() + SignalFileBrowserWindow::infoTable.getPositionIndicator()*canvas->width();
+	double oldPosition = scrollBar->value() + OpenDataFile::infoTable.getPositionIndicator()*canvas->width();
 	double ratio = static_cast<double>(value)/virtualWidthFromScrollBar();
 
 	resize(value);
-	setPosition(round(oldPosition*ratio - SignalFileBrowserWindow::infoTable.getPositionIndicator()*canvas->width()));
+	setPosition(round(oldPosition*ratio - OpenDataFile::infoTable.getPositionIndicator()*canvas->width()));
 
 	canvas->update();
 }

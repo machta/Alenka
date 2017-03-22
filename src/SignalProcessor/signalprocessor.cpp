@@ -1,6 +1,6 @@
 #include "signalprocessor.h"
 
-#include "../signalfilebrowserwindow.h"
+#include "../DataModel/opendatafile.h"
 #include <AlenkaFile/datafile.h>
 #include "../myapplication.h"
 #include "kernelcache.h"
@@ -38,7 +38,7 @@ AlenkaSignal::WindowFunction resolveWindow()
 
 AbstractTrackTable* getTrackTable(DataFile* file)
 {
-	return file->getDataModel().montageTable->trackTable(SignalFileBrowserWindow::infoTable.getSelectedMontage());
+	return file->getDataModel()->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
 }
 
 } // namespace
@@ -122,12 +122,12 @@ void SignalProcessor::updateFilter()
 	AlenkaSignal::Filter<float> filter(M, file->getSamplingFrequency()); // Possibly could save this object so that it won't be created from scratch everytime.
 
 	filter.lowpass(true);
-	filter.setLowpass(SignalFileBrowserWindow::infoTable.getLowpassFrequency());
+	filter.setLowpass(OpenDataFile::infoTable.getLowpassFrequency());
 
 	filter.highpass(true);
-	filter.setHighpass(SignalFileBrowserWindow::infoTable.getHighpassFrequency());
+	filter.setHighpass(OpenDataFile::infoTable.getHighpassFrequency());
 
-	filter.notch(SignalFileBrowserWindow::infoTable.getNotch());
+	filter.notch(OpenDataFile::infoTable.getNotch());
 	filter.setNotch(50);
 
 	filterProcessor->changeSampleFilter(M, filter.computeSamples());

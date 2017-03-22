@@ -7,7 +7,7 @@
 #include "signalviewer.h"
 #include "SignalProcessor/signalblock.h"
 #include "SignalProcessor/signalprocessor.h"
-#include "signalfilebrowserwindow.h"
+#include "DataModel/opendatafile.h"
 #include "DataModel/vitnessdatamodel.h"
 
 #include <QMatrix4x4>
@@ -33,19 +33,19 @@ const double trackZoomFactor = 1.3;
 void getEventTypeColorOpacity(DataFile* file, int type, QColor* color, double* opacity)
 {
 	assert(color && opacity);
-	EventType et = file->getDataModel().eventTypeTable->row(type);
-	*color = SignalFileBrowserWindow::array2color(et.color);
+	EventType et = file->getDataModel()->eventTypeTable()->row(type);
+	*color = DataModel::array2color<QColor>(et.color);
 	*opacity = et.opacity;
 }
 
 AbstractTrackTable* getTrackTable(DataFile* file)
 {
-	return file->getDataModel().montageTable->trackTable(SignalFileBrowserWindow::infoTable.getSelectedMontage());
+	return file->getDataModel()->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
 }
 
 AbstractEventTable* getEventTable(DataFile* file)
 {
-	return file->getDataModel().montageTable->eventTable(SignalFileBrowserWindow::infoTable.getSelectedMontage());
+	return file->getDataModel()->montageTable()->eventTable(OpenDataFile::infoTable.getSelectedMontage());
 }
 
 void zoom(double factor, AbstractTrackTable* trackTable, int i)
@@ -82,7 +82,7 @@ void getEventsForRendering(DataFile* file, int firstSample, int lastSample, vect
 		Event e = eventTable->row(i);
 
 		if (e.position <= lastSample && firstSample <= e.position + e.duration - 1 && e.type >= 0 && e.channel >= -1 &&
-			file->getDataModel().eventTypeTable->row(e.type).hidden == false)
+			file->getDataModel()->eventTypeTable()->row(e.type).hidden == false)
 		{
 			if (e.channel == - 1)
 			{
@@ -138,18 +138,18 @@ void Canvas::changeFile(DataFile* file)
 
 	if (file)
 	{
-		auto c = connect(&SignalFileBrowserWindow::infoTable, SIGNAL(lowpassFrequencyChanged(double)), this, SLOT(updateFilter()));
+		auto c = connect(&OpenDataFile::infoTable, SIGNAL(lowpassFrequencyChanged(double)), this, SLOT(updateFilter()));
 		openFileConnections.push_back(c);
-		c = connect(&SignalFileBrowserWindow::infoTable, SIGNAL(highpassFrequencyChanged(double)), this, SLOT(updateFilter()));
+		c = connect(&OpenDataFile::infoTable, SIGNAL(highpassFrequencyChanged(double)), this, SLOT(updateFilter()));
 		openFileConnections.push_back(c);
-		c = connect(&SignalFileBrowserWindow::infoTable, SIGNAL(notchChanged(bool)), this, SLOT(updateFilter()));
+		c = connect(&OpenDataFile::infoTable, SIGNAL(notchChanged(bool)), this, SLOT(updateFilter()));
 
 
-		c = connect(&SignalFileBrowserWindow::infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(selectMontage()));
+		c = connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(selectMontage()));
 		openFileConnections.push_back(c);
 		//selectMontage();
 
-		c = connect(&SignalFileBrowserWindow::infoTable, SIGNAL(positionChanged(int)), this, SLOT(updateCursor()));
+		c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int)), this, SLOT(updateCursor()));
 		openFileConnections.push_back(c);
 
 		samplesRecorded = file->getSamplesRecorded();
@@ -185,8 +185,8 @@ void Canvas::updateCursor()
 	{
 		QPoint pos = mapFromGlobal(QCursor::pos());
 
-		double ratio = samplesRecorded/SignalFileBrowserWindow::infoTable.getVirtualWidth();
-		int sample = round((pos.x() + SignalFileBrowserWindow::infoTable.getPosition())*ratio);
+		double ratio = samplesRecorded/OpenDataFile::infoTable.getVirtualWidth();
+		int sample = round((pos.x() + OpenDataFile::infoTable.getPosition())*ratio);
 
 		double trackHeigth = static_cast<double>(height())/signalProcessor->getTrackCount();
 		int track = static_cast<int>(pos.y()/trackHeigth);
@@ -300,10 +300,10 @@ void Canvas::paintGL()
 	if (ready())
 	{
 		// Calculate the transformMatrix.
-		double ratio = samplesRecorded/SignalFileBrowserWindow::infoTable.getVirtualWidth();
+		double ratio = samplesRecorded/OpenDataFile::infoTable.getVirtualWidth();
 
 		QMatrix4x4 matrix;
-		matrix.ortho(QRectF(SignalFileBrowserWindow::infoTable.getPosition()*ratio, 0, width()*ratio, height()));
+		matrix.ortho(QRectF(OpenDataFile::infoTable.getPosition()*ratio, 0, width()*ratio, height()));
 
 		gl()->glUseProgram(signalProgram->getGLProgram());
 
@@ -332,8 +332,8 @@ void Canvas::paintGL()
 		gl()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
 
 		// Create the data block range needed.
-		int firstSample = static_cast<unsigned int>(floor(SignalFileBrowserWindow::infoTable.getPosition()*ratio));
-		int lastSample = static_cast<unsigned int>(ceil((SignalFileBrowserWindow::infoTable.getPosition() + width())*ratio));
+		int firstSample = static_cast<unsigned int>(floor(OpenDataFile::infoTable.getPosition()*ratio));
+		int lastSample = static_cast<unsigned int>(ceil((OpenDataFile::infoTable.getPosition() + width())*ratio));
 
 		auto fromTo = sampleRangeToBlockRange(make_pair(firstSample, lastSample), signalProcessor->getBlockSize());
 
@@ -417,7 +417,7 @@ void Canvas::wheelEvent(QWheelEvent* event)
 			horizontalZoom(1/horizontalZoomFactor);
 
 		updateCursor();
-		emit SignalFileBrowserWindow::infoTable.positionIndicatorChanged(SignalFileBrowserWindow::infoTable.getPositionIndicator());
+		emit OpenDataFile::infoTable.positionIndicatorChanged(OpenDataFile::infoTable.getPositionIndicator());
 
 		update();
 		event->accept();
@@ -460,7 +460,7 @@ void Canvas::keyPressEvent(QKeyEvent* event)
 
 		if (0 <= indicator && indicator <= 1)
 		{
-			SignalFileBrowserWindow::infoTable.setPositionIndicator(indicator);
+			OpenDataFile::infoTable.setPositionIndicator(indicator);
 			update();
 		}
 	}
@@ -500,8 +500,8 @@ void Canvas::mousePressEvent(QMouseEvent* event)
 			{
 				isDrawingEvent = true;
 
-				double ratio = samplesRecorded/SignalFileBrowserWindow::infoTable.getVirtualWidth();
-				eventStart = eventEnd = (event->pos().x() + SignalFileBrowserWindow::infoTable.getPosition())*ratio;
+				double ratio = samplesRecorded/OpenDataFile::infoTable.getVirtualWidth();
+				eventStart = eventEnd = (event->pos().x() + OpenDataFile::infoTable.getPosition())*ratio;
 
 				if (event->modifiers() == Qt::ShiftModifier)
 					eventTrack = -1;
@@ -586,7 +586,7 @@ void Canvas::drawAllChannelEvents(const vector<tuple<int, int, int>>& eventVecto
 		{
 			QColor color(Qt::blue);
 			double opacity = 0.5;
-			int type = SignalFileBrowserWindow::infoTable.getSelectedType();
+			int type = OpenDataFile::infoTable.getSelectedType();
 			if (type != -1)
 			{
 				getEventTypeColorOpacity(file, type, &color, &opacity);
@@ -616,7 +616,7 @@ void Canvas::drawAllChannelEvent(int from, int to)
 
 void Canvas::drawTimeLines()
 {
-	double interval = SignalFileBrowserWindow::infoTable.getTimeLineInterval();
+	double interval = OpenDataFile::infoTable.getTimeLineInterval();
 
 	gl()->glUseProgram(rectangleLineProgram->getGLProgram());
 	glBindVertexArray(rectangleLineArray);
@@ -624,10 +624,10 @@ void Canvas::drawTimeLines()
 
 	setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::green), 1);
 
-	double ratio = samplesRecorded/SignalFileBrowserWindow::infoTable.getVirtualWidth();
+	double ratio = samplesRecorded/OpenDataFile::infoTable.getVirtualWidth();
 	interval *= samplingFrequency;
 
-	double position = SignalFileBrowserWindow::infoTable.getPosition()*ratio;
+	double position = OpenDataFile::infoTable.getPosition()*ratio;
 	double end = position + width()*ratio;
 
 	int nextPosition = ceil(position/interval)*interval;
@@ -651,8 +651,8 @@ void Canvas::drawPositionIndicator()
 
 	setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::blue), 1);
 
-	double ratio = samplesRecorded/SignalFileBrowserWindow::infoTable.getVirtualWidth();
-	double position = (SignalFileBrowserWindow::infoTable.getPosition() + width()*SignalFileBrowserWindow::infoTable.getPositionIndicator())*ratio;
+	double ratio = samplesRecorded/OpenDataFile::infoTable.getVirtualWidth();
+	double position = (OpenDataFile::infoTable.getPosition() + width()*OpenDataFile::infoTable.getPositionIndicator())*ratio;
 
 	drawTimeLine(position);
 }
@@ -672,9 +672,9 @@ void Canvas::drawCross()
 
 	setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::black), 1);
 
-	double ratio = samplesRecorded/SignalFileBrowserWindow::infoTable.getVirtualWidth();
+	double ratio = samplesRecorded/OpenDataFile::infoTable.getVirtualWidth();
 
-	double position = (SignalFileBrowserWindow::infoTable.getPosition() + pos.x())*ratio;
+	double position = (OpenDataFile::infoTable.getPosition() + pos.x())*ratio;
 
 	float data[8] = {static_cast<float>(position), 0, static_cast<float>(position), static_cast<float>(height()), 0, static_cast<float>(pos.y()), static_cast<float>(samplesRecorded), static_cast<float>(pos.y())};
 
@@ -751,7 +751,7 @@ void Canvas::drawSingleChannelEvents(const SignalBlock& block, const vector<tupl
 
 			QColor color(Qt::blue);
 			double opacity = 0.5;
-			int type = SignalFileBrowserWindow::infoTable.getSelectedType();
+			int type = OpenDataFile::infoTable.getSelectedType();
 			if (type != -1)
 				getEventTypeColorOpacity(file, type, &color, &opacity);
 			setUniformColor(eventProgram->getGLProgram(), color, opacity);
@@ -803,7 +803,7 @@ void Canvas::drawSignal(const SignalBlock& block)
 
 		setUniformTrack(signalProgram->getGLProgram(), track + hidden, hidden, block);
 
-		QColor color = SignalFileBrowserWindow::array2color(getTrackTable(file)->row(track + hidden).color);
+		QColor color = DataModel::array2color<QColor>(getTrackTable(file)->row(track + hidden).color);
 		if (isSelectingTrack && track == cursorTrack)
 			color = modifySelectionColor(color);
 
@@ -849,7 +849,7 @@ void Canvas::checkGLMessages()
 
 void Canvas::horizontalZoom(double factor)
 {
-	SignalFileBrowserWindow::infoTable.setVirtualWidth(SignalFileBrowserWindow::infoTable.getVirtualWidth()*factor);
+	OpenDataFile::infoTable.setVirtualWidth(OpenDataFile::infoTable.getVirtualWidth()*factor);
 }
 
 void Canvas::verticalZoom(double factor)
@@ -883,7 +883,7 @@ void Canvas::addEvent(int channel)
 
 	Event e = eventTable->row(index);
 
-	e.type = SignalFileBrowserWindow::infoTable.getSelectedType();
+	e.type = OpenDataFile::infoTable.getSelectedType();
 	if (eventEnd < eventStart)
 		swap(eventStart, eventEnd);
 	e.position = eventStart;
