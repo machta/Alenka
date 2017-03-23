@@ -31,7 +31,7 @@ void TrackLabelBar::paintEvent(QPaintEvent* /*event*/)
 	if (!file)
 		return;
 
-	AbstractTrackTable* trackTable = file->dataModel->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
+	const AbstractTrackTable* trackTable = file->dataModel->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
 
 	int totalTracks = 0;
 	for (int i = 0; i < trackTable->rowCount(); ++i)

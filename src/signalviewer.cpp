@@ -78,8 +78,9 @@ void SignalViewer::updateSignalViewer()
 	update();
 }
 
-void SignalViewer::resizeEvent(QResizeEvent*)
+void SignalViewer::resizeEvent(QResizeEvent* event)
 {
+	(void)event;
 	resize(OpenDataFile::infoTable.getVirtualWidth());
 }
 

@@ -4,13 +4,13 @@
 #include "infotable.h"
 #include <AlenkaFile/datafile.h>
 
-class QUndoStack;
+class UndoCommandFactory;
 
 struct OpenDataFile
 {
 	AlenkaFile::DataFile* file;
-	AlenkaFile::DataModel* dataModel;
-	QUndoStack* undoStack;
+	const AlenkaFile::DataModel* dataModel;
+	UndoCommandFactory* undoFactory;
 
 	static InfoTable infoTable;
 };

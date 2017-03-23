@@ -3,6 +3,7 @@
 #include "../myapplication.h"
 #include "tablemodel.h"
 #include "sortproxymodel.h"
+#include "../DataModel/undocommandfactory.h"
 
 #include <QTableView>
 #include <QPushButton>
@@ -249,6 +250,8 @@ void Manager::copyHtml()
 
 void Manager::paste()
 {
+	file->undoFactory->beginMacro("paste");
+
 	int startRow, startColumn;
 
 	auto index = tableView->selectionModel()->currentIndex();
@@ -288,4 +291,6 @@ void Manager::paste()
 			++column;
 		}
 	}
+
+	file->undoFactory->endMacro();
 }

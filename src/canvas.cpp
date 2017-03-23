@@ -9,6 +9,7 @@
 #include "SignalProcessor/signalprocessor.h"
 #include "DataModel/opendatafile.h"
 #include "DataModel/vitnessdatamodel.h"
+#include "DataModel/undocommandfactory.h"
 
 #include <QMatrix4x4>
 #include <QWheelEvent>
@@ -28,7 +29,7 @@ namespace
 
 const double horizontalZoomFactor = 1.3;
 const double verticalZoomFactor = 1.3;
-const double trackZoomFactor = 1.3;
+const double trackZoomFactor = verticalZoomFactor;
 
 void getEventTypeColorOpacity(OpenDataFile* file, int type, QColor* color, double* opacity)
 {
@@ -38,23 +39,24 @@ void getEventTypeColorOpacity(OpenDataFile* file, int type, QColor* color, doubl
 	*opacity = et.opacity;
 }
 
-AbstractTrackTable* getTrackTable(OpenDataFile* file)
+const AbstractTrackTable* getTrackTable(OpenDataFile* file)
 {
 	return file->dataModel->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
 }
 
-AbstractEventTable* getEventTable(OpenDataFile* file)
+const AbstractEventTable* getEventTable(OpenDataFile* file)
 {
 	return file->dataModel->montageTable()->eventTable(OpenDataFile::infoTable.getSelectedMontage());
 }
 
-void zoom(double factor, AbstractTrackTable* trackTable, int i)
+void zoom(OpenDataFile* file, double factor, int i)
 {
-	Track t = trackTable->row(i);
-	double value = t.amplitude*factor;
-	value = value != 0 ? value : -0.000001;
-	t.amplitude = value;
-	trackTable->row(i, t);
+	Track track = getTrackTable(file)->row(i);
+
+	double value = track.amplitude*factor;
+	track.amplitude = value != 0 ? value : -0.000001;
+
+	file->undoFactory->changeTrack(OpenDataFile::infoTable.getSelectedMontage(), i, track, "zoom track");
 }
 
 /**
@@ -75,7 +77,7 @@ pair<int64_t, int64_t> sampleRangeToBlockRange(pair<int64_t, int64_t> range, uns
 
 void getEventsForRendering(OpenDataFile* file, int firstSample, int lastSample, vector<tuple<int, int, int>>* allChannelEvents, vector<tuple<int, int, int, int>>* singleChannelEvents)
 {
-	AbstractEventTable* eventTable = getEventTable(file);
+	const AbstractEventTable* eventTable = getEventTable(file);
 
 	for (int i = 0; i < eventTable->rowCount(); ++i)
 	{
@@ -177,6 +179,47 @@ QColor Canvas::modifySelectionColor(const QColor& color)
 	newColor.setGreenF(colorComponents[1]);
 	newColor.setBlueF(colorComponents[2]);
 	return newColor;
+}
+
+void Canvas::horizontalZoom(bool reverse)
+{
+	double factor = horizontalZoomFactor;
+	if (reverse)
+		factor = 1/factor;
+
+	OpenDataFile::infoTable.setVirtualWidth(OpenDataFile::infoTable.getVirtualWidth()*factor);
+}
+
+void Canvas::verticalZoom(bool reverse)
+{
+	if (file)
+	{
+		double factor = verticalZoomFactor;
+		if (reverse)
+			factor = 1/factor;
+
+		file->undoFactory->beginMacro("vertical zoom");
+
+		for (int i = 0; i < getTrackTable(file)->rowCount(); ++i)
+			zoom(file, factor, i);
+
+		file->undoFactory->endMacro();
+	}
+}
+
+void Canvas::trackZoom(bool reverse)
+{
+	if (file)
+	{
+		double factor = trackZoomFactor;
+		if (reverse)
+			factor = 1/factor;
+
+		int track = cursorTrack;
+		track += countHiddenTracks(track);
+
+		zoom(file, factor, track);
+	}
 }
 
 void Canvas::updateCursor()
@@ -382,15 +425,15 @@ void Canvas::paintGL()
 
 void Canvas::wheelEvent(QWheelEvent* event)
 {
-	bool isUp;
+	bool isDown;
 
 	if (event->angleDelta().isNull() == false)
 	{
-		isUp = event->angleDelta().x() + event->angleDelta().y() > 0;
+		isDown = event->angleDelta().x() + event->angleDelta().y() < 0;
 	}
 	else if (event->pixelDelta().isNull() == false)
 	{
-		isUp = event->pixelDelta().x() + event->pixelDelta().y() > 0;
+		isDown = event->pixelDelta().x() + event->pixelDelta().y() < 0;
 	}
 	else
 	{
@@ -400,10 +443,7 @@ void Canvas::wheelEvent(QWheelEvent* event)
 
 	if (event->modifiers() & Qt::ControlModifier)
 	{
-		if (isUp)
-			trackZoom(trackZoomFactor);
-		else
-			trackZoom(1/trackZoomFactor);
+		trackZoom(isDown);
 
 		update();
 		event->accept();
@@ -411,10 +451,7 @@ void Canvas::wheelEvent(QWheelEvent* event)
 	}
 	else if (event->modifiers() & Qt::AltModifier)
 	{
-		if (isUp)
-			horizontalZoom(horizontalZoomFactor);
-		else
-			horizontalZoom(1/horizontalZoomFactor);
+		horizontalZoom(isDown);
 
 		updateCursor();
 		emit OpenDataFile::infoTable.positionIndicatorChanged(OpenDataFile::infoTable.getPositionIndicator());
@@ -425,10 +462,7 @@ void Canvas::wheelEvent(QWheelEvent* event)
 	}
 	else if (event->modifiers() & Qt::ShiftModifier)
 	{
-		if (isUp)
-			verticalZoom(verticalZoomFactor);
-		else
-			verticalZoom(1/verticalZoomFactor);
+		verticalZoom(isDown);
 
 		update();
 		event->accept();
@@ -699,7 +733,7 @@ void Canvas::drawSingleChannelEvents(const SignalBlock& block, const vector<tupl
 
 	glBindVertexArray(block.getArray());
 
-	AbstractTrackTable* trackTable = getTrackTable(file);
+	const AbstractTrackTable* trackTable = getTrackTable(file);
 	int event = 0, type = -1, track = -1, hidden = 0;
 
 	while (event < static_cast<int>(eventVector.size()))
@@ -847,39 +881,14 @@ void Canvas::checkGLMessages()
 		logToFile("OpenGL message: " << m.message().toStdString());
 }
 
-void Canvas::horizontalZoom(double factor)
-{
-	OpenDataFile::infoTable.setVirtualWidth(OpenDataFile::infoTable.getVirtualWidth()*factor);
-}
-
-void Canvas::verticalZoom(double factor)
-{
-	if (file)
-	{
-		AbstractTrackTable* trackTable = getTrackTable(file);
-
-		for (int i = 0; i < trackTable->rowCount(); ++i)
-			zoom(factor, trackTable, i);
-	}
-}
-
-void Canvas::trackZoom(double factor)
-{
-	if (file)
-	{
-		int track = cursorTrack;
-		track += countHiddenTracks(track);
-
-		zoom(factor, getTrackTable(file), track);
-	}
-}
-
 void Canvas::addEvent(int channel)
 {
-	AbstractEventTable* eventTable = getEventTable(file);
+	file->undoFactory->beginMacro("add event");
+
+	const AbstractEventTable* eventTable = getEventTable(file);
 
 	int index = eventTable->rowCount();
-	eventTable->insertRows(index);
+	file->undoFactory->insertEvent(OpenDataFile::infoTable.getSelectedMontage(), index);
 
 	Event e = eventTable->row(index);
 
@@ -890,7 +899,9 @@ void Canvas::addEvent(int channel)
 	e.duration = eventEnd - eventStart + 1;
 	e.channel = channel + countHiddenTracks(channel);
 
-	eventTable->row(index, e);
+	file->undoFactory->changeEvent(OpenDataFile::infoTable.getSelectedMontage(), index, e);
+
+	file->undoFactory->endMacro();
 }
 
 int Canvas::countHiddenTracks(int track)

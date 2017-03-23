@@ -2,21 +2,12 @@
 
 #include <AlenkaFile/datafile.h>
 #include "../DataModel/opendatafile.h"
+#include "../DataModel/undocommandfactory.h"
 
 using namespace AlenkaFile;
 
-namespace
-{
-
-AbstractTrackTable* currentTrackTable(DataModel* dataModel)
-{
-	return dataModel->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
-}
-
-} // namespace
-
 void TrackManager::insertRowBack()
 {
-	int rc = currentTrackTable(file->dataModel)->rowCount();
-	currentTrackTable(file->dataModel)->insertRows(rc);
+	int rc = file->dataModel->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage())->rowCount();
+	file->undoFactory->insertTrack(OpenDataFile::infoTable.getSelectedMontage(), rc, 1, "add Track row");
 }

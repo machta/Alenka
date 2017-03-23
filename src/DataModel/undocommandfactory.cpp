@@ -1,5 +1,8 @@
 #include "undocommandfactory.h"
 
+#include <QUndoStack>
+#include <QUndoCommand>
+
 #include <cassert>
 
 using namespace std;
@@ -10,206 +13,206 @@ namespace
 
 class ChangeEventType : public QUndoCommand
 {
-	DataFile* file;
+	DataModel* dataModel;
 	int i;
 	EventType before, after;
 
 public:
-	ChangeEventType(DataFile* file, int i, const EventType& value, const QString& text) :
-		QUndoCommand(text), file(file), i(i), after(value)
+	ChangeEventType(DataModel* dataModel, int i, const EventType& value, const QString& text) :
+		QUndoCommand(text), dataModel(dataModel), i(i), after(value)
 	{
-		before = file->getDataModel()->eventTypeTable()->row(i);
+		before = dataModel->eventTypeTable()->row(i);
 	}
 	virtual void redo() override
 	{
-		file->getDataModel()->eventTypeTable()->row(i, after);
+		dataModel->eventTypeTable()->row(i, after);
 	}
 	virtual void undo() override
 	{
-		file->getDataModel()->eventTypeTable()->row(i, before);
+		dataModel->eventTypeTable()->row(i, before);
 	}
 };
 
 class ChangeMontage : public QUndoCommand
 {
-	DataFile* file;
+	DataModel* dataModel;
 	int i;
 	Montage before, after;
 
 public:
-	ChangeMontage(DataFile* file, int i, const Montage& value, const QString& text) :
-		QUndoCommand(text), file(file), i(i), after(value)
+	ChangeMontage(DataModel* dataModel, int i, const Montage& value, const QString& text) :
+		QUndoCommand(text), dataModel(dataModel), i(i), after(value)
 	{
-		before = file->getDataModel()->montageTable()->row(i);
+		before = dataModel->montageTable()->row(i);
 	}
 	virtual void redo() override
 	{
-		file->getDataModel()->montageTable()->row(i, after);
+		dataModel->montageTable()->row(i, after);
 	}
 	virtual void undo() override
 	{
-		file->getDataModel()->montageTable()->row(i, before);
+		dataModel->montageTable()->row(i, before);
 	}
 };
 
 class ChangeEvent : public QUndoCommand
 {
-	DataFile* file;
+	DataModel* dataModel;
 	int i, j;
 	Event before, after;
 
 public:
-	ChangeEvent(DataFile* file, int i, int j, const Event& value, const QString& text) :
-		QUndoCommand(text), file(file), i(i), j(j), after(value)
+	ChangeEvent(DataModel* dataModel, int i, int j, const Event& value, const QString& text) :
+		QUndoCommand(text), dataModel(dataModel), i(i), j(j), after(value)
 	{
-		before = file->getDataModel()->montageTable()->eventTable(i)->row(j);
+		before = dataModel->montageTable()->eventTable(i)->row(j);
 	}
 	virtual void redo() override
 	{
-		file->getDataModel()->montageTable()->eventTable(i)->row(j, after);
+		dataModel->montageTable()->eventTable(i)->row(j, after);
 	}
 	virtual void undo() override
 	{
-		file->getDataModel()->montageTable()->eventTable(i)->row(j, before);
+		dataModel->montageTable()->eventTable(i)->row(j, before);
 	}
 };
 
 class ChangeTrack : public QUndoCommand
 {
-	DataFile* file;
+	DataModel* dataModel;
 	int i, j;
 	Track before, after;
 
 public:
-	ChangeTrack(DataFile* file, int i, int j, const Track& value, const QString& text) :
-		QUndoCommand(text), file(file), i(i), j(j), after(value)
+	ChangeTrack(DataModel* dataModel, int i, int j, const Track& value, const QString& text) :
+		QUndoCommand(text), dataModel(dataModel), i(i), j(j), after(value)
 	{
-		before = file->getDataModel()->montageTable()->trackTable(i)->row(j);
+		before = dataModel->montageTable()->trackTable(i)->row(j);
 	}
 	virtual void redo() override
 	{
-		file->getDataModel()->montageTable()->trackTable(i)->row(j, after);
+		dataModel->montageTable()->trackTable(i)->row(j, after);
 	}
 	virtual void undo() override
 	{
-		file->getDataModel()->montageTable()->trackTable(i)->row(j, before);
+		dataModel->montageTable()->trackTable(i)->row(j, before);
 	}
 };
 
 class InsertEventType : public QUndoCommand
 {
-	DataFile* file;
+	DataModel* dataModel;
 	int i, c;
 
 public:
-	InsertEventType(DataFile* file, int i, int c, const QString& text) :
-		QUndoCommand(text), file(file), i(i), c(c) {}
+	InsertEventType(DataModel* dataModel, int i, int c, const QString& text) :
+		QUndoCommand(text), dataModel(dataModel), i(i), c(c) {}
 	virtual void redo() override
 	{
-		file->getDataModel()->eventTypeTable()->insertRows(i, c);
+		dataModel->eventTypeTable()->insertRows(i, c);
 	}
 	virtual void undo() override
 	{
-		file->getDataModel()->eventTypeTable()->removeRows(i, c);
+		dataModel->eventTypeTable()->removeRows(i, c);
 	}
 };
 
 class InsertMontage: public QUndoCommand
 {
-	DataFile* file;
+	DataModel* dataModel;
 	int i, c;
 
 public:
-	InsertMontage(DataFile* file, int i, int c, const QString& text) :
-		QUndoCommand(text), file(file), i(i), c(c) {}
+	InsertMontage(DataModel* dataModel, int i, int c, const QString& text) :
+		QUndoCommand(text), dataModel(dataModel), i(i), c(c) {}
 	virtual void redo() override
 	{
-		file->getDataModel()->montageTable()->insertRows(i, c);
+		dataModel->montageTable()->insertRows(i, c);
 	}
 	virtual void undo() override
 	{
-		file->getDataModel()->montageTable()->removeRows(i, c);
+		dataModel->montageTable()->removeRows(i, c);
 	}
 };
 
 class InsertEvent: public QUndoCommand
 {
-	DataFile* file;
+	DataModel* dataModel;
 	int i, j, c;
 
 public:
-	InsertEvent(DataFile* file, int i, int j, int c, const QString& text) :
-		QUndoCommand(text), file(file), i(i), j(j), c(c) {}
+	InsertEvent(DataModel* dataModel, int i, int j, int c, const QString& text) :
+		QUndoCommand(text), dataModel(dataModel), i(i), j(j), c(c) {}
 	virtual void redo() override
 	{
-		file->getDataModel()->montageTable()->eventTable(i)->insertRows(j, c);
+		dataModel->montageTable()->eventTable(i)->insertRows(j, c);
 	}
 	virtual void undo() override
 	{
-		file->getDataModel()->montageTable()->eventTable(i)->removeRows(j, c);
+		dataModel->montageTable()->eventTable(i)->removeRows(j, c);
 	}
 };
 
 class InsertTrack: public QUndoCommand
 {
-	DataFile* file;
+	DataModel* dataModel;
 	int i, j, c;
 
 public:
-	InsertTrack(DataFile* file, int i, int j, int c, const QString& text) :
-		QUndoCommand(text), file(file), i(i), j(j), c(c) {}
+	InsertTrack(DataModel* dataModel, int i, int j, int c, const QString& text) :
+		QUndoCommand(text), dataModel(dataModel), i(i), j(j), c(c) {}
 	virtual void redo() override
 	{
-		file->getDataModel()->montageTable()->trackTable(i)->insertRows(j, c);
+		dataModel->montageTable()->trackTable(i)->insertRows(j, c);
 	}
 	virtual void undo() override
 	{
-		file->getDataModel()->montageTable()->trackTable(i)->removeRows(j, c);
+		dataModel->montageTable()->trackTable(i)->removeRows(j, c);
 	}
 };
 
 class RemoveEventType : public QUndoCommand
 {
-	DataFile* file;
+	DataModel* dataModel;
 	int i, c;
 	vector<EventType> before;
 
 public:
-	RemoveEventType(DataFile* file, int i, int c, const QString& text) :
-		QUndoCommand(text), file(file), i(i), c(c)
+	RemoveEventType(DataModel* dataModel, int i, int c, const QString& text) :
+		QUndoCommand(text), dataModel(dataModel), i(i), c(c)
 	{
 		for (int k = 0; k < c; ++k)
-			before.push_back(file->getDataModel()->eventTypeTable()->row(i + k));
+			before.push_back(dataModel->eventTypeTable()->row(i + k));
 	}
 	virtual void redo() override
 	{
-		file->getDataModel()->eventTypeTable()->removeRows(i, c);
+		dataModel->eventTypeTable()->removeRows(i, c);
 	}
 	virtual void undo() override
 	{
-		file->getDataModel()->eventTypeTable()->insertRows(i, c);
+		dataModel->eventTypeTable()->insertRows(i, c);
 
 		for (int k = 0; k < c; ++k)
-			file->getDataModel()->eventTypeTable()->row(i + k, before[k]);
+			dataModel->eventTypeTable()->row(i + k, before[k]);
 	}
 };
 
 class RemoveMontage: public QUndoCommand
 {
-	DataFile* file;
+	DataModel* dataModel;
 	int i, c;
 	vector<Montage> before;
 	vector<vector<Event>> eventsBefore;
 	vector<vector<Track>> tracksBefore;
 
 public:
-	RemoveMontage(DataFile* file, int i, int c, const QString& text) :
-		QUndoCommand(text), file(file), i(i), c(c)
+	RemoveMontage(DataModel* dataModel, int i, int c, const QString& text) :
+		QUndoCommand(text), dataModel(dataModel), i(i), c(c)
 	{
 		eventsBefore.resize(c);
 		tracksBefore.resize(c);
 
-		AbstractMontageTable* mt = file->getDataModel()->montageTable();
+		AbstractMontageTable* mt = dataModel->montageTable();
 
 		for (int k = 0; k < c; ++k)
 			before.push_back(mt->row(i + k));
@@ -230,11 +233,11 @@ public:
 	}
 	virtual void redo() override
 	{
-		file->getDataModel()->montageTable()->removeRows(i, c);
+		dataModel->montageTable()->removeRows(i, c);
 	}
 	virtual void undo() override
 	{
-		AbstractMontageTable* mt = file->getDataModel()->montageTable();
+		AbstractMontageTable* mt = dataModel->montageTable();
 		mt->insertRows(i, c);
 
 		for (int k = 0; k < c; ++k)
@@ -259,114 +262,124 @@ public:
 
 class RemoveEvent: public QUndoCommand
 {
-	DataFile* file;
+	DataModel* dataModel;
 	int i, j, c;
 	vector<Event> before;
 
 public:
-	RemoveEvent(DataFile* file, int i, int j, int c, const QString& text) :
-		QUndoCommand(text), file(file), i(i), j(j), c(c)
+	RemoveEvent(DataModel* dataModel, int i, int j, int c, const QString& text) :
+		QUndoCommand(text), dataModel(dataModel), i(i), j(j), c(c)
 	{
 		for (int k = 0; k < c; ++k)
-			before.push_back(file->getDataModel()->montageTable()->eventTable(i)->row(j + k));
+			before.push_back(dataModel->montageTable()->eventTable(i)->row(j + k));
 	}
 	virtual void redo() override
 	{
-		file->getDataModel()->montageTable()->eventTable(i)->removeRows(j, c);
+		dataModel->montageTable()->eventTable(i)->removeRows(j, c);
 	}
 	virtual void undo() override
 	{
-		file->getDataModel()->montageTable()->eventTable(i)->insertRows(j, c);
+		dataModel->montageTable()->eventTable(i)->insertRows(j, c);
 
 		for (int k = 0; k < c; ++k)
-			file->getDataModel()->montageTable()->eventTable(i)->row(j + k, before[k]);
+			dataModel->montageTable()->eventTable(i)->row(j + k, before[k]);
 	}
 };
 
 class RemoveTrack: public QUndoCommand
 {
-	DataFile* file;
+	DataModel* dataModel;
 	int i, j, c;
 	vector<Track> before;
 
 public:
-	RemoveTrack(DataFile* file, int i, int j, int c, const QString& text) :
-		QUndoCommand(text), file(file), i(i), j(j), c(c)
+	RemoveTrack(DataModel* dataModel, int i, int j, int c, const QString& text) :
+		QUndoCommand(text), dataModel(dataModel), i(i), j(j), c(c)
 	{
 		for (int k = 0; k < c; ++k)
-			before.push_back(file->getDataModel()->montageTable()->trackTable(i)->row(j + k));
+			before.push_back(dataModel->montageTable()->trackTable(i)->row(j + k));
 	}
 	virtual void redo() override
 	{
-		file->getDataModel()->montageTable()->trackTable(i)->removeRows(j, c);
+		dataModel->montageTable()->trackTable(i)->removeRows(j, c);
 	}
 	virtual void undo() override
 	{
-		file->getDataModel()->montageTable()->trackTable(i)->insertRows(j, c);
+		dataModel->montageTable()->trackTable(i)->insertRows(j, c);
 
 		for (int k = 0; k < c; ++k)
-			file->getDataModel()->montageTable()->trackTable(i)->row(j + k, before[k]);
+			dataModel->montageTable()->trackTable(i)->row(j + k, before[k]);
 	}
 };
 
 } // namespace
 
-QUndoCommand* UndoCommandFactory::changeEventType(int i, const EventType& value, const QString& text) const
+void UndoCommandFactory::beginMacro(const QString& text)
 {
-	return new ChangeEventType(file->file, i, value, text);
+	undoStack->beginMacro(text);
 }
 
-QUndoCommand* UndoCommandFactory::changeMontage(int i, const Montage& value, const QString& text) const
+void UndoCommandFactory::endMacro()
 {
-	return new ChangeMontage(file->file, i, value, text);
+	undoStack->endMacro();
 }
 
-QUndoCommand* UndoCommandFactory::changeEvent(int i, int j, const Event& value, const QString& text) const
+void UndoCommandFactory::changeEventType(int i, const EventType& value, const QString& text) const
 {
-	return new ChangeEvent(file->file, i, j, value, text);
+	undoStack->push(new ChangeEventType(dataModel, i, value, text));
 }
 
-QUndoCommand* UndoCommandFactory::changeTrack(int i, int j, const Track& value, const QString& text) const
+void UndoCommandFactory::changeMontage(int i, const Montage& value, const QString& text) const
 {
-	return new ChangeTrack(file->file, i, j, value, text);
+	undoStack->push(new ChangeMontage(dataModel, i, value, text));
 }
 
-QUndoCommand* UndoCommandFactory::insertEventType(int i, int c, const QString& text) const
+void UndoCommandFactory::changeEvent(int i, int j, const Event& value, const QString& text) const
 {
-	return new InsertEventType(file->file, i, c, text);
+	undoStack->push(new ChangeEvent(dataModel, i, j, value, text));
 }
 
-QUndoCommand* UndoCommandFactory::insertMontage(int i, int c, const QString& text) const
+void UndoCommandFactory::changeTrack(int i, int j, const Track& value, const QString& text) const
 {
-	return new InsertMontage(file->file, i, c, text);
+	undoStack->push(new ChangeTrack(dataModel, i, j, value, text));
 }
 
-QUndoCommand* UndoCommandFactory::insertEvent(int i, int j, int c, const QString& text) const
+void UndoCommandFactory::insertEventType(int i, int c, const QString& text) const
 {
-	return new InsertEvent(file->file, i, j, c, text);
+	undoStack->push(new InsertEventType(dataModel, i, c, text));
 }
 
-QUndoCommand* UndoCommandFactory::insertTrack(int i, int j, int c, const QString& text) const
+void UndoCommandFactory::insertMontage(int i, int c, const QString& text) const
 {
-	return new InsertTrack(file->file, i, j, c, text);
+	undoStack->push(new InsertMontage(dataModel, i, c, text));
 }
 
-QUndoCommand* UndoCommandFactory::removeEventType(int i, int c, const QString& text) const
+void UndoCommandFactory::insertEvent(int i, int j, int c, const QString& text) const
 {
-	return new RemoveEventType(file->file, i, c, text);
+	undoStack->push(new InsertEvent(dataModel, i, j, c, text));
 }
 
-QUndoCommand* UndoCommandFactory::removeMontage(int i, int c, const QString& text) const
+void UndoCommandFactory::insertTrack(int i, int j, int c, const QString& text) const
 {
-	return new RemoveMontage(file->file, i, c, text);
+	undoStack->push(new InsertTrack(dataModel, i, j, c, text));
 }
 
-QUndoCommand* UndoCommandFactory::removeEvent(int i, int j, int c, const QString& text) const
+void UndoCommandFactory::removeEventType(int i, int c, const QString& text) const
 {
-	return new RemoveEvent(file->file, i, j, c, text);
+	undoStack->push(new RemoveEventType(dataModel, i, c, text));
 }
 
-QUndoCommand* UndoCommandFactory::removeTrack(int i, int j, int c, const QString& text) const
+void UndoCommandFactory::removeMontage(int i, int c, const QString& text) const
 {
-	return new RemoveTrack(file->file, i, j, c, text);
+	undoStack->push(new RemoveMontage(dataModel, i, c, text));
+}
+
+void UndoCommandFactory::removeEvent(int i, int j, int c, const QString& text) const
+{
+	undoStack->push(new RemoveEvent(dataModel, i, j, c, text));
+}
+
+void UndoCommandFactory::removeTrack(int i, int j, int c, const QString& text) const
+{
+	undoStack->push(new RemoveTrack(dataModel, i, j, c, text));
 }

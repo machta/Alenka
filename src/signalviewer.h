@@ -28,7 +28,7 @@ public:
 	explicit SignalViewer(QWidget* parent = nullptr);
 	~SignalViewer();
 
-	const Canvas* getCanvas() const
+	Canvas* getCanvas()
 	{
 		return canvas;
 	}
@@ -47,7 +47,7 @@ public slots:
 	void updateSignalViewer();
 
 protected:
-	virtual void resizeEvent(QResizeEvent* /*event*/) override;
+	virtual void resizeEvent(QResizeEvent* event) override;
 	virtual void wheelEvent(QWheelEvent* event) override;
 	virtual void keyPressEvent(QKeyEvent* event) override;
 	virtual void keyReleaseEvent(QKeyEvent* event) override;

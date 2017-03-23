@@ -33,9 +33,9 @@ public:
 	virtual void removeRows(int row, int count = 1) override;
 	virtual void row(int i, const AlenkaFile::EventType& value) override;
 
-	static DataModelVitness* vitness(AlenkaFile::AbstractEventTypeTable* table)
+	static const DataModelVitness* vitness(const AlenkaFile::AbstractEventTypeTable* table)
 	{
-		return dynamic_cast<VitnessEventTypeTable*>(table)->vitnessObject;
+		return dynamic_cast<const VitnessEventTypeTable*>(table)->vitnessObject;
 	}
 
 private:
@@ -57,9 +57,9 @@ public:
 	virtual void removeRows(int row, int count = 1) override;
 	virtual void row(int i, const AlenkaFile::Event& value) override;
 
-	static DataModelVitness* vitness(AlenkaFile::AbstractEventTable* table)
+	static const DataModelVitness* vitness(const AlenkaFile::AbstractEventTable* table)
 	{
-		return dynamic_cast<VitnessEventTable*>(table)->vitnessObject;
+		return dynamic_cast<const VitnessEventTable*>(table)->vitnessObject;
 	}
 
 private:
@@ -81,9 +81,9 @@ public:
 	virtual void removeRows(int row, int count = 1) override;
 	virtual void row(int i, const AlenkaFile::Track& value) override;
 
-	static DataModelVitness* vitness(AlenkaFile::AbstractTrackTable* table)
+	static const DataModelVitness* vitness(const AlenkaFile::AbstractTrackTable* table)
 	{
-		return dynamic_cast<VitnessTrackTable*>(table)->vitnessObject;
+		return dynamic_cast<const VitnessTrackTable*>(table)->vitnessObject;
 	}
 
 private:
@@ -105,9 +105,9 @@ public:
 	virtual void removeRows(int row, int count = 1) override;
 	virtual void row(int i, const AlenkaFile::Montage& value) override;
 
-	static DataModelVitness* vitness(AlenkaFile::AbstractMontageTable* table)
+	static const DataModelVitness* vitness(const AlenkaFile::AbstractMontageTable* table)
 	{
-		return dynamic_cast<VitnessMontageTable*>(table)->vitnessObject;
+		return dynamic_cast<const VitnessMontageTable*>(table)->vitnessObject;
 	}
 
 protected:

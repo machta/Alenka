@@ -36,7 +36,7 @@ AlenkaSignal::WindowFunction resolveWindow()
 	return AlenkaSignal::WindowFunction::None;
 }
 
-AbstractTrackTable* getTrackTable(OpenDataFile* file)
+const AbstractTrackTable* getTrackTable(OpenDataFile* file)
 {
 	return file->dataModel->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
 }

@@ -61,6 +61,10 @@ public:
 	 */
 	static QColor modifySelectionColor(const QColor& color);
 
+	void horizontalZoom(bool reverse);
+	void verticalZoom(bool reverse);
+	void trackZoom(bool reverse);
+
 signals:
 	void cursorPositionSampleChanged(int);
 	void cursorPositionTrackChanged(int);
@@ -115,9 +119,6 @@ private:
 	void setUniformTrack(GLuint program, int track, int hidden, const SignalBlock& block);
 	void setUniformColor(GLuint program, const QColor& color, double opacity);
 	void checkGLMessages();
-	void horizontalZoom(double factor);
-	void verticalZoom(double factor);
-	void trackZoom(double factor);
 	void addEvent(int channel);
 	int countHiddenTracks(int track);
 	void setCursorPositionSample(int sample)

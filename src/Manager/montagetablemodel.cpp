@@ -1,6 +1,7 @@
 #include "montagetablemodel.h"
 
 #include "../DataModel/vitnessdatamodel.h"
+#include "../DataModel/undocommandfactory.h"
 
 #include <QColor>
 #include <QLocale>
@@ -14,12 +15,12 @@ namespace
 class Name : public TableColumn
 {
 public:
-	Name(DataModel* dataModel) : TableColumn("Name", dataModel) {}
+	Name(OpenDataFile* file) : TableColumn("Name", file) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
 		if (role == Qt::DisplayRole || role == Qt::EditRole)
-			return QString::fromStdString(dataModel->montageTable()->row(row).name);
+			return QString::fromStdString(file->dataModel->montageTable()->row(row).name);
 
 		return QVariant();
 	}
@@ -28,9 +29,9 @@ public:
 	{
 		if (role == Qt::EditRole)
 		{
-			Montage m = dataModel->montageTable()->row(row);
+			Montage m = file->dataModel->montageTable()->row(row);
 			m.name = value.toString().toStdString();
-			dataModel->montageTable()->row(row, m);
+			file->undoFactory->changeMontage(row, m, "change Name");
 			return true;
 		}
 
@@ -41,12 +42,12 @@ public:
 class Save : public BoolTableColumn
 {
 public:
-	Save(DataModel* dataModel) : BoolTableColumn("Save", dataModel) {}
+	Save(OpenDataFile* file) : BoolTableColumn("Save", file) {}
 
 	virtual QVariant data(int row, int role) const override
 	{
 		if (role == Qt::DisplayRole || role == Qt::EditRole)
-			return dataModel->montageTable()->row(row).save;
+			return file->dataModel->montageTable()->row(row).save;
 
 		return QVariant();
 	}
@@ -55,9 +56,9 @@ public:
 	{
 		if (role == Qt::EditRole)
 		{
-			Montage m = dataModel->montageTable()->row(row);
+			Montage m = file->dataModel->montageTable()->row(row);
 			m.save = value.toBool();
-			dataModel->montageTable()->row(row, m);
+			file->undoFactory->changeMontage(row, m, "change Save");
 			return true;
 		}
 
@@ -69,12 +70,13 @@ public:
 
 MontageTableModel::MontageTableModel(OpenDataFile* file, QObject* parent) : TableModel(file, parent)
 {
-	columns.push_back(new Name(file->dataModel));
-	columns.push_back(new Save(file->dataModel));
+	columns.push_back(new Name(file));
+	columns.push_back(new Save(file));
 
 	auto vitness = VitnessMontageTable::vitness(file->dataModel->montageTable());
 	connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(emitDataChanged(int, int)));
 	connect(vitness, SIGNAL(rowsInserted(int, int)), this, SLOT(insertDataModelRows(int, int)));
+	connect(vitness, SIGNAL(rowsRemoved(int, int)), this, SLOT(removeDataModelRows(int, int)));
 }
 
 int MontageTableModel::rowCount(const QModelIndex& parent) const
@@ -83,12 +85,9 @@ int MontageTableModel::rowCount(const QModelIndex& parent) const
 	return file->dataModel->montageTable()->rowCount();
 }
 
-void MontageTableModel::insertRowBack()
-{
-	file->dataModel->montageTable()->insertRows(file->dataModel->montageTable()->rowCount());
-}
-
 void MontageTableModel::removeRowsFromDataModel(int row, int count)
 {
-	file->dataModel->montageTable()->removeRows(row, count);
+	file->undoFactory->beginMacro("remove Montage rows");
+	file->undoFactory->removeMontage(row, count);
+	file->undoFactory->endMacro();
 }

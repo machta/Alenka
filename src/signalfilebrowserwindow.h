@@ -33,6 +33,7 @@ class TableModel;
 class DataModelVitness;
 class QTimer;
 class QUndoStack;
+class UndoCommandFactory;
 
 /**
  * @brief This class implements the top level window of the program.
@@ -88,11 +89,10 @@ private:
 	std::vector<QMetaObject::Connection> openFileConnections;
 	QTimer* autoSaveTimer;
 	std::string autoSaveName;
-	QUndoStack* undoStack = nullptr;
+	QUndoStack* undoStack;
+	UndoCommandFactory* undoFactory = nullptr;
 
-	void connectVitness(DataModelVitness* vitness, std::function<void ()> f);
-	void horizontalZoom(double factor);
-	void verticalZoom(double factor);
+	void connectVitness(const DataModelVitness* vitness, std::function<void ()> f);
 	void mode(int m);
 	bool shouldSynchronizeView();
 	void deleteAutoSave();
@@ -106,22 +106,6 @@ private slots:
 	void highpassComboBoxUpdate(const QString& text);
 	void highpassComboBoxUpdate(double value);
 	void updateManagers(int value);
-	void horizontalZoomIn();
-	void horizontalZoomOut();
-	void verticalZoomIn();
-	void verticalZoomOut();
-	void timeMode0()
-	{
-		mode(0);
-	}
-	void timeMode1()
-	{
-		mode(1);
-	}
-	void timeMode2()
-	{
-		mode(2);
-	}
 	void updateTimeMode(int mode);
 	void updatePositionStatusLabel();
 	void updateCursorStatusLabel();

@@ -3,6 +3,7 @@
 #include "../DataModel/opendatafile.h"
 #include <AlenkaFile/datafile.h>
 #include "../canvas.h"
+#include "../DataModel/undocommandfactory.h"
 
 #include <QTableView>
 #include <QPushButton>
@@ -12,16 +13,6 @@
 
 using namespace std;
 using namespace AlenkaFile;
-
-namespace
-{
-
-AbstractEventTable* currentEventTable(DataModel* dataModel)
-{
-	return dataModel->montageTable()->eventTable(OpenDataFile::infoTable.getSelectedMontage());
-}
-
-} // namespace
 
 EventManager::EventManager(QWidget* parent) : Manager(parent)
 {
@@ -38,8 +29,8 @@ EventManager::EventManager(QWidget* parent) : Manager(parent)
 
 void EventManager::insertRowBack()
 {
-	int rc = currentEventTable(file->dataModel)->rowCount();
-	currentEventTable(file->dataModel)->insertRows(rc);
+	int rc = file->dataModel->montageTable()->eventTable(OpenDataFile::infoTable.getSelectedMontage())->rowCount();
+	file->undoFactory->insertEvent(OpenDataFile::infoTable.getSelectedMontage(), rc, 1, "add Event row");
 }
 
 // TODO: Don't constrain goto to the dimensions of the slider, but rather make sure time line is always correctly positioned.

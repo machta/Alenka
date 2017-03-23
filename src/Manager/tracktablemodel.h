@@ -14,7 +14,6 @@ public:
 	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override;
 
 protected:
-	virtual void insertRowBack() override;
 	virtual void removeRowsFromDataModel(int row, int count) override;
 
 private slots:

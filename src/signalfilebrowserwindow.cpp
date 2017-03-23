@@ -1,6 +1,5 @@
 #include "signalfilebrowserwindow.h"
 
-#include "DataModel/opendatafile.h"
 #include "options.h"
 #include "error.h"
 #include "signalviewer.h"
@@ -8,6 +7,9 @@
 #include "myapplication.h"
 #include "spikedetsettingsdialog.h"
 #include "canvas.h"
+#include "DataModel/undocommandfactory.h"
+#include "DataModel/opendatafile.h"
+#include "DataModel/vitnessdatamodel.h"
 #include "Manager/trackmanager.h"
 #include "Manager/eventmanager.h"
 #include "Manager/eventtypemanager.h"
@@ -19,7 +21,6 @@
 #include "Sync/syncserver.h"
 #include "Sync/syncclient.h"
 #include "Sync/syncdialog.h"
-#include "DataModel/vitnessdatamodel.h"
 #include <AlenkaSignal/openclcontext.h>
 #include <AlenkaSignal/montage.h>
 #include <AlenkaFile/gdf2.h>
@@ -52,9 +53,6 @@ using namespace AlenkaFile;
 
 namespace
 {
-
-const double horizontalZoomFactor = 1.3;
-const double verticalZoomFactor = 1.3;
 
 const char* title = "Signal File Browser";
 
@@ -139,7 +137,6 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	setCentralWidget(signalViewer);
 
 	openDataFile = new OpenDataFile();
-	openDataFile->undoStack = undoStack;
 
 	// Construct dock widgets.
 	setDockNestingEnabled(true);
@@ -200,25 +197,33 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	horizontalZoomInAction->setShortcut(QKeySequence("Alt++"));
 	horizontalZoomInAction->setToolTip("Zoom in time line.");
 	horizontalZoomInAction->setStatusTip(horizontalZoomInAction->toolTip());
-	connect(horizontalZoomInAction, SIGNAL(triggered()), this, SLOT(horizontalZoomIn()));
+	connect(horizontalZoomInAction, &QAction::triggered, [this] () {
+		signalViewer->getCanvas()->horizontalZoom(false);
+	});
 
 	QAction* horizontalZoomOutAction = new QAction("Horizontal Zoom Out", this);
 	horizontalZoomOutAction->setShortcut(QKeySequence("Alt+-"));
 	horizontalZoomOutAction->setToolTip("Zoom out time line.");
 	horizontalZoomOutAction->setStatusTip(horizontalZoomOutAction->toolTip());
-	connect(horizontalZoomOutAction, SIGNAL(triggered()), this, SLOT(horizontalZoomOut()));
+	connect(horizontalZoomOutAction, &QAction::triggered, [this] () {
+		signalViewer->getCanvas()->horizontalZoom(true);
+	});
 
 	QAction* verticalZoomInAction = new QAction("Vertical Zoom In", this);
 	verticalZoomInAction->setShortcut(QKeySequence("Shift++"));
 	verticalZoomInAction->setToolTip("Zoom in amplitudes of signals.");
 	verticalZoomInAction->setStatusTip(verticalZoomInAction->toolTip());
-	connect(verticalZoomInAction, SIGNAL(triggered()), this, SLOT(verticalZoomIn()));
+	connect(verticalZoomInAction, &QAction::triggered, [this] () {
+		signalViewer->getCanvas()->verticalZoom(false);
+	});
 
 	QAction* verticalZoomOutAction = new QAction("Vertical Zoom Out", this);
 	verticalZoomOutAction->setShortcut(QKeySequence("Shift+-"));
 	verticalZoomOutAction->setToolTip("Zoom out amplitudes of signals.");
 	verticalZoomOutAction->setStatusTip(verticalZoomOutAction->toolTip());
-	connect(verticalZoomOutAction, SIGNAL(triggered()), this, SLOT(verticalZoomOut()));
+	connect(verticalZoomOutAction, &QAction::triggered, [this] () {
+		signalViewer->getCanvas()->verticalZoom(true);
+	});
 
 	// Construct Spikedet actions.
 	QAction* runSpikedetAction = new QAction(QIcon(":/play-icon.png"), "Run Spikedet Analysis", this);
@@ -229,8 +234,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	QAction* spikedetSettingsAction = new QAction(QIcon(":/settings-icon.png"), "Spikedet Settings", this);
 	spikedetSettingsAction->setToolTip("Change Spikedet settings.");
 	spikedetSettingsAction->setStatusTip(spikedetSettingsAction->toolTip());
-	connect(spikedetSettingsAction, &QAction::triggered, [this] ()
-	{
+	connect(spikedetSettingsAction, &QAction::triggered, [this] () {
 		AlenkaSignal::DETECTOR_SETTINGS settings = spikedetAnalysis->getSettings();
 		SpikedetSettingsDialog dialog(&settings, &eventDuration, this);
 
@@ -244,23 +248,23 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	QAction* timeModeAction0 = new QAction("Sample", this);
 	timeModeAction0->setToolTip("Samples from the start.");
 	timeModeAction0->setStatusTip(timeModeAction0->toolTip());
-	connect(timeModeAction0, SIGNAL(triggered()), this, SLOT(timeMode0()));
 	timeModeAction0->setActionGroup(timeModeActionGroup);
 	timeModeAction0->setCheckable(true);
+	connect(timeModeAction0, &QAction::triggered, [this] () { mode(0); });
 
 	QAction* timeModeAction1 = new QAction("Offset", this);
 	timeModeAction1->setToolTip("Time offset from the start.");
 	timeModeAction1->setStatusTip(timeModeAction1->toolTip());
-	connect(timeModeAction1, SIGNAL(triggered()), this, SLOT(timeMode1()));
 	timeModeAction1->setActionGroup(timeModeActionGroup);
 	timeModeAction1->setCheckable(true);
+	connect(timeModeAction1, &QAction::triggered, [this] () { mode(1); });
 
 	QAction* timeModeAction2 = new QAction("Real", this);
 	timeModeAction2->setToolTip("Real time.");
 	timeModeAction2->setStatusTip(timeModeAction2->toolTip());
-	connect(timeModeAction2, SIGNAL(triggered()), this, SLOT(timeMode2()));
 	timeModeAction2->setActionGroup(timeModeActionGroup);
 	timeModeAction2->setCheckable(true);
+	connect(timeModeAction2, &QAction::triggered, [this] () { mode(2); });
 
 	// Construct Time Line Interval action group.
 	timeLineIntervalActionGroup = new QActionGroup(this);
@@ -268,33 +272,25 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	QAction* timeLineOffAction = new QAction("Off", this);
 	timeLineOffAction->setToolTip("Turn off the time lines.");
 	timeLineOffAction->setStatusTip(timeLineOffAction->toolTip());
-	connect(timeLineOffAction, &QAction::triggered, [this] ()
-	{
+	connect(timeLineOffAction, &QAction::triggered, [this] () {
 		if (file)
-		{
 			OpenDataFile::infoTable.setTimeLineInterval(0);
-		}
 	});
 
 	setTimeLineIntervalAction = new QAction("Set", this);
 	setTimeLineIntervalAction->setActionGroup(timeLineIntervalActionGroup);
-	connect(setTimeLineIntervalAction, &QAction::triggered, [this] ()
-	{
+	connect(setTimeLineIntervalAction, &QAction::triggered, [this] () {
 		if (file)
 		{
 			double value = OpenDataFile::infoTable.getTimeLineInterval();
 			if (value == 0)
-			{
 				value = 1;
-			}
 
 			bool ok;
 			value = QInputDialog::getDouble(this, "Set the interval", "Please, enter the value for the time line interval here:", value, 0, 1000*1000*1000, 2, &ok);
 
 			if (ok)
-			{
 				OpenDataFile::infoTable.setTimeLineInterval(value);
-			}
 		}
 	});
 
@@ -550,7 +546,7 @@ void SignalFileBrowserWindow::closeEvent(QCloseEvent* event)
 	QMainWindow::closeEvent(event);
 }
 
-void SignalFileBrowserWindow::connectVitness(DataModelVitness* vitness, std::function<void ()> f)
+void SignalFileBrowserWindow::connectVitness(const DataModelVitness* vitness, std::function<void ()> f)
 {
 	auto c = connect(vitness, &DataModelVitness::valueChanged, f);
 	openFileConnections.push_back(c);
@@ -558,31 +554,6 @@ void SignalFileBrowserWindow::connectVitness(DataModelVitness* vitness, std::fun
 	openFileConnections.push_back(c);
 	c = connect(vitness, &DataModelVitness::rowsRemoved, f);
 	openFileConnections.push_back(c);
-}
-
-void SignalFileBrowserWindow::horizontalZoom(double factor)
-{
-	if (file)
-		OpenDataFile::infoTable.setVirtualWidth(OpenDataFile::infoTable.getVirtualWidth()*factor);
-}
-
-void SignalFileBrowserWindow::verticalZoom(double factor)
-{
-	if (file)
-	{
-		AbstractTrackTable* tt = file->getDataModel()->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
-
-		for (int i = 0; i < tt->rowCount(); ++i)
-		{
-			Track t = tt->row(i);
-
-			double value = t.amplitude*factor;
-			value = value != 0 ? value : -0.000001;
-			t.amplitude = value;
-
-			tt->row(i, t);
-		}
-	}
 }
 
 void SignalFileBrowserWindow::mode(int m)
@@ -662,8 +633,11 @@ void SignalFileBrowserWindow::openFile()
 	dataModel = new DataModel(new VitnessEventTypeTable(), new VitnessMontageTable());
 	file->setDataModel(dataModel);
 
+	undoFactory = new UndoCommandFactory(dataModel, undoStack);
+
 	openDataFile->file = file;
 	openDataFile->dataModel = dataModel;
+	openDataFile->undoFactory = undoFactory;
 
 	autoSaveName = file->getFilePath() + ".mont.autosave";
 	bool useAutoSave = false;
@@ -687,7 +661,7 @@ void SignalFileBrowserWindow::openFile()
 	setWindowTitle(fileInfo.fileName() + " - " + title);
 
 	// Check for any values in InfoTable that could make trouble.
-	if (OpenDataFile::infoTable.getSelectedMontage() < 0 || OpenDataFile::infoTable.getSelectedMontage() >= file->getDataModel()->montageTable()->rowCount())
+	if (OpenDataFile::infoTable.getSelectedMontage() < 0 || OpenDataFile::infoTable.getSelectedMontage() >= openDataFile->dataModel->montageTable()->rowCount())
 		OpenDataFile::infoTable.setSelectedMontage(0);
 
 	// Pass the file to the child widgets.
@@ -757,7 +731,7 @@ void SignalFileBrowserWindow::openFile()
 	});
 	openFileConnections.push_back(c);
 
-	c = connect(&OpenDataFile::infoTable, &InfoTable::selectedTypeChanged, [this] (int value){
+	c = connect(&OpenDataFile::infoTable, &InfoTable::selectedTypeChanged, [this] (int value) {
 		eventTypeComboBox->setCurrentIndex(value + 1);
 	});
 	openFileConnections.push_back(c);
@@ -941,26 +915,6 @@ void SignalFileBrowserWindow::updateManagers(int value)
 	connectVitness(VitnessEventTable::vitness(dataModel->montageTable()->eventTable(value)), [this] () { signalViewer->updateSignalViewer(); });
 }
 
-void SignalFileBrowserWindow::horizontalZoomIn()
-{
-	horizontalZoom(horizontalZoomFactor);
-}
-
-void SignalFileBrowserWindow::horizontalZoomOut()
-{
-	horizontalZoom(1/horizontalZoomFactor);
-}
-
-void SignalFileBrowserWindow::verticalZoomIn()
-{
-	verticalZoom(verticalZoomFactor);
-}
-
-void SignalFileBrowserWindow::verticalZoomOut()
-{
-	verticalZoom(1/verticalZoomFactor);
-}
-
 void SignalFileBrowserWindow::updateTimeMode(int mode)
 {
 	QAction* a = timeModeActionGroup->actions().at(mode);
@@ -986,7 +940,7 @@ void SignalFileBrowserWindow::updateMontageComboBox()
 {
 	if (file)
 	{
-		AbstractMontageTable* montageTable = file->getDataModel()->montageTable();
+		const AbstractMontageTable* montageTable = openDataFile->dataModel->montageTable();
 		int itemCount = montageComboBox->count();
 		int selectedMontage = OpenDataFile::infoTable.getSelectedMontage();
 
@@ -1004,7 +958,7 @@ void SignalFileBrowserWindow::updateEventTypeComboBox()
 {
 	if (file)
 	{
-		AbstractEventTypeTable* eventTypeTable = file->getDataModel()->eventTypeTable();
+		const AbstractEventTypeTable* eventTypeTable = openDataFile->dataModel->eventTypeTable();
 		int itemCount = eventTypeComboBox->count();
 		int selectedType = OpenDataFile::infoTable.getSelectedType();
 
@@ -1021,71 +975,77 @@ void SignalFileBrowserWindow::updateEventTypeComboBox()
 
 void SignalFileBrowserWindow::runSpikedet()
 {
-	if (file)
+	if (!file)
+		return;
+
+	undoFactory->beginMacro("run Spikedet");
+
+	// Build montage from code.
+	vector<AlenkaSignal::Montage<float>*> montage;
+
+	QFile headerFile(":/montageHeader.cl");
+	headerFile.open(QIODevice::ReadOnly);
+	string header = headerFile.readAll().toStdString();
+
+	const AbstractTrackTable* tt = openDataFile->dataModel->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
+	for (int i = 0; i < tt->rowCount(); ++i)
+		montage.push_back(new AlenkaSignal::Montage<float>(tt->row(i).code, globalContext.get(), header));
+
+	// Run Spikedet.
+	QProgressDialog progress("Running Spikedet analysis", "Abort", 0, 100, this);
+	progress.setWindowModality(Qt::WindowModal);
+
+	progress.setMinimumDuration(0); // This is to show the dialog immediately.
+	progress.setValue(1);
+
+	spikedetAnalysis->runAnalysis(openDataFile, montage, &progress);
+
+	// Add three new event types for the different levels of spike events.
+	const AbstractEventTypeTable* ett = openDataFile->dataModel->eventTypeTable();
+	int index = ett->rowCount();
+	undoFactory->insertEventType(index, 3);
+
+	QColor colors[3] = {QColor(0, 0, 255), QColor(0, 255, 0), QColor(0, 255, 255)};
+	for (int i = 0; i < 3; ++i)
 	{
-		// Build montage from code.
-		vector<AlenkaSignal::Montage<float>*> montage;
+		EventType et = ett->row(index + i);
 
-		QFile headerFile(":/montageHeader.cl");
-		headerFile.open(QIODevice::ReadOnly);
-		string header = headerFile.readAll().toStdString();
+		et.name = "Spikedet K" + to_string(i + 1);
+		DataModel::color2array(colors[i], et.color);
 
-		AbstractTrackTable* tt = file->getDataModel()->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
-		for (int i = 0; i < tt->rowCount(); ++i)
-			montage.push_back(new AlenkaSignal::Montage<float>(tt->row(i).code, globalContext.get(), header));
+		undoFactory->changeEventType(index + i, et);
+	}
 
-		// Run Spikedet.
-		QProgressDialog progress("Running Spikedet analysis", "Abort", 0, 100, this);
-		progress.setWindowModality(Qt::WindowModal);
+	// Process the output structure.
+	const AbstractEventTable* et = openDataFile->dataModel->montageTable()->eventTable(OpenDataFile::infoTable.getSelectedMontage());
 
-		progress.setMinimumDuration(0); // This is to show the dialog immediately.
-		progress.setValue(1);
+	AlenkaSignal::CDetectorOutput* out = spikedetAnalysis->getOutput();
+	assert(out);
+	unsigned int count = out->m_pos.size();
 
-		spikedetAnalysis->runAnalysis(openDataFile, montage, &progress);
+	if (count > 0)
+	{
+		assert(out->m_chan.size() == count);
 
-		// Add three new event types for the different levels of spike events.
-		AbstractEventTypeTable* ett = file->getDataModel()->eventTypeTable();
-		int index = ett->rowCount();
-		ett->insertRows(index, 3);
+		int etIndex = et->rowCount();
+		undoFactory->insertEvent(OpenDataFile::infoTable.getSelectedMontage(), etIndex, count);
 
-		QColor colors[3] = {QColor(0, 0, 255), QColor(0, 255, 0), QColor(0, 255, 255)};
-		for (int i = 0; i < 3; ++i)
+		for (unsigned int i = 0; i < count; i++)
 		{
-			EventType et = ett->row(index + i);
-			et.name = "Spikedet K" + to_string(i + 1);
-			DataModel::color2array(colors[i], et.color);
-			ett->row(index + i, et);
-		}
+			Event e = et->row(etIndex + i);
 
-		// Process the output structure.
-		AbstractEventTable* et = file->getDataModel()->montageTable()->eventTable(OpenDataFile::infoTable.getSelectedMontage());
+			e.label = "Spike " + to_string(i);
+			e.type = index + (out->m_con[i] == 0.5 ? 1 : 0); // TODO: Figure out what should be used as the third type.
+			e.position = out->m_pos[i]*file->getSamplingFrequency();
+			e.duration = file->getSamplingFrequency()*eventDuration;
+			//e.duration = out->m_dur[i]*file->getSamplingFrequency();
+			e.channel = out->m_chan[i] - 1;
 
-		AlenkaSignal::CDetectorOutput* out = spikedetAnalysis->getOutput();
-		assert(out);
-		unsigned int count = out->m_pos.size();
-
-		if (count > 0)
-		{
-			assert(out->m_chan.size() == count);
-
-			int etIndex = et->rowCount();
-			et->insertRows(etIndex, count);
-
-			for (unsigned int i = 0; i < count; i++)
-			{
-				Event e = et->row(etIndex + i);
-
-				e.label = "Spike " + to_string(i);
-				e.type = index + (out->m_con[i] == 0.5 ? 1 : 0); // TODO: Figure out what should be used as the third type.
-				e.position = out->m_pos[i]*file->getSamplingFrequency();
-				e.duration = file->getSamplingFrequency()*eventDuration;
-				//e.duration = out->m_dur[i]*file->getSamplingFrequency();
-				e.channel = out->m_chan[i] - 1;
-
-				et->row(etIndex + i, e);
-			}
+			undoFactory->changeEvent(OpenDataFile::infoTable.getSelectedMontage(), etIndex + i, e);
 		}
 	}
+
+	undoFactory->endMacro();
 }
 
 void SignalFileBrowserWindow::receiveSyncMessage(const QByteArray& message)

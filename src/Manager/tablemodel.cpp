@@ -119,3 +119,12 @@ void TableModel::insertDataModelRows(int row, int count)
 		endInsertRows();
 	}
 }
+
+void TableModel::removeDataModelRows(int row, int count)
+{
+	if (0 < count)
+	{
+		beginRemoveRows(QModelIndex(), row, row + count - 1);
+		endRemoveRows();
+	}
+}
