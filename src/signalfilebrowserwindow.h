@@ -30,6 +30,7 @@ class SyncClient;
 class SyncDialog;
 class TableModel;
 class DataModelVitness;
+class QTimer;
 
 /**
  * @brief This class implements the top level window of the program.
@@ -82,12 +83,15 @@ private:
 	TableModel* trackTable = nullptr;
 	AlenkaFile::DataModel* dataModel = nullptr;
 	std::vector<QMetaObject::Connection> openFileConnections;
+	QTimer* autoSaveTimer;
+	std::string autoSaveName;
 
 	void connectVitness(DataModelVitness* vitness, std::function<void ()> f);
 	void horizontalZoom(double factor);
 	void verticalZoom(double factor);
 	void mode(int m);
 	bool shouldSynchronizeView();
+	void deleteAutoSave();
 
 private slots:
 	void openFile();

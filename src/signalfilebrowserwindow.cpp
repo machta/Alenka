@@ -41,6 +41,8 @@
 #include <QLocale>
 #include <QProgressDialog>
 #include <QDateTime>
+#include <QTimer>
+#include <QMessageBox>
 
 #include <locale>
 
@@ -131,6 +133,8 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 	signalViewer = new SignalViewer(this);
 	setCentralWidget(signalViewer);
+
+	autoSaveTimer = new QTimer;
 
 	// Construct dock widgets.
 	setDockNestingEnabled(true);
@@ -580,9 +584,20 @@ bool SignalFileBrowserWindow::shouldSynchronizeView()
 	return synchronize->isChecked();
 }
 
+void SignalFileBrowserWindow::deleteAutoSave()
+{
+	if (autoSaveName != "")
+	{
+		QFile autoSaveFile(autoSaveName.c_str());
+		autoSaveFile.remove();
+	}
+
+	autoSaveTimer->start();
+}
+
 void SignalFileBrowserWindow::openFile()
 {
-	QString fileName = QFileDialog::getOpenFileName(this, "Open File", "", "GDF file (*.gdf);;EDF file (*.edf)");
+	QString fileName = QFileDialog::getOpenFileName(this, "Open File", "", "Signal files (*.edf *.gdf);;EDF file (*.edf);;GDF file (*.gdf)");
 
 	if (fileName.isNull())
 		return; // No file was selected.
@@ -610,20 +625,41 @@ void SignalFileBrowserWindow::openFile()
 	logToFile("Opening file '" << fileName.toStdString() << "'.");
 
 	string stdFileName = fileName.toStdString();
-	if (fileInfo.suffix().toLower() == "gdf")
+	auto suffix = fileInfo.suffix().toLower();
+	assert(!file);
+
+	if (suffix == "gdf")
 	{
 		file = new GDF2(stdFileName);
 	}
-	else
+	else if (suffix == "edf")
 	{
 		file = new EDF(stdFileName);
+	}
+	else
+	{
+		throw runtime_error("Unknown file extension.");
 	}
 
 	dataModel = new DataModel(new VitnessEventTypeTable(), new VitnessMontageTable());
 	file->setDataModel(dataModel);
 
-	executeWithCLocale([this] () {
-		file->load();
+	autoSaveName = file->getFilePath() + ".mont.autosave";
+	bool useAutoSave = false;
+
+	if (QFileInfo(autoSaveName.c_str()).exists())
+	{
+		QMessageBox::StandardButton res;
+		res = QMessageBox::question(this, "Use autosave file?", "An autosave file was detected. Would you like to use it?");
+		useAutoSave = res == QMessageBox::Yes;
+	}
+
+	executeWithCLocale([this, useAutoSave] () {
+		if (useAutoSave)
+			file->loadSecondaryFile(autoSaveName);
+		else
+			file->load();
+
 		OpenDataFile::infoTable.readXML(file->getFilePath() + ".info");
 	});
 
@@ -758,6 +794,19 @@ void SignalFileBrowserWindow::openFile()
 
 	// Emit all signals to ensure there are no uninitialized controls.
 	OpenDataFile::infoTable.emitAllSignals();
+
+	// Set up autosave.
+	c = connect(autoSaveTimer, &QTimer::timeout, [this] () {
+		executeWithCLocale([this] () {
+			file->saveSecondaryFile(autoSaveName);
+			logToFileAndConsole("Autosaving to " << autoSaveName);
+		});
+	});
+	openFileConnections.push_back(c);
+
+	int ms = 1000*PROGRAM_OPTIONS["autoSaveInterval"].as<int>();
+	autoSaveTimer->setInterval(ms);
+	autoSaveTimer->start();
 }
 
 void SignalFileBrowserWindow::closeFile()
@@ -779,6 +828,9 @@ void SignalFileBrowserWindow::closeFile()
 			OpenDataFile::infoTable.writeXML(file->getFilePath() + ".info");
 		});
 	}
+
+	deleteAutoSave();
+	autoSaveName = "";
 
 	signalViewer->changeFile(nullptr);
 
@@ -808,6 +860,8 @@ void SignalFileBrowserWindow::saveFile()
 		executeWithCLocale([this] () {
 			file->save();
 		});
+
+		deleteAutoSave();
 	}
 }
 
