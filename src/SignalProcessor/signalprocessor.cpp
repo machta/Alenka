@@ -36,9 +36,9 @@ AlenkaSignal::WindowFunction resolveWindow()
 	return AlenkaSignal::WindowFunction::None;
 }
 
-AbstractTrackTable* getTrackTable(DataFile* file)
+AbstractTrackTable* getTrackTable(OpenDataFile* file)
 {
-	return file->getDataModel()->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
+	return file->dataModel->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
 }
 
 } // namespace
@@ -118,8 +118,8 @@ void SignalProcessor::updateFilter()
 	if (!file)
 		return;
 
-	int M = file->getSamplingFrequency()/* + 1*/;
-	AlenkaSignal::Filter<float> filter(M, file->getSamplingFrequency()); // Possibly could save this object so that it won't be created from scratch everytime.
+	int M = file->file->getSamplingFrequency()/* + 1*/;
+	AlenkaSignal::Filter<float> filter(M, file->file->getSamplingFrequency()); // Possibly could save this object so that it won't be created from scratch everytime.
 
 	filter.lowpass(true);
 	filter.setLowpass(OpenDataFile::infoTable.getLowpassFrequency());
@@ -246,7 +246,7 @@ SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
 	return SignalBlock(index, fromTo.first, fromTo.second, vertexArrays);
 }
 
-void SignalProcessor::changeFile(DataFile* file)
+void SignalProcessor::changeFile(OpenDataFile* file)
 {
 	destroyFileRelated();
 
@@ -254,16 +254,16 @@ void SignalProcessor::changeFile(DataFile* file)
 
 	if (file)
 	{
-		int M = file->getSamplingFrequency();
+		int M = file->file->getSamplingFrequency();
 		int offset = M;
 		int delay = M/2 - 1;
 		blockSize = PROGRAM_OPTIONS["blockSize"].as<unsigned int>() - offset;
-		unsigned int tmpBlockSize = (blockSize + offset)*file->getChannelCount();
+		unsigned int tmpBlockSize = (blockSize + offset)*file->file->getChannelCount();
 
 		// Construct the filter and montage processors.
-		filterProcessor = new AlenkaSignal::FilterProcessor<float>(blockSize + offset, file->getChannelCount(), context, resolveWindow());
+		filterProcessor = new AlenkaSignal::FilterProcessor<float>(blockSize + offset, file->file->getChannelCount(), context, resolveWindow());
 
-		montageProcessor = new AlenkaSignal::MontageProcessor<float>(offset, blockSize, file->getChannelCount());
+		montageProcessor = new AlenkaSignal::MontageProcessor<float>(offset, blockSize, file->file->getChannelCount());
 
 		// Construct the cache.
 		int64_t memoryToUse = PROGRAM_OPTIONS["gpuMemorySize"].as<int64_t>();

@@ -8,7 +8,7 @@ class MontageTableModel : public TableModel
 	Q_OBJECT
 
 public:
-	explicit MontageTableModel(AlenkaFile::DataFile* file, QObject* parent = nullptr);
+	explicit MontageTableModel(OpenDataFile* file, QObject* parent = nullptr);
 	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override;
 
 protected:

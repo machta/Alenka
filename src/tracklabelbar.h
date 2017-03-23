@@ -3,10 +3,7 @@
 
 #include <QWidget>
 
-namespace AlenkaFile
-{
-class DataFile;
-}
+class OpenDataFile;
 
 /**
  * @brief This class implements the GUI control responsible for displaying track names.
@@ -22,7 +19,7 @@ public:
 	 * @brief Notifies this object that the DataFile changed.
 	 * @param file Pointer to the data file. nullptr means file was closed.
 	 */
-	void changeFile(AlenkaFile::DataFile* file);
+	void changeFile(OpenDataFile* file);
 
 signals:
 
@@ -37,7 +34,7 @@ protected:
 	virtual void paintEvent(QPaintEvent* event) override;
 
 private:
-	AlenkaFile::DataFile* file = nullptr;
+	OpenDataFile* file = nullptr;
 	int selectedTrack = -1;
 	std::vector<QMetaObject::Connection> trackConnections;
 

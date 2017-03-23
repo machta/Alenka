@@ -6,14 +6,11 @@
 #include <map>
 #include <utility>
 
-namespace AlenkaFile
-{
-class DataFile;
-}
 class QTableView;
 class TableModel;
 class QGridLayout;
 class QPushButton;
+class OpenDataFile;
 
 // TODO: Possibly merge Manager and DataModel dirs.
 /**
@@ -37,14 +34,14 @@ public:
 	 * @brief Notifies this object that the DataFile changed.
 	 * @param file Pointer to the data file. nullptr means file was closed.
 	 */
-	void changeFile(AlenkaFile::DataFile* file)
+	void changeFile(OpenDataFile* file)
 	{
 		this->file = file;
 	}
 
 protected:
 	QTableView* tableView;
-	AlenkaFile::DataFile* file = nullptr;
+	OpenDataFile* file = nullptr;
 
 	/**
 	 * @brief Adds the button to the prepared layout on top of the widget.

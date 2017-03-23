@@ -1,5 +1,6 @@
 #include "gpucache.h"
 
+#include "../DataModel/opendatafile.h"
 #include <AlenkaSignal/openclcontext.h>
 #include <AlenkaSignal/filterprocessor.h>
 
@@ -42,12 +43,12 @@ bool findCommon(const std::map<int, unsigned int>& a, const std::set<int>& b, in
 
 } // namespace
 
-GPUCache::GPUCache(unsigned int blockSize, unsigned int offset, int delay, int64_t availableMemory, AlenkaFile::DataFile* file, AlenkaSignal::OpenCLContext* context, AlenkaSignal::FilterProcessor<float>* filterProcessor)
+GPUCache::GPUCache(unsigned int blockSize, unsigned int offset, int delay, int64_t availableMemory, OpenDataFile* file, AlenkaSignal::OpenCLContext* context, AlenkaSignal::FilterProcessor<float>* filterProcessor)
 	: blockSize(blockSize), offset(offset), delay(delay), file(file), filterProcessor(filterProcessor)
 {
 	cl_int err;
 
-	unsigned int bytesPerBlock = (blockSize + offset + 4)*file->getChannelCount()*sizeof(float); // The +4 is pading for the filter processor
+	unsigned int bytesPerBlock = (blockSize + offset + 4)*file->file->getChannelCount()*sizeof(float); // The +4 is pading for the filter processor
 	capacity = availableMemory/bytesPerBlock;
 
 	if (capacity == 0)
@@ -162,7 +163,7 @@ void GPUCache::loaderThreadFunction()
 
 	try
 	{
-		int size = (blockSize + offset)*file->getChannelCount();
+		int size = (blockSize + offset)*file->file->getChannelCount();
 
 		vector<float> tmpBuffer(size);
 		cl_event tmpBufferEvent = nullptr;
@@ -195,17 +196,17 @@ void GPUCache::loaderThreadFunction()
 					checkClErrorCode(err, "clReleaseEvent()");
 				}
 
-				file->readSignal(tmpBuffer.data(), fromTo.first - offset + delay, fromTo.second + delay);
+				file->file->readSignal(tmpBuffer.data(), fromTo.first - offset + delay, fromTo.second + delay);
 
 				printBuffer("after_readData.txt", tmpBuffer.data(), tmpBuffer.size());
 
 #ifdef AMD_BUG
-				err = clEnqueueWriteBuffer(commandQueue, tmpMemBuffer, CL_TRUE, 0, (blockSize + offset)*file->getChannelCount()*sizeof(float), tmpBuffer.data(), 0, nullptr, &tmpBufferEvent);
+				err = clEnqueueWriteBuffer(commandQueue, tmpMemBuffer, CL_TRUE, 0, (blockSize + offset)*file->file->getChannelCount()*sizeof(float), tmpBuffer.data(), 0, nullptr, &tmpBufferEvent);
 				checkClErrorCode(err, "clEnqueueWriteBuffer()");
 #else
 				size_t origin[] = {0, 0, 0};
 				size_t rowLen = (blockSize + offset)*sizeof(float);
-				size_t region[] = {rowLen, file->getChannelCount(), 1};
+				size_t region[] = {rowLen, file->file->getChannelCount(), 1};
 
 				err = clEnqueueWriteBufferRect(commandQueue, tmpMemBuffer/*buffers[cacheIndex]*/, /*CL_FALSE*/CL_TRUE, origin, origin, region, rowLen + 4*sizeof(float), 0, 0, 0, tmpBuffer.data(), 0, nullptr, &tmpBufferEvent);
 				checkClErrorCode(err, "clEnqueueWriteBufferRect()");
@@ -249,12 +250,12 @@ void GPUCache::enqueuCopy(cl_mem source, cl_mem destination, cl_event readyEvent
 
 		size_t origin[] = {0, 0, 0};
 		size_t rowLen = (blockSize + offset)*sizeof(float);
-		size_t region[] = {rowLen, file->getChannelCount(), 1};
+		size_t region[] = {rowLen, file->file->getChannelCount(), 1};
 
 		err = clEnqueueCopyBufferRect(commandQueue, source, destination, origin, origin, region, rowLen + 4*sizeof(float), 0, 0, 0, 0, nullptr, &event);
 		checkClErrorCode(err, "clEnqueueCopyBufferRect()");
 
-		//err = clEnqueueCopyBuffer(commandQueue, source, destination, 0, 0, (blockSize + offset)*file->getChannelCount()*sizeof(float), 0, nullptr, &event);
+		//err = clEnqueueCopyBuffer(commandQueue, source, destination, 0, 0, (blockSize + offset)*file->file->getChannelCount()*sizeof(float), 0, nullptr, &event);
 		//checkClErrorCode(err, "clEnqueueCopyBuffer()");
 
 		err = clSetEventCallback(event, CL_COMPLETE, &signalEventCallback, readyEvent);

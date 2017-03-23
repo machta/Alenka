@@ -276,14 +276,14 @@ public:
 
 } // namespace
 
-TrackTableModel::TrackTableModel(DataFile* file, QObject* parent) : TableModel(file, parent)
+TrackTableModel::TrackTableModel(OpenDataFile* file, QObject* parent) : TableModel(file, parent)
 {
-	columns.push_back(new Id(file->getDataModel()));
-	columns.push_back(new Label(file->getDataModel()));
-	columns.push_back(new Code(file->getDataModel()));
-	columns.push_back(new Color(file->getDataModel()));
-	columns.push_back(new Amplitude(file->getDataModel()));
-	columns.push_back(new Hidden(file->getDataModel()));
+	columns.push_back(new Id(file->dataModel));
+	columns.push_back(new Label(file->dataModel));
+	columns.push_back(new Code(file->dataModel));
+	columns.push_back(new Color(file->dataModel));
+	columns.push_back(new Amplitude(file->dataModel));
+	columns.push_back(new Hidden(file->dataModel));
 
 	connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(setSelectedMontage(int)));
 	setSelectedMontage(OpenDataFile::infoTable.getSelectedMontage());
@@ -292,22 +292,22 @@ TrackTableModel::TrackTableModel(DataFile* file, QObject* parent) : TableModel(f
 int TrackTableModel::rowCount(const QModelIndex& parent) const
 {
 	(void)parent;
-	return currentTrackTable(file->getDataModel())->rowCount();
+	return currentTrackTable(file->dataModel)->rowCount();
 }
 
 
 void TrackTableModel::insertRowBack()
 {
-	int rc = currentTrackTable(file->getDataModel())->rowCount();
-	currentTrackTable(file->getDataModel())->insertRows(rc);
+	int rc = currentTrackTable(file->dataModel)->rowCount();
+	currentTrackTable(file->dataModel)->insertRows(rc);
 }
 
 void TrackTableModel::removeRowsFromDataModel(int row, int count)
 {
 	// Update the channels of events to point to correct tracks after the rows are removed.
-	for (int i = 0; i < file->getDataModel()->montageTable()->rowCount(); ++i)
+	for (int i = 0; i < file->dataModel->montageTable()->rowCount(); ++i)
 	{
-		AbstractEventTable* eventTable = file->getDataModel()->montageTable()->eventTable(i);
+		AbstractEventTable* eventTable = file->dataModel->montageTable()->eventTable(i);
 
 		for (int j = 0; j < eventTable->rowCount(); ++j)
 		{
@@ -322,7 +322,7 @@ void TrackTableModel::removeRowsFromDataModel(int row, int count)
 		}
 	}
 
-	currentTrackTable(file->getDataModel())->removeRows(row, count);
+	currentTrackTable(file->dataModel)->removeRows(row, count);
 }
 
 void TrackTableModel::setSelectedMontage(int i)
@@ -333,7 +333,7 @@ void TrackTableModel::setSelectedMontage(int i)
 		disconnect(e);
 	trackTableConnections.clear();
 
-	auto vitness = VitnessTrackTable::vitness(file->getDataModel()->montageTable()->trackTable(i));
+	auto vitness = VitnessTrackTable::vitness(file->dataModel->montageTable()->trackTable(i));
 
 	auto c = connect(vitness, &DataModelVitness::valueChanged, [this] (int row, int col) {
 		emitDataChanged(row, col + 1);

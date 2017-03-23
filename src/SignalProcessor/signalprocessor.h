@@ -23,10 +23,7 @@ class Montage;
 template<class T>
 class MontageProcessor;
 }
-namespace AlenkaFile
-{
-class DataFile;
-}
+class OpenDataFile;
 class KernelCache;
 class SignalBlock;
 
@@ -103,7 +100,7 @@ public:
 	 * @brief Notifies this object that the DataFile changed.
 	 * @param file Pointer to the data file. nullptr means file was closed.
 	 */
-	void changeFile(AlenkaFile::DataFile* file);
+	void changeFile(OpenDataFile* file);
 
 	/**
 	 * @brief Returns true if this object is ready for full operation.
@@ -116,7 +113,7 @@ public:
 	static std::string simplifyMontage(const std::string& str);
 
 private:
-	AlenkaFile::DataFile* file = nullptr;
+	OpenDataFile* file = nullptr;
 	AlenkaSignal::OpenCLContext* context;
 	AlenkaSignal::FilterProcessor<float>* filterProcessor;
 	AlenkaSignal::MontageProcessor<float>* montageProcessor;

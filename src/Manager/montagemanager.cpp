@@ -1,8 +1,8 @@
 #include "montagemanager.h"
 
-#include <AlenkaFile/datafile.h>
+#include "../DataModel/opendatafile.h"
 
 void MontageManager::insertRowBack()
 {
-	file->getDataModel()->montageTable()->insertRows(file->getDataModel()->montageTable()->rowCount());
+	file->dataModel->montageTable()->insertRows(file->dataModel->montageTable()->rowCount());
 }

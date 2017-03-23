@@ -17,6 +17,6 @@ AbstractTrackTable* currentTrackTable(DataModel* dataModel)
 
 void TrackManager::insertRowBack()
 {
-	int rc = currentTrackTable(file->getDataModel())->rowCount();
-	currentTrackTable(file->getDataModel())->insertRows(rc);
+	int rc = currentTrackTable(file->dataModel)->rowCount();
+	currentTrackTable(file->dataModel)->insertRows(rc);
 }

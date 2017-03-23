@@ -8,7 +8,7 @@ class EventTypeTableModel : public TableModel
 	Q_OBJECT
 
 public:
-	explicit EventTypeTableModel(AlenkaFile::DataFile* file, QObject* parent = nullptr);
+	explicit EventTypeTableModel(OpenDataFile* file, QObject* parent = nullptr);
 	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override;
 
 protected:

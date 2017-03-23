@@ -67,12 +67,12 @@ public:
 
 } // namespace
 
-MontageTableModel::MontageTableModel(DataFile* file, QObject* parent) : TableModel(file, parent)
+MontageTableModel::MontageTableModel(OpenDataFile* file, QObject* parent) : TableModel(file, parent)
 {
-	columns.push_back(new Name(file->getDataModel()));
-	columns.push_back(new Save(file->getDataModel()));
+	columns.push_back(new Name(file->dataModel));
+	columns.push_back(new Save(file->dataModel));
 
-	auto vitness = VitnessMontageTable::vitness(file->getDataModel()->montageTable());
+	auto vitness = VitnessMontageTable::vitness(file->dataModel->montageTable());
 	connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(emitDataChanged(int, int)));
 	connect(vitness, SIGNAL(rowsInserted(int, int)), this, SLOT(insertDataModelRows(int, int)));
 }
@@ -80,15 +80,15 @@ MontageTableModel::MontageTableModel(DataFile* file, QObject* parent) : TableMod
 int MontageTableModel::rowCount(const QModelIndex& parent) const
 {
 	(void)parent;
-	return file->getDataModel()->montageTable()->rowCount();
+	return file->dataModel->montageTable()->rowCount();
 }
 
 void MontageTableModel::insertRowBack()
 {
-	file->getDataModel()->montageTable()->insertRows(file->getDataModel()->montageTable()->rowCount());
+	file->dataModel->montageTable()->insertRows(file->dataModel->montageTable()->rowCount());
 }
 
 void MontageTableModel::removeRowsFromDataModel(int row, int count)
 {
-	file->getDataModel()->montageTable()->removeRows(row, count);
+	file->dataModel->montageTable()->removeRows(row, count);
 }

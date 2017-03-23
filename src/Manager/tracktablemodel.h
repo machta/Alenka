@@ -10,7 +10,7 @@ class TrackTableModel : public TableModel
 	Q_OBJECT
 
 public:
-	explicit TrackTableModel(AlenkaFile::DataFile* file, QObject* parent = nullptr);
+	explicit TrackTableModel(OpenDataFile* file, QObject* parent = nullptr);
 	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override;
 
 protected:

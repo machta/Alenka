@@ -43,6 +43,7 @@
 #include <QDateTime>
 #include <QTimer>
 #include <QMessageBox>
+#include <QUndoStack>
 
 #include <locale>
 
@@ -131,10 +132,14 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 {
 	setWindowTitle(title);
 
+	autoSaveTimer = new QTimer(this);
+	undoStack = new QUndoStack(this);
+
 	signalViewer = new SignalViewer(this);
 	setCentralWidget(signalViewer);
 
-	autoSaveTimer = new QTimer;
+	openDataFile = new OpenDataFile();
+	openDataFile->undoStack = undoStack;
 
 	// Construct dock widgets.
 	setDockNestingEnabled(true);
@@ -183,6 +188,12 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	saveFileAction->setToolTip("Save the currently opened file.");
 	saveFileAction->setStatusTip(saveFileAction->toolTip());
 	connect(saveFileAction, SIGNAL(triggered()), this, SLOT(saveFile()));
+
+	QAction* undoAction = undoStack->createUndoAction(this);
+	undoAction->setShortcut(QKeySequence::Undo);
+
+	QAction* redoAction = undoStack->createRedoAction(this);
+	redoAction->setShortcut(QKeySequence::Redo);
 
 	// Construct Zoom actions.
 	QAction* horizontalZoomInAction = new QAction("Horizontal Zoom In", this);
@@ -315,6 +326,8 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	fileToolBar->addAction(openFileAction);
 	fileToolBar->addAction(closeFileAction);
 	fileToolBar->addAction(saveFileAction);
+	fileToolBar->addAction(undoAction);
+	fileToolBar->addAction(redoAction);
 
 	// Construct Filter tool bar.
 	QToolBar* filterToolBar = addToolBar("Filter Tool Bar");
@@ -385,6 +398,9 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	fileMenu->addAction(openFileAction);
 	fileMenu->addAction(closeFileAction);
 	fileMenu->addAction(saveFileAction);
+	fileMenu->addSeparator();
+	fileMenu->addAction(undoAction);
+	fileMenu->addAction(redoAction);
 
 	// Construct View menu.
 	QMenu* viewMenu = menuBar()->addMenu("&View");
@@ -475,6 +491,7 @@ SignalFileBrowserWindow::~SignalFileBrowserWindow()
 {
 	closeFile();
 
+	delete openDataFile;
 	delete spikedetAnalysis;
 }
 
@@ -602,8 +619,6 @@ void SignalFileBrowserWindow::openFile()
 	if (fileName.isNull())
 		return; // No file was selected.
 
-	closeFile();
-
 	QFileInfo fileInfo(fileName);
 
 	if (fileInfo.exists() == false)
@@ -621,6 +636,9 @@ void SignalFileBrowserWindow::openFile()
 		logToFileAndConsole("File '" + fileName.toStdString() + "' cannot be written to.");
 		return;
 	}
+
+	closeFile();
+	undoStack->clear();
 
 	logToFile("Opening file '" << fileName.toStdString() << "'.");
 
@@ -643,6 +661,9 @@ void SignalFileBrowserWindow::openFile()
 
 	dataModel = new DataModel(new VitnessEventTypeTable(), new VitnessMontageTable());
 	file->setDataModel(dataModel);
+
+	openDataFile->file = file;
+	openDataFile->dataModel = dataModel;
 
 	autoSaveName = file->getFilePath() + ".mont.autosave";
 	bool useAutoSave = false;
@@ -670,16 +691,15 @@ void SignalFileBrowserWindow::openFile()
 		OpenDataFile::infoTable.setSelectedMontage(0);
 
 	// Pass the file to the child widgets.
-	trackManager->changeFile(file);
-	eventManager->changeFile(file);
-	eventTypeManager->changeFile(file);
-	montageManager->changeFile(file);
+	trackManager->changeFile(openDataFile);
+	eventManager->changeFile(openDataFile);
+	eventTypeManager->changeFile(openDataFile);
+	montageManager->changeFile(openDataFile);
 
-	signalViewer->changeFile(file);
+	signalViewer->changeFile(openDataFile);
 
 	// Update Filter tool bar.
 	QStringList comboOptions;
-
 	comboOptions << "---" << "0" << "5" << "10";
 
 	for (int i = 50; i <= file->getSamplingFrequency()/2; i *= 2)
@@ -707,16 +727,16 @@ void SignalFileBrowserWindow::openFile()
 	openFileConnections.push_back(c);
 
 	// Set up table models and managers.
-	eventTypeTable = new EventTypeTableModel(file);
+	eventTypeTable = new EventTypeTableModel(openDataFile);
 	eventTypeManager->setModel(eventTypeTable);
 
-	montageTable = new MontageTableModel(file);
+	montageTable = new MontageTableModel(openDataFile);
 	montageManager->setModel(montageTable);
 
-	eventTable = new EventTableModel(file);
+	eventTable = new EventTableModel(openDataFile);
 	eventManager->setModel(eventTable);
 
-	trackTable = new TrackTableModel(file);
+	trackTable = new TrackTableModel(openDataFile);
 	trackManager->setModel(trackTable);
 
 	// Update the Select tool bar.
@@ -1021,7 +1041,7 @@ void SignalFileBrowserWindow::runSpikedet()
 		progress.setMinimumDuration(0); // This is to show the dialog immediately.
 		progress.setValue(1);
 
-		spikedetAnalysis->runAnalysis(file, montage, &progress);
+		spikedetAnalysis->runAnalysis(openDataFile, montage, &progress);
 
 		// Add three new event types for the different levels of spike events.
 		AbstractEventTypeTable* ett = file->getDataModel()->eventTypeTable();

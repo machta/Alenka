@@ -5,10 +5,7 @@
 
 #include <vector>
 
-namespace AlenkaFile
-{
-class DataFile;
-}
+class OpenDataFile;
 class TrackLabelBar;
 class QScrollBar;
 class QSplitter;
@@ -40,7 +37,7 @@ public:
 	 * @brief Notifies this object that the DataFile changed.
 	 * @param file Pointer to the data file. nullptr means file was closed.
 	 */
-	void changeFile(AlenkaFile::DataFile* file);
+	void changeFile(OpenDataFile* file);
 
 signals:
 	void virtualWidthChanged(int);
@@ -56,7 +53,7 @@ protected:
 	virtual void keyReleaseEvent(QKeyEvent* event) override;
 
 private:
-	AlenkaFile::DataFile* file;
+	OpenDataFile* file;
 	QSplitter* splitter;
 	Canvas* canvas;
 	QScrollBar* scrollBar;

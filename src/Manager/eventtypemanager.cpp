@@ -1,8 +1,8 @@
 #include "eventtypemanager.h"
 
-#include <AlenkaFile/datafile.h>
+#include "../DataModel/opendatafile.h"
 
 void EventTypeManager::insertRowBack()
 {
-	file->getDataModel()->eventTypeTable()->insertRows(file->getDataModel()->eventTypeTable()->rowCount());
+	file->dataModel->eventTypeTable()->insertRows(file->dataModel->eventTypeTable()->rowCount());
 }

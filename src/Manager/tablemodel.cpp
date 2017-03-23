@@ -82,7 +82,7 @@ bool ColorTableColumn::createEditor(QWidget* parent, const QStyleOptionViewItem&
 	return true;
 }
 
-TableModel::TableModel(AlenkaFile::DataFile* file, QObject* parent) : QAbstractTableModel(parent), file(file)
+TableModel::TableModel(OpenDataFile* file, QObject* parent) : QAbstractTableModel(parent), file(file)
 {
 	delegate = new Delegate(&columns);
 }

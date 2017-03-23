@@ -38,8 +38,8 @@ EventManager::EventManager(QWidget* parent) : Manager(parent)
 
 void EventManager::insertRowBack()
 {
-	int rc = currentEventTable(file->getDataModel())->rowCount();
-	currentEventTable(file->getDataModel())->insertRows(rc);
+	int rc = currentEventTable(file->dataModel)->rowCount();
+	currentEventTable(file->dataModel)->insertRows(rc);
 }
 
 // TODO: Don't constrain goto to the dimensions of the slider, but rather make sure time line is always correctly positioned.
@@ -51,7 +51,7 @@ void EventManager::goToEvent()
 	{
 		InfoTable& it = OpenDataFile::infoTable;
 
-		double ratio = static_cast<double>(file->getSamplesRecorded())/it.getVirtualWidth();
+		double ratio = static_cast<double>(file->file->getSamplesRecorded())/it.getVirtualWidth();
 		int col = static_cast<int>(Event::Index::position);
 		auto index = tableView->model()->index(currentIndex.row(), col);
 

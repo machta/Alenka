@@ -1,7 +1,7 @@
 #ifndef GPUCACHE_H
 #define GPUCACHE_H
 
-#include <AlenkaFile/datafile.h>
+//#include <AlenkaFile/datafile.h>
 #include "../error.h"
 
 #include <CL/cl_gl.h>
@@ -23,6 +23,7 @@ class OpenCLContext;
 template<class T>
 class FilterProcessor;
 }
+class OpenDataFile;
 
 /**
  * @brief This class a LRU cache of data blocks on the GPU.
@@ -45,7 +46,7 @@ public:
 	 * @param availableMemory The maximum bytes available for the cache.
 	 * @param filterProcessor If nullptr, the cached blocks are not filtered.
 	 */
-	GPUCache(unsigned int blockSize, unsigned int offset, int delay, int64_t availableMemory, AlenkaFile::DataFile* file, AlenkaSignal::OpenCLContext* context, AlenkaSignal::FilterProcessor<float>* filterProcessor);
+	GPUCache(unsigned int blockSize, unsigned int offset, int delay, int64_t availableMemory, OpenDataFile* file, AlenkaSignal::OpenCLContext* context, AlenkaSignal::FilterProcessor<float>* filterProcessor);
 	~GPUCache();
 
 	/**
@@ -101,7 +102,7 @@ private:
 	int offset;
 	int delay;
 	unsigned int capacity;
-	AlenkaFile::DataFile* file;
+	OpenDataFile* file;
 	AlenkaSignal::FilterProcessor<float>* filterProcessor;
 	cl_command_queue commandQueue;
 	std::vector<cl_mem> buffers;

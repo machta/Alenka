@@ -1,6 +1,6 @@
 #include "spikedetanalysis.h"
 
-#include <AlenkaFile/datafile.h>
+#include "DataModel/opendatafile.h"
 
 #include <AlenkaSignal/openclcontext.h>
 #include <AlenkaSignal/montage.h>
@@ -119,12 +119,12 @@ public:
 
 } // namespace
 
-void SpikedetAnalysis::runAnalysis(AlenkaFile::DataFile* file, const vector<Montage<float>*>& montage, QProgressDialog* progress)
+void SpikedetAnalysis::runAnalysis(OpenDataFile* file, const vector<Montage<float>*>& montage, QProgressDialog* progress)
 {
 	assert(file);
 
-	Spikedet<float> spikedet(file->getSamplingFrequency(), montage.size(), settings, context);
-	Loader<float> loader(file, montage, context);
+	Spikedet<float> spikedet(file->file->getSamplingFrequency(), montage.size(), settings, context);
+	Loader<float> loader(file->file, montage, context);
 
 	delete output;
 	output = new CDetectorOutput;

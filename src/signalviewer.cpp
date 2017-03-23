@@ -44,7 +44,7 @@ SignalViewer::~SignalViewer()
 	PROGRAM_OPTIONS.settings("SignalViewer splitter state", splitter->saveState());
 }
 
-void SignalViewer::changeFile(AlenkaFile::DataFile* file)
+void SignalViewer::changeFile(OpenDataFile* file)
 {
 	canvas->changeFile(file);
 	trackLabelBar->changeFile(file);

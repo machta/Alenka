@@ -10,10 +10,7 @@
 #include <vector>
 #include <tuple>
 
-namespace AlenkaFile
-{
-class DataFile;
-}
+class OpenDataFile;
 class SignalProcessor;
 class SignalBlock;
 class OpenGLProgram;
@@ -40,7 +37,7 @@ public:
 	 * @brief Notifies this object that the DataFile changed.
 	 * @param file Pointer to the data file. nullptr means file was closed.
 	 */
-	void changeFile(AlenkaFile::DataFile* file);
+	void changeFile(OpenDataFile* file);
 
 	int getCursorPositionSample() const
 	{
@@ -85,7 +82,7 @@ protected:
 	virtual void focusInEvent(QFocusEvent* event) override;
 
 private:
-	AlenkaFile::DataFile* file;
+	OpenDataFile* file;
 	SignalProcessor* signalProcessor = nullptr;
 	OpenGLProgram* signalProgram = nullptr;
 	OpenGLProgram* eventProgram = nullptr;

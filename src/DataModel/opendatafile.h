@@ -4,10 +4,13 @@
 #include "infotable.h"
 #include <AlenkaFile/datafile.h>
 
+class QUndoStack;
+
 struct OpenDataFile
 {
 	AlenkaFile::DataFile* file;
-	AlenkaFile::DataModel* dataModel; // TODO: Switch from file.getDataFile() to this.
+	AlenkaFile::DataModel* dataModel;
+	QUndoStack* undoStack;
 
 	static InfoTable infoTable;
 };

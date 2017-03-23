@@ -179,15 +179,15 @@ public:
 
 } // namespace
 
-EventTypeTableModel::EventTypeTableModel(DataFile* file, QObject* parent) : TableModel(file, parent)
+EventTypeTableModel::EventTypeTableModel(OpenDataFile* file, QObject* parent) : TableModel(file, parent)
 {
-	columns.push_back(new Id(file->getDataModel()));
-	columns.push_back(new Name(file->getDataModel()));
-	columns.push_back(new Opacity(file->getDataModel()));
-	columns.push_back(new Color(file->getDataModel()));
-	columns.push_back(new Hidden(file->getDataModel()));
+	columns.push_back(new Id(file->dataModel));
+	columns.push_back(new Name(file->dataModel));
+	columns.push_back(new Opacity(file->dataModel));
+	columns.push_back(new Color(file->dataModel));
+	columns.push_back(new Hidden(file->dataModel));
 
-	auto vitness = VitnessEventTypeTable::vitness(file->getDataModel()->eventTypeTable());
+	auto vitness = VitnessEventTypeTable::vitness(file->dataModel->eventTypeTable());
 	connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(emitDataChanged(int, int)));
 	connect(vitness, SIGNAL(rowsInserted(int, int)), this, SLOT(insertDataModelRows(int, int)));
 }
@@ -195,20 +195,20 @@ EventTypeTableModel::EventTypeTableModel(DataFile* file, QObject* parent) : Tabl
 int EventTypeTableModel::rowCount(const QModelIndex& parent) const
 {
 	(void)parent;
-	return file->getDataModel()->eventTypeTable()->rowCount();
+	return file->dataModel->eventTypeTable()->rowCount();
 }
 
 void EventTypeTableModel::insertRowBack()
 {
-	file->getDataModel()->eventTypeTable()->insertRows(file->getDataModel()->eventTypeTable()->rowCount());
+	file->dataModel->eventTypeTable()->insertRows(file->dataModel->eventTypeTable()->rowCount());
 }
 
 void EventTypeTableModel::removeRowsFromDataModel(int row, int count)
 {
 	// Update the types of events to point to correct event types after the rows are removed.
-	for (int i = 0; i < file->getDataModel()->montageTable()->rowCount(); ++i)
+	for (int i = 0; i < file->dataModel->montageTable()->rowCount(); ++i)
 	{
-		AbstractEventTable* eventTable = file->getDataModel()->montageTable()->eventTable(i);
+		AbstractEventTable* eventTable = file->dataModel->montageTable()->eventTable(i);
 
 		for (int j = 0; j < eventTable->rowCount(); ++j)
 		{
@@ -223,5 +223,5 @@ void EventTypeTableModel::removeRowsFromDataModel(int row, int count)
 		}
 	}
 
-	file->getDataModel()->eventTypeTable()->removeRows(row, count);
+	file->dataModel->eventTypeTable()->removeRows(row, count);
 }

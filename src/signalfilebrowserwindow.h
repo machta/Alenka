@@ -13,6 +13,7 @@ namespace AlenkaFile
 class DataFile;
 class DataModel;
 }
+class OpenDataFile;
 class SignalViewer;
 class TrackManager;
 class EventManager;
@@ -31,6 +32,7 @@ class SyncDialog;
 class TableModel;
 class DataModelVitness;
 class QTimer;
+class QUndoStack;
 
 /**
  * @brief This class implements the top level window of the program.
@@ -52,6 +54,8 @@ protected:
 
 private:
 	AlenkaFile::DataFile* file = nullptr;
+	OpenDataFile* openDataFile;
+	AlenkaFile::DataModel* dataModel = nullptr;
 	SignalViewer* signalViewer;
 	TrackManager* trackManager;
 	EventManager* eventManager;
@@ -81,10 +85,10 @@ private:
 	TableModel* montageTable = nullptr;
 	TableModel* eventTable = nullptr;
 	TableModel* trackTable = nullptr;
-	AlenkaFile::DataModel* dataModel = nullptr;
 	std::vector<QMetaObject::Connection> openFileConnections;
 	QTimer* autoSaveTimer;
 	std::string autoSaveName;
+	QUndoStack* undoStack = nullptr;
 
 	void connectVitness(DataModelVitness* vitness, std::function<void ()> f);
 	void horizontalZoom(double factor);

@@ -291,14 +291,14 @@ public:
 
 } // namespace
 
-EventTableModel::EventTableModel(DataFile* file, QObject* parent) : TableModel(file, parent)
+EventTableModel::EventTableModel(OpenDataFile* file, QObject* parent) : TableModel(file, parent)
 {
-	columns.push_back(new Label(file->getDataModel()));
-	columns.push_back(new Type(file->getDataModel()));
-	columns.push_back(new Position(file->getDataModel(), file));
-	columns.push_back(new Duration(file->getDataModel(), file));
-	columns.push_back(new Channel(file->getDataModel()));
-	columns.push_back(new Description(file->getDataModel()));
+	columns.push_back(new Label(file->dataModel));
+	columns.push_back(new Type(file->dataModel));
+	columns.push_back(new Position(file->dataModel, file->file));
+	columns.push_back(new Duration(file->dataModel, file->file));
+	columns.push_back(new Channel(file->dataModel));
+	columns.push_back(new Description(file->dataModel));
 
 	connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(setSelectedMontage(int)));
 	setSelectedMontage(OpenDataFile::infoTable.getSelectedMontage());
@@ -309,18 +309,18 @@ EventTableModel::EventTableModel(DataFile* file, QObject* parent) : TableModel(f
 int EventTableModel::rowCount(const QModelIndex& parent) const
 {
 	(void)parent;
-	return currentEventTable(file->getDataModel())->rowCount();
+	return currentEventTable(file->dataModel)->rowCount();
 }
 
 void EventTableModel::removeRowsFromDataModel(int row, int count)
 {
-	currentEventTable(file->getDataModel())->removeRows(row, count);
+	currentEventTable(file->dataModel)->removeRows(row, count);
 }
 
 void EventTableModel::insertRowBack()
 {
-	int rc = currentEventTable(file->getDataModel())->rowCount();
-	currentEventTable(file->getDataModel())->insertRows(rc);
+	int rc = currentEventTable(file->dataModel)->rowCount();
+	currentEventTable(file->dataModel)->insertRows(rc);
 }
 
 void EventTableModel::setSelectedMontage(int i)
@@ -331,7 +331,7 @@ void EventTableModel::setSelectedMontage(int i)
 		disconnect(e);
 	montageTableConnections.clear();
 
-	auto vitness = VitnessEventTable::vitness(file->getDataModel()->montageTable()->eventTable(i));
+	auto vitness = VitnessEventTable::vitness(file->dataModel->montageTable()->eventTable(i));
 
 	auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(emitDataChanged(int, int)));
 	montageTableConnections.push_back(c);

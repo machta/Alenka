@@ -30,22 +30,22 @@ const double horizontalZoomFactor = 1.3;
 const double verticalZoomFactor = 1.3;
 const double trackZoomFactor = 1.3;
 
-void getEventTypeColorOpacity(DataFile* file, int type, QColor* color, double* opacity)
+void getEventTypeColorOpacity(OpenDataFile* file, int type, QColor* color, double* opacity)
 {
 	assert(color && opacity);
-	EventType et = file->getDataModel()->eventTypeTable()->row(type);
+	EventType et = file->dataModel->eventTypeTable()->row(type);
 	*color = DataModel::array2color<QColor>(et.color);
 	*opacity = et.opacity;
 }
 
-AbstractTrackTable* getTrackTable(DataFile* file)
+AbstractTrackTable* getTrackTable(OpenDataFile* file)
 {
-	return file->getDataModel()->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
+	return file->dataModel->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
 }
 
-AbstractEventTable* getEventTable(DataFile* file)
+AbstractEventTable* getEventTable(OpenDataFile* file)
 {
-	return file->getDataModel()->montageTable()->eventTable(OpenDataFile::infoTable.getSelectedMontage());
+	return file->dataModel->montageTable()->eventTable(OpenDataFile::infoTable.getSelectedMontage());
 }
 
 void zoom(double factor, AbstractTrackTable* trackTable, int i)
@@ -73,7 +73,7 @@ pair<int64_t, int64_t> sampleRangeToBlockRange(pair<int64_t, int64_t> range, uns
 	return make_pair(from, to);
 }
 
-void getEventsForRendering(DataFile* file, int firstSample, int lastSample, vector<tuple<int, int, int>>* allChannelEvents, vector<tuple<int, int, int, int>>* singleChannelEvents)
+void getEventsForRendering(OpenDataFile* file, int firstSample, int lastSample, vector<tuple<int, int, int>>* allChannelEvents, vector<tuple<int, int, int, int>>* singleChannelEvents)
 {
 	AbstractEventTable* eventTable = getEventTable(file);
 
@@ -82,7 +82,7 @@ void getEventsForRendering(DataFile* file, int firstSample, int lastSample, vect
 		Event e = eventTable->row(i);
 
 		if (e.position <= lastSample && firstSample <= e.position + e.duration - 1 && e.type >= 0 && e.channel >= -1 &&
-			file->getDataModel()->eventTypeTable()->row(e.type).hidden == false)
+			file->dataModel->eventTypeTable()->row(e.type).hidden == false)
 		{
 			if (e.channel == - 1)
 			{
@@ -127,7 +127,7 @@ Canvas::~Canvas()
 	doneCurrent();
 }
 
-void Canvas::changeFile(DataFile* file)
+void Canvas::changeFile(OpenDataFile* file)
 {
 	assert(signalProcessor);
 
@@ -152,8 +152,8 @@ void Canvas::changeFile(DataFile* file)
 		c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int)), this, SLOT(updateCursor()));
 		openFileConnections.push_back(c);
 
-		samplesRecorded = file->getSamplesRecorded();
-		samplingFrequency = file->getSamplingFrequency();
+		samplesRecorded = file->file->getSamplesRecorded();
+		samplingFrequency = file->file->getSamplingFrequency();
 	}
 	else
 	{

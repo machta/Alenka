@@ -1,7 +1,7 @@
 #ifndef TABLEMODEL_H
 #define TABLEMODEL_H
 
-#include <AlenkaFile/datafile.h>
+#include "../DataModel/opendatafile.h"
 #include "../DataModel/infotable.h"
 
 #include <QAbstractTableModel>
@@ -76,7 +76,7 @@ class TableModel : public QAbstractTableModel
 	Q_OBJECT
 
 public:
-	explicit TableModel(AlenkaFile::DataFile* file, QObject* parent = nullptr);
+	explicit TableModel(OpenDataFile* file, QObject* parent = nullptr);
 	~TableModel();
 
 	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override = 0;
@@ -128,7 +128,7 @@ public slots:
 	}
 
 protected:
-	AlenkaFile::DataFile* file;
+	OpenDataFile* file;
 	std::vector<TableColumn*> columns;
 
 	virtual void insertRowBack() = 0;

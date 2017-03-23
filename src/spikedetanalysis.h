@@ -9,10 +9,7 @@ class OpenCLContext;
 template<class T>
 class Montage;
 }
-namespace AlenkaFile
-{
-class DataFile;
-}
+class OpenDataFile;
 class QProgressDialog;
 
 class SpikedetAnalysis
@@ -44,7 +41,7 @@ public:
 		return settings;
 	}
 
-	void runAnalysis(AlenkaFile::DataFile* file, const std::vector<AlenkaSignal::Montage<float>*>& montage, QProgressDialog* progress);
+	void runAnalysis(OpenDataFile* file, const std::vector<AlenkaSignal::Montage<float>*>& montage, QProgressDialog* progress);
 
 private:
 	AlenkaSignal::OpenCLContext* context;
