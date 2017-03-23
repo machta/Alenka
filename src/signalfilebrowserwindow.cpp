@@ -172,25 +172,32 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	openFileAction->setShortcut(QKeySequence::Open);
 	openFileAction->setToolTip("Open an existing file.");
 	openFileAction->setStatusTip(openFileAction->toolTip());
+	openFileAction->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
 	connect(openFileAction, SIGNAL(triggered()), this, SLOT(openFile()));
 
 	QAction* closeFileAction = new QAction("Close File", this);
 	closeFileAction->setShortcut(QKeySequence::Close);
 	closeFileAction->setToolTip("Close the currently opened file.");
 	closeFileAction->setStatusTip(closeFileAction->toolTip());
+	closeFileAction->setIcon(style()->standardIcon(QStyle::SP_DialogCloseButton));
 	connect(closeFileAction, SIGNAL(triggered()), this, SLOT(closeFile()));
 
 	QAction* saveFileAction = new QAction("Save File", this);
 	saveFileAction->setShortcut(QKeySequence::Save);
 	saveFileAction->setToolTip("Save the currently opened file.");
 	saveFileAction->setStatusTip(saveFileAction->toolTip());
+	saveFileAction->setIcon(style()->standardIcon(QStyle::SP_DialogSaveButton));
 	connect(saveFileAction, SIGNAL(triggered()), this, SLOT(saveFile()));
 
 	QAction* undoAction = undoStack->createUndoAction(this);
 	undoAction->setShortcut(QKeySequence::Undo);
+	undoAction->setIcon(QIcon::fromTheme("edit-undo"));
+	undoAction->setIcon(style()->standardIcon(QStyle::SP_ArrowLeft));
+	// TODO: Get proper icons for undo/redo.
 
 	QAction* redoAction = undoStack->createRedoAction(this);
 	redoAction->setShortcut(QKeySequence::Redo);
+	redoAction->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
 
 	// Construct Zoom actions.
 	QAction* horizontalZoomInAction = new QAction("Horizontal Zoom In", this);
