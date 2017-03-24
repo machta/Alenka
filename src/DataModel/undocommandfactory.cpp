@@ -314,6 +314,11 @@ public:
 
 } // namespace
 
+void UndoCommandFactory::push(QUndoCommand* cmd)
+{
+	undoStack->push(cmd);
+}
+
 void UndoCommandFactory::beginMacro(const QString& text)
 {
 	undoStack->beginMacro(text);

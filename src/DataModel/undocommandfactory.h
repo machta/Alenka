@@ -6,6 +6,7 @@
 #include <QString>
 
 class QUndoStack;
+class QUndoCommand;
 
 class UndoCommandFactory
 {
@@ -13,6 +14,7 @@ public:
 	UndoCommandFactory(AlenkaFile::DataModel* dataModel, QUndoStack* undoStack) :
 		dataModel(dataModel), undoStack(undoStack) {}
 
+	void push(QUndoCommand* cmd);
 	void beginMacro(const QString &text);
 	void endMacro();
 

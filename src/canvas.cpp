@@ -15,6 +15,7 @@
 #include <QWheelEvent>
 #include <QKeyEvent>
 #include <QCursor>
+#include <QUndoCommand>
 
 #include <cstdio>
 #include <string>
@@ -49,14 +50,67 @@ const AbstractEventTable* getEventTable(OpenDataFile* file)
 	return file->dataModel->montageTable()->eventTable(OpenDataFile::infoTable.getSelectedMontage());
 }
 
+class ZoomCommand : public QUndoCommand
+{
+	DataModel* dataModel;
+	int i, j;
+	double before, after;
+	const int commandId = 0;
+	vector<QUndoCommand*> childCommands;
+
+public:
+	ZoomCommand(DataModel* dataModel, int i, int j, double before, double after) :
+		QUndoCommand("vertical zoom"), dataModel(dataModel), i(i), j(j), before(before), after(after) {}
+	virtual ~ZoomCommand() override
+	{
+		for (QUndoCommand* c : childCommands)
+			delete c;
+	}
+
+	virtual void redo() override
+	{
+		Track t = dataModel->montageTable()->trackTable(i)->row(j);
+		t.amplitude = after;
+		dataModel->montageTable()->trackTable(i)->row(j, t);
+
+		for (QUndoCommand* c : childCommands)
+			c->redo();
+	}
+	virtual void undo() override
+	{
+		for (auto i = childCommands.rbegin(); i != childCommands.rend(); ++i)
+			(*i)->undo();
+
+		Track t = dataModel->montageTable()->trackTable(i)->row(j);
+		t.amplitude = before;
+		dataModel->montageTable()->trackTable(i)->row(j, t);
+	}
+
+	virtual int id() const override
+	{
+		return commandId;
+	}
+	virtual bool mergeWith(const QUndoCommand* other) override
+	{
+		assert(other->id() == commandId);
+
+		auto o = dynamic_cast<const ZoomCommand*>(other);
+		childCommands.push_back(new ZoomCommand(o->dataModel, o->i, o->j, o->before, o->after));
+
+		return true;
+	}
+};
+
 void zoom(OpenDataFile* file, double factor, int i)
 {
 	Track track = getTrackTable(file)->row(i);
 
-	double value = track.amplitude*factor;
-	track.amplitude = value != 0 ? value : -0.000001;
+	const double before = track.amplitude;
 
-	file->undoFactory->changeTrack(OpenDataFile::infoTable.getSelectedMontage(), i, track, "zoom track");
+	double after = before*factor;
+	after = after != 0 ? after : -0.000001;
+
+	file->undoFactory->push(new ZoomCommand(file->file->getDataModel(), OpenDataFile::infoTable.getSelectedMontage(), i, before, after));
 }
 
 /**
@@ -198,12 +252,8 @@ void Canvas::verticalZoom(bool reverse)
 		if (reverse)
 			factor = 1/factor;
 
-		file->undoFactory->beginMacro("vertical zoom");
-
 		for (int i = 0; i < getTrackTable(file)->rowCount(); ++i)
 			zoom(file, factor, i);
-
-		file->undoFactory->endMacro();
 	}
 }
 

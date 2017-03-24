@@ -848,6 +848,9 @@ void SignalFileBrowserWindow::closeFile()
 		});
 	}
 
+	deleteAutoSave();
+	autoSaveName = "";
+
 	closeFileDestroy();
 
 	signalViewer->updateSignalViewer();
@@ -1128,9 +1131,6 @@ void SignalFileBrowserWindow::closeFileDestroy()
 
 	montageComboBox->clear();
 	eventTypeComboBox->clear();
-
-	deleteAutoSave();
-	autoSaveName = "";
 
 	signalViewer->changeFile(nullptr);
 
