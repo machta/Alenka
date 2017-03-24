@@ -91,6 +91,7 @@ private:
 	std::string autoSaveName;
 	QUndoStack* undoStack;
 	UndoCommandFactory* undoFactory = nullptr;
+	QAction* saveFileAction;
 
 	void connectVitness(const DataModelVitness* vitness, std::function<void ()> f);
 	void mode(int m);
@@ -114,6 +115,8 @@ private slots:
 	void runSpikedet();
 	void receiveSyncMessage(const QByteArray& message);
 	void sendSyncMessage();
+	void cleanChanged(bool clean);
+	void closeFileDestroy();
 };
 
 #endif // SIGNALFILEBROWSERWINDOW_H

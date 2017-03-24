@@ -45,6 +45,7 @@
 #include <QTimer>
 #include <QMessageBox>
 #include <QUndoStack>
+#include <QCloseEvent>
 
 #include <locale>
 
@@ -131,7 +132,9 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	setWindowTitle(title);
 
 	autoSaveTimer = new QTimer(this);
+
 	undoStack = new QUndoStack(this);
+	connect(undoStack, SIGNAL(cleanChanged(bool)), this, SLOT(cleanChanged(bool)));
 
 	signalViewer = new SignalViewer(this);
 	setCentralWidget(signalViewer);
@@ -182,22 +185,23 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	closeFileAction->setIcon(style()->standardIcon(QStyle::SP_DialogCloseButton));
 	connect(closeFileAction, SIGNAL(triggered()), this, SLOT(closeFile()));
 
-	QAction* saveFileAction = new QAction("Save File", this);
+	saveFileAction = new QAction("Save File", this);
 	saveFileAction->setShortcut(QKeySequence::Save);
 	saveFileAction->setToolTip("Save the currently opened file.");
 	saveFileAction->setStatusTip(saveFileAction->toolTip());
 	saveFileAction->setIcon(style()->standardIcon(QStyle::SP_DialogSaveButton));
+	saveFileAction->setEnabled(false);
 	connect(saveFileAction, SIGNAL(triggered()), this, SLOT(saveFile()));
 
 	QAction* undoAction = undoStack->createUndoAction(this);
 	undoAction->setShortcut(QKeySequence::Undo);
-	undoAction->setIcon(QIcon::fromTheme("edit-undo"));
-	undoAction->setIcon(style()->standardIcon(QStyle::SP_ArrowLeft));
-	// TODO: Get proper icons for undo/redo.
+	//undoAction->setIcon(QIcon::fromTheme("edit-undo"));
+	//undoAction->setIcon(style()->standardIcon(QStyle::SP_ArrowLeft));
 
 	QAction* redoAction = undoStack->createRedoAction(this);
 	redoAction->setShortcut(QKeySequence::Redo);
-	redoAction->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
+	//redoAction->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
+	// TODO: Get proper icons for undo/redo.
 
 	// Construct Zoom actions.
 	QAction* horizontalZoomInAction = new QAction("Horizontal Zoom In", this);
@@ -316,8 +320,6 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	connect(syncServer, SIGNAL(messageReceived(QByteArray)), this, SLOT(receiveSyncMessage(QByteArray)));
 	connect(syncClient, SIGNAL(messageReceived(QByteArray)), this, SLOT(receiveSyncMessage(QByteArray)));
 
-	// TODO: filter the stupid ssl warnings from debug output.
-
 	// Tool bars.
 	const int spacing = 3;
 
@@ -329,8 +331,8 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	fileToolBar->addAction(openFileAction);
 	fileToolBar->addAction(closeFileAction);
 	fileToolBar->addAction(saveFileAction);
-	fileToolBar->addAction(undoAction);
-	fileToolBar->addAction(redoAction);
+	addAction(undoAction); // Add these to this widget to keep the shortcuts working, but do't include it in the toolbar.
+	addAction(redoAction);
 
 	// Construct Filter tool bar.
 	QToolBar* filterToolBar = addToolBar("Filter Tool Bar");
@@ -492,7 +494,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 SignalFileBrowserWindow::~SignalFileBrowserWindow()
 {
-	closeFile();
+	closeFileDestroy();
 
 	delete openDataFile;
 	delete spikedetAnalysis;
@@ -546,11 +548,35 @@ QString SignalFileBrowserWindow::sampleToDateTimeString(DataFile* file, int samp
 
 void SignalFileBrowserWindow::closeEvent(QCloseEvent* event)
 {
-	// Store settings.
-	PROGRAM_OPTIONS.settings("SignalFileBrowserWindow geometry", saveGeometry());
-	PROGRAM_OPTIONS.settings("SignalFileBrowserWindow state", saveState());
+	bool shouldClose = true;
+	bool shouldSave = false;
 
-	QMainWindow::closeEvent(event);
+	if (!undoStack->isClean())
+	{
+		auto res = QMessageBox::question(this, "Save File?", "Save changes before closing?", QMessageBox::Save | QMessageBox::Cancel | QMessageBox::Discard);
+
+		if (res == QMessageBox::Save)
+			shouldSave = true;
+		else if (res == QMessageBox::Cancel)
+			shouldClose = false;
+	}
+
+	if (shouldClose)
+	{
+		if (shouldSave)
+			saveFile();
+
+		closeFile();
+
+		PROGRAM_OPTIONS.settings("SignalFileBrowserWindow state", saveState());
+		PROGRAM_OPTIONS.settings("SignalFileBrowserWindow geometry", saveGeometry());
+
+		event->accept();
+	}
+	else
+	{
+		event->ignore();
+	}
 }
 
 void SignalFileBrowserWindow::connectVitness(const DataModelVitness* vitness, std::function<void ()> f)
@@ -651,8 +677,7 @@ void SignalFileBrowserWindow::openFile()
 
 	if (QFileInfo(autoSaveName.c_str()).exists())
 	{
-		QMessageBox::StandardButton res;
-		res = QMessageBox::question(this, "Use autosave file?", "An autosave file was detected. Would you like to use it?");
+		auto res = QMessageBox::question(this, "Load Autosave File?", "An autosave file was detected. Would you like to load it?");
 		useAutoSave = res == QMessageBox::Yes;
 	}
 
@@ -816,13 +841,6 @@ void SignalFileBrowserWindow::closeFile()
 
 	setWindowTitle(title);
 
-	for (auto e : openFileConnections)
-		disconnect(e);
-	openFileConnections.clear();
-
-	montageComboBox->clear();
-	eventTypeComboBox->clear();
-
 	if (file)
 	{
 		executeWithCLocale([this] () {
@@ -830,24 +848,7 @@ void SignalFileBrowserWindow::closeFile()
 		});
 	}
 
-	deleteAutoSave();
-	autoSaveName = "";
-
-	signalViewer->changeFile(nullptr);
-
-	trackManager->changeFile(nullptr);
-	eventManager->changeFile(nullptr);
-	eventTypeManager->changeFile(nullptr);
-	montageManager->changeFile(nullptr);
-
-	delete eventTypeTable; eventTypeTable = nullptr;
-	delete montageTable; montageTable = nullptr;
-	delete eventTable; eventTable = nullptr;
-	delete trackTable; trackTable= nullptr;
-
-	delete dataModel; dataModel = nullptr;
-
-	delete file; file = nullptr;
+	closeFileDestroy();
 
 	signalViewer->updateSignalViewer();
 }
@@ -863,6 +864,7 @@ void SignalFileBrowserWindow::saveFile()
 		});
 
 		deleteAutoSave();
+		undoStack->setClean();
 	}
 }
 
@@ -1111,4 +1113,38 @@ void SignalFileBrowserWindow::sendSyncMessage()
 		// Reset to the default value, so that the message is skipped at most once.
 		lastPositionReceived = lastPositionReceivedDefault;
 	}
+}
+
+void SignalFileBrowserWindow::cleanChanged(bool clean)
+{
+	saveFileAction->setEnabled(!clean);
+}
+
+void SignalFileBrowserWindow::closeFileDestroy()
+{
+	for (auto e : openFileConnections)
+		disconnect(e);
+	openFileConnections.clear();
+
+	montageComboBox->clear();
+	eventTypeComboBox->clear();
+
+	deleteAutoSave();
+	autoSaveName = "";
+
+	signalViewer->changeFile(nullptr);
+
+	trackManager->changeFile(nullptr);
+	eventManager->changeFile(nullptr);
+	eventTypeManager->changeFile(nullptr);
+	montageManager->changeFile(nullptr);
+
+	delete eventTypeTable; eventTypeTable = nullptr;
+	delete montageTable; montageTable = nullptr;
+	delete eventTable; eventTable = nullptr;
+	delete trackTable; trackTable= nullptr;
+
+	delete dataModel; dataModel = nullptr;
+
+	delete file; file = nullptr;
 }
