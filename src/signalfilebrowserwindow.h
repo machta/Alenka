@@ -92,6 +92,8 @@ private:
 	QUndoStack* undoStack;
 	UndoCommandFactory* undoFactory = nullptr;
 	QAction* saveFileAction;
+	QAction* closeFileAction;
+	QAction* runSpikedetAction;
 
 	void connectVitness(const DataModelVitness* vitness, std::function<void ()> f);
 	void mode(int m);
@@ -100,7 +102,7 @@ private:
 
 private slots:
 	void openFile();
-	void closeFile();
+	bool closeFile();
 	void saveFile();
 	void lowpassComboBoxUpdate(const QString& text);
 	void lowpassComboBoxUpdate(double value);
@@ -117,6 +119,7 @@ private slots:
 	void sendSyncMessage();
 	void cleanChanged(bool clean);
 	void closeFileDestroy();
+	void setEnableFileActions(bool enable);
 };
 
 #endif // SIGNALFILEBROWSERWINDOW_H

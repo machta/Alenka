@@ -55,7 +55,7 @@ using namespace AlenkaFile;
 namespace
 {
 
-const char* title = "Signal File Browser";
+const char* TITLE = "Signal File Browser";
 
 double byteArray2Double(const char* data)
 {
@@ -129,7 +129,7 @@ void executeWithCLocale(function<void ()> code)
 
 SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(parent)
 {
-	setWindowTitle(title);
+	setWindowTitle(TITLE);
 
 	autoSaveTimer = new QTimer(this);
 
@@ -178,7 +178,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	openFileAction->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
 	connect(openFileAction, SIGNAL(triggered()), this, SLOT(openFile()));
 
-	QAction* closeFileAction = new QAction("Close File", this);
+	closeFileAction = new QAction("Close File", this);
 	closeFileAction->setShortcut(QKeySequence::Close);
 	closeFileAction->setToolTip("Close the currently opened file.");
 	closeFileAction->setStatusTip(closeFileAction->toolTip());
@@ -237,7 +237,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	});
 
 	// Construct Spikedet actions.
-	QAction* runSpikedetAction = new QAction(QIcon(":/play-icon.png"), "Run Spikedet Analysis", this);
+	runSpikedetAction = new QAction(QIcon(":/play-icon.png"), "Run Spikedet Analysis", this);
 	runSpikedetAction->setToolTip("Run Spikedet analysis on the current montage.");
 	runSpikedetAction->setStatusTip(runSpikedetAction->toolTip());
 	connect(runSpikedetAction, &QAction::triggered, [this] () { runSpikedet(); } );
@@ -490,6 +490,8 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	auto settings = spikedetAnalysis->getSettings();
 	loadSpikedetOptions(&settings, &eventDuration);
 	spikedetAnalysis->setSettings(settings);
+
+	setEnableFileActions(false);
 }
 
 SignalFileBrowserWindow::~SignalFileBrowserWindow()
@@ -548,26 +550,8 @@ QString SignalFileBrowserWindow::sampleToDateTimeString(DataFile* file, int samp
 
 void SignalFileBrowserWindow::closeEvent(QCloseEvent* event)
 {
-	bool shouldClose = true;
-	bool shouldSave = false;
-
-	if (!undoStack->isClean())
+	if (closeFile())
 	{
-		auto res = QMessageBox::question(this, "Save File?", "Save changes before closing?", QMessageBox::Save | QMessageBox::Cancel | QMessageBox::Discard);
-
-		if (res == QMessageBox::Save)
-			shouldSave = true;
-		else if (res == QMessageBox::Cancel)
-			shouldClose = false;
-	}
-
-	if (shouldClose)
-	{
-		if (shouldSave)
-			saveFile();
-
-		closeFile();
-
 		PROGRAM_OPTIONS.settings("SignalFileBrowserWindow state", saveState());
 		PROGRAM_OPTIONS.settings("SignalFileBrowserWindow geometry", saveGeometry());
 
@@ -618,6 +602,9 @@ void SignalFileBrowserWindow::deleteAutoSave()
 
 void SignalFileBrowserWindow::openFile()
 {
+	if (!closeFile())
+		return; // User chose to keep open the current file.
+
 	QString fileName = QFileDialog::getOpenFileName(this, "Open File", "", "Signal files (*.edf *.gdf);;EDF file (*.edf);;GDF file (*.gdf)");
 
 	if (fileName.isNull())
@@ -641,10 +628,9 @@ void SignalFileBrowserWindow::openFile()
 		return;
 	}
 
-	closeFile();
-	undoStack->clear();
-
 	logToFile("Opening file '" << fileName.toStdString() << "'.");
+
+	setEnableFileActions(true);
 
 	string stdFileName = fileName.toStdString();
 	auto suffix = fileInfo.suffix().toLower();
@@ -690,7 +676,7 @@ void SignalFileBrowserWindow::openFile()
 		OpenDataFile::infoTable.readXML(file->getFilePath() + ".info");
 	});
 
-	setWindowTitle(fileInfo.fileName() + " - " + title);
+	setWindowTitle(fileInfo.fileName() + " - " + TITLE);
 
 	// Check for any values in InfoTable that could make trouble.
 	if (OpenDataFile::infoTable.getSelectedMontage() < 0 || OpenDataFile::infoTable.getSelectedMontage() >= openDataFile->dataModel->montageTable()->rowCount())
@@ -835,11 +821,23 @@ void SignalFileBrowserWindow::openFile()
 	autoSaveTimer->start();
 }
 
-void SignalFileBrowserWindow::closeFile()
+bool SignalFileBrowserWindow::closeFile()
 {
+	if (!undoStack->isClean())
+	{
+		auto res = QMessageBox::question(this, "Save File?", "Save changes before closing?", QMessageBox::Save | QMessageBox::Cancel | QMessageBox::Discard);
+
+		if (res == QMessageBox::Save)
+			saveFile();
+		else if (res == QMessageBox::Cancel)
+			return false;
+	}
+
 	logToFile("Closing file.");
 
-	setWindowTitle(title);
+	setWindowTitle(TITLE);
+	undoStack->clear();
+	setEnableFileActions(false);
 
 	if (file)
 	{
@@ -854,6 +852,8 @@ void SignalFileBrowserWindow::closeFile()
 	closeFileDestroy();
 
 	signalViewer->updateSignalViewer();
+
+	return true;
 }
 
 void SignalFileBrowserWindow::saveFile()
@@ -1142,9 +1142,15 @@ void SignalFileBrowserWindow::closeFileDestroy()
 	delete eventTypeTable; eventTypeTable = nullptr;
 	delete montageTable; montageTable = nullptr;
 	delete eventTable; eventTable = nullptr;
-	delete trackTable; trackTable= nullptr;
+	delete trackTable; trackTable = nullptr;
 
 	delete dataModel; dataModel = nullptr;
 
 	delete file; file = nullptr;
+}
+
+void SignalFileBrowserWindow::setEnableFileActions(bool enable)
+{
+	closeFileAction->setEnabled(enable);
+	runSpikedetAction->setEnabled(enable);
 }
