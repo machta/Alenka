@@ -110,13 +110,12 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 	if (PROGRAM_OPTIONS.isSet("help"))
 	{
 		cout << PROGRAM_OPTIONS.getDescription() << endl;
-
-		exit(EXIT_SUCCESS);
+		std::exit(EXIT_SUCCESS);
 	}
 	else if (PROGRAM_OPTIONS.isSet("clInfo"))
 	{
 		cout << ss.str();
-		exit(EXIT_SUCCESS);
+		std::exit(EXIT_SUCCESS);
 	}
 
 	// Set locale.

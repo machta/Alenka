@@ -32,7 +32,6 @@ public:
 	 * Also some of the command line only options are processed here.
 	 */
 	explicit MyApplication(int& argc, char** argv);
-
 	~MyApplication();
 
 	/**

@@ -371,7 +371,7 @@ void Canvas::initializeGL()
 	if (PROGRAM_OPTIONS.isSet("glInfo"))
 	{
 		cout << ss.str();
-		exit(EXIT_SUCCESS);
+		std::exit(EXIT_SUCCESS);
 	}
 
 	checkGLMessages();
