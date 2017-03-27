@@ -997,7 +997,7 @@ void SignalFileBrowserWindow::updateEventTypeComboBox()
 		for (int i = 0; i < itemCount; ++i)
 			eventTypeComboBox->removeItem(0);
 
-		OpenDataFile::infoTable.setSelectedType(min(0, eventTypeTable->rowCount() - 1));
+		OpenDataFile::infoTable.setSelectedType(min(selectedType, eventTypeTable->rowCount() - 1));
 	}
 }
 
