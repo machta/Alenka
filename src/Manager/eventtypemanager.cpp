@@ -3,8 +3,14 @@
 #include "../DataModel/opendatafile.h"
 #include "../DataModel/undocommandfactory.h"
 
-void EventTypeManager::insertRowBack()
+bool EventTypeManager::insertRowBack()
 {
-	int rc = file->dataModel->eventTypeTable()->rowCount();
-	file->undoFactory->insertEventType(rc, 1, "add EventType row");
+	if (file)
+	{
+		int rc = file->dataModel->eventTypeTable()->rowCount();
+		file->undoFactory->insertEventType(rc, 1, "add EventType row");
+		return true;
+	}
+
+	return false;
 }

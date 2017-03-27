@@ -3,8 +3,14 @@
 #include "../DataModel/opendatafile.h"
 #include "../DataModel/undocommandfactory.h"
 
-void MontageManager::insertRowBack()
+bool MontageManager::insertRowBack()
 {
-	int rc = file->dataModel->montageTable()->rowCount();
-	file->undoFactory->insertMontage(rc, 1, "add Montage row");
+	if (file)
+	{
+		int rc = file->dataModel->montageTable()->rowCount();
+		file->undoFactory->insertMontage(rc, 1, "add Montage row");
+		return true;
+	}
+
+	return false;
 }

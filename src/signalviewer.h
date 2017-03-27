@@ -53,7 +53,7 @@ protected:
 	virtual void keyReleaseEvent(QKeyEvent* event) override;
 
 private:
-	OpenDataFile* file;
+	OpenDataFile* file = nullptr;
 	QSplitter* splitter;
 	Canvas* canvas;
 	QScrollBar* scrollBar;

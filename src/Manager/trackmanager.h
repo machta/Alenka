@@ -14,7 +14,7 @@ public:
 	explicit TrackManager(QWidget* parent = nullptr) : Manager(parent) {}
 
 protected slots:
-	virtual void insertRowBack() override;
+	virtual bool insertRowBack() override;
 };
 
 #endif // TRACKMANAGER_H

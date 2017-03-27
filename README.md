@@ -5,7 +5,7 @@ A Visualisation System for Biosignals
 * git
 * Qt 5.4+ libraries
 * OpenCL and OpenGL libraries (If you don't have the hardware for this use AMD APP SDK for a CPU implementation of OpenCL.)
-* G++ or Visual C++ compiler
+* g++ or Visual C++ compiler
 
 On debian-like systems you can use: `sudo apt install git cmake-gui build-essential`
 

@@ -27,15 +27,24 @@ EventManager::EventManager(QWidget* parent) : Manager(parent)
 	addButton(goToButton);
 }
 
-void EventManager::insertRowBack()
+bool EventManager::insertRowBack()
 {
-	int rc = file->dataModel->montageTable()->eventTable(OpenDataFile::infoTable.getSelectedMontage())->rowCount();
-	file->undoFactory->insertEvent(OpenDataFile::infoTable.getSelectedMontage(), rc, 1, "add Event row");
+	if (file && 0 < file->dataModel->montageTable()->rowCount())
+	{
+		int rc = file->dataModel->montageTable()->eventTable(OpenDataFile::infoTable.getSelectedMontage())->rowCount();
+		file->undoFactory->insertEvent(OpenDataFile::infoTable.getSelectedMontage(), rc, 1, "add Event row");
+		return true;
+	}
+
+	return false;
 }
 
 // TODO: Don't constrain goto to the dimensions of the slider, but rather make sure time line is always correctly positioned.
 void EventManager::goToEvent()
 {
+	if (!file)
+		return;
+
 	auto currentIndex = tableView->selectionModel()->currentIndex();
 
 	if (file && currentIndex.isValid())

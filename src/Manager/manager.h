@@ -52,7 +52,7 @@ protected slots:
 	/**
 	 * @brief Appends a row to the end of the table.
 	 */
-	virtual void insertRowBack() = 0;
+	virtual bool insertRowBack() = 0;
 
 private:
 	const int buttonsPerRow = 4;

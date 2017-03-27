@@ -6,8 +6,14 @@
 
 using namespace AlenkaFile;
 
-void TrackManager::insertRowBack()
+bool TrackManager::insertRowBack()
 {
-	int rc = file->dataModel->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage())->rowCount();
-	file->undoFactory->insertTrack(OpenDataFile::infoTable.getSelectedMontage(), rc, 1, "add Track row");
+	if (file && 0 < file->dataModel->montageTable()->rowCount())
+	{
+		int rc = file->dataModel->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage())->rowCount();
+		file->undoFactory->insertTrack(OpenDataFile::infoTable.getSelectedMontage(), rc, 1, "add Track row");
+		return true;
+	}
+
+	return false;
 }

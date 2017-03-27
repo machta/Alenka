@@ -28,7 +28,7 @@ void TrackLabelBar::changeFile(OpenDataFile* file)
 
 void TrackLabelBar::paintEvent(QPaintEvent* /*event*/)
 {
-	if (!file)
+	if (!file || file->dataModel->montageTable()->rowCount() <= 0)
 		return;
 
 	const AbstractTrackTable* trackTable = file->dataModel->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());

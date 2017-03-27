@@ -304,7 +304,10 @@ EventTableModel::EventTableModel(OpenDataFile* file, QObject* parent) : TableMod
 int EventTableModel::rowCount(const QModelIndex& parent) const
 {
 	(void)parent;
-	return currentEventTable(file)->rowCount();
+
+	if (0 < file->dataModel->montageTable()->rowCount())
+		return currentEventTable(file)->rowCount();
+	return 0;
 }
 
 void EventTableModel::removeRowsFromDataModel(int row, int count)
@@ -322,16 +325,19 @@ void EventTableModel::setSelectedMontage(int i)
 		disconnect(e);
 	montageTableConnections.clear();
 
-	auto vitness = VitnessEventTable::vitness(file->dataModel->montageTable()->eventTable(i));
+	if (0 < file->dataModel->montageTable()->rowCount())
+	{
+		auto vitness = VitnessEventTable::vitness(file->dataModel->montageTable()->eventTable(i));
 
-	auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(emitDataChanged(int, int)));
-	montageTableConnections.push_back(c);
+		auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(emitDataChanged(int, int)));
+		montageTableConnections.push_back(c);
 
-	c = connect(vitness, SIGNAL(rowsInserted(int, int)), this, SLOT(insertDataModelRows(int, int)));
-	montageTableConnections.push_back(c);
+		c = connect(vitness, SIGNAL(rowsInserted(int, int)), this, SLOT(insertDataModelRows(int, int)));
+		montageTableConnections.push_back(c);
 
-	c = connect(vitness, SIGNAL(rowsRemoved(int, int)), this, SLOT(removeDataModelRows(int, int)));
-	montageTableConnections.push_back(c);
+		c = connect(vitness, SIGNAL(rowsRemoved(int, int)), this, SLOT(removeDataModelRows(int, int)));
+		montageTableConnections.push_back(c);
+	}
 
 	endResetModel();
 }

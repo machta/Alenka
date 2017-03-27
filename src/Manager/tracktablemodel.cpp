@@ -293,7 +293,10 @@ TrackTableModel::TrackTableModel(OpenDataFile* file, QObject* parent) : TableMod
 int TrackTableModel::rowCount(const QModelIndex& parent) const
 {
 	(void)parent;
-	return currentTrackTable(file)->rowCount();
+
+	if (0 < file->dataModel->montageTable()->rowCount())
+		return currentTrackTable(file)->rowCount();
+	return 0;
 }
 
 void TrackTableModel::removeRowsFromDataModel(int row, int count)
@@ -329,18 +332,21 @@ void TrackTableModel::setSelectedMontage(int i)
 		disconnect(e);
 	trackTableConnections.clear();
 
-	auto vitness = VitnessTrackTable::vitness(file->dataModel->montageTable()->trackTable(i));
+	if (0 < file->dataModel->montageTable()->rowCount())
+	{
+		auto vitness = VitnessTrackTable::vitness(file->dataModel->montageTable()->trackTable(i));
 
-	auto c = connect(vitness, &DataModelVitness::valueChanged, [this] (int row, int col) {
-		emitDataChanged(row, col + 1);
-	});
-	trackTableConnections.push_back(c);
+		auto c = connect(vitness, &DataModelVitness::valueChanged, [this] (int row, int col) {
+			emitDataChanged(row, col + 1);
+		});
+		trackTableConnections.push_back(c);
 
-	c = connect(vitness, SIGNAL(rowsInserted(int, int)), this, SLOT(insertDataModelRows(int, int)));
-	trackTableConnections.push_back(c);
+		c = connect(vitness, SIGNAL(rowsInserted(int, int)), this, SLOT(insertDataModelRows(int, int)));
+		trackTableConnections.push_back(c);
 
-	c = connect(vitness, SIGNAL(rowsRemoved(int, int)), this, SLOT(removeDataModelRows(int, int)));
-	trackTableConnections.push_back(c);
+		c = connect(vitness, SIGNAL(rowsRemoved(int, int)), this, SLOT(removeDataModelRows(int, int)));
+		trackTableConnections.push_back(c);
+	}
 
 	endResetModel();
 }

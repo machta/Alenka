@@ -161,10 +161,14 @@ void SignalProcessor::setUpdateMontageFlag()
 	if (file)
 	{
 		trackCount = 0;
-		for (int i = 0; i < getTrackTable(file)->rowCount(); ++i)
+
+		if (0 < file->dataModel->montageTable()->rowCount())
 		{
-			if (getTrackTable(file)->row(i).hidden == false)
-				++trackCount;
+			for (int i = 0; i < getTrackTable(file)->rowCount(); ++i)
+			{
+				if (getTrackTable(file)->row(i).hidden == false)
+					++trackCount;
+			}
 		}
 
 		if (trackCount > 0)

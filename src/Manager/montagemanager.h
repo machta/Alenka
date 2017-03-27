@@ -14,7 +14,7 @@ public:
 	explicit MontageManager(QWidget* parent = nullptr) : Manager(parent) {}
 
 protected slots:
-	virtual void insertRowBack() override;
+	virtual bool insertRowBack() override;
 };
 
 #endif // MONTAGEMANAGER_H

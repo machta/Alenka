@@ -153,6 +153,9 @@ map<pair<int, int>, QString> Manager::textOfSelection()
 
 void Manager::removeRows()
 {
+	if (!file)
+		return;
+
 	auto indexes = tableView->selectionModel()->selection().indexes();
 
 	if (indexes.empty() == false)
@@ -250,11 +253,12 @@ void Manager::copyHtml()
 
 void Manager::paste()
 {
-	file->undoFactory->beginMacro("paste");
+	if (!file)
+		return;
 
 	int startRow, startColumn;
-
 	auto index = tableView->selectionModel()->currentIndex();
+
 	if (index.isValid())
 	{
 		startRow = index.row();
@@ -269,26 +273,32 @@ void Manager::paste()
 	vector<string> lines = splitStringToLines(MyApplication::clipboard()->text().toStdString());
 	int rowsToInsert = startRow + lines.size() - model->rowCount();
 
+	file->undoFactory->beginMacro("paste");
+
+	bool insertOK = true;
 	for (int i = 0; i < rowsToInsert; ++i)
-		insertRowBack();
+		insertOK &= insertRowBack();
 
-	for (unsigned int row = 0; row < lines.size(); ++row)
+	if (insertOK)
 	{
-		stringstream lineStream(lines[row]);
-		int column = 0;
-
-		while (lineStream.good())
+		for (unsigned int row = 0; row < lines.size(); ++row)
 		{
-			string cell;
-			getline(lineStream, cell, '\t');
+			stringstream lineStream(lines[row]);
+			int column = 0;
 
-			if (startColumn + column < model->columnCount())
+			while (lineStream.good())
 			{
-				auto val = QVariant(QString::fromStdString(cell));
-				model->setData(model->index(startRow + row, startColumn + column), val);
-			}
+				string cell;
+				getline(lineStream, cell, '\t');
 
-			++column;
+				if (startColumn + column < model->columnCount())
+				{
+					auto val = QVariant(QString::fromStdString(cell));
+					model->setData(model->index(startRow + row, startColumn + column), val);
+				}
+
+				++column;
+			}
 		}
 	}
 

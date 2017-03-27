@@ -86,7 +86,7 @@ protected:
 	virtual void focusInEvent(QFocusEvent* event) override;
 
 private:
-	OpenDataFile* file;
+	OpenDataFile* file = nullptr;
 	SignalProcessor* signalProcessor = nullptr;
 	OpenGLProgram* signalProgram = nullptr;
 	OpenGLProgram* eventProgram = nullptr;

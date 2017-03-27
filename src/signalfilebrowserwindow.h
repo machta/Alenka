@@ -87,6 +87,7 @@ private:
 	TableModel* eventTable = nullptr;
 	TableModel* trackTable = nullptr;
 	std::vector<QMetaObject::Connection> openFileConnections;
+	std::vector<QMetaObject::Connection> managersConnections;
 	QTimer* autoSaveTimer;
 	std::string autoSaveName;
 	QUndoStack* undoStack;
@@ -95,7 +96,7 @@ private:
 	QAction* closeFileAction;
 	QAction* runSpikedetAction;
 
-	void connectVitness(const DataModelVitness* vitness, std::function<void ()> f);
+	std::vector<QMetaObject::Connection> connectVitness(const DataModelVitness* vitness, std::function<void ()> f);
 	void mode(int m);
 	bool shouldSynchronizeView();
 	void deleteAutoSave();

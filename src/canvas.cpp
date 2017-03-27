@@ -983,14 +983,17 @@ void Canvas::selectMontage()
 		disconnect(e);
 	montageConnections.clear();
 
-	auto vitness = VitnessTrackTable::vitness(getTrackTable(file));
+	if (file && 0 < file->dataModel->montageTable()->rowCount())
+	{
+		auto vitness = VitnessTrackTable::vitness(getTrackTable(file));
 
-	auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(updateMontage(int, int)));
-	montageConnections.push_back(c);
-	c = connect(vitness, SIGNAL(rowsInserted(int, int)), this, SLOT(updateMontage()));
-	montageConnections.push_back(c);
-	c = connect(vitness, SIGNAL(rowsRemoved(int, int)), this, SLOT(updateMontage()));
-	montageConnections.push_back(c);
+		auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(updateMontage(int, int)));
+		montageConnections.push_back(c);
+		c = connect(vitness, SIGNAL(rowsInserted(int, int)), this, SLOT(updateMontage()));
+		montageConnections.push_back(c);
+		c = connect(vitness, SIGNAL(rowsRemoved(int, int)), this, SLOT(updateMontage()));
+		montageConnections.push_back(c);
+	}
 
 	updateMontage();
 }
@@ -1014,5 +1017,5 @@ void Canvas::updateMontage()
 
 bool Canvas::ready()
 {
-	return signalProcessor && signalProcessor->ready();
+	return /*file && 0 < file->dataModel->montageTable()->rowCount() &&*/ signalProcessor && signalProcessor->ready();
 }

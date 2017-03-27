@@ -24,7 +24,7 @@ public:
 	}
 
 protected slots:
-	virtual void insertRowBack() override;
+	virtual bool insertRowBack() override;
 
 private:
 	const Canvas* canvas = nullptr;
