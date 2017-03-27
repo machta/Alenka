@@ -816,6 +816,9 @@ void SignalFileBrowserWindow::openFile()
 
 	// Set up autosave.
 	c = connect(autoSaveTimer, &QTimer::timeout, [this] () {
+		if (undoStack->isClean())
+			return;
+
 		executeWithCLocale([this] () {
 			file->saveSecondaryFile(autoSaveName);
 			logToFileAndConsole("Autosaving to " << autoSaveName);
@@ -1137,6 +1140,9 @@ void SignalFileBrowserWindow::sendSyncMessage()
 void SignalFileBrowserWindow::cleanChanged(bool clean)
 {
 	saveFileAction->setEnabled(!clean);
+
+	if (clean)
+		autoSaveTimer->start();
 }
 
 void SignalFileBrowserWindow::closeFileDestroy()
