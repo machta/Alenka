@@ -2,107 +2,67 @@
 
 #include "../error.h"
 
-#include <QFile>
-#include <QXmlStreamReader>
-#include <QXmlStreamWriter>
-
-#include <cassert>
+#include <pugixml.hpp>
 
 using namespace std;
-
-// TODO: Possibly switch to pugixml.
+using namespace pugi;
 
 void InfoTable::writeXML(const string& filePath) const
 {
-	QFile xmlFile(QString::fromStdString(filePath));
-	xmlFile.open(QIODevice::WriteOnly);
+	xml_document file;
+	xml_node document = file.append_child("document");
 
-	QXmlStreamWriter xml(&xmlFile);
-	xml.setAutoFormatting(true);
-	xml.setAutoFormattingIndent(-1);
-	xml.writeStartDocument();
-	xml.writeStartElement("document");
+	xml_node browserSettings = document.append_child("browserSettings");
+	browserSettings.append_attribute("position").set_value(position);
+	browserSettings.append_attribute("positionIndicator").set_value(positionIndicator);
+	browserSettings.append_attribute("virtualWidth").set_value(virtualWidth);
 
-	xml.writeTextElement("virtualWidth", QString::number(virtualWidth));
-	xml.writeTextElement("position", QString::number(position));
-	xml.writeTextElement("lowpassFrequency", QString::number(lowpassFrequency));
-	xml.writeTextElement("highPassFrequency", QString::number(highPassFrequency));
-	xml.writeTextElement("notch", notch ? "true" : "false");
-	xml.writeTextElement("selectedMontage", QString::number(selectedMontage));
-	xml.writeTextElement("timeMode", QString::number(static_cast<int>(timeMode)));
-	xml.writeTextElement("selectedType", QString::number(selectedType));
+	xml_node filter = document.append_child("filter");
+	filter.append_attribute("lowpassFrequency").set_value(lowpassFrequency);
+	filter.append_attribute("highPassFrequency").set_value(highPassFrequency);
+	filter.append_attribute("notch").set_value(notch);
 
-	xml.writeEndDocument();
+	xml_node selection = document.append_child("selection");
+	selection.append_attribute("selectedMontage").set_value(selectedMontage);
+	selection.append_attribute("selectedType").set_value(selectedType);
 
-	if (xml.hasError())
+	xml_node windowSettings = document.append_child("windowSettings");
+	windowSettings.append_attribute("timeMode").set_value(static_cast<int>(timeMode));
+	windowSettings.append_attribute("timeLineInterval").set_value(timeLineInterval);
+
+	if (!file.save_file(filePath.c_str()))
 	{
-		logToFileAndConsole("XML error occurred while writing to file '" << filePath << "'");
+		logToFileAndConsole("Error while writing file '" << filePath << "'.");
 	}
-
-	xmlFile.close();
 }
-
-#define readNumericElement(a_, b_)\
-	if (xml.name() == #a_)\
-	{\
-		bool ok;\
-		auto tmp = xml.readElementText().b_(&ok);\
-		(a_) = ok ? tmp : (a_);\
-		continue;\
-	}
 
 void InfoTable::readXML(const string& filePath)
 {
-	QFile xmlFile(QString::fromStdString(filePath));
+	xml_document file;
+	xml_parse_result res = file.load_file(filePath.c_str());
 
-	if (xmlFile.exists() == false)
+	if (!res)
 		return;
 
-	xmlFile.open(QIODevice::ReadOnly);
+	xml_node document = file.child("document");
 
-	QXmlStreamReader xml(&xmlFile);
-	xml.readNextStartElement();
-	assert(xml.name() == "document");
+	xml_node browserSettings = document.child("browserSettings");
+	position = browserSettings.attribute("position").as_int(position);
+	positionIndicator = browserSettings.attribute("positionIndicator").as_double(positionIndicator);
+	virtualWidth = browserSettings.attribute("virtualWidth").as_int(virtualWidth);
 
-	while (xml.readNextStartElement())
-	{
-		readNumericElement(virtualWidth, toInt);
-		readNumericElement(position, toInt);
-		readNumericElement(lowpassFrequency, toDouble);
-		readNumericElement(highPassFrequency, toDouble);
+	xml_node filter = document.child("filter");
+	lowpassFrequency = filter.attribute("lowpassFrequency").as_double(lowpassFrequency);
+	highPassFrequency = filter.attribute("highPassFrequency").as_double(highPassFrequency);
+	notch = filter.attribute("notch").as_bool(notch);
 
-		if (xml.name() == "notch")
-		{
-			notch = xml.readElementText() == "false" ? false : true;
-			continue;
-		}
+	xml_node selection = document.child("selection");
+	selectedMontage = selection.attribute("selectedMontage").as_int(selectedMontage);
+	selectedType = selection.attribute("selectedType").as_int(selectedType);
 
-		readNumericElement(selectedMontage, toInt);
-
-		if (xml.name() == "timeMode")
-		{
-			bool ok;
-			int mode = xml.readElementText().toInt(&ok);
-			if (ok && 0 <= mode && mode < static_cast<int>(TimeMode::size))
-			{
-				timeMode = static_cast<TimeMode>(mode);
-			}
-			continue;
-		}
-
-		readNumericElement(selectedType, toInt);
-		readNumericElement(timeLineInterval, toDouble);
-		readNumericElement(positionIndicator, toDouble);
-
-		xml.skipCurrentElement();
-	}
-
-	if (xml.hasError())
-	{
-		logToFileAndConsole("XML error(" << xml.error() << ") while reading file '" << filePath << "': " << xml.errorString().toStdString());
-	}
-
-	xmlFile.close();
+	xml_node windowSettings = document.child("windowSettings");
+	timeMode = static_cast<TimeMode>(windowSettings.attribute("timeMode").as_int(static_cast<int>(timeMode)));
+	timeLineInterval = windowSettings.attribute("timeLineInterval").as_double(timeLineInterval);
 }
 
 #undef readNumericElement

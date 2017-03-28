@@ -3,7 +3,7 @@
 SIGNAL_LIB = $$_PRO_FILE_PWD_/Alenka-Signal
 FILE_LIB = $$_PRO_FILE_PWD_/Alenka-File
 
-INCLUDEPATH += $$FILE_LIB/boost
+INCLUDEPATH += $$FILE_LIB/boost $$FILE_LIB/pugixml/src # Note that pugixml code is linked via Alenka-File.
 SOURCES += $$files($$FILE_LIB/boost/libs/program_options/src/*.cpp)
 
 CONFIG(debug, debug|release) {
