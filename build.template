@@ -39,7 +39,6 @@ LIBS += \
 	-lalenka-signal \
 	-lalenka-file \
 	-lclFFT \
-	-lEDF \
 	-lGDF \
 	-lpugixml
 
