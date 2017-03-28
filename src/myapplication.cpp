@@ -31,7 +31,7 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 		const int maxLogFileNameLength = 1000;
 		char logFileName[maxLogFileNameLength + 1];
 		time_t now = time(nullptr);
-		size_t len = strftime(logFileName, maxLogFileNameLength, PROGRAM_OPTIONS["logFileName"].as<string>().c_str(), localtime(&now));
+		size_t len = strftime(logFileName, maxLogFileNameLength, PROGRAM_OPTIONS["log"].as<string>().c_str(), localtime(&now));
 		logFileName[len] = 0;
 
 		LOG_FILE.open(logFileName);

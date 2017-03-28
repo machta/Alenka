@@ -5,14 +5,34 @@
 #include <fstream>
 #include <cstdint>
 
+#ifdef UNIX_BUILD
+#include <sys/ioctl.h>
+#endif
+
 using namespace std;
 using namespace boost::program_options;
 
+namespace
+{
+
+int getTerminalWidth()
+{
+#ifdef UNIX_BUILD
+	struct winsize w;
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+	return w.ws_col;
+#endif
+	return 80;
+}
+
+} // namespace
+
 Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS")
 {
+	const int lineWidth = max(60, getTerminalWidth());
 	const char* configDefault = "options.cfg";
 
-	options_description commandLineOnly("Command line options");
+	options_description commandLineOnly("Command line options", lineWidth);
 	commandLineOnly.add_options()
 	("help", "help message")
 	("config,c", value<string>()->default_value(configDefault), "config file")
@@ -22,7 +42,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("glInfo", "print OpenGL info")
 	;
 
-	options_description configuration("Configuration");
+	options_description configuration("Configuration", lineWidth);
 	configuration.add_options()
 	("locale", value<string>()->default_value("en_us"), "the locale to be use; mostly controls decimal number format")
 	("uncalibrated", value<bool>()->default_value(false), "assume uncalibrated data in gdf files")
@@ -39,12 +59,12 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("glSharing", value<bool>()->default_value(false), "if true, OpenCL will share data directly with OpenGL")
 	("eventRenderMode", value<int>()->default_value(2), "controls rendering of single-channel events; accepted values (from simplest mode) are 1, 2")
 	//("prepareFrames", value<unsigned int>()->default_value(0), "how many frames should be prepared in memory")
-	("logFileName", value<string>()->default_value("%Y-%m-%d--%H-%M-%S.log"), "string passed to strftime() to create the file name")
+	("log", value<string>()->default_value("%Y-%m-%d--%H-%M-%S.log"), "string passed to strftime() to create the file name")
 	("kernelCacheSize", value<int>()->default_value(2048), "maximum number of montage kernels that can be cached")
 	("autoSaveInterval", value<int>()->default_value(2*60), "in seconds")
 	;
 
-	options_description spikedet("Spikedet");
+	options_description spikedet("Spikedet", lineWidth);
 	spikedet.add_options()
 	("fl", value<int>()->default_value(10), "lowpass filter frequency")
 	("fh", value<int>()->default_value(60), "highpass filter frequency")
@@ -64,7 +84,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	configuration.add(spikedet);
 
 	// TODO: Write some info on the first line (like "Usage: ./Alenka", version, some description what this program does).
-	options_description all("");
+	options_description all("", lineWidth);
 	all.add(commandLineOnly).add(configuration);
 
 	// Parse the command-line input.
