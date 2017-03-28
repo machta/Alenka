@@ -73,48 +73,6 @@ QByteArray packMessage(double timePossition)
 	return QByteArray(reinterpret_cast<char*>(&timePossition), sizeof(double));
 }
 
-void loadSpikedetOptions(AlenkaSignal::DETECTOR_SETTINGS* settings, double* eventDuration)
-{
-	if (PROGRAM_OPTIONS.isSet("fl"))
-		settings->m_band_low = PROGRAM_OPTIONS["fl"].as<int>();
-
-	if (PROGRAM_OPTIONS.isSet("fh"))
-		settings->m_band_high = PROGRAM_OPTIONS["fh"].as<int>();
-
-	if (PROGRAM_OPTIONS.isSet("k1"))
-		settings->m_k1 = PROGRAM_OPTIONS["k1"].as<double>();
-
-	if (PROGRAM_OPTIONS.isSet("k2"))
-		settings->m_k2 = PROGRAM_OPTIONS["k2"].as<double>();
-
-	if (PROGRAM_OPTIONS.isSet("k3"))
-		settings->m_k3 = PROGRAM_OPTIONS["k3"].as<double>();
-
-	if (PROGRAM_OPTIONS.isSet("w"))
-		settings->m_winsize = PROGRAM_OPTIONS["w"].as<int>();
-
-	if (PROGRAM_OPTIONS.isSet("n"))
-		settings->m_noverlap = PROGRAM_OPTIONS["n"].as<double>();
-
-	if (PROGRAM_OPTIONS.isSet("buf"))
-		settings->m_buffering = PROGRAM_OPTIONS["buf"].as<int>();
-
-	if (PROGRAM_OPTIONS.isSet("h"))
-		settings->m_main_hum_freq = PROGRAM_OPTIONS["h"].as<int>();
-
-	if (PROGRAM_OPTIONS.isSet("dt"))
-		settings->m_discharge_tol = PROGRAM_OPTIONS["dt"].as<double>();
-
-	if (PROGRAM_OPTIONS.isSet("pt"))
-		settings->m_polyspike_union_time = PROGRAM_OPTIONS["pt"].as<double>();
-
-	if (PROGRAM_OPTIONS.isSet("dec"))
-		settings->m_decimation = PROGRAM_OPTIONS["dec"].as<int>();
-
-	if (PROGRAM_OPTIONS.isSet("sed"))
-		*eventDuration = PROGRAM_OPTIONS["sed"].as<double>();
-}
-
 void executeWithCLocale(function<void ()> code)
 {
 	std::locale localeCopy;
@@ -247,10 +205,15 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	spikedetSettingsAction->setStatusTip(spikedetSettingsAction->toolTip());
 	connect(spikedetSettingsAction, &QAction::triggered, [this] () {
 		AlenkaSignal::DETECTOR_SETTINGS settings = spikedetAnalysis->getSettings();
-		SpikedetSettingsDialog dialog(&settings, &eventDuration, this);
+		double newDuration = spikeDuration;
+
+		SpikedetSettingsDialog dialog(&settings, &newDuration, this);
 
 		if (dialog.exec() == QDialog::Accepted)
+		{
 			spikedetAnalysis->setSettings(settings);
+			spikeDuration = newDuration;
+		}
 	});
 
 	// Construct Time Mode action group.
@@ -488,7 +451,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	spikedetAnalysis = new SpikedetAnalysis(globalContext.get());
 
 	auto settings = spikedetAnalysis->getSettings();
-	loadSpikedetOptions(&settings, &eventDuration);
+	SpikedetSettingsDialog::resetSettings(&settings, &spikeDuration);
 	spikedetAnalysis->setSettings(settings);
 
 	setEnableFileActions(false);
@@ -552,8 +515,8 @@ void SignalFileBrowserWindow::closeEvent(QCloseEvent* event)
 {
 	if (closeFile())
 	{
-		PROGRAM_OPTIONS.settings("SignalFileBrowserWindow state", saveState());
-		PROGRAM_OPTIONS.settings("SignalFileBrowserWindow geometry", saveGeometry());
+		SET_PROGRAM_OPTIONS.settings("SignalFileBrowserWindow state", saveState());
+		SET_PROGRAM_OPTIONS.settings("SignalFileBrowserWindow geometry", saveGeometry());
 
 		event->accept();
 	}
@@ -677,7 +640,8 @@ void SignalFileBrowserWindow::openFile()
 		else
 			file->load();
 
-		OpenDataFile::infoTable.readXML(file->getFilePath() + ".info");
+		AlenkaSignal::DETECTOR_SETTINGS settings;
+		OpenDataFile::infoTable.readXML(file->getFilePath() + ".info", &settings, &spikeDuration);
 	});
 
 	setWindowTitle(fileInfo.fileName() + " - " + TITLE);
@@ -852,7 +816,7 @@ bool SignalFileBrowserWindow::closeFile()
 	if (file)
 	{
 		executeWithCLocale([this] () {
-			OpenDataFile::infoTable.writeXML(file->getFilePath() + ".info");
+			OpenDataFile::infoTable.writeXML(file->getFilePath() + ".info", spikedetAnalysis->getSettings(), spikeDuration);
 		});
 	}
 
@@ -1068,7 +1032,7 @@ void SignalFileBrowserWindow::runSpikedet()
 			e.label = "Spike " + to_string(i);
 			e.type = index + (out->m_con[i] == 0.5 ? 1 : 0); // TODO: Figure out what should be used as the third type.
 			e.position = out->m_pos[i]*file->getSamplingFrequency();
-			e.duration = file->getSamplingFrequency()*eventDuration;
+			e.duration = file->getSamplingFrequency()*spikeDuration;
 			//e.duration = out->m_dur[i]*file->getSamplingFrequency();
 			e.channel = out->m_chan[i] - 1;
 

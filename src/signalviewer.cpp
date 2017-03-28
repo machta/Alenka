@@ -41,7 +41,7 @@ SignalViewer::SignalViewer(QWidget* parent) : QWidget(parent)
 
 SignalViewer::~SignalViewer()
 {
-	PROGRAM_OPTIONS.settings("SignalViewer splitter state", splitter->saveState());
+	SET_PROGRAM_OPTIONS.settings("SignalViewer splitter state", splitter->saveState());
 }
 
 void SignalViewer::changeFile(OpenDataFile* file)

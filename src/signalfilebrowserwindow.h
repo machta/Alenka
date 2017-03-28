@@ -75,7 +75,7 @@ private:
 	QLabel* positionStatusLabel;
 	QLabel* cursorStatusLabel;
 	SpikedetAnalysis* spikedetAnalysis;
-	double eventDuration = 0.1;
+	double spikeDuration;
 	SyncServer* syncServer;
 	SyncClient* syncClient;
 	SyncDialog* syncDialog;

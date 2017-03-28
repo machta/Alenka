@@ -5,6 +5,11 @@
 
 #include <string>
 
+namespace AlenkaSignal
+{
+typedef struct detectorSettings DETECTOR_SETTINGS;
+}
+
 /**
  * @brief A class for handling program wide used information stored in .info files.
  */
@@ -24,12 +29,12 @@ public:
 	/**
 	 * @brief Writes info file.
 	 */
-	void writeXML(const std::string& filePath) const;
+	void writeXML(const std::string& filePath, const AlenkaSignal::DETECTOR_SETTINGS& spikedetSettings, double spikeDuration) const;
 
 	/**
 	 * @brief Reads info file.
 	 */
-	void readXML(const std::string& filePath);
+	void readXML(const std::string& filePath, AlenkaSignal::DETECTOR_SETTINGS* spikedetSettings, double* spikeDuration);
 
 	/**
 	 * @brief Emit all signals defined by this class.

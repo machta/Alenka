@@ -46,19 +46,19 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 
 	options_description spikedet("Spikedet");
 	spikedet.add_options()
-	("fl", value<int>(), "lowpass filter frequency")
-	("fh", value<int>(), "highpass filter frequency")
-	("k1", value<double>(), "K1")
-	("k2", value<double>(), "K2")
-	("k3", value<double>(), "K3")
-	("w", value<int>(), "winsize")
-	("n", value<double>(), "noverlap")
-	("buf", value<int>(), "buffering")
-	("h", value<int>(), "main hum. freq.")
-	("dt", value<double>(), "discharge tol.")
-	("pt", value<double>(), "polyspike union time")
-	("dec", value<int>(), "decimation")
-	("sed", value<double>(), "spike event duration in seconds")
+	("fl", value<int>()->default_value(10), "lowpass filter frequency")
+	("fh", value<int>()->default_value(60), "highpass filter frequency")
+	("k1", value<double>()->default_value(3.65), "K1")
+	("k2", value<double>()->default_value(3.65), "K2")
+	("k3", value<double>()->default_value(0), "K3")
+	("w", value<int>()->default_value(5), "winsize")
+	("n", value<double>()->default_value(4), "noverlap")
+	("buf", value<int>()->default_value(300), "buffering")
+	("h", value<int>()->default_value(50), "main hum. freq.")
+	("dt", value<double>()->default_value(0.005), "discharge tol.")
+	("pt", value<double>()->default_value(0.12), "polyspike union time")
+	("dec", value<int>()->default_value(200), "decimation")
+	("sed", value<double>()->default_value(0.1), "spike event duration in seconds")
 	;
 
 	configuration.add(spikedet);
@@ -125,4 +125,5 @@ void Options::logConfigFile() const
 	}
 }
 
-Options* PROGRAM_OPTIONS_POINTER = nullptr;
+const Options* PROGRAM_OPTIONS_POINTER = nullptr;
+Options* SET_PROGRAM_OPTIONS_POINTER = nullptr;

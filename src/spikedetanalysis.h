@@ -15,8 +15,7 @@ class QProgressDialog;
 class SpikedetAnalysis
 {
 public:
-	SpikedetAnalysis(AlenkaSignal::OpenCLContext* context) : context(context)
-	{}
+	SpikedetAnalysis(AlenkaSignal::OpenCLContext* context) : context(context) {}
 	~SpikedetAnalysis()
 	{
 		delete output;
@@ -32,11 +31,11 @@ public:
 		return discharges;
 	}
 
-	void setSettings(AlenkaSignal::DETECTOR_SETTINGS s)
+	void setSettings(const AlenkaSignal::DETECTOR_SETTINGS& s)
 	{
 		settings = s;
 	}
-	AlenkaSignal::DETECTOR_SETTINGS getSettings()
+	AlenkaSignal::DETECTOR_SETTINGS getSettings() const
 	{
 		return settings;
 	}

@@ -25,7 +25,7 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 	{
 		// Set up the global options object.
 		options = new Options(argc, argv);
-		PROGRAM_OPTIONS_POINTER = options;
+		PROGRAM_OPTIONS_POINTER = SET_PROGRAM_OPTIONS_POINTER = options;
 
 		// Set up the log.
 		const int maxLogFileNameLength = 1000;

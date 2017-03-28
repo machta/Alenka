@@ -2,8 +2,8 @@
  * @brief The header with the Options class definition.
  *
  * MyApplication's constructor creates one Options object and stores its pointer
- * in PROGRAM_OPTIONS_POINTER. All code that needs to access the options needs
- * to include this header.
+ * in PROGRAM_OPTIONS_POINTER and SET_PROGRAM_OPTIONS_POINTER.
+ * All code that needs to access the options needs to include this header.
  *
  * Then PROGRAM_OPTIONS macro can be used to retrieve the values like this:
  * @code{.cpp}
@@ -86,7 +86,7 @@ public:
 	/**
 	 * @brief Returns the value previously stored under key.
 	 */
-	QVariant settings(const QString& key)
+	QVariant settings(const QString& key) const
 	{
 		return programSettings.value(key);
 	}
@@ -115,11 +115,17 @@ private:
 	void validateValues();
 };
 
-/**
- * @brief This pointer is used from the rest of the code to access the global Options object.
- */
-extern Options* PROGRAM_OPTIONS_POINTER;
+extern const Options* PROGRAM_OPTIONS_POINTER;
+extern Options* SET_PROGRAM_OPTIONS_POINTER;
 
+/**
+ * @brief Use this to read global program options.
+ */
 #define PROGRAM_OPTIONS (*PROGRAM_OPTIONS_POINTER)
+
+/**
+ * @brief Use this to read and modify global program options.
+ */
+#define SET_PROGRAM_OPTIONS (*SET_PROGRAM_OPTIONS_POINTER)
 
 #endif // OPTIONS_H
