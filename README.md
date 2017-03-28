@@ -15,7 +15,7 @@ Visual C++ compiler can be acquired by installing Visual C++ Build Tools 2015. C
 
 ### Build instructions
 1. Clone this repo
-2. Run download-libraries.sh (using git-bash on Windows), and build the subprojects Alenka-File and Alenka-Signal
+2. Run download-libraries.sh (using git-bash on Windows), and build the subprojects [Alenka-File](https://github.com/machta/Alenka-File) and [Alenka-Signal](https://github.com/machta/Alenka-Signal)
 3. Copy "build.template" file to "build"
 4. Modify build file to suit your system (mainly change paths to libraries)
 5. Open "Alenka.pro" in Qt Creator (an IDE that was installed alongside Qt), and setup the project (I recommend changing the working directory in Projects -> Run.)
