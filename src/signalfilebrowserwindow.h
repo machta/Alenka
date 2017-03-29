@@ -95,6 +95,7 @@ private:
 	QAction* saveFileAction;
 	QAction* closeFileAction;
 	QAction* runSpikedetAction;
+	bool allowSaveOnClean;
 
 	std::vector<QMetaObject::Connection> connectVitness(const DataModelVitness* vitness, std::function<void ()> f);
 	void mode(int m);

@@ -630,19 +630,30 @@ void SignalFileBrowserWindow::openFile()
 
 	if (QFileInfo(autoSaveName.c_str()).exists())
 	{
-		auto res = QMessageBox::question(this, "Load Autosave File?", "An autosave file was detected. Would you like to load it?");
+		auto res = QMessageBox::question(this, "Load Autosave File?", "An autosave file was detected. Would you like to load it?", QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
 		useAutoSave = res == QMessageBox::Yes;
 	}
 
-	executeWithCLocale([this, useAutoSave] () {
+	bool secondaryFileExists;
+	executeWithCLocale([this, useAutoSave, &secondaryFileExists] () {
 		if (useAutoSave)
-			file->loadSecondaryFile(autoSaveName);
+			secondaryFileExists = file->loadSecondaryFile(autoSaveName);
 		else
-			file->load();
+			secondaryFileExists = file->load();
 
 		AlenkaSignal::DETECTOR_SETTINGS settings;
 		OpenDataFile::infoTable.readXML(file->getFilePath() + ".info", &settings, &spikeDuration);
 	});
+
+	if (useAutoSave || !secondaryFileExists)
+	{
+		saveFileAction->setEnabled(true); // Allow save when the secondary file can be created or is out of sync with the autosave.
+		allowSaveOnClean = true;
+	}
+	else
+	{
+		allowSaveOnClean = false;
+	}
 
 	setWindowTitle(fileInfo.fileName() + " - " + TITLE);
 
@@ -841,7 +852,11 @@ void SignalFileBrowserWindow::saveFile()
 		});
 
 		deleteAutoSave();
+
+		allowSaveOnClean = false;
 		undoStack->setClean();
+		saveFileAction->setEnabled(false);
+		autoSaveTimer->start();
 	}
 }
 
@@ -1110,10 +1125,10 @@ void SignalFileBrowserWindow::sendSyncMessage()
 
 void SignalFileBrowserWindow::cleanChanged(bool clean)
 {
-	saveFileAction->setEnabled(!clean);
-
-	if (clean)
-		autoSaveTimer->start();
+	if (clean && allowSaveOnClean)
+		saveFileAction->setEnabled(true);
+	else
+		saveFileAction->setEnabled(!clean);
 }
 
 void SignalFileBrowserWindow::closeFileDestroy()
