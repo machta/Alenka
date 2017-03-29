@@ -135,9 +135,11 @@ int GPUCache::getAny(const set<int>& indexSet, cl_mem buffer, cl_event readyEven
 
 		assert(indexMap.size() == reverseIndexMap.size());
 
-		lock_guard<mutex> lock(loaderThreadMutex);
+		//lock_guard<mutex> lock(loaderThreadMutex);
+		//queue.emplace(index, cacheIndex, readyEvent, buffer);
 
-		queue.emplace(index, cacheIndex, readyEvent, buffer);
+		assert(queue.empty());
+		loadOneBlock(index, cacheIndex, readyEvent, buffer);
 
 		loaderThreadCV.notify_one();
 	}
@@ -155,6 +157,8 @@ int GPUCache::getAny(const set<int>& indexSet, cl_mem buffer, cl_event readyEven
 
 void GPUCache::loaderThreadFunction()
 {
+	return; // Temporarily disable this code.
+
 	try
 	{
 		while (loaderThreadStop.load() == false)
