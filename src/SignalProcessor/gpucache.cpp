@@ -52,9 +52,7 @@ GPUCache::GPUCache(unsigned int blockSize, unsigned int offset, int delay, int64
 	capacity = availableMemory/bytesPerBlock;
 
 	if (capacity == 0)
-	{
 		throw runtime_error("Not enough memory for the gpu cache.");
-	}
 
 	logToFile("Creating GPUCache with " << capacity << " blocks.");
 
@@ -81,6 +79,8 @@ GPUCache::GPUCache(unsigned int blockSize, unsigned int offset, int delay, int64
 	checkClErrorCode(err, "clCreateCommandQueue()");
 
 	loaderThread = thread(&GPUCache::loaderThreadFunction, this);
+
+	tmpBuffer.resize((blockSize + offset)*file->file->getChannelCount());
 }
 
 GPUCache::~GPUCache()
@@ -105,6 +105,9 @@ GPUCache::~GPUCache()
 
 	err = clReleaseMemObject(tmpMemBuffer);
 	checkClErrorCode(err, "clReleaseMemObject()");
+
+	err = clReleaseCommandQueue(commandQueue);
+	checkClErrorCode(err, "clReleaseCommandQueue()");
 }
 
 int GPUCache::getAny(const set<int>& indexSet, cl_mem buffer, cl_event readyEvent)
@@ -122,9 +125,7 @@ int GPUCache::getAny(const set<int>& indexSet, cl_mem buffer, cl_event readyEven
 		cacheIndex = order.back();
 
 		if (reverseIndexMap.count(cacheIndex))
-		{
 			indexMap.erase(reverseIndexMap[cacheIndex]);
-		}
 
 		indexMap[index] = cacheIndex;
 		reverseIndexMap[cacheIndex] = index;
@@ -140,9 +141,7 @@ int GPUCache::getAny(const set<int>& indexSet, cl_mem buffer, cl_event readyEven
 
 	// Update the order for next time this method is called.
 	for (auto& e : lastUsed)
-	{
 		++e;
-	}
 
 	lastUsed[cacheIndex] = 0;
 
@@ -151,23 +150,10 @@ int GPUCache::getAny(const set<int>& indexSet, cl_mem buffer, cl_event readyEven
 	return index;
 }
 
-// AMD_BUG specific parts work around a bug in clEnqueueWriteBufferRect() when using some versions of AMD drivers.
-// As a result of this bug, clEnqueueWriteBufferRect() copies only a part of the data to the buffer.
-// The bug is reported here:
-// http://devgurus.amd.com/thread/169828
-// http://devgurus.amd.com/thread/160312
-
 void GPUCache::loaderThreadFunction()
 {
-	cl_int err;
-
 	try
 	{
-		int size = (blockSize + offset)*file->file->getChannelCount();
-
-		vector<float> tmpBuffer(size);
-		cl_event tmpBufferEvent = nullptr;
-
 		while (loaderThreadStop.load() == false)
 		{
 			unique_lock<mutex> lock(loaderThreadMutex);
@@ -179,60 +165,16 @@ void GPUCache::loaderThreadFunction()
 				cl_event readyEvent = get<2>(queue.front());
 				cl_mem buffer = get<3>(queue.front());
 
-				logToFile("Loading block " << index << ".");
-
 				queue.pop();
-
 				lock.unlock();
 
-				auto fromTo = blockIndexToSampleRange(index, blockSize);
-
-				if (tmpBufferEvent)
-				{
-					err = clWaitForEvents(1, &tmpBufferEvent);
-					checkClErrorCode(err, "clWaitForEvents()");
-
-					err = clReleaseEvent(tmpBufferEvent);
-					checkClErrorCode(err, "clReleaseEvent()");
-				}
-
-				file->file->readSignal(tmpBuffer.data(), fromTo.first - offset + delay, fromTo.second + delay);
-
-				printBuffer("after_readData.txt", tmpBuffer.data(), tmpBuffer.size());
-
-#ifdef AMD_BUG
-				err = clEnqueueWriteBuffer(commandQueue, tmpMemBuffer, CL_TRUE, 0, (blockSize + offset)*file->file->getChannelCount()*sizeof(float), tmpBuffer.data(), 0, nullptr, &tmpBufferEvent);
-				checkClErrorCode(err, "clEnqueueWriteBuffer()");
-#else
-				size_t origin[] = {0, 0, 0};
-				size_t rowLen = (blockSize + offset)*sizeof(float);
-				size_t region[] = {rowLen, file->file->getChannelCount(), 1};
-
-				err = clEnqueueWriteBufferRect(commandQueue, tmpMemBuffer/*buffers[cacheIndex]*/, /*CL_FALSE*/CL_TRUE, origin, origin, region, rowLen + 4*sizeof(float), 0, 0, 0, tmpBuffer.data(), 0, nullptr, &tmpBufferEvent);
-				checkClErrorCode(err, "clEnqueueWriteBufferRect()");
-#endif
-
-				printBuffer("after_writeBuffer.txt", tmpMemBuffer, commandQueue);
-
-				if (filterProcessor)
-				{
-					//clFinish(commandQueue);
-					filterProcessor->process(tmpMemBuffer, buffers[cacheIndex], commandQueue);
-					//clFinish(commandQueue);
-
-					printBuffer("after_filter.txt", buffers[cacheIndex], commandQueue);
-				}
-
-				enqueuCopy(buffers[cacheIndex], buffer, readyEvent);
+				loadOneBlock(index, cacheIndex, readyEvent, buffer);
 			}
 			else
 			{
 				loaderThreadCV.wait(lock);
 			}
-		}
-
-		err = clReleaseCommandQueue(commandQueue);
-		checkClErrorCode(err, "clReleaseCommandQueue()");
+		}		
 	}
 	catch (exception& e)
 	{
@@ -264,6 +206,58 @@ void GPUCache::enqueuCopy(cl_mem source, cl_mem destination, cl_event readyEvent
 		err = clFlush(commandQueue);
 		checkClErrorCode(err, "clFlush()");
 	}
+}
+
+// AMD_BUG specific parts work around a bug in clEnqueueWriteBufferRect() when using some versions of AMD drivers.
+// As a result of this bug, clEnqueueWriteBufferRect() copies only a part of the data to the buffer.
+// The bug is reported here:
+// http://devgurus.amd.com/thread/169828
+// http://devgurus.amd.com/thread/160312
+
+void GPUCache::loadOneBlock(int index, unsigned int cacheIndex, cl_event readyEvent, cl_mem buffer)
+{
+	logToFile("Loading block " << index << ".");
+
+	cl_int err;
+	auto fromTo = blockIndexToSampleRange(index, blockSize);
+
+	if (tmpBufferEvent)
+	{
+		err = clWaitForEvents(1, &tmpBufferEvent);
+		checkClErrorCode(err, "clWaitForEvents()");
+
+		err = clReleaseEvent(tmpBufferEvent);
+		checkClErrorCode(err, "clReleaseEvent()");
+	}
+
+	file->file->readSignal(tmpBuffer.data(), fromTo.first - offset + delay, fromTo.second + delay);
+
+	printBuffer("after_readData.txt", tmpBuffer.data(), tmpBuffer.size());
+
+#ifdef AMD_BUG
+	err = clEnqueueWriteBuffer(commandQueue, tmpMemBuffer, CL_TRUE, 0, (blockSize + offset)*file->file->getChannelCount()*sizeof(float), tmpBuffer.data(), 0, nullptr, &tmpBufferEvent);
+	checkClErrorCode(err, "clEnqueueWriteBuffer()");
+#else
+	size_t origin[] = {0, 0, 0};
+	size_t rowLen = (blockSize + offset)*sizeof(float);
+	size_t region[] = {rowLen, file->file->getChannelCount(), 1};
+
+	err = clEnqueueWriteBufferRect(commandQueue, tmpMemBuffer/*buffers[cacheIndex]*/, /*CL_FALSE*/CL_TRUE, origin, origin, region, rowLen + 4*sizeof(float), 0, 0, 0, tmpBuffer.data(), 0, nullptr, &tmpBufferEvent);
+	checkClErrorCode(err, "clEnqueueWriteBufferRect()");
+#endif
+
+	printBuffer("after_writeBuffer.txt", tmpMemBuffer, commandQueue);
+
+	if (filterProcessor)
+	{
+		//clFinish(commandQueue);
+		filterProcessor->process(tmpMemBuffer, buffers[cacheIndex], commandQueue);
+		//clFinish(commandQueue);
+
+		printBuffer("after_filter.txt", buffers[cacheIndex], commandQueue);
+	}
+
+	enqueuCopy(buffers[cacheIndex], buffer, readyEvent);
 }
 
 void CL_CALLBACK GPUCache::signalEventCallback(cl_event callbackEvent, cl_int status, void* data)

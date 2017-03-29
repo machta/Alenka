@@ -116,6 +116,8 @@ private:
 	std::thread loaderThread;
 	std::condition_variable loaderThreadCV;
 	std::atomic<bool> loaderThreadStop {false};
+	std::vector<float> tmpBuffer;
+	cl_event tmpBufferEvent = nullptr;
 
 	/**
 	 * @brief The code executed by the loader thread.
@@ -132,6 +134,8 @@ private:
 	 * @param readyEvent This event is signaled once the data in the destination is ready.
 	 */
 	void enqueuCopy(cl_mem source, cl_mem destination, cl_event readyEvent);
+
+	void loadOneBlock(int index, unsigned int cacheIndex, cl_event readyEvent, cl_mem buffer);
 
 	/**
 	 * @brief Enqueues command for copying of buffers.
