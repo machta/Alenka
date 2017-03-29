@@ -97,7 +97,13 @@ GPUCache::~GPUCache()
 	// Delete resources.
 	cl_int err;
 
-	for (auto& e : buffers)
+	err = clFinish(commandQueue);
+	checkClErrorCode(err, "clFinish()");
+
+	err = clReleaseCommandQueue(commandQueue);
+	checkClErrorCode(err, "clReleaseCommandQueue()");
+
+	for (auto e : buffers)
 	{
 		err = clReleaseMemObject(e);
 		checkClErrorCode(err, "clReleaseMemObject()");
@@ -105,9 +111,6 @@ GPUCache::~GPUCache()
 
 	err = clReleaseMemObject(tmpMemBuffer);
 	checkClErrorCode(err, "clReleaseMemObject()");
-
-	err = clReleaseCommandQueue(commandQueue);
-	checkClErrorCode(err, "clReleaseCommandQueue()");
 }
 
 int GPUCache::getAny(const set<int>& indexSet, cl_mem buffer, cl_event readyEvent)
