@@ -973,6 +973,14 @@ void SignalFileBrowserWindow::runSpikedet()
 	if (!file)
 		return;
 
+	const AbstractMontageTable* montageTable = openDataFile->dataModel->montageTable();
+	if (montageTable->rowCount() <= 0)
+		return;
+
+	const AbstractTrackTable* trackTable = montageTable->trackTable(OpenDataFile::infoTable.getSelectedMontage());
+	if (trackTable->rowCount() <= 0)
+		return;
+
 	undoFactory->beginMacro("run Spikedet");
 
 	// Build montage from code.
@@ -982,9 +990,8 @@ void SignalFileBrowserWindow::runSpikedet()
 	headerFile.open(QIODevice::ReadOnly);
 	string header = headerFile.readAll().toStdString();
 
-	const AbstractTrackTable* tt = openDataFile->dataModel->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
-	for (int i = 0; i < tt->rowCount(); ++i)
-		montage.push_back(new AlenkaSignal::Montage<float>(tt->row(i).code, globalContext.get(), header));
+	for (int i = 0; i < trackTable->rowCount(); ++i)
+		montage.push_back(new AlenkaSignal::Montage<float>(trackTable->row(i).code, globalContext.get(), header));
 
 	// Run Spikedet.
 	QProgressDialog progress("Running Spikedet analysis", "Abort", 0, 100, this);
@@ -996,14 +1003,14 @@ void SignalFileBrowserWindow::runSpikedet()
 	spikedetAnalysis->runAnalysis(openDataFile, montage, &progress);
 
 	// Add three new event types for the different levels of spike events.
-	const AbstractEventTypeTable* ett = openDataFile->dataModel->eventTypeTable();
-	int index = ett->rowCount();
+	const AbstractEventTypeTable* eventTypeTable = openDataFile->dataModel->eventTypeTable();
+	int index = eventTypeTable->rowCount();
 	undoFactory->insertEventType(index, 3);
 
 	QColor colors[3] = {QColor(0, 0, 255), QColor(0, 255, 0), QColor(0, 255, 255)};
 	for (int i = 0; i < 3; ++i)
 	{
-		EventType et = ett->row(index + i);
+		EventType et = eventTypeTable->row(index + i);
 
 		et.name = "Spikedet K" + to_string(i + 1);
 		DataModel::color2array(colors[i], et.color);
@@ -1012,7 +1019,7 @@ void SignalFileBrowserWindow::runSpikedet()
 	}
 
 	// Process the output structure.
-	const AbstractEventTable* et = openDataFile->dataModel->montageTable()->eventTable(OpenDataFile::infoTable.getSelectedMontage());
+	const AbstractEventTable* eventTable = montageTable->eventTable(OpenDataFile::infoTable.getSelectedMontage());
 
 	AlenkaSignal::CDetectorOutput* out = spikedetAnalysis->getOutput();
 	assert(out);
@@ -1022,12 +1029,12 @@ void SignalFileBrowserWindow::runSpikedet()
 	{
 		assert(out->m_chan.size() == count);
 
-		int etIndex = et->rowCount();
+		int etIndex = eventTable->rowCount();
 		undoFactory->insertEvent(OpenDataFile::infoTable.getSelectedMontage(), etIndex, count);
 
 		for (unsigned int i = 0; i < count; i++)
 		{
-			Event e = et->row(etIndex + i);
+			Event e = eventTable->row(etIndex + i);
 
 			e.label = "Spike " + to_string(i);
 			e.type = index + (out->m_con[i] == 0.5 ? 1 : 0); // TODO: Figure out what should be used as the third type.
