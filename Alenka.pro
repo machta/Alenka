@@ -4,7 +4,7 @@ TEMPLATE = app console
 
 CONFIG += c++11
 
-QT += widgets websockets
+QT += widgets websockets charts
 
 HEADERS += \
 	$$files(src/DataModel/*.h) \

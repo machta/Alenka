@@ -132,6 +132,8 @@ void SignalProcessor::updateFilter()
 
 	filterProcessor->changeSampleFilter(M, filter.computeSamples());
 
+	file->setFilterCoefficients(filterProcessor->getCoefficients());
+
 	if (PROGRAM_OPTIONS.isSet("printFilter"))
 	{
 		if (PROGRAM_OPTIONS.isSet("printFilterFile"))

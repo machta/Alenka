@@ -21,11 +21,6 @@ TrackLabelBar::TrackLabelBar(QWidget* parent) : QWidget(parent)
 	connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(updateTrackTable(int)));
 }
 
-void TrackLabelBar::changeFile(OpenDataFile* file)
-{
-	this->file = file;
-}
-
 void TrackLabelBar::paintEvent(QPaintEvent* /*event*/)
 {
 	if (!file || file->dataModel->montageTable()->rowCount() <= 0)

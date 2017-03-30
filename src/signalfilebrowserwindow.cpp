@@ -14,6 +14,7 @@
 #include "Manager/eventmanager.h"
 #include "Manager/eventtypemanager.h"
 #include "Manager/montagemanager.h"
+#include "Manager/filtermanager.h"
 #include "Manager/eventtypetablemodel.h"
 #include "Manager/montagetablemodel.h"
 #include "Manager/eventtablemodel.h"
@@ -113,20 +114,26 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	eventManager->setReferences(signalViewer->getCanvas());
 	eventManagerDockWidget->setWidget(eventManager);
 
-	QDockWidget* eventTypeDockWidget = new QDockWidget("EventType Manager", this);
-	eventTypeDockWidget->setObjectName("EventType Manager QDockWidget");
+	QDockWidget* eventTypeManagerDockWidget = new QDockWidget("EventType Manager", this);
+	eventTypeManagerDockWidget->setObjectName("EventType Manager QDockWidget");
 	eventTypeManager = new EventTypeManager(this);
-	eventTypeDockWidget->setWidget(eventTypeManager);
+	eventTypeManagerDockWidget->setWidget(eventTypeManager);
 
 	QDockWidget* montageManagerDockWidget = new QDockWidget("Montage Manager", this);
 	montageManagerDockWidget->setObjectName("Montage Manager QDockWidget");
 	montageManager = new MontageManager(this);
 	montageManagerDockWidget->setWidget(montageManager);
 
+	QDockWidget* filterManagerDockWidget = new QDockWidget("Filter Manager", this);
+	filterManagerDockWidget->setObjectName("Filter Manager QDockWidget");
+	filterManager = new FilterManager(this);
+	filterManagerDockWidget->setWidget(filterManager);
+
 	addDockWidget(Qt::RightDockWidgetArea, trackManagerDockWidget);
 	tabifyDockWidget(trackManagerDockWidget, eventManagerDockWidget);
-	tabifyDockWidget(eventManagerDockWidget, eventTypeDockWidget);
-	tabifyDockWidget(eventTypeDockWidget, montageManagerDockWidget);
+	tabifyDockWidget(eventManagerDockWidget, eventTypeManagerDockWidget);
+	tabifyDockWidget(eventTypeManagerDockWidget, montageManagerDockWidget);
+	tabifyDockWidget(montageManagerDockWidget, filterManagerDockWidget);
 
 	// Construct File actions.
 	QAction* openFileAction = new QAction("&Open File", this);
@@ -394,8 +401,9 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 	windowMenu->addAction(trackManagerDockWidget->toggleViewAction());
 	windowMenu->addAction(eventManagerDockWidget->toggleViewAction());
-	windowMenu->addAction(eventTypeDockWidget->toggleViewAction());
+	windowMenu->addAction(eventTypeManagerDockWidget->toggleViewAction());
 	windowMenu->addAction(montageManagerDockWidget->toggleViewAction());
+	windowMenu->addAction(filterManagerDockWidget->toggleViewAction());
 
 	windowMenu->addSeparator();
 	windowMenu->addAction(fileToolBar->toggleViewAction());
@@ -666,6 +674,7 @@ void SignalFileBrowserWindow::openFile()
 	eventManager->changeFile(openDataFile);
 	eventTypeManager->changeFile(openDataFile);
 	montageManager->changeFile(openDataFile);
+	filterManager->changeFile(openDataFile);
 
 	signalViewer->changeFile(openDataFile);
 
@@ -1146,6 +1155,7 @@ void SignalFileBrowserWindow::closeFileDestroy()
 	eventManager->changeFile(nullptr);
 	eventTypeManager->changeFile(nullptr);
 	montageManager->changeFile(nullptr);
+	filterManager->changeFile(nullptr);
 
 	delete eventTypeTable; eventTypeTable = nullptr;
 	delete montageTable; montageTable = nullptr;

@@ -19,7 +19,10 @@ public:
 	 * @brief Notifies this object that the DataFile changed.
 	 * @param file Pointer to the data file. nullptr means file was closed.
 	 */
-	void changeFile(OpenDataFile* file);
+	void changeFile(OpenDataFile* file)
+	{
+		this->file = file;
+	}
 
 signals:
 

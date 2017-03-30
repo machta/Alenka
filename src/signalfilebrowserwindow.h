@@ -19,6 +19,7 @@ class TrackManager;
 class EventManager;
 class EventTypeManager;
 class MontageManager;
+class FilterManager;
 class QComboBox;
 class QCheckBox;
 class QAbstractTableModel;
@@ -62,6 +63,7 @@ private:
 	EventManager* eventManager;
 	EventTypeManager* eventTypeManager;
 	MontageManager* montageManager;
+	FilterManager* filterManager;
 	QComboBox* lowpassComboBox;
 	QComboBox* highpassComboBox;
 	QCheckBox* notchCheckBox;
