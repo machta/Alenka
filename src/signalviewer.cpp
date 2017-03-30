@@ -101,11 +101,17 @@ void SignalViewer::keyReleaseEvent(QKeyEvent* event)
 
 void SignalViewer::resize(int virtualWidth)
 {
-	int pageWidth = canvas->width();
+	const int pageWidth = canvas->width();
 
 	scrollBar->setRange(0, virtualWidth - pageWidth - 1);
 	scrollBar->setPageStep(pageWidth);
 	scrollBar->setSingleStep(max(1, pageWidth/20));
+
+	if (file)
+	{
+		double ratio = file->file->getSamplesRecorded()/OpenDataFile::infoTable.getVirtualWidth();
+		OpenDataFile::infoTable.setSamplesDisplayed(pageWidth*ratio);
+	}
 }
 
 int SignalViewer::virtualWidthFromScrollBar()
@@ -116,8 +122,8 @@ int SignalViewer::virtualWidthFromScrollBar()
 void SignalViewer::setVirtualWidth(int value)
 {
 	// This version makes sure that the position indicator stays at the same time.
-	double oldPosition = scrollBar->value() + OpenDataFile::infoTable.getPositionIndicator()*canvas->width();
-	double ratio = static_cast<double>(value)/virtualWidthFromScrollBar();
+	const double oldPosition = scrollBar->value() + OpenDataFile::infoTable.getPositionIndicator()*canvas->width();
+	const double ratio = static_cast<double>(value)/virtualWidthFromScrollBar();
 
 	resize(value);
 	setPosition(round(oldPosition*ratio - OpenDataFile::infoTable.getPositionIndicator()*canvas->width()));

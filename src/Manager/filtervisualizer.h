@@ -26,13 +26,21 @@ public:
 
 	void changeFile(OpenDataFile* file);
 
+public slots:
+	void setChannelToDisplay(unsigned int i)
+	{
+		channelToDisplay = i;
+	}
+
 private:
 	OpenDataFile* file;
 	QtCharts::QChartView* chartView;
 	QMetaObject::Connection connection;
 	Eigen::FFT<float>* fft;
+	std::vector<float> buffer;
+	unsigned int channelToDisplay = 0;
 
-	void filterInput(const std::vector<float>& b);
+	void updateChart(const std::vector<float>& b);
 };
 
 #endif // FILTERVISUALIZER_H

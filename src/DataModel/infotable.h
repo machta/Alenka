@@ -96,6 +96,10 @@ public:
 	{
 		return positionIndicator;
 	}
+	int getSamplesDisplayed() const
+	{
+		return samplesDisplayed;
+	}
 
 signals:
 	void virtualWidthChanged(int);
@@ -108,6 +112,7 @@ signals:
 	void selectedTypeChanged(int);
 	void timeLineIntervalChanged(double);
 	void positionIndicatorChanged(double);
+	void samplesDisplayedChanged(int);
 
 public slots:
 	void setVirtualWidth(int value)
@@ -190,6 +195,14 @@ public slots:
 			emit positionIndicatorChanged(value);
 		}
 	}
+	void setSamplesDisplayed(int value)
+	{
+		if (value != samplesDisplayed)
+		{
+			samplesDisplayed = value;
+			emit samplesDisplayedChanged(value);
+		}
+	}
 
 private:
 	int virtualWidth = 100000;
@@ -202,6 +215,7 @@ private:
 	int selectedType = 0;
 	double timeLineInterval = 1;
 	double positionIndicator = 0.5;
+	int samplesDisplayed; // This doesn't get saved.
 };
 
 #endif // INFOTABLE_H
