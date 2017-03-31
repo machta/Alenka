@@ -58,6 +58,7 @@ public:
 		emit timeLineIntervalChanged(timeLineInterval);
 		emit positionIndicatorChanged(positionIndicator);
 		emit pixelViewWidthChanged(pixelViewWidth);
+		emit frequencyMultipliersChanged(frequencyMultipliers);
 	}
 
 	int getVirtualWidth() const { return virtualWidth; }
@@ -67,11 +68,12 @@ public:
 	bool getNotch() const {	return notch; }
 	AlenkaSignal::WindowFunction getFilterWindow() const { return filterWindow; }
 	int getSelectedMontage() const { return selectedMontage; }
-	TimeMode getTimeMode() const { return timeMode;	}
+	InfoTable::TimeMode getTimeMode() const { return timeMode;	}
 	int getSelectedType() const { return selectedType; }
 	double getTimeLineInterval() const { return timeLineInterval; }
 	double getPositionIndicator() const { return positionIndicator; }
 	int getPixelViewWidth() const { return pixelViewWidth; }
+	const std::vector<std::pair<double, double>>& getFrequencyMultipliers() const { return frequencyMultipliers; }
 
 signals:
 	void virtualWidthChanged(int);
@@ -81,11 +83,12 @@ signals:
 	void notchChanged(bool);
 	void filterWindowChanged(AlenkaSignal::WindowFunction);
 	void selectedMontageChanged(int);
-	void timeModeChanged(TimeMode);
+	void timeModeChanged(InfoTable::TimeMode);
 	void selectedTypeChanged(int);
 	void timeLineIntervalChanged(double);
 	void positionIndicatorChanged(double);
 	void pixelViewWidthChanged(int);
+	void frequencyMultipliersChanged(const std::vector<std::pair<double, double>>&);
 
 public slots:
 	void setVirtualWidth(int value)
@@ -144,7 +147,7 @@ public slots:
 			emit selectedMontageChanged(value);
 		}
 	}
-	void setTimeMode(TimeMode value)
+	void setTimeMode(InfoTable::TimeMode value)
 	{
 		if (value != timeMode)
 		{
@@ -184,6 +187,14 @@ public slots:
 			emit pixelViewWidthChanged(value);
 		}
 	}
+	void setFrequencyMultipliers(const std::vector<std::pair<double, double>>& value)
+	{
+		if (value != frequencyMultipliers)
+		{
+			frequencyMultipliers = value;
+			emit frequencyMultipliersChanged(value);
+		}
+	}
 
 private:
 	int virtualWidth = 100000;
@@ -193,10 +204,11 @@ private:
 	bool notch = false;
 	AlenkaSignal::WindowFunction filterWindow = AlenkaSignal::WindowFunction::None;
 	int selectedMontage = 0;
-	TimeMode timeMode = TimeMode::offset;
+	InfoTable::TimeMode timeMode = InfoTable::TimeMode::offset;
 	int selectedType = 0;
 	double timeLineInterval = 1;
 	double positionIndicator = 0.5;
+	std::vector<std::pair<double, double>> frequencyMultipliers;
 
 	// The following values are not saved to .info files.
 	int pixelViewWidth = 0;

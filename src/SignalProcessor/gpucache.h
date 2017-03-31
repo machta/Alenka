@@ -1,7 +1,6 @@
 #ifndef GPUCACHE_H
 #define GPUCACHE_H
 
-//#include <AlenkaFile/datafile.h>
 #include "../error.h"
 
 #include <CL/cl_gl.h>

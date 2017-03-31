@@ -29,6 +29,34 @@ const AbstractTrackTable* getTrackTable(OpenDataFile* file)
 	return file->dataModel->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
 }
 
+void multiplySamples(vector<float>* samples)
+{
+	// Assume input is already sorted.
+	vector<pair<double, double>> input = OpenDataFile::infoTable.getFrequencyMultipliers();
+	if (input.empty())
+		return;
+
+	unsigned int inputSize = input.size();
+	unsigned int samplesSize = samples->size();
+	input.push_back(make_pair(samplesSize, input.back().second)); // End of vector guard.
+
+	vector<float> multipliers(samplesSize, 1);
+
+	for (unsigned int i = 0; i < inputSize; ++i)
+	{
+		int f = round(input[i].first);
+		double nextF = input[i + 1].first;
+
+		double multi = input[i].second;
+
+		for (; f < nextF; ++f)
+			multipliers[f] = multi;
+	}
+
+	for (unsigned int i = 0; i < samplesSize; ++i)
+		(*samples)[i] *= multipliers[i];
+}
+
 } // namespace
 
 SignalProcessor::SignalProcessor()
@@ -107,7 +135,7 @@ void SignalProcessor::updateFilter()
 		return;
 
 	int M = file->file->getSamplingFrequency()/* + 1*/;
-	AlenkaSignal::Filter<float> filter(M, file->file->getSamplingFrequency()); // TODO: Possibly could save this object so that it won't be created from scratch everytime.
+	AlenkaSignal::Filter<float> filter(M, file->file->getSamplingFrequency()); // TODO: Possibly could save this object so that it won't be created from scratch every time.
 
 	filter.lowpass(true);
 	filter.setLowpass(OpenDataFile::infoTable.getLowpassFrequency());
@@ -118,7 +146,10 @@ void SignalProcessor::updateFilter()
 	filter.notch(OpenDataFile::infoTable.getNotch());
 	filter.setNotch(50);
 
-	filterProcessor->changeSampleFilter(M, filter.computeSamples());
+	auto samples = filter.computeSamples();
+	multiplySamples(&samples);
+
+	filterProcessor->changeSampleFilter(M, samples);
 	filterProcessor->applyWindow(OpenDataFile::infoTable.getFilterWindow());
 
 	file->setFilterCoefficients(filterProcessor->getCoefficients());

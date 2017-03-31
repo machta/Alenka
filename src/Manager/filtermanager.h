@@ -6,6 +6,8 @@
 #include "filtervisualizer.h"
 
 class OpenDataFile;
+class QPlainTextEdit;
+class QSlider;
 
 class FilterManager : public QWidget
 {
@@ -14,13 +16,16 @@ class FilterManager : public QWidget
 public:
 	explicit FilterManager(QWidget* parent = nullptr);
 
-	void changeFile(OpenDataFile* file)
-	{
-		filterVisulizer->changeFile(file);
-	}
+	void changeFile(OpenDataFile* file);
 
 private:
 	FilterVisualizer* filterVisulizer;
+	QPlainTextEdit* multipliersEdit;
+	QSlider* channelSlider;
+
+private slots:
+	void setMultipliersText(const std::vector<std::pair<double, double>>& value);
+	void applyMultipliers();
 };
 
 #endif // FILTERMANAGER_H

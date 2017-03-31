@@ -74,7 +74,7 @@ void FilterVisualizer::updateChart()
 	if (!file)
 		return;
 
-	assert(channelToDisplay < file->file->getChannelCount());
+	assert(channelToDisplay < static_cast<int>(file->file->getChannelCount()));
 	QChart* chart = new QChart();
 	chart->legend()->hide();
 

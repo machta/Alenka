@@ -202,6 +202,8 @@ void Canvas::changeFile(OpenDataFile* file)
 		openFileConnections.push_back(c);
 		c = connect(&OpenDataFile::infoTable, SIGNAL(filterWindowChanged(AlenkaSignal::WindowFunction)), this, SLOT(updateFilter()));
 		openFileConnections.push_back(c);
+		c = connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersChanged(std::vector<std::pair<double, double>>)), this, SLOT(updateFilter()));
+		openFileConnections.push_back(c);
 
 		c = connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(selectMontage()));
 		openFileConnections.push_back(c);

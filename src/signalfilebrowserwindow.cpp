@@ -766,11 +766,15 @@ void SignalFileBrowserWindow::openFile()
 	openFileConnections.push_back(c);
 	c = connect(&OpenDataFile::infoTable, SIGNAL(notchChanged(bool)), signalViewer, SLOT(updateSignalViewer()));
 	openFileConnections.push_back(c);
+	c = connect(&OpenDataFile::infoTable, SIGNAL(filterWindowChanged(AlenkaSignal::WindowFunction)), signalViewer, SLOT(updateSignalViewer()));
+	openFileConnections.push_back(c);
 	c = connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), signalViewer, SLOT(updateSignalViewer()));
 	openFileConnections.push_back(c);
 	c = connect(&OpenDataFile::infoTable, SIGNAL(timeLineIntervalChanged(double)), signalViewer, SLOT(updateSignalViewer()));
 	openFileConnections.push_back(c);
 	c = connect(&OpenDataFile::infoTable, SIGNAL(positionIndicatorChanged(double)), signalViewer, SLOT(updateSignalViewer()));
+	openFileConnections.push_back(c);
+	c = connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersChanged(std::vector<std::pair<double, double>>)), signalViewer, SLOT(updateSignalViewer()));
 	openFileConnections.push_back(c);
 
 	cc = connectVitness(VitnessMontageTable::vitness(dataModel->montageTable()), [this] () { signalViewer->updateSignalViewer(); });
