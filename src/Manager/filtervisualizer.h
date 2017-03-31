@@ -31,16 +31,15 @@ public slots:
 	{
 		channelToDisplay = i;
 	}
+	void updateChart();
 
 private:
 	OpenDataFile* file;
 	QtCharts::QChartView* chartView;
-	QMetaObject::Connection connection;
+	std::vector<QMetaObject::Connection> connections;
 	Eigen::FFT<float>* fft;
 	std::vector<float> buffer;
 	unsigned int channelToDisplay = 0;
-
-	void updateChart(const std::vector<float>& b);
 };
 
 #endif // FILTERVISUALIZER_H

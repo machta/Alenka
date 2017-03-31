@@ -945,9 +945,9 @@ void SignalFileBrowserWindow::updateTimeMode(int mode)
 void SignalFileBrowserWindow::updatePositionStatusLabel()
 {
 	double ratio = static_cast<double>(file->getSamplesRecorded())/OpenDataFile::infoTable.getVirtualWidth();
-	double position = (OpenDataFile::infoTable.getPosition() + OpenDataFile::infoTable.getPositionIndicator()*signalViewer->getCanvas()->width())*ratio;
+	double position = OpenDataFile::infoTable.getPosition() + OpenDataFile::infoTable.getPixelViewWidth()*OpenDataFile::infoTable.getPositionIndicator();
 
-	positionStatusLabel->setText("Position: " + sampleToDateTimeString(file, round(position)));
+	positionStatusLabel->setText("Position: " + sampleToDateTimeString(file, round(position*ratio)));
 }
 
 void SignalFileBrowserWindow::updateCursorStatusLabel()
@@ -1089,7 +1089,7 @@ void SignalFileBrowserWindow::receiveSyncMessage(const QByteArray& message)
 #endif
 
 		lastPositionReceived = position;
-		position -= signalViewer->getCanvas()->width()*OpenDataFile::infoTable.getPositionIndicator();
+		position -= OpenDataFile::infoTable.getPixelViewWidth()*OpenDataFile::infoTable.getPositionIndicator();
 		OpenDataFile::infoTable.setPosition(position);
 	}
 }
@@ -1098,7 +1098,7 @@ void SignalFileBrowserWindow::sendSyncMessage()
 {
 	if (file && shouldSynchronizeView())
 	{
-		const int position = OpenDataFile::infoTable.getPosition() + signalViewer->getCanvas()->width()*OpenDataFile::infoTable.getPositionIndicator();
+		const int position = OpenDataFile::infoTable.getPosition() + OpenDataFile::infoTable.getPixelViewWidth()*OpenDataFile::infoTable.getPositionIndicator();
 
 		const double ratio = static_cast<double>(file->getSamplesRecorded())/OpenDataFile::infoTable.getVirtualWidth();
 		const int epsilon = max<int>(3, file->getSamplingFrequency()/50/ratio);

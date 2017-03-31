@@ -6,8 +6,6 @@
 # Use this when you make changes there and then want to build the main app.
 # Use Git Bash or a similar tool to run this on Windows.
 
-export MAKEFLAGS=-j4 # Change this to controll how many parallel jobs make can use.
-
 cd Alenka-File
 for build in `ls build* -d`
 do
@@ -47,3 +45,4 @@ echo ================= Build summary =================
 echo "Library                                  Status"
 echo =================================================
 echo -en "$SUMMARY"
+

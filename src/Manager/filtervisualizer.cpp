@@ -49,21 +49,27 @@ void FilterVisualizer::changeFile(OpenDataFile* file)
 {
 	this->file = file;
 
-	disconnect(connection);
+	for (auto e : connections)
+		disconnect(e);
+	connections.clear();
 
 	if (file)
 	{
-		connection = connect(file, &OpenDataFile::filterCoefficientsChanged, [this, file] () {
-			updateChart(file->getFilterCoefficients());
-		});
-	}
-	else
-	{
-		connection = QMetaObject::Connection();
+		auto c = connect(file, SIGNAL(filterCoefficientsChanged()), this, SLOT(updateChart()));
+		connections.push_back(c);
+
+		c = connect(&file->infoTable, SIGNAL(positionChanged(int)), this, SLOT(updateChart()));
+		connections.push_back(c);
+
+		c = connect(&file->infoTable, SIGNAL(positionIndicatorChanged(double)), this, SLOT(updateChart()));
+		connections.push_back(c);
+
+		c = connect(&file->infoTable, SIGNAL(pixelViewWidthChanged(int)), SLOT(updateChart()));
+		connections.push_back(c);
 	}
 }
 
-void FilterVisualizer::updateChart(const vector<float>& bb)
+void FilterVisualizer::updateChart()
 {
 	if (!file)
 		return;
@@ -78,8 +84,10 @@ void FilterVisualizer::updateChart(const vector<float>& bb)
 	chart->addAxis(axisX, Qt::AlignBottom);
 
 	// Draw signal spectrum.
-	const int samplesToUse = static_cast<int>(2*file->file->getSamplingFrequency());
-	const int position = static_cast<int>(OpenDataFile::infoTable.getPosition() + OpenDataFile::infoTable.getSamplesDisplayed()*OpenDataFile::infoTable.getPositionIndicator());
+	const int samplesToUse = 2*static_cast<int>(file->file->getSamplingFrequency());
+	double ratio = static_cast<double>(file->file->getSamplesRecorded())/OpenDataFile::infoTable.getVirtualWidth();
+	double doublePosition = OpenDataFile::infoTable.getPosition() + OpenDataFile::infoTable.getPixelViewWidth()*OpenDataFile::infoTable.getPositionIndicator();
+	const int position = static_cast<int>(doublePosition*ratio);
 
 	const int start = max(0, position - samplesToUse/2);
 	const int end = start + samplesToUse - 1;
@@ -98,28 +106,40 @@ void FilterVisualizer::updateChart(const vector<float>& bb)
 	assert(static_cast<int>(spectrum.size()) == sampleCount);
 
 	QLineSeries* signalSeries = new QLineSeries();
+	chart->addSeries(signalSeries);
+	signalSeries->attachAxis(axisX);
+
+	QValueAxis* axisY = new QValueAxis();
+	chart->addAxis(axisY, Qt::AlignLeft);
+	signalSeries->attachAxis(axisY);
+	axisY->setTitleText("Amplitude");
+
 	float maxVal = 0;
 
 	for (int i = 0; i < sampleCount/2; ++i)
 	{
 		float val = abs(spectrum[i]);
-		maxVal = max(maxVal, val);
-		signalSeries->append(fs*i/(sampleCount/2), val);
+		if (isfinite(val))
+		{
+			maxVal = max(maxVal, val);
+			signalSeries->append(fs*i/(sampleCount/2), val);
+		}
 	}
 
-	signalSeries->attachAxis(axisX);
-	QValueAxis* axisY = new QValueAxis();
-	axisY->setTitleText("Amplitude");
 	axisY->setRange(0, maxVal);
-	signalSeries->attachAxis(axisY);
-
-	chart->addAxis(axisY, Qt::AlignLeft);
-	chart->addSeries(signalSeries);
 
 	// Draw filter response.
-	vector<float> response = computeFilterResponse(bb, 10000, fft);
+	vector<float> response = computeFilterResponse(file->getFilterCoefficients(), 10000, fft);
 
 	QLineSeries* responseSeries = new QLineSeries();
+	chart->addSeries(responseSeries);
+	responseSeries->attachAxis(axisX);
+
+	axisY = new QValueAxis();
+	chart->addAxis(axisY, Qt::AlignRight);
+	responseSeries->attachAxis(axisY);
+	axisY->setTitleText("Attenuation (dB)");
+
 	float minVal = 1000*1000;
 	maxVal = 0;
 	const unsigned int n2 = response.size()/2;
@@ -127,21 +147,17 @@ void FilterVisualizer::updateChart(const vector<float>& bb)
 	for (unsigned int i = 0; i < n2; ++i)
 	{
 		float val = response[i];
-		maxVal = max(maxVal, val);
-		minVal = min(minVal, val);
-		responseSeries->append(fs*i/n2, val);
+		if (isfinite(val))
+		{
+			maxVal = max(maxVal, val);
+			minVal = min(minVal, val);
+			responseSeries->append(fs*i/n2, val);
+		}
 	}
 
-	responseSeries->attachAxis(axisX);
-	axisY = new QValueAxis();
-	axisY->setTitleText("Attenuation (dB)");
 	axisY->setRange(minVal, maxVal);
-	responseSeries->attachAxis(axisY);
-
-	chart->addAxis(axisY, Qt::AlignRight);
-	chart->addSeries(responseSeries);
 
 	// Replace the old chart.
-	delete chartView->chart();
+	//delete chartView->chart();
 	chartView->setChart(chart);
 }

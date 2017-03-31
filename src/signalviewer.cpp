@@ -107,11 +107,7 @@ void SignalViewer::resize(int virtualWidth)
 	scrollBar->setPageStep(pageWidth);
 	scrollBar->setSingleStep(max(1, pageWidth/20));
 
-	if (file)
-	{
-		double ratio = file->file->getSamplesRecorded()/OpenDataFile::infoTable.getVirtualWidth();
-		OpenDataFile::infoTable.setSamplesDisplayed(pageWidth*ratio);
-	}
+	OpenDataFile::infoTable.setPixelViewWidth(pageWidth);
 }
 
 int SignalViewer::virtualWidthFromScrollBar()

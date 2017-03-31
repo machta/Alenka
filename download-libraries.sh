@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Usage: ./download-libraries.sh
+#
+# This script downloads all dependant libraries.
+# Use Git Bash or a similar tool to run this on Windows.
+
 if [ -d Alenka-File ]
 then
 	file=skipped
@@ -22,3 +27,4 @@ echo "Library                 Status"
 echo ======================================
 echo "Alenka-File             $file"
 echo "Alenka-Signal           $signal"
+

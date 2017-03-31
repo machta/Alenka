@@ -96,9 +96,9 @@ public:
 	{
 		return positionIndicator;
 	}
-	int getSamplesDisplayed() const
+	int getPixelViewWidth() const
 	{
-		return samplesDisplayed;
+		return pixelViewWidth;
 	}
 
 signals:
@@ -112,7 +112,7 @@ signals:
 	void selectedTypeChanged(int);
 	void timeLineIntervalChanged(double);
 	void positionIndicatorChanged(double);
-	void samplesDisplayedChanged(int);
+	void pixelViewWidthChanged(int);
 
 public slots:
 	void setVirtualWidth(int value)
@@ -195,12 +195,12 @@ public slots:
 			emit positionIndicatorChanged(value);
 		}
 	}
-	void setSamplesDisplayed(int value)
+	void setPixelViewWidth(int value)
 	{
-		if (value != samplesDisplayed)
+		if (value != pixelViewWidth)
 		{
-			samplesDisplayed = value;
-			emit samplesDisplayedChanged(value);
+			pixelViewWidth = value;
+			emit pixelViewWidthChanged(value);
 		}
 	}
 
@@ -215,7 +215,9 @@ private:
 	int selectedType = 0;
 	double timeLineInterval = 1;
 	double positionIndicator = 0.5;
-	int samplesDisplayed; // This doesn't get saved.
+
+	// The following values are not saved to .info files.
+	int pixelViewWidth;
 };
 
 #endif // INFOTABLE_H
