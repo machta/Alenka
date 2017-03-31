@@ -3,6 +3,8 @@
 
 #include <QObject>
 
+#include <AlenkaSignal/filterprocessor.h>
+
 #include <string>
 
 namespace AlenkaSignal
@@ -49,57 +51,27 @@ public:
 		emit lowpassFrequencyChanged(lowpassFrequency);
 		emit highpassFrequencyChanged(highPassFrequency);
 		emit notchChanged(notch);
+		emit filterWindowChanged(filterWindow);
 		emit selectedMontageChanged(selectedMontage);
-		emit timeModeChanged(static_cast<int>(timeMode));
+		emit timeModeChanged(timeMode);
 		emit selectedTypeChanged(selectedType);
 		emit timeLineIntervalChanged(timeLineInterval);
 		emit positionIndicatorChanged(positionIndicator);
+		emit pixelViewWidthChanged(pixelViewWidth);
 	}
 
-	int getVirtualWidth() const
-	{
-		return virtualWidth;
-	}
-	int getPosition() const
-	{
-		return position;
-	}
-	double getLowpassFrequency() const
-	{
-		return lowpassFrequency;
-	}
-	double getHighpassFrequency() const
-	{
-		return highPassFrequency;
-	}
-	bool getNotch() const
-	{
-		return notch;
-	}
-	int getSelectedMontage() const
-	{
-		return selectedMontage;
-	}
-	TimeMode getTimeMode() const
-	{
-		return timeMode;
-	}
-	int getSelectedType() const
-	{
-		return selectedType;
-	}
-	double getTimeLineInterval() const
-	{
-		return timeLineInterval;
-	}
-	double getPositionIndicator() const
-	{
-		return positionIndicator;
-	}
-	int getPixelViewWidth() const
-	{
-		return pixelViewWidth;
-	}
+	int getVirtualWidth() const { return virtualWidth; }
+	int getPosition() const { return position; }
+	double getLowpassFrequency() const { return lowpassFrequency; }
+	double getHighpassFrequency() const { return highPassFrequency; }
+	bool getNotch() const {	return notch; }
+	AlenkaSignal::WindowFunction getFilterWindow() const { return filterWindow; }
+	int getSelectedMontage() const { return selectedMontage; }
+	TimeMode getTimeMode() const { return timeMode;	}
+	int getSelectedType() const { return selectedType; }
+	double getTimeLineInterval() const { return timeLineInterval; }
+	double getPositionIndicator() const { return positionIndicator; }
+	int getPixelViewWidth() const { return pixelViewWidth; }
 
 signals:
 	void virtualWidthChanged(int);
@@ -107,8 +79,9 @@ signals:
 	void lowpassFrequencyChanged(double);
 	void highpassFrequencyChanged(double);
 	void notchChanged(bool);
+	void filterWindowChanged(AlenkaSignal::WindowFunction);
 	void selectedMontageChanged(int);
-	void timeModeChanged(int);
+	void timeModeChanged(TimeMode);
 	void selectedTypeChanged(int);
 	void timeLineIntervalChanged(double);
 	void positionIndicatorChanged(double);
@@ -155,6 +128,14 @@ public slots:
 			emit notchChanged(value);
 		}
 	}
+	void setFilterWindow(AlenkaSignal::WindowFunction value)
+	{
+		if (value != filterWindow)
+		{
+			filterWindow = value;
+			emit filterWindowChanged(value);
+		}
+	}
 	void setSelectedMontage(int value)
 	{
 		if (value != selectedMontage)
@@ -168,7 +149,7 @@ public slots:
 		if (value != timeMode)
 		{
 			timeMode = value;
-			emit timeModeChanged(static_cast<int>(value));
+			emit timeModeChanged(value);
 		}
 	}
 	void setSelectedType(int value)
@@ -210,6 +191,7 @@ private:
 	double lowpassFrequency = 1000000;
 	double highPassFrequency = -1000000;
 	bool notch = false;
+	AlenkaSignal::WindowFunction filterWindow = AlenkaSignal::WindowFunction::None;
 	int selectedMontage = 0;
 	TimeMode timeMode = TimeMode::offset;
 	int selectedType = 0;
@@ -217,7 +199,7 @@ private:
 	double positionIndicator = 0.5;
 
 	// The following values are not saved to .info files.
-	int pixelViewWidth;
+	int pixelViewWidth = 0;
 };
 
 #endif // INFOTABLE_H

@@ -199,11 +199,12 @@ void Canvas::changeFile(OpenDataFile* file)
 		c = connect(&OpenDataFile::infoTable, SIGNAL(highpassFrequencyChanged(double)), this, SLOT(updateFilter()));
 		openFileConnections.push_back(c);
 		c = connect(&OpenDataFile::infoTable, SIGNAL(notchChanged(bool)), this, SLOT(updateFilter()));
-
+		openFileConnections.push_back(c);
+		c = connect(&OpenDataFile::infoTable, SIGNAL(filterWindowChanged(AlenkaSignal::WindowFunction)), this, SLOT(updateFilter()));
+		openFileConnections.push_back(c);
 
 		c = connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(selectMontage()));
 		openFileConnections.push_back(c);
-		//selectMontage();
 
 		c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int)), this, SLOT(updateCursor()));
 		openFileConnections.push_back(c);

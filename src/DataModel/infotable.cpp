@@ -22,6 +22,7 @@ void InfoTable::writeXML(const string& filePath, const AlenkaSignal::DETECTOR_SE
 	filter.append_attribute("lowpassFrequency").set_value(lowpassFrequency);
 	filter.append_attribute("highPassFrequency").set_value(highPassFrequency);
 	filter.append_attribute("notch").set_value(notch);
+	filter.append_attribute("filterWindow").set_value(static_cast<int>(filterWindow));
 
 	xml_node selection = document.append_child("selection");
 	selection.append_attribute("selectedMontage").set_value(selectedMontage);
@@ -71,6 +72,7 @@ void InfoTable::readXML(const string& filePath, AlenkaSignal::DETECTOR_SETTINGS*
 	lowpassFrequency = filter.attribute("lowpassFrequency").as_double(lowpassFrequency);
 	highPassFrequency = filter.attribute("highPassFrequency").as_double(highPassFrequency);
 	notch = filter.attribute("notch").as_bool(notch);
+	filterWindow = static_cast<AlenkaSignal::WindowFunction>(browser.attribute("filterWindow").as_int(static_cast<int>(filterWindow)));
 
 	xml_node selection = document.child("selection");
 	selectedMontage = selection.attribute("selectedMontage").as_int(selectedMontage);

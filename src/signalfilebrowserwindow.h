@@ -113,7 +113,7 @@ private slots:
 	void highpassComboBoxUpdate(const QString& text);
 	void highpassComboBoxUpdate(double value);
 	void updateManagers(int value);
-	void updateTimeMode(int mode);
+	void updateTimeMode(InfoTable::TimeMode mode);
 	void updatePositionStatusLabel();
 	void updateCursorStatusLabel();
 	void updateMontageComboBox();

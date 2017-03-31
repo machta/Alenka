@@ -781,7 +781,7 @@ void SignalFileBrowserWindow::openFile()
 	openFileConnections.push_back(c);
 
 	// Update the View submenus.
-	c = connect(&OpenDataFile::infoTable, SIGNAL(timeModeChanged(int)), this, SLOT(updateTimeMode(int)));
+	c = connect(&OpenDataFile::infoTable, SIGNAL(timeModeChanged(InfoTable::TimeMode)), this, SLOT(updateTimeMode(InfoTable::TimeMode)));
 	c = connect(&OpenDataFile::infoTable, &InfoTable::timeLineIntervalChanged, [this] (double value)
 	{
 		setTimeLineIntervalAction->setToolTip("The time line interval is " + locale().toString(value) + " s.");
@@ -934,9 +934,9 @@ void SignalFileBrowserWindow::updateManagers(int value)
 	}
 }
 
-void SignalFileBrowserWindow::updateTimeMode(int mode)
+void SignalFileBrowserWindow::updateTimeMode(InfoTable::TimeMode mode)
 {
-	QAction* a = timeModeActionGroup->actions().at(mode);
+	QAction* a = timeModeActionGroup->actions().at(static_cast<int>(mode));
 	a->setChecked(true);
 
 	timeModeStatusLabel->setText("Time Mode: " + a->text());

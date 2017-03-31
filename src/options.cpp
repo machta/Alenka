@@ -36,7 +36,6 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	commandLineOnly.add_options()
 	("help", "help message")
 	("config,c", value<string>()->default_value(configDefault), "config file")
-	("printFilter", "should the filter coefficients be printed (every time they are computed)")
 	("printBuffers", "print the values in buffers during signal processing")
 	("clInfo", "print OpenCL platform and device info")
 	("glInfo", "print OpenGL info")
@@ -48,11 +47,9 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("uncalibrated", value<bool>()->default_value(false), "assume uncalibrated data in gdf files")
 	("clPlatform", value<int>()->default_value(0), "OpenCL platform id")
 	("clDevice", value<int>()->default_value(0), "OpenCL device id to be used in SignalProcessor")
-	("window", value<string>()->default_value("none"), "window function to be used on FIR coefficients (none | hamming | blackman)")
 	("blockSize", value<unsigned int>()->default_value(32*1024), "size of one block of signal data")
 	("gpuMemorySize", value<int64_t>()->default_value(0), "the maximum amount of GPU memory used; if <= 0 then the value is relative to the implementation defined maximum, otherwise it is absolute")
 	("dataFileCacheSize", value<int64_t>()->default_value(0), "maximum total memory used by the data file cache; zero means don't use cache")
-	("printFilterFile", value<string>(), "print filter to a file with this name; if empty, stderr is used")
 	("printBuffersFolder", value<string>()->default_value("."), "path to the folder to which the values will be saved (no end slash), only in debug build")
 	("notchFrequency", value<double>()->default_value(50), "frequency used to filter power interference with the signal")
 	("onlineFilter", value<bool>()->default_value(false), "should the signal be filtered every time before it is rendered")
@@ -124,10 +121,6 @@ void Options::validateValues()
 	{
 		throw validation_error(validation_error::invalid_option_value, "eventRenderMode", to_string(mode));
 	}
-
-	const string window = get("window").as<string>();
-	if (window != "none" && window != "hamming" && window != "blackman")
-		throw validation_error(validation_error::invalid_option_value, "window", window);
 }
 
 void Options::logConfigFile() const

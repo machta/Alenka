@@ -298,7 +298,7 @@ EventTableModel::EventTableModel(OpenDataFile* file, QObject* parent) : TableMod
 	connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(setSelectedMontage(int)));
 	setSelectedMontage(OpenDataFile::infoTable.getSelectedMontage());
 
-	connect(&OpenDataFile::infoTable, SIGNAL(timeModeChanged(int)), this, SLOT(beginEndReset()));
+	connect(&OpenDataFile::infoTable, SIGNAL(timeModeChanged(InfoTable::TimeMode)), this, SLOT(beginEndReset()));
 }
 
 int EventTableModel::rowCount(const QModelIndex& parent) const

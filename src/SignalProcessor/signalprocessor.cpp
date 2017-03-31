@@ -24,18 +24,6 @@ using namespace AlenkaFile;
 namespace
 {
 
-AlenkaSignal::WindowFunction resolveWindow()
-{
-	string window = PROGRAM_OPTIONS["window"].as<string>();
-
-	if (window == "hamming")
-		return AlenkaSignal::WindowFunction::Hamming;
-	else if (window == "blackman")
-		return AlenkaSignal::WindowFunction::Blackman;
-
-	return AlenkaSignal::WindowFunction::None;
-}
-
 const AbstractTrackTable* getTrackTable(OpenDataFile* file)
 {
 	return file->dataModel->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
@@ -119,7 +107,7 @@ void SignalProcessor::updateFilter()
 		return;
 
 	int M = file->file->getSamplingFrequency()/* + 1*/;
-	AlenkaSignal::Filter<float> filter(M, file->file->getSamplingFrequency()); // Possibly could save this object so that it won't be created from scratch everytime.
+	AlenkaSignal::Filter<float> filter(M, file->file->getSamplingFrequency()); // TODO: Possibly could save this object so that it won't be created from scratch everytime.
 
 	filter.lowpass(true);
 	filter.setLowpass(OpenDataFile::infoTable.getLowpassFrequency());
@@ -131,31 +119,12 @@ void SignalProcessor::updateFilter()
 	filter.setNotch(50);
 
 	filterProcessor->changeSampleFilter(M, filter.computeSamples());
+	filterProcessor->applyWindow(OpenDataFile::infoTable.getFilterWindow());
 
 	file->setFilterCoefficients(filterProcessor->getCoefficients());
 
-	if (PROGRAM_OPTIONS.isSet("printFilter"))
-	{
-		if (PROGRAM_OPTIONS.isSet("printFilterFile"))
-		{
-			FILE* file = fopen(PROGRAM_OPTIONS["printFilterFile"].as<string>().c_str(), "w");
-			checkNotErrorCode(file, nullptr, "File '" << PROGRAM_OPTIONS["printFilterFile"].as<string>() << "' could not be opened for writing.");
-
-			filter.printCoefficients(file, filterProcessor->getCoefficients());
-
-			int err = fclose(file);
-			checkErrorCode(err, 0, "fclose()");
-		}
-		else
-		{
-			filter.printCoefficients(stdout, filterProcessor->getCoefficients());
-		}
-	}
-
 	if (onlineFilter == false)
-	{
 		cache->clear();
-	}
 }
 
 void SignalProcessor::setUpdateMontageFlag()
@@ -267,7 +236,7 @@ void SignalProcessor::changeFile(OpenDataFile* file)
 		unsigned int tmpBlockSize = (blockSize + offset)*file->file->getChannelCount();
 
 		// Construct the filter and montage processors.
-		filterProcessor = new AlenkaSignal::FilterProcessor<float>(blockSize + offset, file->file->getChannelCount(), context, resolveWindow());
+		filterProcessor = new AlenkaSignal::FilterProcessor<float>(blockSize + offset, file->file->getChannelCount(), context);
 
 		montageProcessor = new AlenkaSignal::MontageProcessor<float>(offset, blockSize, file->file->getChannelCount());
 
