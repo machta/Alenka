@@ -8,6 +8,7 @@
 #include <vector>
 
 class OpenDataFile;
+class QAction;
 namespace QtCharts
 {
 class QChart;
@@ -54,6 +55,8 @@ public slots:
 			updateSpectrum();
 		}
 	}
+	const QAction* getResetAction() const { return resetAction; }
+	const QAction* getZoomAction() const { return zoomAction; }
 
 private:
 	OpenDataFile* file = nullptr;
@@ -70,6 +73,8 @@ private:
 	QtCharts::QValueAxis* axisX;
 	QtCharts::QValueAxis* axisSpectrum;
 	QtCharts::QValueAxis* axisResponse;
+	QAction* resetAction;
+	QAction* zoomAction;
 
 	void forceUpdateSpectrum()
 	{

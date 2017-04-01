@@ -5,8 +5,10 @@
         <file>montageHeader.cl</file>
         <file>rectangleLine.vert</file>
         <file>signal.vert</file>
-        <file>play-icon.png</file>
-        <file>settings-icon.png</file>
-        <file>edit-icon.png</file>
+        <file>icons/edit.png</file>
+        <file>icons/fit.png</file>
+        <file>icons/zoom-in.png</file>
+        <file>icons/play.png</file>
+        <file>icons/settings.png</file>
     </qresource>
 </RCC>

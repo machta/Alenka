@@ -4,6 +4,7 @@
 
 #include <QtCharts>
 #include <QVBoxLayout>
+#include <QAction>
 
 #include <cmath>
 #include <complex>
@@ -18,7 +19,7 @@ vector<float> computeFilterResponse(const vector<float>& bb, const unsigned int 
 {
 	assert(bb.size() <= n);
 
-	vector<float> b = bb;
+	vector<float> b = bb; // TODO: Perhaps pad it with zeros to get a better resolution and a power of two for efficiency.
 	b.resize(n);
 
 	vector<complex<float>> response;
@@ -39,6 +40,21 @@ FilterVisualizer::FilterVisualizer(QWidget* parent) : QWidget(parent)
 
 	chartView = new QChartView();
 	chartView->setRenderHint(QPainter::Antialiasing);
+	chartView->setDragMode(QGraphicsView::NoDrag);
+
+	resetAction = new QAction(QIcon(":/icons/fit.png"), "Reset view");
+	connect(resetAction, &QAction::triggered, [this] () {
+		chart->zoomReset();
+	});
+	chartView->addAction(resetAction);
+
+	zoomAction = new QAction(QIcon(":/icons/zoom-in.png"), "Zoom");
+	zoomAction->setToolTip("Drag to zoom in, right-click to zoom out");
+	zoomAction->setCheckable(true);
+	connect(zoomAction, &QAction::toggled, [this] (bool enable) {
+		chartView->setRubberBand(enable ? QChartView::RectangleRubberBand : QChartView::NoRubberBand);
+	});
+	chartView->addAction(zoomAction);
 
 	QVBoxLayout* box = new QVBoxLayout();
 	box->addWidget(chartView);

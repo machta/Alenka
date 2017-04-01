@@ -60,7 +60,7 @@ bool ColorTableColumn::createEditor(QWidget* parent, const QStyleOptionViewItem&
 	(void)option; (void)index;
 
 	QLineEdit* lineEdit = new QLineEdit(parent);
-	QAction* action = lineEdit->addAction(QIcon(":/edit-icon.png"), QLineEdit::TrailingPosition);
+	QAction* action = lineEdit->addAction(QIcon(":/icons/edit.png"), QLineEdit::TrailingPosition);
 
 	lineEdit->connect(action, &QAction::triggered, [lineEdit] () {
 		QColor color;

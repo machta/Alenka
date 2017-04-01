@@ -12,6 +12,7 @@
 #include <QSlider>
 #include <QSpinBox>
 #include <QCheckBox>
+#include <QAction>
 
 #include <sstream>
 
@@ -42,6 +43,19 @@ FilterManager::FilterManager(QWidget* parent) : QWidget(parent)
 	hbox->addStretch();
 
 	// Visulizer controls.
+	QPushButton* button = new QPushButton();
+	button->setIcon(filterVisulizer->getResetAction()->icon());
+	button->setToolTip(filterVisulizer->getResetAction()->toolTip());
+	connect(button, SIGNAL(clicked(bool)), filterVisulizer->getResetAction(), SLOT(trigger()));
+	hbox->addWidget(button);
+
+	button = new QPushButton();
+	button->setIcon(filterVisulizer->getZoomAction()->icon());
+	button->setToolTip(filterVisulizer->getZoomAction()->toolTip());
+	button->setCheckable(true);
+	connect(button, SIGNAL(clicked(bool)), filterVisulizer->getZoomAction(), SLOT(setChecked(bool)));
+	hbox->addWidget(button);
+
 	label = new QLabel("Channel");
 	label->setToolTip("Index of a channel from the original file to use as input for the spectrum graph");
 	hbox->addWidget(label);

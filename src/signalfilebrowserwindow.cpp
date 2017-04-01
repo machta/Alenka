@@ -202,12 +202,12 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	});
 
 	// Construct Spikedet actions.
-	runSpikedetAction = new QAction(QIcon(":/play-icon.png"), "Run Spikedet Analysis", this);
+	runSpikedetAction = new QAction(QIcon(":/icons/play.png"), "Run Spikedet Analysis", this);
 	runSpikedetAction->setToolTip("Run Spikedet analysis on the current montage.");
 	runSpikedetAction->setStatusTip(runSpikedetAction->toolTip());
 	connect(runSpikedetAction, &QAction::triggered, [this] () { runSpikedet(); } );
 
-	QAction* spikedetSettingsAction = new QAction(QIcon(":/settings-icon.png"), "Spikedet Settings", this);
+	QAction* spikedetSettingsAction = new QAction(QIcon(":/icons/settings.png"), "Spikedet Settings", this);
 	spikedetSettingsAction->setToolTip("Change Spikedet settings.");
 	spikedetSettingsAction->setStatusTip(spikedetSettingsAction->toolTip());
 	connect(spikedetSettingsAction, &QAction::triggered, [this] () {
