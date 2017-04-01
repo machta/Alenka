@@ -30,6 +30,7 @@ cp -v $QT_DIR/bin/Qt5Gui.dll $folder/$name &&
 cp -v $QT_DIR/bin/Qt5Widgets.dll $folder/$name &&
 cp -v $QT_DIR/bin/Qt5Network.dll $folder/$name &&
 cp -v $QT_DIR/bin/Qt5WebSockets.dll $folder/$name &&
+cp -v $QT_DIR/bin/Qt5Charts.dll $folder/$name &&
 cp -v $QT_DIR/plugins/platforms/qwindows.dll $folder/$name/platforms &&
 libraries=OK || libraries=fail
 
@@ -39,6 +40,7 @@ cp -v $QT_DIR/bin/Qt5Gui.dll $folder32/$name-32 &&
 cp -v $QT_DIR/bin/Qt5Widgets.dll $folder32/$name-32 &&
 cp -v $QT_DIR/bin/Qt5Network.dll $folder32/$name-32 &&
 cp -v $QT_DIR/bin/Qt5WebSockets.dll $folder32/$name-32 &&
+cp -v $QT_DIR/bin/Qt5Charts.dll $folder32/$name-32 &&
 cp -v $QT_DIR/plugins/platforms/qwindows.dll $folder32/$name-32/platforms &&
 libraries32=OK || libraries32=fail
 
