@@ -10,6 +10,8 @@
 #include <QPushButton>
 #include <QSplitter>
 #include <QSlider>
+#include <QSpinBox>
+#include <QCheckBox>
 
 #include <sstream>
 
@@ -25,16 +27,23 @@ FilterManager::FilterManager(QWidget* parent) : QWidget(parent)
 	splitter->addWidget(filterVisulizer);
 
 	QVBoxLayout* box2 = new QVBoxLayout();
-
 	QHBoxLayout* hbox = new QHBoxLayout();
 
 	QLabel* label = new QLabel("Frequency multipliers:");
-	label->setToolTip("Enter one pairs [f, multiplier] per line. Frequencies > f are modified by multiplier (default is 1).");
+	label->setToolTip("Enter one pairs [f, multiplier] per line. Frequencies > f are modified by the multiplier");
 	hbox->addWidget(label);
+
+	QCheckBox* checkBox = new QCheckBox("on");
+	checkBox->setToolTip("Enable/disable multipliers");
+	connect(checkBox, SIGNAL(clicked(bool)), &OpenDataFile::infoTable, SLOT(setFrequencyMultipliersOn(bool)));
+	connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersOnChanged(bool)), checkBox, SLOT(setChecked(bool)));
+	hbox->addWidget(checkBox);
+
 	hbox->addStretch();
 
-	label = new QLabel("Display channel:");
-	label->setToolTip("Which channel from the original file should be used?");
+	// Visulizer controls.
+	label = new QLabel("Channel");
+	label->setToolTip("Index of a channel from the original file to use as input for the spectrum graph");
 	hbox->addWidget(label);
 	channelSlider = new QSlider(Qt::Horizontal);
 	connect(channelSlider, SIGNAL(valueChanged(int)), filterVisulizer, SLOT(setChannelToDisplay(int)));
@@ -45,8 +54,26 @@ FilterManager::FilterManager(QWidget* parent) : QWidget(parent)
 	hbox->addWidget(label);
 	hbox->addWidget(channelSlider);
 
+	QSpinBox* spinBox = new QSpinBox();
+	spinBox->setRange(0, 100);
+	connect(spinBox, SIGNAL(valueChanged(int)), filterVisulizer, SLOT(setSecondsToDisplay(int)));
+	spinBox->setValue(2);
+	hbox->addWidget(spinBox);
+	label = new QLabel("s");
+	label->setToolTip("Interval in seconds to use for the spectrum graph");
+	hbox->addWidget(label);
+
+	checkBox = new QCheckBox("freeze");
+	checkBox->setToolTip("Freeze spectrum");
+	connect(checkBox, SIGNAL(clicked(bool)), filterVisulizer, SLOT(setFreezeSpectrum(bool)));
+	checkBox->setChecked(false);
+	hbox->addWidget(checkBox);
+
 	box2->addLayout(hbox);
+
+	// Multipliers text field.
 	multipliersEdit = new QPlainTextEdit();
+	connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersChanged(std::vector<std::pair<double,double> >)), this, SLOT(setMultipliersText(std::vector<std::pair<double,double> >)));
 	box2->addWidget(multipliersEdit);
 
 	QWidget* widget = new QWidget();
@@ -54,10 +81,12 @@ FilterManager::FilterManager(QWidget* parent) : QWidget(parent)
 	splitter->addWidget(widget);
 	box->addWidget(splitter);
 
-	// Controls.
+	// Filter controls.
 	hbox = new QHBoxLayout();
 
-	hbox->addWidget(new QLabel("Filter window:"));
+	label = new QLabel("Filter window:");
+	label->setToolTip("Window function to use to modify the FIR filter coeficients");
+	hbox->addWidget(label);
 	QComboBox* windowCombo = new QComboBox();
 	windowCombo->addItem("None");
 	windowCombo->addItem("Hamming");
@@ -71,6 +100,7 @@ FilterManager::FilterManager(QWidget* parent) : QWidget(parent)
 	hbox->addWidget(windowCombo);
 
 	QPushButton* applyButton = new QPushButton("Apply");
+	applyButton->setToolTip("Apply multipliers");
 	connect(applyButton, SIGNAL(clicked(bool)), this, SLOT(applyMultipliers()));
 	hbox->addWidget(applyButton);
 
@@ -81,6 +111,7 @@ FilterManager::FilterManager(QWidget* parent) : QWidget(parent)
 
 void FilterManager::changeFile(OpenDataFile* file)
 {
+	this->file = file;
 	filterVisulizer->changeFile(file);
 
 	if (file)
@@ -102,8 +133,12 @@ void FilterManager::setMultipliersText(const std::vector<std::pair<double, doubl
 
 void FilterManager::applyMultipliers()
 {
+	if (!file)
+		return;
+
 	stringstream ss(multipliersEdit->toPlainText().toStdString());
 
+	const double fs = file->file->getSamplingFrequency()/2;
 	vector<pair<double, double>> multi;
 	string line;
 
@@ -113,10 +148,10 @@ void FilterManager::applyMultipliers()
 		double a, b;
 		int got = sscanf(line.c_str(), "%lf %lf", &a, &b);
 
-		if (1 <= got)
+		if (1 <= got && a <= fs)
 		{
 			p.first = a;
-			p.second = 2 <= got ? b : 1;
+			p.second = (2 == got ? b : 1);
 			multi.push_back(p);
 		}
 	}

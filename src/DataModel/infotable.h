@@ -59,6 +59,7 @@ public:
 		emit positionIndicatorChanged(positionIndicator);
 		emit pixelViewWidthChanged(pixelViewWidth);
 		emit frequencyMultipliersChanged(frequencyMultipliers);
+		emit frequencyMultipliersOnChanged(frequencyMultipliersOn);
 	}
 
 	int getVirtualWidth() const { return virtualWidth; }
@@ -74,6 +75,7 @@ public:
 	double getPositionIndicator() const { return positionIndicator; }
 	int getPixelViewWidth() const { return pixelViewWidth; }
 	const std::vector<std::pair<double, double>>& getFrequencyMultipliers() const { return frequencyMultipliers; }
+	bool getFrequencyMultipliersOn() const { return frequencyMultipliersOn; }
 
 signals:
 	void virtualWidthChanged(int);
@@ -89,6 +91,7 @@ signals:
 	void positionIndicatorChanged(double);
 	void pixelViewWidthChanged(int);
 	void frequencyMultipliersChanged(const std::vector<std::pair<double, double>>&);
+	void frequencyMultipliersOnChanged(bool);
 
 public slots:
 	void setVirtualWidth(int value)
@@ -195,6 +198,14 @@ public slots:
 			emit frequencyMultipliersChanged(value);
 		}
 	}
+	void setFrequencyMultipliersOn(bool value)
+	{
+		if (value != frequencyMultipliersOn)
+		{
+			frequencyMultipliersOn = value;
+			emit frequencyMultipliersOnChanged(value);
+		}
+	}
 
 private:
 	int virtualWidth = 100000;
@@ -209,6 +220,7 @@ private:
 	double timeLineInterval = 1;
 	double positionIndicator = 0.5;
 	std::vector<std::pair<double, double>> frequencyMultipliers;
+	bool frequencyMultipliersOn = true;
 
 	// The following values are not saved to .info files.
 	int pixelViewWidth = 0;

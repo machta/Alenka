@@ -47,6 +47,15 @@ void InfoTable::writeXML(const string& filePath, const AlenkaSignal::DETECTOR_SE
 	spikedet.append_attribute("dec").set_value(spikedetSettings.m_decimation);
 	spikedet.append_attribute("sed").set_value(spikeDuration);
 
+	xml_node multipliers = document.append_child("multipliers");
+	multipliers.append_attribute("on").set_value(frequencyMultipliersOn);
+	for (auto e : frequencyMultipliers)
+	{
+		xml_node multi = multipliers.append_child("multi");
+		multi.append_attribute("f").set_value(e.first);
+		multi.append_attribute("mag").set_value(e.second);
+	}
+
 	if (!file.save_file(filePath.c_str()))
 	{
 		logToFileAndConsole("Error while writing file '" << filePath << "'.");
@@ -82,7 +91,7 @@ void InfoTable::readXML(const string& filePath, AlenkaSignal::DETECTOR_SETTINGS*
 	timeMode = static_cast<TimeMode>(window.attribute("timeMode").as_int(static_cast<int>(timeMode)));
 	timeLineInterval = window.attribute("timeLineInterval").as_double(timeLineInterval);
 
-	xml_node spikedet = document.append_child("spikedet");
+	xml_node spikedet = document.child("spikedet");
 	spikedetSettings->m_band_low = spikedet.attribute("fl").as_int(spikedetSettings->m_band_low);
 	spikedetSettings->m_band_high = spikedet.attribute("fh").as_int(spikedetSettings->m_band_high);
 	spikedetSettings->m_k1 = spikedet.attribute("k1").as_double(spikedetSettings->m_k1);
@@ -96,4 +105,16 @@ void InfoTable::readXML(const string& filePath, AlenkaSignal::DETECTOR_SETTINGS*
 	spikedetSettings->m_polyspike_union_time = spikedet.attribute("pt").as_double(spikedetSettings->m_polyspike_union_time);
 	spikedetSettings->m_decimation = spikedet.attribute("dec").as_int(spikedetSettings->m_decimation);
 	*spikeDuration = spikedet.attribute("sed").as_double(*spikeDuration);
+
+	xml_node multipliers = document.child("multipliers");
+	frequencyMultipliersOn = multipliers.attribute("on").as_bool(frequencyMultipliersOn);
+	frequencyMultipliers.clear();
+	xml_node multi = multipliers.child("multi");
+	while (multi)
+	{
+		auto p = make_pair(multi.attribute("f").as_double(), multi.attribute("mag").as_double(1));
+		frequencyMultipliers.push_back(p);
+
+		multi = multi.next_sibling("multi");
+	}
 }

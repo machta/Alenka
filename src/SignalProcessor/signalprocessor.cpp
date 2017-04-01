@@ -36,24 +36,26 @@ void multiplySamples(vector<float>* samples)
 	if (input.empty())
 		return;
 
-	unsigned int inputSize = input.size();
-	unsigned int samplesSize = samples->size();
+	int inputSize = input.size();
+	int samplesSize = samples->size();
 	input.push_back(make_pair(samplesSize, input.back().second)); // End of vector guard.
 
 	vector<float> multipliers(samplesSize, 1);
 
-	for (unsigned int i = 0; i < inputSize; ++i)
+	for (int i = 0; i < inputSize; ++i)
 	{
+		double multi = input[i].second;
 		int f = round(input[i].first);
 		double nextF = input[i + 1].first;
 
-		double multi = input[i].second;
+		if (samplesSize < f || samplesSize < nextF)
+			continue;
 
 		for (; f < nextF; ++f)
 			multipliers[f] = multi;
 	}
 
-	for (unsigned int i = 0; i < samplesSize; ++i)
+	for (int i = 0; i < samplesSize; ++i)
 		(*samples)[i] *= multipliers[i];
 }
 
@@ -147,7 +149,8 @@ void SignalProcessor::updateFilter()
 	filter.setNotch(50);
 
 	auto samples = filter.computeSamples();
-	multiplySamples(&samples);
+	if (OpenDataFile::infoTable.getFrequencyMultipliersOn())
+		multiplySamples(&samples);
 
 	filterProcessor->changeSampleFilter(M, samples);
 	filterProcessor->applyWindow(OpenDataFile::infoTable.getFilterWindow());

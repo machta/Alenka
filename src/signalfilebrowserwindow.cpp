@@ -776,6 +776,8 @@ void SignalFileBrowserWindow::openFile()
 	openFileConnections.push_back(c);
 	c = connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersChanged(std::vector<std::pair<double, double>>)), signalViewer, SLOT(updateSignalViewer()));
 	openFileConnections.push_back(c);
+	c = connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersOnChanged(bool)), signalViewer, SLOT(updateSignalViewer()));
+	openFileConnections.push_back(c);
 
 	cc = connectVitness(VitnessMontageTable::vitness(dataModel->montageTable()), [this] () { signalViewer->updateSignalViewer(); });
 	openFileConnections.insert(openFileConnections.end(), cc.begin(), cc.end());

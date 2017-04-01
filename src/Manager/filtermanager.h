@@ -19,6 +19,7 @@ public:
 	void changeFile(OpenDataFile* file);
 
 private:
+	OpenDataFile* file;
 	FilterVisualizer* filterVisulizer;
 	QPlainTextEdit* multipliersEdit;
 	QSlider* channelSlider;

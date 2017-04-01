@@ -10,7 +10,10 @@
 class OpenDataFile;
 namespace QtCharts
 {
+class QChart;
 class QChartView;
+class QLineSeries;
+class QValueAxis;
 }
 
 class FilterVisualizer : public QWidget
@@ -27,15 +30,30 @@ public:
 	void changeFile(OpenDataFile* file);
 
 public slots:
-	void setChannelToDisplay(int i)
+	void setChannelToDisplay(int value)
 	{
-		if (channelToDisplay != i)
+		if (channelToDisplay != value)
 		{
-			channelToDisplay = i;
-			updateChart();
+			channelToDisplay = value;
+			forceUpdateSpectrum();
 		}
 	}
-	void updateChart();
+	void setSecondsToDisplay(int value)
+	{
+		if (secondToDisplay != value)
+		{
+			secondToDisplay = value;
+			forceUpdateSpectrum();
+		}
+	}
+	void setFreezeSpectrum(bool value)
+	{
+		if (freezeSpectrum != value)
+		{
+			freezeSpectrum = value;
+			updateSpectrum();
+		}
+	}
 
 private:
 	OpenDataFile* file = nullptr;
@@ -44,6 +62,28 @@ private:
 	Eigen::FFT<float>* fft;
 	std::vector<float> buffer;
 	int channelToDisplay = 0;
+	int secondToDisplay = 2;
+	bool freezeSpectrum = false;
+	QtCharts::QChart* chart;
+	QtCharts::QLineSeries* spectrumSeries;
+	QtCharts::QLineSeries* responseSeries;
+	QtCharts::QValueAxis* axisX;
+	QtCharts::QValueAxis* axisSpectrum;
+	QtCharts::QValueAxis* axisResponse;
+
+	void forceUpdateSpectrum()
+	{
+		bool tmp = freezeSpectrum;
+		freezeSpectrum = false;
+		updateSpectrum();
+		freezeSpectrum = tmp;
+	}
+	void addSeries();
+	void removeSeries();
+
+private slots:
+	void updateSpectrum();
+	void updateResponse();
 };
 
 #endif // FILTERVISUALIZER_H

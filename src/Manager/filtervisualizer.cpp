@@ -43,6 +43,32 @@ FilterVisualizer::FilterVisualizer(QWidget* parent) : QWidget(parent)
 	QVBoxLayout* box = new QVBoxLayout();
 	box->addWidget(chartView);
 	setLayout(box);
+
+	// Set up chart.
+	chart = new QChart();
+	chart->legend()->hide();
+	chartView->setChart(chart);
+
+	axisX = new QValueAxis();
+	chart->addAxis(axisX, Qt::AlignBottom);
+
+	axisSpectrum = new QValueAxis();
+	axisSpectrum->setTitleText("Amplitude");
+	chart->addAxis(axisSpectrum, Qt::AlignLeft);
+
+	spectrumSeries = new QLineSeries();
+	chart->addSeries(spectrumSeries);
+	spectrumSeries->attachAxis(axisX);
+	spectrumSeries->attachAxis(axisSpectrum);
+
+	axisResponse = new QValueAxis();
+	axisResponse->setTitleText("Response (dB)");
+	chart->addAxis(axisResponse, Qt::AlignRight);
+
+	responseSeries = new QLineSeries();
+	chart->addSeries(responseSeries);
+	responseSeries->attachAxis(axisX);
+	responseSeries->attachAxis(axisResponse);
 }
 
 void FilterVisualizer::changeFile(OpenDataFile* file)
@@ -55,43 +81,58 @@ void FilterVisualizer::changeFile(OpenDataFile* file)
 
 	if (file)
 	{
-		auto c = connect(file, SIGNAL(filterCoefficientsChanged()), this, SLOT(updateChart()));
+		auto c = connect(file, SIGNAL(filterCoefficientsChanged()), this, SLOT(updateResponse()));
 		connections.push_back(c);
 
-		c = connect(&file->infoTable, SIGNAL(positionChanged(int)), this, SLOT(updateChart()));
+		c = connect(&file->infoTable, SIGNAL(positionChanged(int)), this, SLOT(updateSpectrum()));
 		connections.push_back(c);
 
-		c = connect(&file->infoTable, SIGNAL(positionIndicatorChanged(double)), this, SLOT(updateChart()));
+		c = connect(&file->infoTable, SIGNAL(positionIndicatorChanged(double)), this, SLOT(updateSpectrum()));
 		connections.push_back(c);
 
-		c = connect(&file->infoTable, SIGNAL(pixelViewWidthChanged(int)), SLOT(updateChart()));
+		c = connect(&file->infoTable, SIGNAL(pixelViewWidthChanged(int)), SLOT(updateSpectrum()));
 		connections.push_back(c);
 	}
+
+	forceUpdateSpectrum();
 }
 
-void FilterVisualizer::updateChart()
+void FilterVisualizer::addSeries()
 {
-	if (!file)
+	chart->addSeries(spectrumSeries);
+	chart->addSeries(responseSeries);
+}
+
+void FilterVisualizer::removeSeries()
+{
+	chart->removeSeries(spectrumSeries);
+	chart->removeSeries(responseSeries);
+}
+
+void FilterVisualizer::updateSpectrum()
+{
+	if (freezeSpectrum)
+		return;
+
+	spectrumSeries->clear();
+	if (!file || secondToDisplay == 0)
 		return;
 
 	assert(channelToDisplay < static_cast<int>(file->file->getChannelCount()));
-	QChart* chart = new QChart();
-	chart->legend()->hide();
+
+	removeSeries();
 
 	const double fs = file->file->getSamplingFrequency()/2;
-	QValueAxis* axisX = new QValueAxis();
 	axisX->setRange(0, fs);
-	chart->addAxis(axisX, Qt::AlignBottom);
 
-	// Draw signal spectrum.
-	const int samplesToUse = 2*static_cast<int>(file->file->getSamplingFrequency());
+	const int samplesToUse = secondToDisplay*static_cast<int>(file->file->getSamplingFrequency());
 	double ratio = static_cast<double>(file->file->getSamplesRecorded())/OpenDataFile::infoTable.getVirtualWidth();
 	double doublePosition = OpenDataFile::infoTable.getPosition() + OpenDataFile::infoTable.getPixelViewWidth()*OpenDataFile::infoTable.getPositionIndicator();
 	const int position = static_cast<int>(doublePosition*ratio);
 
 	const int start = max(0, position - samplesToUse/2);
 	const int end = start + samplesToUse - 1;
-	const int sampleCount = end - start + 1; // TODO: Round this to a power of two.
+	const int sampleCount = end - start + 1; // TODO: Maybe round this to a power of two.
 
 	buffer.resize(sampleCount*file->file->getChannelCount());
 	file->file->readSignal(buffer.data(), start, end);
@@ -105,15 +146,6 @@ void FilterVisualizer::updateChart()
 	assert(static_cast<int>(input.size()) == sampleCount);
 	assert(static_cast<int>(spectrum.size()) == sampleCount);
 
-	QLineSeries* signalSeries = new QLineSeries();
-	chart->addSeries(signalSeries);
-	signalSeries->attachAxis(axisX);
-
-	QValueAxis* axisY = new QValueAxis();
-	chart->addAxis(axisY, Qt::AlignLeft);
-	signalSeries->attachAxis(axisY);
-	axisY->setTitleText("Amplitude");
-
 	float maxVal = 0;
 
 	for (int i = 0; i < sampleCount/2; ++i)
@@ -122,26 +154,29 @@ void FilterVisualizer::updateChart()
 		if (isfinite(val))
 		{
 			maxVal = max(maxVal, val);
-			signalSeries->append(fs*i/(sampleCount/2), val);
+			spectrumSeries->append(fs*i/(sampleCount/2), val);
 		}
 	}
 
-	axisY->setRange(0, maxVal);
+	axisSpectrum->setRange(0, maxVal);
+	addSeries();
+}
 
-	// Draw filter response.
+void FilterVisualizer::updateResponse()
+{
+	responseSeries->clear();
+	if (!file)
+		return;
+
+	removeSeries();
+
+	const double fs = file->file->getSamplingFrequency()/2;
+	axisX->setRange(0, fs);
+
 	vector<float> response = computeFilterResponse(file->getFilterCoefficients(), 10000, fft);
 
-	QLineSeries* responseSeries = new QLineSeries();
-	chart->addSeries(responseSeries);
-	responseSeries->attachAxis(axisX);
-
-	axisY = new QValueAxis();
-	chart->addAxis(axisY, Qt::AlignRight);
-	responseSeries->attachAxis(axisY);
-	axisY->setTitleText("Attenuation (dB)");
-
 	float minVal = 1000*1000;
-	maxVal = 0;
+	float maxVal = 0;
 	const unsigned int n2 = response.size()/2;
 
 	for (unsigned int i = 0; i < n2; ++i)
@@ -155,9 +190,6 @@ void FilterVisualizer::updateChart()
 		}
 	}
 
-	axisY->setRange(minVal, maxVal);
-
-	// Replace the old chart.
-	//delete chartView->chart();
-	chartView->setChart(chart);
+	axisResponse->setRange(minVal, maxVal);
+	addSeries();
 }
