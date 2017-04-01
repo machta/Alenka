@@ -15,12 +15,15 @@ using namespace QtCharts;
 namespace
 {
 
+const float PEN_WIDTH = 1;
+const int POINTS_PER_FREQUENCY = 16;
+
 vector<float> computeFilterResponse(const vector<float>& bb, const unsigned int n, Eigen::FFT<float>* fft)
 {
 	assert(bb.size() <= n);
 
-	vector<float> b = bb; // TODO: Perhaps pad it with zeros to get a better resolution and a power of two for efficiency.
-	b.resize(n);
+	vector<float> b = bb;
+	b.resize(n, 0);
 
 	vector<complex<float>> response;
 	fft->fwd(response, b);
@@ -76,6 +79,9 @@ FilterVisualizer::FilterVisualizer(QWidget* parent) : QWidget(parent)
 	chart->addSeries(spectrumSeries);
 	spectrumSeries->attachAxis(axisX);
 	spectrumSeries->attachAxis(axisSpectrum);
+	QPen pen = spectrumSeries->pen();
+	pen.setWidthF(PEN_WIDTH);
+	spectrumSeries->setPen(pen);
 
 	axisResponse = new QValueAxis();
 	axisResponse->setTitleText("Response (dB)");
@@ -85,6 +91,9 @@ FilterVisualizer::FilterVisualizer(QWidget* parent) : QWidget(parent)
 	chart->addSeries(responseSeries);
 	responseSeries->attachAxis(axisX);
 	responseSeries->attachAxis(axisResponse);
+	pen = responseSeries->pen();
+	pen.setWidthF(PEN_WIDTH);
+	responseSeries->setPen(pen);
 }
 
 void FilterVisualizer::changeFile(OpenDataFile* file)
@@ -189,9 +198,9 @@ void FilterVisualizer::updateResponse()
 	const double fs = file->file->getSamplingFrequency()/2;
 	axisX->setRange(0, fs);
 
-	vector<float> response = computeFilterResponse(file->getFilterCoefficients(), 10000, fft);
+	vector<float> response = computeFilterResponse(file->getFilterCoefficients(), qNextPowerOfTwo(static_cast<int>(fs)*2*POINTS_PER_FREQUENCY), fft);
 
-	float minVal = 1000*1000;
+	float minVal = 1000*1000*1000;
 	float maxVal = 0;
 	const unsigned int n2 = response.size()/2;
 
