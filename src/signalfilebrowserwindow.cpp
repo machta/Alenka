@@ -19,6 +19,7 @@
 #include "Manager/montagetablemodel.h"
 #include "Manager/eventtablemodel.h"
 #include "Manager/tracktablemodel.h"
+#include "SignalProcessor/signalprocessor.h"
 #include "Sync/syncserver.h"
 #include "Sync/syncclient.h"
 #include "Sync/syncdialog.h"
@@ -89,6 +90,8 @@ void executeWithCLocale(function<void ()> code)
 SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(parent)
 {
 	setWindowTitle(TITLE);
+
+	kernelCache = new KernelCache();
 
 	autoSaveTimer = new QTimer(this);
 
@@ -469,6 +472,7 @@ SignalFileBrowserWindow::~SignalFileBrowserWindow()
 {
 	closeFileDestroy();
 
+	delete kernelCache;
 	delete openDataFile;
 	delete spikedetAnalysis;
 	delete syncServer;
@@ -634,6 +638,7 @@ void SignalFileBrowserWindow::openFile()
 	openDataFile->file = file;
 	openDataFile->dataModel = dataModel;
 	openDataFile->undoFactory = undoFactory;
+	openDataFile->kernelCache = kernelCache;
 
 	autoSaveName = file->getFilePath() + ".mont.autosave";
 	bool useAutoSave = false;
@@ -1016,14 +1021,17 @@ void SignalFileBrowserWindow::runSpikedet()
 	undoFactory->beginMacro("run Spikedet");
 
 	// Build montage from code.
-	vector<AlenkaSignal::Montage<float>*> montage;
+
 
 	QFile headerFile(":/montageHeader.cl");
 	headerFile.open(QIODevice::ReadOnly);
 	string header = headerFile.readAll().toStdString();
 
+	vector<string> montageCode;
 	for (int i = 0; i < trackTable->rowCount(); ++i)
-		montage.push_back(new AlenkaSignal::Montage<float>(trackTable->row(i).code, globalContext.get(), header));
+		montageCode.push_back(trackTable->row(i).code);
+
+	auto montage = SignalProcessor::makeMontage(montageCode, globalContext.get(), kernelCache, header);
 
 	// Run Spikedet.
 	QProgressDialog progress("Running Spikedet analysis", "Abort", 0, 100, this);

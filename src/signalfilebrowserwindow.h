@@ -35,6 +35,7 @@ class DataModelVitness;
 class QTimer;
 class QUndoStack;
 class UndoCommandFactory;
+class KernelCache;
 
 /**
  * @brief This class implements the top level window of the program.
@@ -94,6 +95,7 @@ private:
 	std::string autoSaveName;
 	QUndoStack* undoStack;
 	UndoCommandFactory* undoFactory = nullptr;
+	KernelCache* kernelCache = nullptr;
 	QAction* saveFileAction;
 	QAction* closeFileAction;
 	QAction* runSpikedetAction;

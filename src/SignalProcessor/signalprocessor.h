@@ -6,13 +6,9 @@
 
 #include <CL/cl_gl.h>
 
-#include <QCache>
-
 #include <cinttypes>
 #include <set>
 #include <vector>
-#include <sstream>
-#include <cassert>
 
 namespace AlenkaSignal
 {
@@ -25,8 +21,8 @@ template<class T>
 class MontageProcessor;
 }
 class OpenDataFile;
-class KernelCache;
 class SignalBlock;
+class KernelCache;
 
 /**
  * @brief A class used for retrieving the processed signal blocks.
@@ -112,6 +108,7 @@ public:
 	}
 
 	static std::string simplifyMontage(const std::string& str);
+	static std::vector<AlenkaSignal::Montage<float>*> makeMontage(const std::vector<std::string>& montageCode, AlenkaSignal::OpenCLContext* context, KernelCache* kernelCache, const std::string& header);
 
 private:
 	OpenDataFile* file = nullptr;
@@ -120,7 +117,6 @@ private:
 	AlenkaSignal::MontageProcessor<float>* montageProcessor;
 	std::vector<AlenkaSignal::Montage<float>*> montage;
 	GPUCache* cache;
-	QCache<QString, std::vector<unsigned char>> kernelCache;
 	std::string header;
 
 	bool onlineFilter;
@@ -138,21 +134,7 @@ private:
 	GLuint glBuffer;
 
 	void destroyFileRelated();
-	std::string indexSetToString(const std::set<int>& indexSet)
-	{
-		std::stringstream ss;
-
-		for (const auto& e : indexSet)
-		{
-			if (e != *indexSet.begin())
-			{
-				ss << ", ";
-			}
-			ss << e;
-		}
-
-		return ss.str();
-	}
+	std::string indexSetToString(const std::set<int>& indexSet);
 	void releaseOutputBuffer();
 
 	/**

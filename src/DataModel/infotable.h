@@ -76,6 +76,7 @@ public:
 	int getPixelViewWidth() const { return pixelViewWidth; }
 	const std::vector<std::pair<double, double>>& getFrequencyMultipliers() const { return frequencyMultipliers; }
 	bool getFrequencyMultipliersOn() const { return frequencyMultipliersOn; }
+	const std::vector<float>& getFilterCoefficients() const { return filterCoefficients; }
 
 signals:
 	void virtualWidthChanged(int);
@@ -92,6 +93,7 @@ signals:
 	void pixelViewWidthChanged(int);
 	void frequencyMultipliersChanged(const std::vector<std::pair<double, double>>&);
 	void frequencyMultipliersOnChanged(bool);
+	void filterCoefficientsChanged();
 
 public slots:
 	void setVirtualWidth(int value)
@@ -206,6 +208,11 @@ public slots:
 			emit frequencyMultipliersOnChanged(value);
 		}
 	}
+	void setFilterCoefficients(const std::vector<float>& value)
+	{
+		filterCoefficients = value;
+		emit filterCoefficientsChanged();
+	}
 
 private:
 	int virtualWidth = 100000;
@@ -224,6 +231,7 @@ private:
 
 	// The following values are not saved to .info files.
 	int pixelViewWidth = 0;
+	std::vector<float> filterCoefficients;
 };
 
 #endif // INFOTABLE_H

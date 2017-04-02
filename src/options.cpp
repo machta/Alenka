@@ -58,6 +58,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	//("prepareFrames", value<unsigned int>()->default_value(0), "how many frames should be prepared in memory")
 	("log", value<string>()->default_value("%Y-%m-%d--%H-%M-%S.log"), "string passed to strftime() to create the file name")
 	("kernelCacheSize", value<int>()->default_value(2048), "maximum number of montage kernels that can be cached")
+	("kernelCacheFile", value<string>()->default_value(""), "path to a kernel cache file (empty means search the directory where executable is)")
 	("autoSaveInterval", value<int>()->default_value(2*60), "in seconds")
 	;
 

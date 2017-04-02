@@ -4,18 +4,19 @@
 #include <AlenkaFile/datafile.h>
 #include "../myapplication.h"
 #include "signalblock.h"
-
 #include <AlenkaSignal/openclcontext.h>
 #include <AlenkaSignal/filter.h>
 #include <AlenkaSignal/filterprocessor.h>
 #include <AlenkaSignal/montage.h>
 #include <AlenkaSignal/montageprocessor.h>
 
+#include <QFile>
+
+#include <cassert>
 #include <algorithm>
 #include <stdexcept>
 #include <chrono>
-
-#include <QFile>
+#include <sstream>
 
 using namespace std;
 using namespace AlenkaFile;
@@ -99,13 +100,9 @@ SignalProcessor::SignalProcessor()
 
 	gl();
 
-	QFile headerFile(":/montageHeader.cl");
+	QFile headerFile(":/montageHeader.cl"); // TODO: Consolidate the 4 copies of this into one instance.
 	headerFile.open(QIODevice::ReadOnly);
 	header = headerFile.readAll().toStdString();
-
-	// TODO: Cache this in a file to eliminate needless compilation next time this runs.
-	// TODO: Perhaps switch to byte-size based capacity system.
-	kernelCache.setMaxCost(PROGRAM_OPTIONS["kernelCacheSize"].as<int>());
 }
 
 SignalProcessor::~SignalProcessor()
@@ -153,7 +150,7 @@ void SignalProcessor::updateFilter()
 	filterProcessor->changeSampleFilter(M, samples);
 	filterProcessor->applyWindow(OpenDataFile::infoTable.getFilterWindow());
 
-	file->setFilterCoefficients(filterProcessor->getCoefficients());
+	OpenDataFile::infoTable.setFilterCoefficients(filterProcessor->getCoefficients());
 
 	if (onlineFilter == false)
 		cache->clear();
@@ -163,7 +160,7 @@ void SignalProcessor::setUpdateMontageFlag()
 {
 	if (file)
 	{
-		trackCount = 0;
+		trackCount = 0; // TODO: Investigate what this variable is for.
 
 		if (0 < file->dataModel->montageTable()->rowCount())
 		{
@@ -316,6 +313,61 @@ string SignalProcessor::simplifyMontage(const string& str)
 	return qstr.simplified().toStdString();
 }
 
+vector<AlenkaSignal::Montage<float>*> SignalProcessor::makeMontage(const vector<string>& montageCode, AlenkaSignal::OpenCLContext* context, KernelCache* kernelCache, const string& header)
+{
+	using namespace chrono;
+#ifndef NDEBUG
+	auto start = high_resolution_clock::now(); // TODO: Remove this after the compilation time issue is solved.
+	int needToCompile = 0;
+#endif
+
+	vector<AlenkaSignal::Montage<float>*> montage;
+
+	for (unsigned int i = 0; i < montageCode.size(); i++)
+	{
+		AlenkaSignal::Montage<float>* m;
+		QString code = QString::fromStdString(simplifyMontage(montageCode[i]));
+
+		auto ptr = kernelCache->find(code);
+
+		if (ptr)
+		{
+			assert(0 < ptr->size());
+			m = new AlenkaSignal::Montage<float>(*ptr, context);
+		}
+		else
+		{
+#ifndef NDEBUG
+			++needToCompile;
+#endif
+			m = new AlenkaSignal::Montage<float>(code.toStdString(), context, header);
+
+			auto binary = new vector<unsigned char>(m->getBinary());
+			if (binary->size() > 0)
+				kernelCache->insert(code, binary);
+		}
+
+		montage.push_back(m);
+	}
+
+#ifndef NDEBUG
+	auto end = high_resolution_clock::now();
+	nanoseconds time = end - start;
+	string str = "Need to compile " + to_string(needToCompile) + " montages: " + to_string(static_cast<double>(time.count())/1000/1000) + " ms";
+	if (needToCompile > 0)
+	{
+		logToFileAndConsole(str);
+	}
+	else
+	{
+		logToFileAndConsole(str)
+		//logToFile(str);
+	}
+#endif
+
+	return montage;
+}
+
 void SignalProcessor::destroyFileRelated()
 {
 	if (file)
@@ -331,6 +383,20 @@ void SignalProcessor::destroyFileRelated()
 
 		releaseOutputBuffer();
 	}
+}
+
+string SignalProcessor::indexSetToString(const set<int>& indexSet)
+{
+	stringstream ss;
+
+	for (const auto& e : indexSet)
+	{
+		if (e != *indexSet.begin())
+			ss << ", ";
+		ss << e;
+	}
+
+	return ss.str();
 }
 
 void SignalProcessor::releaseOutputBuffer()
@@ -349,60 +415,18 @@ void SignalProcessor::releaseOutputBuffer()
 
 void SignalProcessor::updateMontage()
 {
-	using namespace chrono;
 	assert(ready());
-
-#ifndef NDEBUG
-	auto start = high_resolution_clock::now(); // TODO: Remove this after the compilation time issue is solved.
-	int needToCompile = 0;
-#endif
-
 	deleteMontage();
 
+	vector<string> montageCode;
 	for (int i = 0; i < getTrackTable(file)->rowCount(); i++)
 	{
-		AlenkaSignal::Montage<float>* m;
 		Track t = getTrackTable(file)->row(i);
-		QString code = QString::fromStdString(simplifyMontage(t.code));
-
-		auto ptr = kernelCache[code];
-
-		if (ptr)
-		{
-			assert(0 < ptr->size());
-			m = new AlenkaSignal::Montage<float>(*ptr, context);
-		}
-		else
-		{
-#ifndef NDEBUG
-			++needToCompile;
-#endif
-			m = new AlenkaSignal::Montage<float>(code.toStdString(), context, header);
-
-			auto binary = new vector<unsigned char>(m->getBinary());
-			if (binary->size() > 0)
-				kernelCache.insert(code, binary);
-		}
-
-		montage.push_back(m);
+		if (!t.hidden)
+			montageCode.push_back(t.code);
 	}
 
-	assert(static_cast<int>(montage.size()) == trackCount);
-
-#ifndef NDEBUG
-	auto end = high_resolution_clock::now();
-	nanoseconds time = end - start;
-	string str = "Need to compile " + to_string(needToCompile) + " montages: " + to_string(static_cast<double>(time.count())/1000/1000) + " ms";
-	if (needToCompile > 0)
-	{
-		logToFileAndConsole(str);
-	}
-	else
-	{
-		logToFileAndConsole(str)
-		//logToFile(str);
-	}
-#endif
+	montage = makeMontage(montageCode, context, file->kernelCache, header);
 
 	releaseOutputBuffer();
 

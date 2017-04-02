@@ -106,7 +106,7 @@ void FilterVisualizer::changeFile(OpenDataFile* file)
 
 	if (file)
 	{
-		auto c = connect(file, SIGNAL(filterCoefficientsChanged()), this, SLOT(updateResponse()));
+		auto c = connect(&file->infoTable, SIGNAL(filterCoefficientsChanged()), this, SLOT(updateResponse()));
 		connections.push_back(c);
 
 		c = connect(&file->infoTable, SIGNAL(positionChanged(int)), this, SLOT(updateSpectrum()));
@@ -198,7 +198,7 @@ void FilterVisualizer::updateResponse()
 	const double fs = file->file->getSamplingFrequency()/2;
 	axisX->setRange(0, fs);
 
-	vector<float> response = computeFilterResponse(file->getFilterCoefficients(), qNextPowerOfTwo(static_cast<int>(fs)*2*POINTS_PER_FREQUENCY), fft);
+	vector<float> response = computeFilterResponse(OpenDataFile::infoTable.getFilterCoefficients(), qNextPowerOfTwo(static_cast<int>(fs)*2*POINTS_PER_FREQUENCY), fft);
 
 	float minVal = 1000*1000*1000;
 	float maxVal = 0;

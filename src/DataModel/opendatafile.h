@@ -5,39 +5,20 @@
 
 #include "infotable.h"
 #include <AlenkaFile/datafile.h>
+#include "kernelcache.h"
 
 #include <vector>
 
 class UndoCommandFactory;
 
-class OpenDataFile : public QObject
+struct OpenDataFile
 {
-	Q_OBJECT
+	AlenkaFile::DataFile* file = nullptr;
+	const AlenkaFile::DataModel* dataModel = nullptr;
+	UndoCommandFactory* undoFactory = nullptr;
+	KernelCache* kernelCache = nullptr;
 
-public:
-	explicit OpenDataFile(QObject* parent = nullptr) : QObject(parent) {}
-
-	const std::vector<float>& getFilterCoefficients() const
-	{
-		return filterCoefficients;
-	}
-	void setFilterCoefficients(const std::vector<float>& c)
-	{
-		filterCoefficients = c;
-		emit filterCoefficientsChanged();
-	}
-
-	AlenkaFile::DataFile* file;
-	const AlenkaFile::DataModel* dataModel;
-	UndoCommandFactory* undoFactory;
-
-	static InfoTable infoTable;
-
-signals:
-	void filterCoefficientsChanged();
-
-private:
-	std::vector<float> filterCoefficients;
+	static InfoTable infoTable;	
 };
 
 #endif // OPENDATAFILE_H
