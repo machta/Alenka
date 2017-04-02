@@ -271,17 +271,18 @@ void CL_CALLBACK GPUCache::signalEventCallback(cl_event callbackEvent, cl_int st
 {
 	try
 	{
-		assert(status == CL_COMPLETE);
-		(void)status;
+		assert(status == CL_COMPLETE); (void)status;
 
 		cl_event event = reinterpret_cast<cl_event>(data);
-
 		cl_int err;
 
 		err = clSetUserEventStatus(event, CL_COMPLETE);
 		checkClErrorCode(err, "clSetUserEventStatus()");
 
 		err = clReleaseEvent(callbackEvent);
+		checkClErrorCode(err, "clReleaseEvent()");
+
+		err = clReleaseEvent(event);
 		checkClErrorCode(err, "clReleaseEvent()");
 	}
 	catch (exception& e)
