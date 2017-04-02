@@ -3,7 +3,6 @@
 #include "../DataModel/opendatafile.h"
 #include <AlenkaFile/datafile.h>
 #include "../myapplication.h"
-#include "kernelcache.h"
 #include "signalblock.h"
 
 #include <AlenkaSignal/openclcontext.h>
@@ -100,10 +99,13 @@ SignalProcessor::SignalProcessor()
 
 	gl();
 
-	kernelCache = new KernelCache();
 	QFile headerFile(":/montageHeader.cl");
 	headerFile.open(QIODevice::ReadOnly);
 	header = headerFile.readAll().toStdString();
+
+	// TODO: Cache this in a file to eliminate needless compilation next time this runs.
+	// TODO: Perhaps switch to byte-size based capacity system.
+	kernelCache.setMaxCost(PROGRAM_OPTIONS["kernelCacheSize"].as<int>());
 }
 
 SignalProcessor::~SignalProcessor()
@@ -123,10 +125,6 @@ SignalProcessor::~SignalProcessor()
 	glDeleteVertexArrays(2, vertexArrays);
 
 	gl();
-
-	kernelCache->shrink(0);
-	assert(kernelCache->size() == 0 && "Make sure the kernel cache is empty.");
-	delete kernelCache;
 }
 
 void SignalProcessor::updateFilter()
@@ -181,7 +179,7 @@ void SignalProcessor::setUpdateMontageFlag()
 	}
 }
 
-SignalBlock SignalProcessor::getAnyBlock(const std::set<int>& indexSet)
+SignalBlock SignalProcessor::getAnyBlock(const set<int>& indexSet)
 {
 	assert(ready());
 	assert(indexSet.empty() == false);
@@ -351,60 +349,42 @@ void SignalProcessor::releaseOutputBuffer()
 
 void SignalProcessor::updateMontage()
 {
-	using namespace std::chrono;
+	using namespace chrono;
 	assert(ready());
 
 #ifndef NDEBUG
 	auto start = high_resolution_clock::now(); // TODO: Remove this after the compilation time issue is solved.
+	int needToCompile = 0;
 #endif
 
 	deleteMontage();
 
-	int capacity = max<int>(PROGRAM_OPTIONS["kernelCacheSize"].as<int>(), getTrackTable(file)->rowCount());
-	if (kernelCache->size() > capacity)
-	{
-		kernelCache->shrink(capacity);
-		logToFileAndConsole("Shrinking kernel cache.");
-	}
-	assert(kernelCache->size() <= capacity);
-
-	vector<int> newMontageIndex;
-	vector<string> newMontageCode;
-
 	for (int i = 0; i < getTrackTable(file)->rowCount(); i++)
 	{
+		AlenkaSignal::Montage<float>* m;
 		Track t = getTrackTable(file)->row(i);
+		QString code = QString::fromStdString(simplifyMontage(t.code));
 
-		if (t.hidden)
-			continue;
+		auto ptr = kernelCache[code];
 
-		string str = simplifyMontage(t.code);
-
-		AlenkaSignal::Montage<float>* ptr = kernelCache->find(str);
-		if (!ptr)
+		if (ptr)
 		{
-			newMontageIndex.push_back(i);
-			newMontageCode.push_back(str);
+			assert(0 < ptr->size());
+			m = new AlenkaSignal::Montage<float>(*ptr, context);
 		}
-		montage.push_back(ptr);
-	}
-
-	assert(newMontageIndex.size() == newMontageCode.size());
-	mutex mtx;
-
-	// For some reason the compilation gets serialized for an Nvidia card.
-	// TODO: Figure out whether this is an OpenCL issue, and if yes, remove the parallel block and simplify this code.
-	int iters = static_cast<int>(newMontageIndex.size());
-	#pragma omp parallel for
-	for (int i = 0; i < iters; i++)
-	{
-		AlenkaSignal::Montage<float>* m = new AlenkaSignal::Montage<float>(newMontageCode[i], context, header);
-
+		else
 		{
-			lock_guard<mutex> lock(mtx);
-			kernelCache->add(newMontageCode[i], m);
-			montage[newMontageIndex[i]] = m;
+#ifndef NDEBUG
+			++needToCompile;
+#endif
+			m = new AlenkaSignal::Montage<float>(code.toStdString(), context, header);
+
+			auto binary = new vector<unsigned char>(m->getBinary());
+			if (binary->size() > 0)
+				kernelCache.insert(code, binary);
 		}
+
+		montage.push_back(m);
 	}
 
 	assert(static_cast<int>(montage.size()) == trackCount);
@@ -412,15 +392,15 @@ void SignalProcessor::updateMontage()
 #ifndef NDEBUG
 	auto end = high_resolution_clock::now();
 	nanoseconds time = end - start;
-	int size = newMontageIndex.size();
-	string str = "Need to compile " + to_string(size) + " montages: " + to_string(static_cast<double>(time.count())/1000/1000) + " ms";
-	if (size > 0)
+	string str = "Need to compile " + to_string(needToCompile) + " montages: " + to_string(static_cast<double>(time.count())/1000/1000) + " ms";
+	if (needToCompile > 0)
 	{
 		logToFileAndConsole(str);
 	}
 	else
 	{
-		logToFile(str);
+		logToFileAndConsole(str)
+		//logToFile(str);
 	}
 #endif
 
@@ -468,5 +448,7 @@ void SignalProcessor::updateMontage()
 
 void SignalProcessor::deleteMontage()
 {
+	for (auto e : montage)
+		delete e;
 	montage.clear();
 }

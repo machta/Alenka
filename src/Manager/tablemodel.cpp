@@ -90,6 +90,9 @@ TableModel::TableModel(OpenDataFile* file, QObject* parent) : QAbstractTableMode
 TableModel::~TableModel()
 {
 	delete delegate;
+
+	for (auto e : columns)
+		delete e;
 }
 
 bool TableModel::removeRows(int row, int count, const QModelIndex& parent)

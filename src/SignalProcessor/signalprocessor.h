@@ -2,10 +2,11 @@
 #define SIGNALPROCESSOR_H
 
 #include "../openglinterface.h"
-
 #include "gpucache.h"
 
 #include <CL/cl_gl.h>
+
+#include <QCache>
 
 #include <cinttypes>
 #include <set>
@@ -119,7 +120,7 @@ private:
 	AlenkaSignal::MontageProcessor<float>* montageProcessor;
 	std::vector<AlenkaSignal::Montage<float>*> montage;
 	GPUCache* cache;
-	KernelCache* kernelCache;
+	QCache<QString, std::vector<unsigned char>> kernelCache;
 	std::string header;
 
 	bool onlineFilter;

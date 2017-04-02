@@ -45,13 +45,13 @@ FilterVisualizer::FilterVisualizer(QWidget* parent) : QWidget(parent)
 	chartView->setRenderHint(QPainter::Antialiasing);
 	chartView->setDragMode(QGraphicsView::NoDrag);
 
-	resetAction = new QAction(QIcon(":/icons/fit.png"), "Reset view");
+	resetAction = new QAction(QIcon(":/icons/fit.png"), "Reset view", this);
 	connect(resetAction, &QAction::triggered, [this] () {
 		chart->zoomReset();
 	});
 	chartView->addAction(resetAction);
 
-	zoomAction = new QAction(QIcon(":/icons/zoom-in.png"), "Zoom");
+	zoomAction = new QAction(QIcon(":/icons/zoom-in.png"), "Zoom", this);
 	zoomAction->setToolTip("Drag to zoom in, right-click to zoom out");
 	zoomAction->setCheckable(true);
 	connect(zoomAction, &QAction::toggled, [this] (bool enable) {

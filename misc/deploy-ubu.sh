@@ -6,6 +6,10 @@
 #
 # You must build and package the 32-bit version separately (possibly on a different OS).
 
+echo "This deployment script is BROKEN. Don't use it."
+echo "Qt 5.5 is not supported at the moment."
+exit
+
 name=$1
 if [ "$name" == "" ]
 then

@@ -9,6 +9,7 @@ class EventTypeTableModel : public TableModel
 
 public:
 	explicit EventTypeTableModel(OpenDataFile* file, QObject* parent = nullptr);
+
 	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override;
 
 protected:

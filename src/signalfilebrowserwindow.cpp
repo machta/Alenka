@@ -471,6 +471,8 @@ SignalFileBrowserWindow::~SignalFileBrowserWindow()
 
 	delete openDataFile;
 	delete spikedetAnalysis;
+	delete syncServer;
+	delete syncClient;
 }
 
 QDateTime SignalFileBrowserWindow::sampleToDate(DataFile* file, int sample)
@@ -1170,6 +1172,7 @@ void SignalFileBrowserWindow::closeFileDestroy()
 
 	delete dataModel; dataModel = nullptr;
 
+	delete undoFactory; undoFactory = nullptr;
 	delete file; file = nullptr;
 }
 
