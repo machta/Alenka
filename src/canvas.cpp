@@ -169,12 +169,12 @@ Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent)
 
 Canvas::~Canvas()
 {
+	makeCurrent();
+
 	delete signalProcessor;
 	delete signalProgram;
 	delete eventProgram;
 	delete rectangleLineProgram;
-
-	makeCurrent();
 
 	glDeleteVertexArrays(1, &rectangleLineArray);
 	gl()->glDeleteBuffers(1, &rectangleLineBuffer);
