@@ -328,7 +328,7 @@ vector<AlenkaSignal::Montage<float>*> SignalProcessor::makeMontage(const vector<
 		AlenkaSignal::Montage<float>* m;
 		QString code = QString::fromStdString(simplifyMontage(montageCode[i]));
 
-		auto ptr = kernelCache->find(code);
+		auto ptr = kernelCache ? kernelCache->find(code) : nullptr;
 
 		if (ptr)
 		{
@@ -342,9 +342,12 @@ vector<AlenkaSignal::Montage<float>*> SignalProcessor::makeMontage(const vector<
 #endif
 			m = new AlenkaSignal::Montage<float>(code.toStdString(), context, header);
 
-			auto binary = m->getBinary();
-			if (binary->size() > 0)
-				kernelCache->insert(code, binary);
+			if (kernelCache)
+			{
+				auto binary = m->getBinary();
+				if (binary->size() > 0)
+					kernelCache->insert(code, binary);
+			}
 		}
 
 		montage.push_back(m);

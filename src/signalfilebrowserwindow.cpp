@@ -91,7 +91,8 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 {
 	setWindowTitle(TITLE);
 
-	kernelCache = new KernelCache();
+	if (0 < PROGRAM_OPTIONS["kernelCacheSize"].as<int>())
+		kernelCache = new KernelCache();
 
 	autoSaveTimer = new QTimer(this);
 
