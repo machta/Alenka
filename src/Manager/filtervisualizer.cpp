@@ -202,9 +202,9 @@ void FilterVisualizer::updateResponse()
 
 	float minVal = 1000*1000*1000;
 	float maxVal = 0;
-	const unsigned int n2 = response.size()/2;
+	const int n2 = static_cast<int>(response.size())/2;
 
-	for (unsigned int i = 0; i < n2; ++i)
+	for (int i = 0; i < n2; ++i)
 	{
 		float val = response[i];
 		if (isfinite(val))

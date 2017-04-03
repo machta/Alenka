@@ -239,7 +239,7 @@ void GPUCache::loadOneBlock(int index, unsigned int cacheIndex, cl_event readyEv
 
 	file->file->readSignal(tmpBuffer.data(), fromTo.first - offset + delay, fromTo.second + delay);
 
-	printBuffer("after_readData.txt", tmpBuffer.data(), tmpBuffer.size());
+	printBuffer("after_readData.txt", tmpBuffer.data(), static_cast<int>(tmpBuffer.size()));
 
 #ifdef AMD_BUG
 	err = clEnqueueWriteBuffer(commandQueue, tmpMemBuffer, CL_TRUE, 0, (blockSize + offset)*file->file->getChannelCount()*sizeof(float), tmpBuffer.data(), 0, nullptr, &tmpBufferEvent);

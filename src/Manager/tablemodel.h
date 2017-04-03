@@ -83,7 +83,7 @@ public:
 	virtual int columnCount(const QModelIndex& parent = QModelIndex()) const override
 	{
 		(void)parent;
-		return columns.size();
+		return static_cast<int>(columns.size());
 	}
 	virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override
 	{

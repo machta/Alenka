@@ -2,7 +2,7 @@ include(build)
 
 TEMPLATE = app console
 
-CONFIG += c++11 object_parallel_to_source
+CONFIG += c++11
 
 QT += widgets websockets charts
 

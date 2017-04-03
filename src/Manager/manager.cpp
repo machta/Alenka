@@ -271,7 +271,7 @@ void Manager::paste()
 
 	QAbstractItemModel* model = tableView->model();
 	vector<string> lines = splitStringToLines(MyApplication::clipboard()->text().toStdString());
-	int rowsToInsert = startRow + lines.size() - model->rowCount();
+	int rowsToInsert = startRow + static_cast<int>(lines.size()) - model->rowCount();
 
 	file->undoFactory->beginMacro("paste");
 

@@ -20,7 +20,7 @@ public:
 	int shutDown();
 	int connectionCount() const
 	{
-		return sockets.size();
+		return static_cast<int>(sockets.size());
 	}
 
 signals:

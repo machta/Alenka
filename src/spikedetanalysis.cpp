@@ -32,7 +32,7 @@ class Loader : public SpikedetDataLoader<T>
 
 public:
 	Loader(AlenkaFile::DataFile* file, const vector<Montage<T>*>& montage, OpenCLContext* context) :
-		file(file), montage(montage), inChannels(file->getChannelCount()), outChannels(montage.size())
+		file(file), montage(montage), inChannels(file->getChannelCount()), outChannels(static_cast<int>(montage.size()))
 	{
 		processor = new MontageProcessor<T>(0, BLOCK_LENGTH, inChannels);
 
@@ -98,7 +98,7 @@ public:
 			//OpenCLContext::printBuffer("after_process.txt", outBuffer, queue);
 
 			size_t outRegion[] = {rowLen, static_cast<size_t>(outChannels), 1};
-			size_t dataOrigin[] = {(sample - firstSample)*sizeof(T), 0, 0};
+			size_t dataOrigin[] = {static_cast<size_t>((sample - firstSample)*sizeof(T)), 0, 0};
 
 			err = clEnqueueReadBufferRect(queue, outBuffer, CL_TRUE, origin, dataOrigin, outRegion,
 				BLOCK_LENGTH*sizeof(T), 0, (lastSample - firstSample + 1)*sizeof(T), 0, data, 0, nullptr, nullptr);
@@ -123,7 +123,7 @@ void SpikedetAnalysis::runAnalysis(OpenDataFile* file, const vector<Montage<floa
 {
 	assert(file);
 
-	Spikedet<float> spikedet(file->file->getSamplingFrequency(), montage.size(), settings, context);
+	Spikedet<float> spikedet(file->file->getSamplingFrequency(), static_cast<int>(montage.size()), settings, context);
 	Loader<float> loader(file->file, montage, context);
 
 	delete output;

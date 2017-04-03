@@ -36,8 +36,8 @@ void multiplySamples(vector<float>* samples)
 	if (input.empty())
 		return;
 
-	int inputSize = input.size();
-	int samplesSize = samples->size();
+	int inputSize = static_cast<int>(input.size());
+	int samplesSize = static_cast<int>(samples->size());
 	input.push_back(make_pair(samplesSize, input.back().second)); // End of vector guard.
 
 	vector<float> multipliers(samplesSize, 1);

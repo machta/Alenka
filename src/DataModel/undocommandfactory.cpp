@@ -246,13 +246,13 @@ public:
 		for (int k = 0; k < c; ++k)
 		{
 			AbstractEventTable* et = mt->eventTable(i + k);
-			int count = eventsBefore[k].size();
+			int count = static_cast<int>(eventsBefore[k].size());
 			et->insertRows(0, count);
 			for (int l = 0; l < count; ++l)
 				et->row(l, eventsBefore[k][l]);
 
 			AbstractTrackTable* tt = mt->trackTable(i + k);
-			count = tracksBefore[k].size();
+			count = static_cast<int>(tracksBefore[k].size());
 			tt->insertRows(0, count);
 			for (int l = 0; l < count; ++l)
 				tt->row(l, tracksBefore[k][l]);

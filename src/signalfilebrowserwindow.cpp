@@ -1064,16 +1064,16 @@ void SignalFileBrowserWindow::runSpikedet()
 
 	AlenkaSignal::CDetectorOutput* out = spikedetAnalysis->getOutput();
 	assert(out);
-	unsigned int count = out->m_pos.size();
+	int count = static_cast<int>(out->m_pos.size());
 
 	if (count > 0)
 	{
-		assert(out->m_chan.size() == count);
+		assert(static_cast<int>(out->m_chan.size()) == count);
 
 		int etIndex = eventTable->rowCount();
 		undoFactory->insertEvent(OpenDataFile::infoTable.getSelectedMontage(), etIndex, count);
 
-		for (unsigned int i = 0; i < count; i++)
+		for (int i = 0; i < count; i++)
 		{
 			Event e = eventTable->row(etIndex + i);
 

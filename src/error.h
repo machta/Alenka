@@ -71,18 +71,6 @@ void CNEC(T val, std::string message, const char* file, int line)
 	throw std::runtime_error(ss.str());
 }
 
-std::string getTimeString(std::time_t t)
-{
-	(void)getTimeString;
-
-	std::string tmp = asctime(localtime(&t));
-
-	if (tmp.back() == '\n')
-		tmp.pop_back();
-
-	return tmp;
-}
-
 } // namespace
 
 /**
@@ -124,7 +112,6 @@ extern std::mutex LOG_FILE_MUTEX;
  * The format of the log entries (for the log file and stderr) is defined here.
  */
 #define logToStream(message_, stream_) stream_ <<  message_ << " [" << "in T" << std::this_thread::get_id() << " from " << __FILE__ << ":" << __LINE__ << "]" << std::endl
-//#define logToStream(message_, stream_) stream_ << "[" << getTimeString(time(nullptr)) << " T" << std::this_thread::get_id() << "] " << message_ << " [in " << __FILE__ << ":" << __LINE__ << "]" << std::endl
 
 /**
  * @brief Logs a message to the log file.
