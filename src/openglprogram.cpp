@@ -42,12 +42,10 @@ OpenGLProgram::OpenGLProgram(const string& vertSource, const string& fragSource)
 
 	if (logLength > 1)
 	{
-		char* log = new char[logLength];
-		gl()->glGetProgramInfoLog(program, logLength, &logLength, log);
+		unique_ptr<char[]> log(new char[logLength]);
+		gl()->glGetProgramInfoLog(program, logLength, &logLength, log.get());
 
-		logToFileAndConsole("OpenGLProgram link log:" << endl << log);
-
-		delete log;
+		logToFileAndConsole("OpenGLProgram link log:" << endl << log.get());
 	}
 #endif
 
@@ -79,8 +77,8 @@ void OpenGLProgram::addShader(const string& sourceText, GLenum type)
 
 	if (logLength > 1)
 	{
-		char* log = new char[logLength];
-		gl()->glGetShaderInfoLog(shader, logLength, &logLength, log);
+		unique_ptr<char[]> log(new char[logLength]);
+		gl()->glGetShaderInfoLog(shader, logLength, &logLength, log.get());
 
 		stringstream ss;
 		switch (type)
@@ -96,9 +94,7 @@ void OpenGLProgram::addShader(const string& sourceText, GLenum type)
 			break;
 		}
 
-		logToFileAndConsole("Shader " << ss.str() << ":" << endl << sourceText << endl << "Compilation log:" << endl << log);
-
-		delete log;
+		logToFileAndConsole("Shader " << ss.str() << ":" << endl << sourceText << endl << "Compilation log:" << endl << log.get());
 	}
 #endif
 

@@ -41,7 +41,7 @@ FilterVisualizer::FilterVisualizer(QWidget* parent) : QWidget(parent)
 {
 	fft = new Eigen::FFT<float>();
 
-	chartView = new QChartView();
+	chartView = new QChartView(this);
 	chartView->setRenderHint(QPainter::Antialiasing);
 	chartView->setDragMode(QGraphicsView::NoDrag);
 

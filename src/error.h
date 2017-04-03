@@ -71,7 +71,7 @@ void CNEC(T val, std::string message, const char* file, int line)
 	throw std::runtime_error(ss.str());
 }
 
-const char* getTimeString(std::time_t t)
+std::string getTimeString(std::time_t t)
 {
 	(void)getTimeString;
 
@@ -80,7 +80,7 @@ const char* getTimeString(std::time_t t)
 	if (tmp.back() == '\n')
 		tmp.pop_back();
 
-	return tmp.c_str();
+	return tmp;
 }
 
 } // namespace
