@@ -16,12 +16,14 @@ namespace
 
 string cacheFilePath()
 {
-	string str = PROGRAM_OPTIONS["kernelCacheFile"].as<string>();
+	int platform = PROGRAM_OPTIONS["clPlatform"].as<int>();
+	int device = PROGRAM_OPTIONS["clDevice"].as<int>();
 
+	string str = PROGRAM_OPTIONS["kernelCacheDir"].as<string>();
 	if (str.empty())
-		str = QCoreApplication::applicationDirPath().toStdString() + QDir::separator().toLatin1() + "kernel-cache.xml";
+		str = QCoreApplication::applicationDirPath().toStdString();
 
-	return str;
+	return str + QDir::separator().toLatin1() + "kernel-cache-" + to_string(platform) + '-' + to_string(device) + ".xml";
 }
 
 } // namespace

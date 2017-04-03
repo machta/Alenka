@@ -11,8 +11,9 @@
 
 class UndoCommandFactory;
 
-struct OpenDataFile
+class OpenDataFile
 {
+public:
 	AlenkaFile::DataFile* file = nullptr;
 	const AlenkaFile::DataModel* dataModel = nullptr;
 	UndoCommandFactory* undoFactory = nullptr;

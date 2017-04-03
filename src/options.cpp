@@ -55,10 +55,9 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("onlineFilter", value<bool>()->default_value(false), "should the signal be filtered every time before it is rendered")
 	("glSharing", value<bool>()->default_value(false), "if true, OpenCL will share data directly with OpenGL")
 	("eventRenderMode", value<int>()->default_value(2), "controls rendering of single-channel events; accepted values (from simplest mode) are 1, 2")
-	//("prepareFrames", value<unsigned int>()->default_value(0), "how many frames should be prepared in memory")
 	("log", value<string>()->default_value("%Y-%m-%d--%H-%M-%S.log"), "string passed to strftime() to create the file name")
-	("kernelCacheSize", value<int>()->default_value(2048), "maximum number of montage kernels that can be cached")
-	("kernelCacheFile", value<string>()->default_value(""), "path to a kernel cache file (empty means search the directory where executable is)")
+	("kernelCacheSize", value<int>()->default_value(0), "the maximum number of montage kernels that will be cached")
+	("kernelCacheDir", value<string>()->default_value(""), "directory for storing cache files (empty means the same dir as the executable)")
 	("autoSaveInterval", value<int>()->default_value(2*60), "in seconds")
 	;
 

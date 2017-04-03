@@ -333,7 +333,7 @@ vector<AlenkaSignal::Montage<float>*> SignalProcessor::makeMontage(const vector<
 		if (ptr)
 		{
 			assert(0 < ptr->size());
-			m = new AlenkaSignal::Montage<float>(*ptr, context);
+			m = new AlenkaSignal::Montage<float>(ptr, context);
 		}
 		else
 		{
@@ -342,7 +342,7 @@ vector<AlenkaSignal::Montage<float>*> SignalProcessor::makeMontage(const vector<
 #endif
 			m = new AlenkaSignal::Montage<float>(code.toStdString(), context, header);
 
-			auto binary = new vector<unsigned char>(m->getBinary());
+			auto binary = m->getBinary();
 			if (binary->size() > 0)
 				kernelCache->insert(code, binary);
 		}
