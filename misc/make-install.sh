@@ -2,9 +2,14 @@
 
 # Usage: ./misc/make-install.sh
 #
-# This script rebuilds the two subprojects.
+# This script pulls and rebuilds the two subprojects.
 # Use this when you make changes there and then want to build the main app.
 # Use Git Bash or a similar tool to run this on Windows.
+
+cd Alenka-File && git pull && fpull="OK" || fpull="fail"
+cd ..
+cd Alenka-Signal && git pull && spull="OK" || spull="fail"
+cd ..
 
 cd Alenka-File
 for build in `ls build* -d`
@@ -41,6 +46,13 @@ done
 cd ..
 
 echo
+echo ================= Pull summary ==================
+echo "Library                                  Status"
+echo =================================================
+echo "Alenka-File                              $fpull"
+echo "Alenka-Signal                            $spull"
+echo
+
 echo ================= Build summary =================
 echo "Library                                  Status"
 echo =================================================
