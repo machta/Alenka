@@ -2,9 +2,15 @@
 
 #include "error.h"
 
+#include <QOpenGLDebugLogger>
 #include <QOpenGLContext>
 
 using namespace std;
+
+OpenGLInterface::~OpenGLInterface()
+{
+	delete logger;
+}
 
 void OpenGLInterface::initializeOpenGLInterface()
 {
@@ -22,7 +28,8 @@ void OpenGLInterface::initializeOpenGLInterface()
 	// initialization for log()
 	logger = new QOpenGLDebugLogger();
 
-	checkNotErrorCode(logger->initialize(), false, "logger->initialize() failed.");
+	bool res = logger->initialize();
+	checkNotErrorCode(res, false, "logger->initialize() failed.");
 
 	logger->logMessage(QOpenGLDebugMessage::createApplicationMessage("OpenGL debug log initialized."));
 
@@ -44,32 +51,23 @@ void OpenGLInterface::initializeOpenGLInterface()
 
 void OpenGLInterface::checkGLErrors()
 {
-	using namespace std;
-
 	GLenum err;
-	bool errorDetected = false;
-	int maxIterations = 10*1000; // This is to prevent infinite loop and filling the hard drive with garbage.
+	int errorsDetected = 0;
 
-	while (err = functions->glGetError(), err != GL_NO_ERROR && maxIterations-- > 0)
+	while (err = functions->glGetError(), err != GL_NO_ERROR && errorsDetected <= 10)
 	{
-		errorDetected = true;
+		++errorsDetected;
 
-#ifdef NDEBUG
-		logToFileAndConsole("OpenGL error: " << getErrorCode(err));
-#else
 		logToFileAndConsole("OpenGL error: " << getErrorCode(err) << " last call from " << lastCallFile << ":" << lastCallLine);
-#endif
 	}
 
-	if (errorDetected)
-	{
-		throw runtime_error("OpenGL error detected.");
-	}
+	if (errorsDetected > 0)
+		throw runtime_error(to_string(errorsDetected) + "OpenGL errors detected.");
 }
 
 #define CASE(a_) case a_: return #a_
 
-std::string OpenGLInterface::getErrorCode(GLenum code)
+string OpenGLInterface::getErrorCode(GLenum code)
 {
 	switch (code)
 	{

@@ -10,10 +10,11 @@
 #include <QOpenGLFunctions_3_2_Core>
 #include <QOpenGLFunctions_3_0>
 #include <QOpenGLFunctions_2_0>
-#include <QOpenGLDebugLogger>
 
 #include <cassert>
 #include <functional>
+
+class QOpenGLDebugLogger;
 
 /**
  * @brief This class provides extending classes with the interface needed to call OpenGL API.
@@ -36,12 +37,12 @@ class OpenGLInterface
 #endif
 
 public:
-	~OpenGLInterface()
-	{
-		delete logger;
-	}
+	~OpenGLInterface();
 
 protected:
+	/**
+	 * @brief Delayed initialization function.
+	 */
 	void initializeOpenGLInterface();
 
 	/**
@@ -54,22 +55,22 @@ protected:
 	 * (i.e. the position of the last call to gl()).
 	 * In release mode this information is ignored.
 	 */
-	QOpenGLFunctions_type* gl(const char* file = "", int line = 0)
+	QOpenGLFunctions_type* gl(const char* file, int line)
 	{
 		assert(functions);
 
 		checkGLErrors();
 
-#ifndef NDEBUG
 		lastCallFile = file;
 		lastCallLine = line;
-#else
-		(void)file;
-		(void)line;
-#endif
 
 		return functions;
 	}
+
+	/**
+	 * @brief Macro that passes debug info to the gl().
+	 */
+	#define gl() gl(__FILE__, __LINE__)
 
 	/**
 	 * @brief Returns a pointer needed to access the OpenGL debug log.
@@ -82,21 +83,14 @@ protected:
 	QOpenGLDebugLogger* log()
 	{
 		assert(logger);
-
 		checkGLErrors();
-
 		return logger;
 	}
 
 	void glGenVertexArrays(GLsizei n, GLuint* arrays)
 	{
 #if defined GL_2_0
-		checkGLErrors();
-		genVertexArrays(n, arrays);
-#ifndef NDEBUG
-		lastCallFile = __FILE__;
-		lastCallLine = __LINE__;
-#endif
+		gl(); genVertexArrays(n, arrays);
 #else
 		gl()->glGenVertexArrays(n, arrays);
 #endif
@@ -105,12 +99,7 @@ protected:
 	void glDeleteVertexArrays(GLsizei n, const GLuint* arrays)
 	{
 #if defined GL_2_0
-		checkGLErrors();
-		deleteVertexArrays(n, arrays);
-#ifndef NDEBUG
-		lastCallFile = __FILE__;
-		lastCallLine = __LINE__;
-#endif
+		gl(); deleteVertexArrays(n, arrays);
 #else
 		gl()->glDeleteVertexArrays(n, arrays);
 #endif
@@ -119,12 +108,7 @@ protected:
 	void glBindVertexArray(GLuint array)
 	{
 #if defined GL_2_0
-		checkGLErrors();
-		bindVertexArray(array);
-#ifndef NDEBUG
-		lastCallFile = __FILE__;
-		lastCallLine = __LINE__;
-#endif
+		gl(); bindVertexArray(array);
 #else
 		gl()->glBindVertexArray(array);
 #endif
@@ -137,15 +121,17 @@ private:
 	std::function<void (GLsizei, const GLuint*)> deleteVertexArrays;
 	std::function<void (GLuint)> bindVertexArray;
 
-#ifndef NDEBUG
-	const char* lastCallFile = "none";
+	const char* lastCallFile = "";
 	int lastCallLine = -1;
-#endif
 
 	/**
 	 * @brief Checks if there are any OpenGL errors.
 	 *
 	 * If there are, print a message to the log and throw an exception.
+	 *
+	 * At most 10 messages are printed so that the output and log doesn't get flooded.
+	 * This can happen on some platforms, where (for some reason) glGetError() never stops returning errors.
+	 * In extreme cases this can lead to filling of the whole harddrive with the same error message.
 	 */
 	void checkGLErrors();
 
@@ -154,10 +140,5 @@ private:
 	 */
 	std::string getErrorCode(GLenum code);
 };
-
-/**
- * @brief Macro that passes some debug info to the gl() method.
- */
-#define gl() gl(__FILE__, __LINE__)
 
 #endif // OPENGLINTERFACE_H

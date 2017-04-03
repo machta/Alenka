@@ -16,6 +16,7 @@
 #include <QKeyEvent>
 #include <QCursor>
 #include <QUndoCommand>
+#include <QOpenGLDebugLogger>
 
 #include <cstdio>
 #include <string>
