@@ -160,7 +160,7 @@ void SignalProcessor::setUpdateMontageFlag()
 {
 	if (file)
 	{
-		trackCount = 0; // TODO: Investigate what this variable is for.
+		trackCount = 0;
 
 		if (0 < file->dataModel->montageTable()->rowCount())
 		{

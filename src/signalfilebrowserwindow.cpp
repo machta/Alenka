@@ -618,7 +618,7 @@ void SignalFileBrowserWindow::openFile()
 	auto suffix = fileInfo.suffix().toLower();
 	assert(!file);
 
-	if (suffix == "gdf")
+	if (suffix == "gdf") // TODO: Add BDF support through Edflib.
 	{
 		file = new GDF2(stdFileName);
 	}
@@ -853,6 +853,8 @@ bool SignalFileBrowserWindow::closeFile()
 			OpenDataFile::infoTable.writeXML(file->getFilePath() + ".info", spikedetAnalysis->getSettings(), spikeDuration);
 		});
 	}
+
+	OpenDataFile::infoTable.setFilterCoefficients(vector<float>());
 
 	deleteAutoSave();
 	autoSaveName = "";
