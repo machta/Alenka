@@ -35,7 +35,7 @@ KernelCache::KernelCache()
 
 	// Load.
 	string filePath = cacheFilePath();
-	ifstream file(filePath);
+	ifstream file(filePath, ios::binary);
 
 	if (file.is_open())
 	{
@@ -75,7 +75,7 @@ KernelCache::~KernelCache()
 		return;
 
 	string filePath = cacheFilePath();
-	ofstream file(filePath);
+	ofstream file(filePath, ios::binary);
 
 	if (file.is_open())
 	{
