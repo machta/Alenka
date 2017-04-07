@@ -47,14 +47,14 @@ cd ..
 
 echo
 echo ================= Pull summary ==================
-echo "Library                                  Status"
+echo "Library path                             Status"
 echo =================================================
 echo "Alenka-File                              $fpull"
 echo "Alenka-Signal                            $spull"
 echo
 
 echo ================= Build summary =================
-echo "Library                                  Status"
+echo "Build directory path                     Status"
 echo =================================================
 echo -en "$SUMMARY"
 

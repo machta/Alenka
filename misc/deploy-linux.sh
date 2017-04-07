@@ -52,7 +52,7 @@ rm -r $folder
 
 echo
 echo ========= Deployment summary =========
-echo "Library                 Status"
+echo "Files                   Status"
 echo ======================================
 echo "Alenka                  $alenka"
 echo "Alenka.debug            $alenkaDebug"

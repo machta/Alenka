@@ -23,7 +23,7 @@ fi
 
 echo
 echo ========== Download summary ==========
-echo "Library                 Status"
+echo "Library path            Status"
 echo ======================================
 echo "Alenka-File             $file"
 echo "Alenka-Signal           $signal"

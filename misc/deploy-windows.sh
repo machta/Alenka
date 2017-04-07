@@ -4,8 +4,9 @@
 #
 # This script makes a standalone ZIP package for distribution on Windows.
 # Tested on Windows 7/10.
-# Use Git Bash or a similar tool to run this. This requires .NET for the archive creation.
-# If you don't have that, comment out the last line and make it manually.
+# Use Git Bash or a similar tool to run this.
+# This requires .NET for the archive creation.
+# If you don't have that, comment the last section out and make it manually.
 
 name=$1
 if [ "$name" == "" ]
@@ -61,7 +62,7 @@ rm -r $folder $folder32
 
 echo
 echo ========= Deployment summary =========
-echo "Library                 Status"
+echo "Files                   Status"
 echo ======================================
 echo "Alenka                  $alenka"
 echo "Alenka 32-bit           $alenka32"

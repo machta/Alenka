@@ -31,7 +31,7 @@ FilterManager::FilterManager(QWidget* parent) : QWidget(parent)
 	QHBoxLayout* hbox = new QHBoxLayout();
 
 	QLabel* label = new QLabel("Frequency multipliers:");
-	label->setToolTip("Enter one pairs [f, multiplier] per line. Frequencies > f are modified by the multiplier");
+	label->setToolTip("Enter one pair of numbers per line [f, multiplier]; frequencies > f are modified by the multiplier");
 	hbox->addWidget(label);
 
 	QCheckBox* checkBox = new QCheckBox("on");
@@ -57,7 +57,7 @@ FilterManager::FilterManager(QWidget* parent) : QWidget(parent)
 	hbox->addWidget(button);
 
 	label = new QLabel("Channel");
-	label->setToolTip("Index of a channel from the original file to use as input for the spectrum graph");
+	label->setToolTip("Index of the channel from the original file to be used as input for the spectrum graph");
 	hbox->addWidget(label);
 	channelSlider = new QSlider(Qt::Horizontal);
 	connect(channelSlider, SIGNAL(valueChanged(int)), filterVisulizer, SLOT(setChannelToDisplay(int)));
@@ -74,11 +74,11 @@ FilterManager::FilterManager(QWidget* parent) : QWidget(parent)
 	spinBox->setValue(2);
 	hbox->addWidget(spinBox);
 	label = new QLabel("s");
-	label->setToolTip("Interval in seconds to use for the spectrum graph");
+	label->setToolTip("Interval in seconds to be used for the spectrum graph");
 	hbox->addWidget(label);
 
 	checkBox = new QCheckBox("freeze");
-	checkBox->setToolTip("Freeze spectrum");
+	checkBox->setToolTip("Freeze spectrum graph");
 	connect(checkBox, SIGNAL(clicked(bool)), filterVisulizer, SLOT(setFreezeSpectrum(bool)));
 	checkBox->setChecked(false);
 	hbox->addWidget(checkBox);
@@ -99,7 +99,7 @@ FilterManager::FilterManager(QWidget* parent) : QWidget(parent)
 	hbox = new QHBoxLayout();
 
 	label = new QLabel("Filter window:");
-	label->setToolTip("Window function to use to modify the FIR filter coeficients");
+	label->setToolTip("Window function to be used to modify the FIR filter coeficients");
 	hbox->addWidget(label);
 	QComboBox* windowCombo = new QComboBox();
 	windowCombo->addItem("None");
