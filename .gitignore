@@ -53,10 +53,6 @@ options*.cfg
 *.log
 log
 
-# mont and info files
-*.mont
-*.info
-
 # doxygen documentation
 doc/html
 doc/latex
@@ -68,3 +64,5 @@ build
 # external libraries subdirs
 Alenka-File
 Alenka-Signal
+unit-test/googletest
+

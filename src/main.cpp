@@ -17,6 +17,8 @@
 #include "myapplication.h"
 #include "signalfilebrowserwindow.h"
 
+#include <gtest/gtest.h>
+
 #include <stdexcept>
 
 using namespace std;
@@ -78,7 +80,11 @@ int main(int argc, char** argv)
 
 	try
 	{
+		testing::InitGoogleTest(&argc, argv);
 		MyApplication app(argc, argv);
+
+		if (PROGRAM_OPTIONS.isSet("test"))
+			return RUN_ALL_TESTS();
 
 		SignalFileBrowserWindow window;
 		window.show();

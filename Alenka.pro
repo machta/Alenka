@@ -21,4 +21,13 @@ SOURCES += \
 	$$files(src/*.cpp) \
 
 RESOURCES += \
-	resources/resources.qrc
+	resources/resources.qrc \
+
+# Tests.
+INCLUDEPATH += \
+	unit-test/googletest/googletest/include \
+	unit-test/googletest/googletest \
+
+SOURCES += \
+	unit-test/googletest/googletest/src/gtest-all.cc \
+	$$files(unit-test/*.cpp) \

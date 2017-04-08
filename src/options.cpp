@@ -39,6 +39,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("printBuffers", "print the values in buffers during signal processing")
 	("clInfo", "print OpenCL platform and device info")
 	("glInfo", "print OpenGL info")
+	("test", "run unit test")
 	;
 
 	options_description configuration("Configuration", lineWidth);
