@@ -87,7 +87,7 @@ FilterManager::FilterManager(QWidget* parent) : QWidget(parent)
 
 	// Multipliers text field.
 	multipliersEdit = new QPlainTextEdit();
-	connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersChanged(std::vector<std::pair<double,double> >)), this, SLOT(setMultipliersText(std::vector<std::pair<double,double> >)));
+	connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersChanged()), this, SLOT(setMultipliersText()));
 	box2->addWidget(multipliersEdit);
 
 	QWidget* widget = new QWidget();
@@ -135,9 +135,11 @@ void FilterManager::changeFile(OpenDataFile* file)
 	}
 }
 
-void FilterManager::setMultipliersText(const std::vector<std::pair<double, double>>& value)
+void FilterManager::setMultipliersText()
 {
 	QString str;
+
+	auto value = OpenDataFile::infoTable.getFrequencyMultipliers();
 
 	for (auto e : value)
 		str += QString::number(e.first) + ' ' + QString::number(e.second) + '\n';

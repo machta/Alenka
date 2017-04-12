@@ -2,18 +2,30 @@
 #define CANVAS_H
 
 #include "openglinterface.h"
+#include "SignalProcessor/lrucache.h"
+
+#include <CL/cl_gl.h>
 
 #include <QOpenGLWidget>
 
-#include <algorithm>
 #include <cassert>
 #include <vector>
 #include <tuple>
 
+namespace AlenkaSignal
+{
+class OpenCLContext;
+}
 class OpenDataFile;
 class SignalProcessor;
 class SignalBlock;
 class OpenGLProgram;
+
+struct GPUCacheItem
+{
+	GLuint signalBuffer, signalArray, eventArray;
+	cl_mem sharedBuffer;
+};
 
 /**
  * @brief This class implements GUI control for rendering signal data and events.
@@ -28,6 +40,32 @@ class OpenGLProgram;
 class Canvas : public QOpenGLWidget, public OpenGLInterface
 {
 	Q_OBJECT
+
+	OpenDataFile* file = nullptr;
+	SignalProcessor* signalProcessor = nullptr;
+	OpenGLProgram* signalProgram = nullptr;
+	OpenGLProgram* eventProgram = nullptr;
+	OpenGLProgram* rectangleLineProgram = nullptr;
+	double samplesRecorded = 1;
+	double samplingFrequency = 1;
+	GLuint rectangleLineArray;
+	GLuint rectangleLineBuffer;
+	GLuint signalArray;
+	GLuint eventArray;
+	bool isSelectingTrack = false;
+	bool isDrawingEvent = false;
+	bool isDrawingCross = false;
+	int eventTrack;
+	int eventStart;
+	int eventEnd;
+	int cursorSample = 0;
+	int cursorTrack = 0;
+	std::vector<QMetaObject::Connection> openFileConnections;
+	std::vector<QMetaObject::Connection> montageConnections;
+	LRUCache<int, GPUCacheItem>* cache = nullptr;
+	AlenkaSignal::OpenCLContext* context = nullptr;
+	int nBlock, nMontage, nSamples, M;
+	bool duplicateSignal;
 
 public:
 	explicit Canvas(QWidget* parent = nullptr);
@@ -86,37 +124,18 @@ protected:
 	virtual void focusInEvent(QFocusEvent* event) override;
 
 private:
-	OpenDataFile* file = nullptr;
-	SignalProcessor* signalProcessor = nullptr;
-	OpenGLProgram* signalProgram = nullptr;
-	OpenGLProgram* eventProgram = nullptr;
-	OpenGLProgram* rectangleLineProgram = nullptr;
-	double samplesRecorded = 1;
-	double samplingFrequency = 1;
-	GLuint rectangleLineArray;
-	GLuint rectangleLineBuffer;
-	int eventMode = 1/*PROGRAM_OPTIONS["eventRenderMode"].as<int>()*/;
-	bool isSelectingTrack = false;
-	bool isDrawingEvent = false;
-	bool isDrawingCross = false;
-	int eventTrack;
-	int eventStart;
-	int eventEnd;
-	int cursorSample = 0;
-	int cursorTrack = 0;
-	std::vector<QMetaObject::Connection> openFileConnections;
-	std::vector<QMetaObject::Connection> montageConnections;
-
+	void updateProcessor();
+	void drawBlock(int index, GPUCacheItem* cacheItem, const std::vector<std::tuple<int, int, int, int>>& singleChannelEvents);
 	void drawAllChannelEvents(const std::vector<std::tuple<int, int, int>>& events);
 	void drawAllChannelEvent(int from, int to);
 	void drawTimeLines();
 	void drawPositionIndicator();
 	void drawCross();
 	void drawTimeLine(double at);
-	void drawSingleChannelEvents(const SignalBlock& block, const std::vector<std::tuple<int, int, int, int>>& events);
-	void drawSingleChannelEvent(const SignalBlock& block, int track, int from, int to);
-	void drawSignal(const SignalBlock& block);
-	void setUniformTrack(GLuint program, int track, int hidden, const SignalBlock& block);
+	void drawSingleChannelEvents(int index, const std::vector<std::tuple<int, int, int, int>>& events);
+	void drawSingleChannelEvent(int index, int track, int from, int to);
+	void drawSignal(int index);
+	void setUniformTrack(GLuint program, int track, int hidden, int index);
 	void setUniformColor(GLuint program, const QColor& color, double opacity);
 	void checkGLMessages();
 	void addEvent(int channel);
@@ -137,6 +156,7 @@ private:
 			emit cursorPositionTrackChanged(track);
 		}
 	}
+	void createSharableContext();
 
 private slots:
 	void updateFilter();

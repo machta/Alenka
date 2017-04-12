@@ -6,18 +6,12 @@
  */
 /// @cond
 
-uniform vec4 color;
+#version 110
 
-#ifndef GLSL_110
-out vec4 outColor;
-#endif
+uniform vec4 color;
 
 void main()
 {
-#ifdef GLSL_110
 	gl_FragColor = color;
-#else
-	outColor = color;
-#endif
 }
 /// @endcond

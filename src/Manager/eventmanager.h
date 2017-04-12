@@ -16,7 +16,7 @@ public:
 	explicit EventManager(QWidget* parent = nullptr);
 
 	/**
-	 * @brief Sets the pointer to Canvas.
+	 * @brief Sets the pointer to NewCanvas.
 	 */
 	void setReferences(const Canvas* canvas)
 	{

@@ -7,8 +7,9 @@
 #include <AlenkaSignal/openclcontext.h>
 #include <AlenkaSignal/filter.h>
 #include <AlenkaSignal/filterprocessor.h>
-#include <AlenkaSignal/montage.h>
 #include <AlenkaSignal/montageprocessor.h>
+#include "../options.h"
+#include "../error.h"
 
 #include <QFile>
 
@@ -61,48 +62,41 @@ void multiplySamples(vector<float>* samples)
 
 } // namespace
 
-SignalProcessor::SignalProcessor()
+SignalProcessor::SignalProcessor(unsigned int nBlock, unsigned int parallelQueues, int montageCopyCount, OpenDataFile* file, AlenkaSignal::OpenCLContext* context)
+	: nBlock(nBlock), parallelQueues(parallelQueues), montageCopyCount(montageCopyCount), file(file), context(context)
 {
-	onlineFilter = PROGRAM_OPTIONS["onlineFilter"].as<bool>();
-	glSharing = PROGRAM_OPTIONS["glSharing"].as<bool>();
-
+	fileChannels = file->file->getChannelCount();
 	cl_int err;
 
 	initializeOpenGLInterface();
 
-	if (glSharing)
+	for (unsigned int i = 0; i < parallelQueues; ++i)
 	{
-		context = new AlenkaSignal::OpenCLContext(PROGRAM_OPTIONS["clPlatform"].as<int>(), PROGRAM_OPTIONS["clDevice"].as<int>(), true);
+		commandQueues.push_back(clCreateCommandQueue(context->getCLContext(), context->getCLDevice(), 0, &err));
+		checkClErrorCode(err, "clCreateCommandQueue()");
+
+		cl_mem_flags flags = CL_MEM_READ_WRITE;
+		inBuffers.push_back(clCreateBuffer(context->getCLContext(), flags, (nBlock + 2)*fileChannels*sizeof(float), nullptr, &err));
+		checkClErrorCode(err, "clCreateBuffer()");
+
+#ifdef NDEBUG
+#if CL_1_2
+		flags |= CL_MEM_HOST_NO_ACCESS;
+#endif
+#endif
+		outBuffers.push_back(clCreateBuffer(context->getCLContext(), flags, (nBlock + 2)*fileChannels*sizeof(float), nullptr, &err));
+		checkClErrorCode(err, "clCreateBuffer()");
 	}
-	else
-	{
-		context = globalContext.get();
-	}
 
-	commandQueue = clCreateCommandQueue(context->getCLContext(), context->getCLDevice(), 0, &err);
-	checkClErrorCode(err, "clCreateCommandQueue()");
-
-	gl()->glGenBuffers(1, &glBuffer);
-	glGenVertexArrays(2, vertexArrays);
-
-	gl()->glBindBuffer(GL_ARRAY_BUFFER, glBuffer);
-
-	glBindVertexArray(vertexArrays[0]);
-	gl()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(0));
-	gl()->glEnableVertexAttribArray(0);
-
-	glBindVertexArray(vertexArrays[1]);
-	gl()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 2*sizeof(float), reinterpret_cast<void*>(0));
-	gl()->glEnableVertexAttribArray(0);
-
-	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-
-	gl();
+	fileBuffer = new float[nBlock*fileChannels];
+	filterProcessor = new AlenkaSignal::FilterProcessor<float>(nBlock, fileChannels, context);
 
 	QFile headerFile(":/montageHeader.cl"); // TODO: Consolidate the 4 copies of this into one instance.
 	headerFile.open(QIODevice::ReadOnly);
 	header = headerFile.readAll().toStdString();
+
+	updateFilter();
+	setUpdateMontageFlag();
 }
 
 SignalProcessor::~SignalProcessor()
@@ -110,18 +104,22 @@ SignalProcessor::~SignalProcessor()
 	cl_int err;
 
 	deleteMontage();
-	destroyFileRelated();
 
-	if (glSharing)
-		delete context;
+	for (unsigned int i = 0; i < parallelQueues; ++i)
+	{
+		err = clReleaseCommandQueue(commandQueues[i]);
+		checkClErrorCode(err, "clReleaseCommandQueue()");
 
-	err = clReleaseCommandQueue(commandQueue);
-	checkClErrorCode(err, "clReleaseCommandQueue()");
+		err = clReleaseMemObject(inBuffers[i]);
+		checkClErrorCode(err, "clReleaseMemObject()");
 
-	gl()->glDeleteBuffers(1, &glBuffer);
-	glDeleteVertexArrays(2, vertexArrays);
+		err = clReleaseMemObject(outBuffers[i]);
+		checkClErrorCode(err, "clReleaseMemObject()");
+	}
 
-	gl();
+	delete[] fileBuffer;
+	delete filterProcessor;
+	delete montageProcessor;
 }
 
 void SignalProcessor::updateFilter()
@@ -131,7 +129,7 @@ void SignalProcessor::updateFilter()
 	if (!file)
 		return;
 
-	int M = file->file->getSamplingFrequency()/* + 1*/;
+	M = file->file->getSamplingFrequency() + 1;
 	AlenkaSignal::Filter<float> filter(M, file->file->getSamplingFrequency()); // TODO: Possibly could save this object so that it won't be created from scratch every time.
 
 	filter.lowpass(true);
@@ -141,7 +139,7 @@ void SignalProcessor::updateFilter()
 	filter.setHighpass(OpenDataFile::infoTable.getHighpassFrequency());
 
 	filter.notch(OpenDataFile::infoTable.getNotch());
-	filter.setNotch(50);
+	filter.setNotch(PROGRAM_OPTIONS["notchFrequency"].as<double>());
 
 	auto samples = filter.computeSamples();
 	if (OpenDataFile::infoTable.getFrequencyMultipliersOn())
@@ -150,10 +148,11 @@ void SignalProcessor::updateFilter()
 	filterProcessor->changeSampleFilter(M, samples);
 	filterProcessor->applyWindow(OpenDataFile::infoTable.getFilterWindow());
 
-	OpenDataFile::infoTable.setFilterCoefficients(filterProcessor->getCoefficients());
+	nDelay = filterProcessor->delaySamples();
+	nMontage = nBlock - M + 1;
+	nSamples = nMontage - 2;
 
-	if (onlineFilter == false)
-		cache->clear();
+	OpenDataFile::infoTable.setFilterCoefficients(filterProcessor->getCoefficients());
 }
 
 void SignalProcessor::setUpdateMontageFlag()
@@ -176,10 +175,12 @@ void SignalProcessor::setUpdateMontageFlag()
 	}
 }
 
-SignalBlock SignalProcessor::getAnyBlock(const set<int>& indexSet)
+void SignalProcessor::process(const vector<int>& index, const vector<cl_mem>& buffers)
 {
 	assert(ready());
-	assert(indexSet.empty() == false);
+	assert(0 < index.size());
+	assert(static_cast<unsigned int>(index.size()) <= parallelQueues);
+	assert(index.size() == buffers.size());
 
 	if (updateMontageFlag)
 	{
@@ -188,129 +189,52 @@ SignalBlock SignalProcessor::getAnyBlock(const set<int>& indexSet)
 	}
 
 	cl_int err;
+	const unsigned int iters = min<unsigned int>(parallelQueues, index.size());
 
-	cl_event readyEvent = clCreateUserEvent(context->getCLContext(), &err);
-	checkClErrorCode(err, "clCreateUserEvent()");
-
-	AlenkaSignal::OpenCLContext::enqueueBarrier(commandQueue, readyEvent);
-
-	int index = cache->getAny(indexSet, processorTmpBuffer, readyEvent);
-
-	printBuffer("after_getAny.txt", processorTmpBuffer, commandQueue);
-
-	if (onlineFilter)
+	for (unsigned int i = 0; i < iters; ++i)
 	{
-		assert(false && "Fix this later!");
-		//filterProcessor->process(processorTmpBuffer, commandQueue);
+		auto fromTo = blockIndexToSampleRange(index[i], nSamples);
+		fromTo.first += -M + nDelay;
+		fromTo.second += nDelay + 1;
+		assert(fromTo.second - fromTo.first + 1 == nBlock);
 
-		printBuffer("after_filter.txt", processorTmpBuffer, commandQueue);
+		file->file->readSignal(fileBuffer, fromTo.first, fromTo.second);
+		printBuffer("after_readSignal.txt", fileBuffer, nBlock*fileChannels);
 
-		err = clFlush(commandQueue);
-		checkClErrorCode(err, "clFlush()");
+		size_t origin[] = {0, 0, 0};
+		size_t rowLen = nBlock*sizeof(float);
+		size_t region[] = {rowLen, fileChannels, 1};
+
+		err = clEnqueueWriteBufferRect(commandQueues[i], inBuffers[i], CL_TRUE, origin, origin, region, rowLen + 2*sizeof(float), 0, 0, 0, fileBuffer, 0, nullptr, nullptr);
+		checkClErrorCode(err, "clEnqueueWriteBufferRect()");
+
+		printBuffer("before_filter.txt", inBuffers[i], commandQueues[i]);
+		filterProcessor->process(inBuffers[i], outBuffers[i], commandQueues[i]);
+		printBuffer("after_filter.txt", outBuffers[i], commandQueues[i]);
 	}
 
-	if (glSharing)
-	{
-		gl()->glFinish(); // Could be replaced by a fence.
+	gl()->glFinish(); // Could be replaced by a fence.
 
-		err = clEnqueueAcquireGLObjects(commandQueue, 1, &processorOutputBuffer, 0, nullptr, nullptr);
+	for (unsigned int i = 0; i < iters; ++i)
+	{
+		err = clEnqueueAcquireGLObjects(commandQueues[i], 1, &buffers[i], 0, nullptr, nullptr);
 		checkClErrorCode(err, "clEnqueueAcquireGLObjects()");
+
+		montageProcessor->process(montage, outBuffers[i], buffers[i], commandQueues[i], M - 1);
+		printBuffer("after_montage.txt", buffers[i], commandQueues[i]);
 	}
 
-	montageProcessor->process(montage, processorTmpBuffer, processorOutputBuffer, commandQueue);
-
-	printBuffer("after_montage.txt", processorOutputBuffer, commandQueue);
-
-	if (glSharing)
+	for (unsigned int i = 0; i < iters; ++i)
 	{
-		err = clFinish(commandQueue);
+		err = clFinish(commandQueues[i]); // Why is this here twice.
 		checkClErrorCode(err, "clFinish()");
 
-		err = clEnqueueReleaseGLObjects(commandQueue, 1, &processorOutputBuffer, 0, nullptr, nullptr);
+		err = clEnqueueReleaseGLObjects(commandQueues[i], 1, &buffers[i], 0, nullptr, nullptr);
 		checkClErrorCode(err, "clEnqueueReleaseGLObjects()");
 
-		err = clFinish(commandQueue);
+		err = clFinish(commandQueues[i]);
 		checkClErrorCode(err, "clFinish()");
 	}
-	else
-	{
-		// Pull the data from CL buffer and copy it to the GL buffer.
-
-		unsigned int outputBlockSize = blockSize*trackCount; // Code-duplicity.
-		//outputBlockSize *= PROGRAM_OPTIONS["eventRenderMode"].as<int>();
-
-		err = clEnqueueReadBuffer(commandQueue, processorOutputBuffer, CL_TRUE, 0, outputBlockSize*sizeof(float), processorOutputBufferTmp, 0, nullptr, nullptr);
-		checkClErrorCode(err, "clGetMemObjectInfo");
-
-		gl()->glBindBuffer(GL_ARRAY_BUFFER, glBuffer);
-		gl()->glBufferData(GL_ARRAY_BUFFER, outputBlockSize*sizeof(float), processorOutputBufferTmp, GL_STATIC_DRAW);
-	}
-
-	auto fromTo = GPUCache::blockIndexToSampleRange(index, getBlockSize());
-	return SignalBlock(index, fromTo.first, fromTo.second, vertexArrays);
-}
-
-void SignalProcessor::changeFile(OpenDataFile* file)
-{
-	destroyFileRelated();
-
-	this->file = file;
-
-	if (file)
-	{
-		int M = file->file->getSamplingFrequency();
-		int offset = M;
-		int delay = M/2 - 1;
-		blockSize = PROGRAM_OPTIONS["blockSize"].as<unsigned int>() - offset;
-		unsigned int tmpBlockSize = (blockSize + offset)*file->file->getChannelCount();
-
-		// Construct the filter and montage processors.
-		filterProcessor = new AlenkaSignal::FilterProcessor<float>(blockSize + offset, file->file->getChannelCount(), context);
-
-		montageProcessor = new AlenkaSignal::MontageProcessor<float>(offset, blockSize, file->file->getChannelCount());
-
-		// Construct the cache.
-		int64_t memoryToUse = PROGRAM_OPTIONS["gpuMemorySize"].as<int64_t>();
-		cl_int err;
-
-		cl_ulong maxMemorySize;
-		err = clGetDeviceInfo(context->getCLDevice(), CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &maxMemorySize, nullptr);
-		checkClErrorCode(err, "clGetDeviceInfo()");
-
-		if (memoryToUse <= 0)
-			memoryToUse += maxMemorySize;
-
-		// Ensure the limit is within a reasonable interval.
-		memoryToUse = max<int64_t>(memoryToUse, maxMemorySize*0.1);
-		memoryToUse = min<int64_t>(memoryToUse, maxMemorySize*0.75);
-
-		memoryToUse -= tmpBlockSize + blockSize*sizeof(float)*2048; // substract the sizes of the tmp buffer and the output buffer (for a realistically big montage)
-		assert(memoryToUse > 0 && "There is no memory left for the GPU buffer.");
-
-		cache = new GPUCache(blockSize, offset, delay, memoryToUse, file, context, onlineFilter ? nullptr : filterProcessor);
-
-		// Construct tmp buffer.
-		cl_mem_flags flags = CL_MEM_READ_WRITE;
-#ifdef NDEBUG
-#if CL_1_2
-		flags |= CL_MEM_HOST_NO_ACCESS;
-#endif
-#endif
-
-		processorTmpBuffer = clCreateBuffer(context->getCLContext(), flags, tmpBlockSize*sizeof(float), nullptr, &err);
-		checkClErrorCode(err, "clCreateBuffer()");
-
-		// Default filter and montage.
-		updateFilter();
-
-		setUpdateMontageFlag();
-	}
-}
-
-string SignalProcessor::simplifyMontage(const string& str)
-{
-	QString qstr = AlenkaSignal::Montage<float>::stripComments(str).c_str();
-	return qstr.simplified().toStdString();
 }
 
 vector<AlenkaSignal::Montage<float>*> SignalProcessor::makeMontage(const vector<string>& montageCode, AlenkaSignal::OpenCLContext* context, KernelCache* kernelCache, const string& header)
@@ -371,57 +295,16 @@ vector<AlenkaSignal::Montage<float>*> SignalProcessor::makeMontage(const vector<
 	return montage;
 }
 
-void SignalProcessor::destroyFileRelated()
-{
-	if (file)
-	{
-		file = nullptr;
-
-		delete cache;
-		delete filterProcessor;
-		delete montageProcessor;
-
-		cl_int err = clReleaseMemObject(processorTmpBuffer);
-		checkClErrorCode(err, "clReleaseMemObject()");
-
-		releaseOutputBuffer();
-	}
-}
-
-string SignalProcessor::indexSetToString(const set<int>& indexSet)
-{
-	stringstream ss;
-
-	for (const auto& e : indexSet)
-	{
-		if (e != *indexSet.begin())
-			ss << ", ";
-		ss << e;
-	}
-
-	return ss.str();
-}
-
-void SignalProcessor::releaseOutputBuffer()
-{
-	if (processorOutputBuffer)
-	{
-		cl_int err = clReleaseMemObject(processorOutputBuffer);
-		checkClErrorCode(err, "clReleaseMemObject()");
-
-		processorOutputBuffer = nullptr;
-	}
-
-	delete[] processorOutputBufferTmp;
-	processorOutputBufferTmp = nullptr;
-}
-
 void SignalProcessor::updateMontage()
 {
 	assert(ready());
-	deleteMontage();
 
+	delete montageProcessor;
+	montageProcessor = new AlenkaSignal::MontageProcessor<float>(nBlock + 2, nMontage, fileChannels, montageCopyCount);
+
+	deleteMontage();
 	vector<string> montageCode;
+
 	for (int i = 0; i < getTrackTable(file)->rowCount(); i++)
 	{
 		Track t = getTrackTable(file)->row(i);
@@ -430,47 +313,6 @@ void SignalProcessor::updateMontage()
 	}
 
 	montage = makeMontage(montageCode, context, file->kernelCache, header);
-
-	releaseOutputBuffer();
-
-	unsigned int outputBlockSize = blockSize*trackCount; // Code-duplicity.
-	//outputBlockSize *= PROGRAM_OPTIONS["eventRenderMode"].as<int>();
-
-	cl_int err;
-
-	if (glSharing)
-	{
-		gl()->glBindBuffer(GL_ARRAY_BUFFER, glBuffer);
-		gl()->glBufferData(GL_ARRAY_BUFFER, outputBlockSize*sizeof(float), nullptr, GL_STATIC_DRAW);
-
-		cl_mem_flags flags = CL_MEM_READ_WRITE;
-	#ifdef NDEBUG
-		flags = CL_MEM_WRITE_ONLY;
-	#if CL_1_2
-		flags |= CL_MEM_HOST_NO_ACCESS;
-	#endif
-	#endif
-
-		processorOutputBuffer = clCreateFromGLBuffer(context->getCLContext(), flags, glBuffer, &err);
-		checkClErrorCode(err, "clCreateFromGLBuffer()");
-	}
-	else
-	{
-		cl_mem_flags flags = CL_MEM_READ_WRITE;
-	#ifdef NDEBUG
-	#if CL_1_2
-		flags |= CL_MEM_HOST_READ_ONLY;
-	#endif
-	#endif
-
-		processorOutputBuffer = clCreateBuffer(context->getCLContext(), flags, outputBlockSize*sizeof(float), nullptr, &err);
-		checkClErrorCode(err, "clCreateBuffer");
-
-		assert(!processorOutputBufferTmp && "Make sure the buffer does't leak.");
-		processorOutputBufferTmp = new float[outputBlockSize];
-	}
-
-	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void SignalProcessor::deleteMontage()

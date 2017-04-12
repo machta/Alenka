@@ -93,6 +93,8 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 	if (0 < PROGRAM_OPTIONS["kernelCacheSize"].as<int>())
 		kernelCache = new KernelCache();
+	else
+		KernelCache::deleteCacheFile();
 
 	autoSaveTimer = new QTimer(this);
 
@@ -782,7 +784,7 @@ void SignalFileBrowserWindow::openFile()
 	openFileConnections.push_back(c);
 	c = connect(&OpenDataFile::infoTable, SIGNAL(positionIndicatorChanged(double)), signalViewer, SLOT(updateSignalViewer()));
 	openFileConnections.push_back(c);
-	c = connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersChanged(std::vector<std::pair<double, double>>)), signalViewer, SLOT(updateSignalViewer()));
+	c = connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersChanged()), signalViewer, SLOT(updateSignalViewer()));
 	openFileConnections.push_back(c);
 	c = connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersOnChanged(bool)), signalViewer, SLOT(updateSignalViewer()));
 	openFileConnections.push_back(c);

@@ -16,16 +16,15 @@ void OpenGLInterface::initializeOpenGLInterface()
 {
 	logToFile("Initializing OpenGLInterface.");
 
-	// initialization for gl()
 	QOpenGLContext* c = QOpenGLContext::currentContext();
 	checkErrorCode(c->isValid(), true, "is current context valid");
 
-	functions = c->versionFunctions<QOpenGLFunctions_type>();
-	checkNotErrorCode(functions, nullptr, "versionFunctions<>() failed.");
+	functions = c->versionFunctions<QOpenGLFunctions_2_0>();
+	checkNotErrorCode(functions, nullptr, "versionFunctions<QOpenGLFunctions_2_0>() failed.");
 
 	checkNotErrorCode(functions->initializeOpenGLFunctions(), false, "initializeOpenGLFunctions() failed.");
 
-	// initialization for log()
+	// Initialize log.
 	logger = new QOpenGLDebugLogger();
 
 	bool res = logger->initialize();
@@ -33,20 +32,39 @@ void OpenGLInterface::initializeOpenGLInterface()
 
 	logger->logMessage(QOpenGLDebugMessage::createApplicationMessage("OpenGL debug log initialized."));
 
-	// get extension function addresses
-#if defined GL_2_0
-	auto ptr1 = reinterpret_cast<void (*)(GLsizei, GLuint*)>(QOpenGLContext::currentContext()->getProcAddress("glGenVertexArrays"));
-	checkNotErrorCode(ptr1, nullptr, "getProcAddress(\"glGenVertexArrays\")");
-	genVertexArrays = ptr1;
+	// Get extension function addresses.
+	QFunctionPointer ptr;
 
-	auto ptr2 = reinterpret_cast<void (*)(GLsizei, const GLuint*)>(QOpenGLContext::currentContext()->getProcAddress("glDeleteVertexArrays"));
-	checkNotErrorCode(ptr2, nullptr, "getProcAddress(\"glDeleteVertexArrays\")");
-	deleteVertexArrays = ptr2;
+	ptr = QOpenGLContext::currentContext()->getProcAddress("glGenVertexArrays");
+	checkNotErrorCode(ptr, nullptr, "getProcAddress(\"glGenVertexArrays\")");
+	genVertexArrays = reinterpret_cast<void (*)(GLsizei, GLuint*)>(ptr);
 
-	auto ptr3 = reinterpret_cast<void (*)(GLuint)>(QOpenGLContext::currentContext()->getProcAddress("glBindVertexArray"));
-	checkNotErrorCode(ptr3, nullptr, "getProcAddress(\"glBindVertexArray\")");
-	bindVertexArray = ptr3;
-#endif
+	ptr = QOpenGLContext::currentContext()->getProcAddress("glDeleteVertexArrays");
+	checkNotErrorCode(ptr, nullptr, "getProcAddress(\"glDeleteVertexArrays\")");
+	deleteVertexArrays = reinterpret_cast<void (*)(GLsizei, const GLuint*)>(ptr);
+
+	ptr = QOpenGLContext::currentContext()->getProcAddress("glBindVertexArray");
+	checkNotErrorCode(ptr, nullptr, "getProcAddress(\"glBindVertexArray\")");
+	bindVertexArray = reinterpret_cast<void (*)(GLuint)>(ptr);
+
+	if (PROGRAM_OPTIONS["gl43"].as<bool>())
+	{
+		ptr = QOpenGLContext::currentContext()->getProcAddress("glBindVertexBuffer");
+		checkNotErrorCode(ptr, nullptr, "getProcAddress(\"glBindVertexBuffer\")");
+		bindVertexBuffer = reinterpret_cast<void (*)(GLuint, GLuint, GLintptr, GLintptr)>(ptr);
+
+		ptr = QOpenGLContext::currentContext()->getProcAddress("glVertexAttribFormat");
+		checkNotErrorCode(ptr, nullptr, "getProcAddress(\"glVertexAttribFormat\")");
+		vertexAttribFormat = reinterpret_cast<void (*)(GLuint, GLint, GLenum, GLboolean, GLuint)>(ptr);
+
+		ptr = QOpenGLContext::currentContext()->getProcAddress("glVertexAttribBinding");
+		checkNotErrorCode(ptr, nullptr, "getProcAddress(\"glVertexAttribBinding\")");
+		vertexAttribBinding = reinterpret_cast<void (*)(GLuint, GLuint)>(ptr);
+
+		ptr = QOpenGLContext::currentContext()->getProcAddress("glVertexBindingDivisor");
+		checkNotErrorCode(ptr, nullptr, "getProcAddress(\"glVertexBindingDivisor\")");
+		vertexBindingDivisor = reinterpret_cast<void (*)(GLuint, GLuint)>(ptr);
+	}
 }
 
 void OpenGLInterface::checkGLErrors()
@@ -62,7 +80,7 @@ void OpenGLInterface::checkGLErrors()
 	}
 
 	if (errorsDetected > 0)
-		throw runtime_error(to_string(errorsDetected) + "OpenGL errors detected.");
+		throw runtime_error(to_string(errorsDetected) + " OpenGL errors detected.");
 }
 
 #define CASE(a_) case a_: return #a_

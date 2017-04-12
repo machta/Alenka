@@ -6,24 +6,24 @@
  */
 /// @cond
 
-#ifdef GLSL_110
-attribute float sampleValue;
-#else
-in float sampleValue;
-#endif
+#version 110
+#extension GL_EXT_gpu_shader4 : enable
+
+attribute float sampleValue0;
+attribute float sampleValue1;
+attribute float sampleValue2;
 
 uniform mat4 transformMatrix;
 uniform float y0;
 uniform int bufferOffset;
 uniform float yScale;
 uniform float eventWidth;
-uniform int divideBy;
 
 void main()
 {
-	float x = float(bufferOffset) + float(gl_VertexID)/float(divideBy);
+	float x = float(bufferOffset) + float(gl_VertexID/2);
 
-	float y = y0 + yScale*sampleValue + eventWidth*float(1 - 2*(gl_VertexID & 1));
+	float y = y0 + yScale*sampleValue1 + eventWidth*float(1 - 2*(gl_VertexID & 1));
 
 	gl_Position = transformMatrix*vec4(x, y, 0, 1);
 }

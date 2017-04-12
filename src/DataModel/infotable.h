@@ -58,7 +58,7 @@ public:
 		emit timeLineIntervalChanged(timeLineInterval);
 		emit positionIndicatorChanged(positionIndicator);
 		emit pixelViewWidthChanged(pixelViewWidth);
-		emit frequencyMultipliersChanged(frequencyMultipliers);
+		emit frequencyMultipliersChanged();
 		emit frequencyMultipliersOnChanged(frequencyMultipliersOn);
 	}
 
@@ -91,7 +91,7 @@ signals:
 	void timeLineIntervalChanged(double);
 	void positionIndicatorChanged(double);
 	void pixelViewWidthChanged(int);
-	void frequencyMultipliersChanged(const std::vector<std::pair<double, double>>&);
+	void frequencyMultipliersChanged();
 	void frequencyMultipliersOnChanged(bool);
 	void filterCoefficientsChanged();
 
@@ -197,7 +197,7 @@ public slots:
 		if (value != frequencyMultipliers)
 		{
 			frequencyMultipliers = value;
-			emit frequencyMultipliersChanged(value);
+			emit frequencyMultipliersChanged();
 		}
 	}
 	void setFrequencyMultipliersOn(bool value)

@@ -17,28 +17,13 @@
 #include "myapplication.h"
 #include "signalfilebrowserwindow.h"
 
+#ifdef TESTS
 #include <gtest/gtest.h>
+#endif
 
 #include <stdexcept>
 
 using namespace std;
-
-// Enforce proper definition of a GL_ macro.
-#if defined GL_2_0
-	#if defined GL_3_0 || defined GL_3_2
-		#error Only one of GL_2_0, GL_3_0 or GL_3_2 can be defined.
-	#endif
-#elif defined GL_3_0
-	#if defined GL_2_0 || defined GL_3_2
-		#error Only one of GL_2_0, GL_3_0 or GL_3_2 can be defined.
-	#endif
-#elif defined GL_3_2
-	#if defined GL_2_0 || defined GL_3_0
-		#error Only one of GL_2_0, GL_3_0 or GL_3_2 can be defined.
-	#endif
-#else
-	#error You must define one of GL_2_0, GL_3_0 or GL_3_2 to select the OpenGL version to be used.
-#endif
 
 // Enforce proper definition of a CL_ macro.
 #if defined CL_1_1
@@ -80,18 +65,25 @@ int main(int argc, char** argv)
 
 	try
 	{
+#ifdef TESTS
 		testing::InitGoogleTest(&argc, argv);
+#endif
 		MyApplication app(argc, argv);
 
 		if (PROGRAM_OPTIONS.isSet("test"))
+		{
+#ifdef TESTS
 			return RUN_ALL_TESTS();
+#endif
+			return 0;
+		}
 
 		SignalFileBrowserWindow window;
 		window.show();
 
 		ret = app.exec();
 	}
-	catch (std::exception& e)
+	catch (exception& e)
 	{
 		logToFileAndConsole("Exception caught: " << e.what());
 	}

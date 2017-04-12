@@ -34,7 +34,7 @@ public:
 	Loader(AlenkaFile::DataFile* file, const vector<Montage<T>*>& montage, OpenCLContext* context) :
 		file(file), montage(montage), inChannels(file->getChannelCount()), outChannels(static_cast<int>(montage.size()))
 	{
-		processor = new MontageProcessor<T>(0, BLOCK_LENGTH, inChannels);
+		processor = new MontageProcessor<T>(BLOCK_LENGTH, BLOCK_LENGTH, inChannels);
 
 		cl_int err;
 		cl_mem_flags flags = CL_MEM_READ_WRITE;

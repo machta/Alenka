@@ -6,11 +6,10 @@
  */
 /// @cond
 
-#ifdef GLSL_110
-attribute float sampleValue;
-#else
-in float sampleValue;
-#endif
+#version 110
+#extension GL_EXT_gpu_shader4 : enable
+
+attribute float sampleValue1;
 
 uniform mat4 transformMatrix;
 uniform float y0;
@@ -21,7 +20,7 @@ void main()
 {
 	float x = float(bufferOffset) + float(gl_VertexID);
 
-	float y = y0 + yScale*sampleValue;
+	float y = y0 + yScale*sampleValue1;
 
 	gl_Position = transformMatrix*vec4(x, y, 0, 1);
 }

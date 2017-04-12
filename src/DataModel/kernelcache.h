@@ -7,6 +7,8 @@
 
 class KernelCache
 {
+	QCache<QString, std::vector<unsigned char>> cache;
+
 public:
 	KernelCache();
 	~KernelCache();
@@ -20,8 +22,7 @@ public:
 		return cache[code];
 	}
 
-private:
-	QCache<QString, std::vector<unsigned char>> cache;
+	static void deleteCacheFile();
 };
 
 #endif // KERNELCACHE_H

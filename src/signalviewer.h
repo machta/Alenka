@@ -14,9 +14,9 @@ class Canvas;
 /**
  * @brief This class implements the GUI control for browsing the DataFile's signal.
  *
- * This control combines in itself a Canvas, a QScrollBar, and a TrackLabelBar.
+ * This control combines in itself a NewCanvas, a QScrollBar, and a TrackLabelBar.
  * It constructs them, connects the appropriate signals and slots and
- * dispatches events between Canvas and the QScrollBar.
+ * dispatches events between NewCanvas and the QScrollBar.
  *
  * Also resizing and handling of virtual width and position is done here.
  */

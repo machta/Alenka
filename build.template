@@ -11,6 +11,8 @@ INCLUDEPATH += \
 SOURCES += $$files($$FILE_LIB/boost/libs/program_options/src/*.cpp)
 
 CONFIG(debug, debug|release) {
+	DEFINES += TESTS
+
 	contains(QMAKE_HOST.arch, x86_64) {
 		SIGNAL_LIB = $$SIGNAL_LIB/build-Debug-64/install-dir
 		FILE_LIB = $$FILE_LIB/build-Debug-64/install-dir
@@ -34,7 +36,7 @@ INCLUDEPATH += $$SIGNAL_LIB/include $$FILE_LIB/include
 
 DEFINES += \
 	CL_USE_DEPRECATED_OPENCL_1_2_APIS \ # This is to silence some warnings.
-	GL_3_2 CL_1_2 # Other possible values are: GL_3_0, GL_3_2, CL_1_1. TODO: Turn these macros into parameters so that the user can switch between versions.
+	CL_1_2
 
 LIBS += \
 	-L$$SIGNAL_LIB/lib \

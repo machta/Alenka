@@ -2,7 +2,7 @@
 #define SIGNALPROCESSOR_H
 
 #include "../openglinterface.h"
-#include "gpucache.h"
+#include <AlenkaSignal/montage.h>
 
 #include <CL/cl_gl.h>
 
@@ -15,8 +15,6 @@ namespace AlenkaSignal
 class OpenCLContext;
 template<class T>
 class FilterProcessor;
-template<class T>
-class Montage;
 template<class T>
 class MontageProcessor;
 }
@@ -41,17 +39,27 @@ doneCurrent();
  */
 class SignalProcessor : public OpenGLInterface
 {
-public:
-	SignalProcessor();
-	~SignalProcessor();
+	int trackCount = 0;
+	bool updateMontageFlag = false;
 
-	/**
-	 * @brief Returns the number of samples in one channel of the result signal block.
-	 */
-	unsigned int getBlockSize() const
-	{
-		return blockSize;
-	}
+	int nBlock, nMontage, nSamples, M, nDelay;
+	unsigned int parallelQueues, montageCopyCount, fileChannels;
+
+	std::vector<cl_command_queue> commandQueues;
+	std::vector<cl_mem> inBuffers;
+	std::vector<cl_mem> outBuffers;
+	float* fileBuffer;
+
+	OpenDataFile* file;
+	AlenkaSignal::OpenCLContext* context;
+	AlenkaSignal::FilterProcessor<float>* filterProcessor;
+	AlenkaSignal::MontageProcessor<float>* montageProcessor = nullptr;
+	std::vector<AlenkaSignal::Montage<float>*> montage;
+	std::string header;
+
+public:
+	SignalProcessor(unsigned int nBlock, unsigned int parallelQueues, int montageCopyCount, OpenDataFile* file, AlenkaSignal::OpenCLContext* context);
+	~SignalProcessor();
 
 	/**
 	 * @brief Returns the number of channels of the result signal block.
@@ -91,13 +99,7 @@ public:
 	 *
 	 * When called ready() should be true.
 	 */
-	SignalBlock getAnyBlock(const std::set<int>& indexSet);
-
-	/**
-	 * @brief Notifies this object that the DataFile changed.
-	 * @param file Pointer to the data file. nullptr means file was closed.
-	 */
-	void changeFile(OpenDataFile* file);
+	void process(const std::vector<int>& index, const std::vector<cl_mem>& buffers);
 
 	/**
 	 * @brief Returns true if this object is ready for full operation.
@@ -107,36 +109,24 @@ public:
 		return file && trackCount > 0;
 	}
 
-	static std::string simplifyMontage(const std::string& str);
+	static std::string simplifyMontage(const std::string& str)
+	{
+		QString qstr = AlenkaSignal::Montage<float>::stripComments(str).c_str();
+		return qstr.simplified().toStdString();
+	}
 	static std::vector<AlenkaSignal::Montage<float>*> makeMontage(const std::vector<std::string>& montageCode, AlenkaSignal::OpenCLContext* context, KernelCache* kernelCache, const std::string& header);
 
+	static std::pair<std::int64_t, std::int64_t> blockIndexToSampleRange(int index, unsigned int blockSize)
+	{
+		using namespace std;
+
+		int64_t from = index*(blockSize - 1);
+		int64_t	to = from + blockSize - 1;
+
+		return make_pair(from, to);
+	}
+
 private:
-	OpenDataFile* file = nullptr;
-	AlenkaSignal::OpenCLContext* context;
-	AlenkaSignal::FilterProcessor<float>* filterProcessor;
-	AlenkaSignal::MontageProcessor<float>* montageProcessor;
-	std::vector<AlenkaSignal::Montage<float>*> montage;
-	GPUCache* cache;
-	std::string header;
-
-	bool onlineFilter;
-	bool glSharing;
-	unsigned int blockSize;
-	int trackCount = 0;
-	bool updateMontageFlag = false;
-
-	std::condition_variable processorInCV;
-	cl_command_queue commandQueue;
-	cl_mem processorTmpBuffer;
-	cl_mem processorOutputBuffer = nullptr;
-	float* processorOutputBufferTmp = nullptr;
-	GLuint vertexArrays[2];
-	GLuint glBuffer;
-
-	void destroyFileRelated();
-	std::string indexSetToString(const std::set<int>& indexSet);
-	void releaseOutputBuffer();
-
 	/**
 	 * @brief This method actually (unlike setUpdateMontageFlag()) updates the MontageProcessor object.
 	 */

@@ -25,7 +25,7 @@ private:
 	QSlider* channelSlider;
 
 private slots:
-	void setMultipliersText(const std::vector<std::pair<double, double>>& value);
+	void setMultipliersText();
 	void applyMultipliers();
 };
 

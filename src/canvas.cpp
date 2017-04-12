@@ -22,16 +22,26 @@
 #include <string>
 #include <cmath>
 #include <set>
+#include <algorithm>
+
+#if defined WIN_BUILD
+#include <windows.h>
+#elif defined UNIX_BUILD
+#include <GL/glx.h>
+#endif
 
 using namespace std;
 using namespace AlenkaFile;
+using namespace AlenkaSignal;
 
 namespace
 {
 
-const double horizontalZoomFactor = 1.3;
-const double verticalZoomFactor = 1.3;
-const double trackZoomFactor = verticalZoomFactor;
+const double HORIZONTAL_ZOOM = 1.3;
+const double VERTICAL_ZOOM = 1.3;
+const double TRACK_ZOOM = VERTICAL_ZOOM;
+const unsigned int PARALLEL_PROCESSOR_QUEUES = 8;
+const unsigned int CACHE_CAP = 10;
 
 void getEventTypeColorOpacity(OpenDataFile* file, int type, QColor* color, double* opacity)
 {
@@ -119,11 +129,8 @@ void zoom(OpenDataFile* file, double factor, int i)
  * @param range The sample range.
  * @param blockSize The size of the blocks constant for all blocks.
  */
-pair<int64_t, int64_t> sampleRangeToBlockRange(pair<int64_t, int64_t> range, unsigned int blockSize)
+pair<int64_t, int64_t> sampleRangeToBlockRange(int64_t from, int64_t to, unsigned int blockSize)
 {
-	int64_t from = range.first;
-	int64_t	to = range.second;
-
 	from /= blockSize - 1;
 	to = (to - 1)/(blockSize - 1);
 
@@ -159,12 +166,99 @@ void getEventsForRendering(OpenDataFile* file, int firstSample, int lastSample, 
 	stable_sort(singleChannelEvents->begin(), singleChannelEvents->end(), [] (tuple<int, int, int, int> a, tuple<int, int, int, int> b) { return get<0>(a) < get<0>(b); });
 }
 
+class GPUCacheAllocator : public LRUCacheAllocator<GPUCacheItem>, public OpenGLInterface
+{
+	size_t size;
+	bool duplicateSignal;
+	OpenCLContext* context;
+
+public:
+	GPUCacheAllocator(size_t size, bool duplicateSignal, OpenCLContext* context) : size(size), duplicateSignal(duplicateSignal), context(context)
+	{
+		initializeOpenGLInterface();
+	}
+
+	virtual bool constructElement(GPUCacheItem** ptr) override
+	{
+		*ptr = new GPUCacheItem();
+		GPUCacheItem& item = **ptr;
+
+		gl()->glGenBuffers(1, &item.signalBuffer);
+
+		GLuint arrays[2];
+		glGenVertexArrays(2, arrays);
+		item.signalArray = arrays[0];
+		item.eventArray = arrays[1];
+
+		gl()->glBindBuffer(GL_ARRAY_BUFFER, item.signalBuffer);
+		gl()->glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_STATIC_DRAW);
+
+		const size_t offset = (duplicateSignal ? 2 : 1)*sizeof(float);
+
+		glBindVertexArray(item.signalArray);				
+		gl()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, duplicateSignal ? 2*sizeof(float) : 0, reinterpret_cast<void*>(offset));
+		gl()->glEnableVertexAttribArray(0);
+
+		glBindVertexArray(item.eventArray);
+		if (duplicateSignal)
+		{
+			for (int i = 0; i < 3; ++i)
+			{
+				gl()->glVertexAttribPointer(i, 1, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(offset*i));
+				gl()->glEnableVertexAttribArray(i);
+			}
+		}
+		else
+		{
+			glBindVertexBuffer(0, item.signalBuffer, 0, 0);
+			glVertexBindingDivisor(0, 2);
+			for (int i = 0; i < 3; ++i)
+			{
+				glVertexAttribFormat(i, 1, GL_FLOAT, GL_FALSE, offset*i);
+				glVertexAttribBinding(i, 0);
+				gl()->glEnableVertexAttribArray(i);
+			}
+		}
+
+		gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		cl_mem_flags flags = CL_MEM_READ_WRITE;
+	#ifdef NDEBUG
+		flags = CL_MEM_WRITE_ONLY;
+	#endif
+
+		cl_int err;
+		item.sharedBuffer = clCreateFromGLBuffer(context->getCLContext(), flags, item.signalBuffer, &err);
+		checkClErrorCode(err, "clCreateFromGLBuffer()");
+
+		return true; // TODO: React to out of memory error.
+	}
+	virtual void destroyElement(GPUCacheItem* ptr) override
+	{
+		if (ptr)
+		{
+			GLuint arrays[2] {ptr->signalArray, ptr->eventArray};
+			glDeleteVertexArrays(2, arrays);
+
+			cl_int err = clReleaseMemObject(ptr->sharedBuffer);
+			checkClErrorCode(err, "clReleaseMemObject()");
+
+			gl()->glDeleteBuffers(1, &ptr->signalBuffer);
+
+			delete ptr;
+		}
+	}
+};
+
 } // namespace
 
 Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent)
 {
 	setFocusPolicy(Qt::ClickFocus);
 	setMouseTracking(true);
+
+	nBlock = PROGRAM_OPTIONS["blockSize"].as<unsigned int>();
+	duplicateSignal = !PROGRAM_OPTIONS["gl43"].as<bool>(); // TODO: Fix the OpenGL 4.3 optimization.
 }
 
 Canvas::~Canvas()
@@ -179,6 +273,9 @@ Canvas::~Canvas()
 	glDeleteVertexArrays(1, &rectangleLineArray);
 	gl()->glDeleteBuffers(1, &rectangleLineBuffer);
 
+	delete context;
+	delete cache;
+
 	gl();
 
 	doneCurrent();
@@ -186,12 +283,9 @@ Canvas::~Canvas()
 
 void Canvas::changeFile(OpenDataFile* file)
 {
-	assert(signalProcessor);
-
 	makeCurrent();
 
 	this->file = file;
-	signalProcessor->changeFile(file);
 
 	if (file)
 	{
@@ -203,7 +297,7 @@ void Canvas::changeFile(OpenDataFile* file)
 		openFileConnections.push_back(c);
 		c = connect(&OpenDataFile::infoTable, SIGNAL(filterWindowChanged(AlenkaSignal::WindowFunction)), this, SLOT(updateFilter()));
 		openFileConnections.push_back(c);
-		c = connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersChanged(std::vector<std::pair<double, double>>)), this, SLOT(updateFilter()));
+		c = connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersChanged()), this, SLOT(updateFilter()));
 		openFileConnections.push_back(c);
 		c = connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersOnChanged(bool)), this, SLOT(updateFilter()));
 		openFileConnections.push_back(c);
@@ -216,12 +310,18 @@ void Canvas::changeFile(OpenDataFile* file)
 
 		samplesRecorded = file->file->getSamplesRecorded();
 		samplingFrequency = file->file->getSamplingFrequency();
+
+		delete signalProcessor;
+		signalProcessor = new SignalProcessor(nBlock, PARALLEL_PROCESSOR_QUEUES, duplicateSignal ? 2 : 1, file, context);
 	}
 	else
 	{
 		for (auto e : openFileConnections)
 			disconnect(e);
 		openFileConnections.clear();
+
+		delete signalProcessor;
+		signalProcessor = nullptr;
 	}
 
 	doneCurrent();
@@ -243,7 +343,7 @@ QColor Canvas::modifySelectionColor(const QColor& color)
 
 void Canvas::horizontalZoom(bool reverse)
 {
-	double factor = horizontalZoomFactor;
+	double factor = HORIZONTAL_ZOOM;
 	if (reverse)
 		factor = 1/factor;
 
@@ -254,7 +354,7 @@ void Canvas::verticalZoom(bool reverse)
 {
 	if (file)
 	{
-		double factor = verticalZoomFactor;
+		double factor = VERTICAL_ZOOM;
 		if (reverse)
 			factor = 1/factor;
 
@@ -267,7 +367,7 @@ void Canvas::trackZoom(bool reverse)
 {
 	if (file)
 	{
-		double factor = trackZoomFactor;
+		double factor = TRACK_ZOOM;
 		if (reverse)
 			factor = 1/factor;
 
@@ -306,8 +406,6 @@ void Canvas::initializeGL()
 	logToFile("Initializing OpenGL in Canvas.");
 
 	initializeOpenGLInterface();
-
-	signalProcessor = new SignalProcessor;
 
 	QFile signalVertFile(":/signal.vert");
 	signalVertFile.open(QIODevice::ReadOnly);
@@ -354,23 +452,11 @@ void Canvas::initializeGL()
 	ss << "Vendor: " << gl()->glGetString(GL_VENDOR) << endl;
 	ss << "GLSH version: " << gl()->glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
 
-#if defined GL_2_0
 	const GLubyte* str = gl()->glGetString(GL_EXTENSIONS);
 	if (str)
 		ss << "Extensions: " << str << endl;
 	else
 		ss << "Extensions:" << endl;
-#else
-	GLint extensions;
-	gl()->glGetIntegerv(GL_NUM_EXTENSIONS, &extensions);
-
-	ss << "Extensions:";
-	for (GLint i = 0; i < extensions; ++i)
-	{
-		ss << " " << gl()->glGetStringi(GL_EXTENSIONS, i);
-	}
-	ss << endl;
-#endif
 
 	logToFile(ss.str());
 
@@ -379,6 +465,8 @@ void Canvas::initializeGL()
 		cout << ss.str();
 		std::exit(EXIT_SUCCESS);
 	}
+
+	createSharableContext();
 
 	checkGLMessages();
 }
@@ -416,10 +504,6 @@ void Canvas::paintGL()
 		checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
 		gl()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
 
-		location = gl()->glGetUniformLocation(eventProgram->getGLProgram(), "divideBy");
-		checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-		gl()->glUniform1i(location, eventMode);
-
 		location = gl()->glGetUniformLocation(eventProgram->getGLProgram(), "eventWidth");
 		checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
 		gl()->glUniform1f(location, 0.45*height()/signalProcessor->getTrackCount());
@@ -431,10 +515,13 @@ void Canvas::paintGL()
 		gl()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
 
 		// Create the data block range needed.
-		int firstSample = static_cast<unsigned int>(floor(OpenDataFile::infoTable.getPosition()*ratio));
-		int lastSample = static_cast<unsigned int>(ceil((OpenDataFile::infoTable.getPosition() + width())*ratio));
+		int firstSample = static_cast<int>(floor(OpenDataFile::infoTable.getPosition()*ratio));
+		int lastSample = static_cast<int>(ceil((OpenDataFile::infoTable.getPosition() + width())*ratio));
 
-		auto fromTo = sampleRangeToBlockRange(make_pair(firstSample, lastSample), signalProcessor->getBlockSize());
+		auto fromTo = sampleRangeToBlockRange(firstSample, lastSample, nSamples);
+
+		assert(SignalProcessor::blockIndexToSampleRange(fromTo.first, nSamples).first <= firstSample);
+		assert(lastSample <= SignalProcessor::blockIndexToSampleRange(fromTo.second, nSamples).second);
 
 		set<int> indexSet;
 
@@ -450,18 +537,44 @@ void Canvas::paintGL()
 		drawTimeLines();
 		drawAllChannelEvents(allChannelEvents);
 
-		while (indexSet.empty() == false)
-		{
-			SignalBlock block = signalProcessor->getAnyBlock(indexSet);
+		int index;
+		GPUCacheItem* cacheItem;
 
-			drawSingleChannelEvents(block, singleChannelEvents);
-			drawSignal(block);
+		while ((cacheItem = cache->getAny(indexSet, &index)))
+		{
+			drawBlock(index, cacheItem, singleChannelEvents);
+
+			indexSet.erase(index);
+		}
+
+		gl()->glFlush();
+		auto it = indexSet.begin();
+
+		for (unsigned int i = 0; i < indexSet.size(); i += PARALLEL_PROCESSOR_QUEUES)
+		{
+			vector<int> indexVector;
+			vector<cl_mem> bufferVector;
+			vector<GPUCacheItem*> items;
+
+			for (unsigned int j = 0; j < PARALLEL_PROCESSOR_QUEUES && j + i < indexSet.size(); ++j)
+			{
+				int index = *(it++);
+				cacheItem = cache->setOldest(index);
+				logToFileAndConsole("Loading block " << index << " to GPU cache.");
+
+				indexVector.push_back(index);
+				bufferVector.push_back(cacheItem->sharedBuffer);
+				items.push_back(cacheItem);
+			}
+
+			signalProcessor->process(indexVector, bufferVector);
+
+			for (unsigned int j = 0; j < indexVector.size(); ++j)
+			{
+				drawBlock(indexVector[j], items[j], singleChannelEvents);
+			}
 
 			gl()->glFlush();
-
-			indexSet.erase(block.getIndex());
-
-			//logToFile("Block " << block.getIndex() << " painted.");
 		}
 
 		drawPositionIndicator();
@@ -640,7 +753,39 @@ void Canvas::focusOutEvent(QFocusEvent* /*event*/)
 }
 
 void Canvas::focusInEvent(QFocusEvent* /*event*/)
+{}
+
+void Canvas::updateProcessor()
 {
+	M = file->file->getSamplingFrequency() + 1;
+	nMontage = nBlock - M + 1;
+	nSamples = nMontage - 2;
+
+	size_t size = nMontage*signalProcessor->getTrackCount()*sizeof(float);
+	if (duplicateSignal)
+		size *= 2;
+
+	delete cache;
+	cache = new LRUCache<int, GPUCacheItem>(CACHE_CAP, new GPUCacheAllocator(size, duplicateSignal, context));
+}
+
+void Canvas::drawBlock(int index, GPUCacheItem* cacheItem, const vector<tuple<int, int, int, int>>& singleChannelEvents)
+{
+	signalArray = cacheItem->signalArray;
+	eventArray = cacheItem->eventArray;
+
+//	gl()->glBindBuffer(GL_COPY_READ_BUFFER, cacheItem->signalBuffer);
+//	gl()->glBindBuffer(GL_COPY_WRITE_BUFFER, eventBuffer);
+
+//	int size = nMontage*signalProcessor->getTrackCount();
+//	for (int i = 0; i < size; ++i)
+//	{
+//		gl()->glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, i*sizeof(float), 2*i*sizeof(float), sizeof(float));
+//		gl()->glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, i*sizeof(float), (2*i + 1)*sizeof(float), sizeof(float));
+//	}
+
+	drawSingleChannelEvents(index, singleChannelEvents);
+	drawSignal(index);
 }
 
 void Canvas::drawAllChannelEvents(const vector<tuple<int, int, int>>& eventVector)
@@ -783,11 +928,11 @@ void Canvas::drawTimeLine(double at)
 	gl()->glDrawArrays(GL_LINE_STRIP, 0, 2);
 }
 
-void Canvas::drawSingleChannelEvents(const SignalBlock& block, const vector<tuple<int, int, int, int>>& eventVector)
+void Canvas::drawSingleChannelEvents(int index, const vector<tuple<int, int, int, int>>& eventVector)
 {
 	gl()->glUseProgram(eventProgram->getGLProgram());
 
-	glBindVertexArray(block.getArray());
+	glBindVertexArray(eventArray);
 
 	const AbstractTrackTable* trackTable = getTrackTable(file);
 	int event = 0, type = -1, track = -1, hidden = 0;
@@ -801,7 +946,7 @@ void Canvas::drawSingleChannelEvents(const SignalBlock& block, const vector<tupl
 				int from = get<2>(eventVector[event]);
 				int to = from + get<3>(eventVector[event]) - 1;
 
-				drawSingleChannelEvent(block, track - hidden, from, to);
+				drawSingleChannelEvent(index, track - hidden, from, to);
 
 				++event;
 			}
@@ -817,7 +962,7 @@ void Canvas::drawSingleChannelEvents(const SignalBlock& block, const vector<tupl
 						++hidden;
 				}
 
-				setUniformTrack(eventProgram->getGLProgram(), track, hidden, block);
+				setUniformTrack(eventProgram->getGLProgram(), track, hidden, index);
 			}
 		}
 		else
@@ -837,7 +982,7 @@ void Canvas::drawSingleChannelEvents(const SignalBlock& block, const vector<tupl
 		{
 			int hidden = countHiddenTracks(track);
 
-			setUniformTrack(eventProgram->getGLProgram(), track + hidden, hidden, block);
+			setUniformTrack(eventProgram->getGLProgram(), track + hidden, hidden, index);
 
 			QColor color(Qt::blue);
 			double opacity = 0.5;
@@ -851,47 +996,37 @@ void Canvas::drawSingleChannelEvents(const SignalBlock& block, const vector<tupl
 			if (end < start)
 				swap(start, end);
 
-			drawSingleChannelEvent(block, track, start, end);
+			drawSingleChannelEvent(index, track, start, end);
 		}
 	}
 }
 
-void Canvas::drawSingleChannelEvent(const SignalBlock& block, int track, int from, int to)
+void Canvas::drawSingleChannelEvent(int index, int track, int from, int to)
 {
-	if (from <= block.getLastSample() && block.getFirstSample() <= to)
-	{
-		from = max<int>(block.getFirstSample(), from);
-		to = min<int>(block.getLastSample(), to);
+	auto fromTo = SignalProcessor::blockIndexToSampleRange(index, nSamples);
+	int firstSample = fromTo.first;
+	int lastSample = fromTo.second;
 
-		if (eventMode == 1)
-		{
-			gl()->glDrawArrays(GL_TRIANGLE_STRIP, track*signalProcessor->getBlockSize() + from - block.getFirstSample(), to - from + 1);
-		}
-		else
-		{
-			gl()->glDrawArrays(GL_TRIANGLE_STRIP, 2*(track*signalProcessor->getBlockSize() + from - block.getFirstSample()), 2*(to - from + 1));
-		}
+	if (from <= lastSample && firstSample <= to)
+	{
+		from = max(firstSample, from);
+		to = min(lastSample, to);
+
+		gl()->glDrawArrays(GL_TRIANGLE_STRIP, 2*(track*nMontage + from - firstSample), 2*(to - from + 1));
 	}
 }
 
-void Canvas::drawSignal(const SignalBlock& block)
+void Canvas::drawSignal(int index)
 {
 	gl()->glUseProgram(signalProgram->getGLProgram());
 
-	if (eventMode == 1)
-	{
-		glBindVertexArray(block.getArray());
-	}
-	else
-	{
-		glBindVertexArray(block.getArrayStrideTwo());
-	}
+	glBindVertexArray(signalArray);
 
 	for (int track = 0; track < signalProcessor->getTrackCount(); ++track)
 	{
 		int hidden = countHiddenTracks(track);
 
-		setUniformTrack(signalProgram->getGLProgram(), track + hidden, hidden, block);
+		setUniformTrack(signalProgram->getGLProgram(), track + hidden, hidden, index);
 
 		QColor color = DataModel::array2color<QColor>(getTrackTable(file)->row(track + hidden).color);
 		if (isSelectingTrack && track == cursorTrack)
@@ -899,11 +1034,11 @@ void Canvas::drawSignal(const SignalBlock& block)
 
 		setUniformColor(signalProgram->getGLProgram(), color, 1);
 
-		gl()->glDrawArrays(GL_LINE_STRIP, track*signalProcessor->getBlockSize(), signalProcessor->getBlockSize());
+		gl()->glDrawArrays(GL_LINE_STRIP, track*nMontage, nSamples);
 	}
 }
 
-void Canvas::setUniformTrack(GLuint program, int track, int hidden, const SignalBlock& block)
+void Canvas::setUniformTrack(GLuint program, int track, int hidden, int index)
 {
 	GLuint location = gl()->glGetUniformLocation(program, "y0");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
@@ -917,7 +1052,7 @@ void Canvas::setUniformTrack(GLuint program, int track, int hidden, const Signal
 
 	location = gl()->glGetUniformLocation(program, "bufferOffset");
 	checkNotErrorCode(location,static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-	gl()->glUniform1i(location, block.getFirstSample() - (track - hidden)*signalProcessor->getBlockSize());
+	gl()->glUniform1i(location, SignalProcessor::blockIndexToSampleRange(index, nSamples).first - (track - hidden)*nMontage);
 }
 
 void Canvas::setUniformColor(GLuint program, const QColor& color, double opacity)
@@ -974,12 +1109,33 @@ int Canvas::countHiddenTracks(int track)
 	return hidden;
 }
 
+void Canvas::createSharableContext()
+{
+	vector<cl_context_properties> properties;
+	properties.push_back(CL_GL_CONTEXT_KHR);
+
+#if defined WIN_BUILD
+		properties.push_back(reinterpret_cast<cl_context_properties>(wglGetCurrentContext()));
+
+		properties.push_back(CL_WGL_HDC_KHR);
+		properties.push_back(reinterpret_cast<cl_context_properties>(wglGetCurrentDC()));
+#elif defined UNIX_BUILD
+		properties.push_back(reinterpret_cast<cl_context_properties>(glXGetCurrentContext()));
+
+		properties.push_back(CL_GLX_DISPLAY_KHR);
+		properties.push_back(reinterpret_cast<cl_context_properties>(glXGetCurrentDisplay()));
+#endif
+
+	context = new AlenkaSignal::OpenCLContext(PROGRAM_OPTIONS["clPlatform"].as<int>(), PROGRAM_OPTIONS["clDevice"].as<int>(), properties);
+}
+
 void Canvas::updateFilter()
 {
 	assert(signalProcessor);
 
 	makeCurrent();
 	signalProcessor->updateFilter();
+	updateProcessor();
 	doneCurrent();
 }
 
@@ -1018,6 +1174,7 @@ void Canvas::updateMontage()
 
 	makeCurrent();
 	signalProcessor->setUpdateMontageFlag();
+	updateProcessor();
 	doneCurrent();
 }
 

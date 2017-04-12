@@ -102,3 +102,10 @@ KernelCache::~KernelCache()
 		logToFileAndConsole("Failed to save kernel cache to " << filePath << ".");
 	}
 }
+
+void KernelCache::deleteCacheFile()
+{
+	QFile file(QString::fromStdString(cacheFilePath()));
+	bool res = file.remove();
+	assert(res); (void)res;
+}

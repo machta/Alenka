@@ -1,3 +1,5 @@
+#ifdef TESTS
+
 #include <gtest/gtest.h>
 
 #include "../src/SignalProcessor/lrucache.h"
@@ -96,3 +98,5 @@ TEST(lrucache_test, float_cache)
 	}
 	EXPECT_EQ(destroyCounter, 10);
 }
+
+#endif // TESTS

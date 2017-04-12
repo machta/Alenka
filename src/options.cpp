@@ -54,10 +54,10 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("printBuffersFolder", value<string>()->default_value("."), "path to the folder to which the values will be saved (no end slash), only in debug build")
 	("notchFrequency", value<double>()->default_value(50), "frequency used to filter power interference with the signal")
 	("onlineFilter", value<bool>()->default_value(false), "should the signal be filtered every time before it is rendered")
-	("glSharing", value<bool>()->default_value(false), "if true, OpenCL will share data directly with OpenGL")
+	("gl43", value<bool>()->default_value(false), "if true, Opengl 4.3 is used instead of the default 2.0")
 	("eventRenderMode", value<int>()->default_value(2), "controls rendering of single-channel events; accepted values (from simplest mode) are 1, 2")
 	("log", value<string>()->default_value("%Y-%m-%d--%H-%M-%S.log"), "string passed to strftime() to create the file name")
-	("kernelCacheSize", value<int>()->default_value(0), "the maximum number of montage kernels that will be cached")
+	("kernelCacheSize", value<int>()->default_value(0), "the maximum number of montage kernels that will be cached; if 0, the existing file is removed")
 	("kernelCacheDir", value<string>()->default_value(""), "directory for storing cache files (empty means the same dir as the executable)")
 	("autoSaveInterval", value<int>()->default_value(2*60), "in seconds")
 	;
