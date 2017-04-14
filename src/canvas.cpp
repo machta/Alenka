@@ -193,9 +193,9 @@ public:
 		gl()->glBindBuffer(GL_ARRAY_BUFFER, item.signalBuffer);
 		gl()->glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_STATIC_DRAW);
 
-		const size_t offset = (duplicateSignal ? 2 : 1)*sizeof(float);
+#define offset (duplicateSignal ? 2 : 1)*sizeof(float)
 
-		glBindVertexArray(item.signalArray);				
+		glBindVertexArray(item.signalArray);
 		gl()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, duplicateSignal ? 2*sizeof(float) : 0, reinterpret_cast<void*>(offset));
 		gl()->glEnableVertexAttribArray(0);
 
@@ -219,6 +219,7 @@ public:
 				gl()->glEnableVertexAttribArray(i);
 			}
 		}
+#undef offset
 
 		gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 

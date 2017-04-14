@@ -76,6 +76,8 @@ win32 {
 		LIBS += -L"$$OPENCL_DIR"/lib/x86
 	}
 
+	LIBS += -lopengl32
+
 	INCLUDEPATH += "$$OPENCL_DIR"/include
 
 	DEFINES += WIN_BUILD _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS \

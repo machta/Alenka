@@ -189,7 +189,7 @@ void SignalProcessor::process(const vector<int>& index, const vector<cl_mem>& bu
 	}
 
 	cl_int err;
-	const unsigned int iters = min<unsigned int>(parallelQueues, index.size());
+	const unsigned int iters = min(parallelQueues, static_cast<unsigned int>(index.size()));
 
 	for (unsigned int i = 0; i < iters; ++i)
 	{

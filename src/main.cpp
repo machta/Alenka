@@ -70,13 +70,12 @@ int main(int argc, char** argv)
 #endif
 		MyApplication app(argc, argv);
 
+#ifdef TESTS
 		if (PROGRAM_OPTIONS.isSet("test"))
 		{
-#ifdef TESTS
 			return RUN_ALL_TESTS();
-#endif
-			return 0;
 		}
+#endif
 
 		SignalFileBrowserWindow window;
 		window.show();

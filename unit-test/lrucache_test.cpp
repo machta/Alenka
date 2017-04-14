@@ -87,7 +87,7 @@ TEST(lrucache_test, float_cache)
 			testKey(key1, secondPointer0, secondPointer1);
 
 			for (int j = 0; j < 7; ++j)
-				cache.setOldest(2 + j + i*20)[0] = 2 + j;
+				cache.setOldest(2 + j + i*20)[0] = 2.f + j;
 		}
 
 		EXPECT_FALSE(cache.getAny(set<int>{-1}, &key0));
