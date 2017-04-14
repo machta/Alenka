@@ -48,7 +48,7 @@ KernelCache::KernelCache()
 			file >> codeSize;
 			file.ignore(2, '\n');
 
-			unique_ptr<char[]> code(new char[codeSize + 1]{0});
+			unique_ptr<char[]> code(new char[codeSize + 1]());
 			file.read(code.get(), codeSize);
 
 			size_t binarySize;
@@ -105,7 +105,5 @@ KernelCache::~KernelCache()
 
 void KernelCache::deleteCacheFile()
 {
-	QFile file(QString::fromStdString(cacheFilePath()));
-	bool res = file.remove();
-	assert(res); (void)res;
+	QFile::remove(QString::fromStdString(cacheFilePath()));
 }
