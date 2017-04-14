@@ -6,10 +6,12 @@
  */
 /// @cond
 
-#version 110
+#ifdef GLSL_110
 #extension GL_EXT_gpu_shader4 : enable
-
 attribute vec2 inputVertex;
+#else
+in vec2 inputVertex;
+#endif
 
 uniform mat4 transformMatrix;
 

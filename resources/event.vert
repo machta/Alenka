@@ -6,12 +6,16 @@
  */
 /// @cond
 
-#version 110
+#ifdef GLSL_110
 #extension GL_EXT_gpu_shader4 : enable
-
 attribute float sampleValue0;
 attribute float sampleValue1;
 attribute float sampleValue2;
+#else
+in float sampleValue0;
+in float sampleValue1;
+in float sampleValue2;
+#endif
 
 uniform mat4 transformMatrix;
 uniform float y0;

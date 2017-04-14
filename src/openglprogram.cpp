@@ -13,8 +13,14 @@ OpenGLProgram::OpenGLProgram(const string& vertSource, const string& fragSource)
 
 	program = gl()->glCreateProgram();
 
-	addShader(vertSource, GL_VERTEX_SHADER);
-	addShader(fragSource, GL_FRAGMENT_SHADER);
+	string shaderHeader;
+	if (PROGRAM_OPTIONS["gl20"].as<bool>())
+		shaderHeader = "#version 110\n#define GLSL_110\n";
+	else
+		shaderHeader = "#version 130\n";
+
+	addShader(shaderHeader + vertSource, GL_VERTEX_SHADER);
+	addShader(shaderHeader + fragSource, GL_FRAGMENT_SHADER);
 
 	gl()->glLinkProgram(program);
 
