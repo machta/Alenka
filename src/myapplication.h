@@ -18,6 +18,8 @@ class MyApplication : public QApplication
 {
 	Q_OBJECT
 
+	Options* options = nullptr;
+
 public:
 	/**
 	 * @brief MyApplication constructor.
@@ -43,8 +45,7 @@ public:
 	 */
 	virtual bool notify(QObject* receiver, QEvent* event) override;
 
-private:
-	Options* options = nullptr;
+	static void mainExit(int status = EXIT_SUCCESS);
 };
 
 extern std::unique_ptr<AlenkaSignal::OpenCLContext> globalContext;

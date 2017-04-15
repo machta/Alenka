@@ -91,6 +91,5 @@ int main(int argc, char** argv)
 		logToFileAndConsole("Unknown exception caught.");
 	}
 
-	logToFile("Exiting with error code " << ret << ".");
-	return ret;
+	MyApplication::mainExit(ret);
 }

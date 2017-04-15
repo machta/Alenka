@@ -102,12 +102,12 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 	if (PROGRAM_OPTIONS.isSet("help"))
 	{
 		cout << PROGRAM_OPTIONS.getDescription() << endl;
-		std::exit(EXIT_SUCCESS);
+		mainExit();
 	}
 	else if (PROGRAM_OPTIONS.isSet("clInfo"))
 	{
 		cout << ss.str();
-		std::exit(EXIT_SUCCESS);
+		mainExit();
 	}
 
 	// Set locale.
@@ -139,4 +139,10 @@ bool MyApplication::notify(QObject* receiver, QEvent* event)
 	}
 
 	return false;
+}
+
+void MyApplication::mainExit(int status)
+{
+	logToFile("Exiting with status " << status << ".");
+	std::exit(status);
 }

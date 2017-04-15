@@ -1,5 +1,6 @@
 #include "canvas.h"
 
+#include "myapplication.h"
 #include "openglprogram.h"
 #include "options.h"
 #include "error.h"
@@ -464,7 +465,7 @@ void Canvas::initializeGL()
 	if (PROGRAM_OPTIONS.isSet("glInfo"))
 	{
 		cout << ss.str();
-		std::exit(EXIT_SUCCESS);
+		MyApplication::mainExit();
 	}
 
 	createSharableContext();

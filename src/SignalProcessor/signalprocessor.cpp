@@ -76,7 +76,7 @@ SignalProcessor::SignalProcessor(unsigned int nBlock, unsigned int parallelQueue
 		checkClErrorCode(err, "clCreateCommandQueue()");
 
 		cl_mem_flags flags = CL_MEM_READ_WRITE;
-		inBuffers.push_back(clCreateBuffer(context->getCLContext(), flags, (nBlock + 2)*fileChannels*sizeof(float), nullptr, &err));
+		rawBuffers.push_back(clCreateBuffer(context->getCLContext(), flags, (nBlock + 2)*fileChannels*sizeof(float), nullptr, &err));
 		checkClErrorCode(err, "clCreateBuffer()");
 
 #ifdef NDEBUG
@@ -84,7 +84,7 @@ SignalProcessor::SignalProcessor(unsigned int nBlock, unsigned int parallelQueue
 		flags |= CL_MEM_HOST_NO_ACCESS;
 #endif
 #endif
-		outBuffers.push_back(clCreateBuffer(context->getCLContext(), flags, (nBlock + 2)*fileChannels*sizeof(float), nullptr, &err));
+		filterBuffers.push_back(clCreateBuffer(context->getCLContext(), flags, (nBlock + 2)*fileChannels*sizeof(float), nullptr, &err));
 		checkClErrorCode(err, "clCreateBuffer()");
 	}
 
@@ -110,10 +110,10 @@ SignalProcessor::~SignalProcessor()
 		err = clReleaseCommandQueue(commandQueues[i]);
 		checkClErrorCode(err, "clReleaseCommandQueue()");
 
-		err = clReleaseMemObject(inBuffers[i]);
+		err = clReleaseMemObject(rawBuffers[i]);
 		checkClErrorCode(err, "clReleaseMemObject()");
 
-		err = clReleaseMemObject(outBuffers[i]);
+		err = clReleaseMemObject(filterBuffers[i]);
 		checkClErrorCode(err, "clReleaseMemObject()");
 	}
 
@@ -175,12 +175,12 @@ void SignalProcessor::setUpdateMontageFlag()
 	}
 }
 
-void SignalProcessor::process(const vector<int>& index, const vector<cl_mem>& buffers)
+void SignalProcessor::process(const vector<int>& index, const vector<cl_mem>& outBuffers)
 {
 	assert(ready());
 	assert(0 < index.size());
 	assert(static_cast<unsigned int>(index.size()) <= parallelQueues);
-	assert(index.size() == buffers.size());
+	assert(index.size() == outBuffers.size());
 
 	if (updateMontageFlag)
 	{
@@ -193,6 +193,7 @@ void SignalProcessor::process(const vector<int>& index, const vector<cl_mem>& bu
 
 	for (unsigned int i = 0; i < iters; ++i)
 	{
+		// Load the signal data into an auxiliary buffer.
 		auto fromTo = blockIndexToSampleRange(index[i], nSamples);
 		fromTo.first += -M + nDelay;
 		fromTo.second += nDelay + 1;
@@ -205,31 +206,35 @@ void SignalProcessor::process(const vector<int>& index, const vector<cl_mem>& bu
 		size_t rowLen = nBlock*sizeof(float);
 		size_t region[] = {rowLen, fileChannels, 1};
 
-		err = clEnqueueWriteBufferRect(commandQueues[i], inBuffers[i], CL_TRUE, origin, origin, region, rowLen + 2*sizeof(float), 0, 0, 0, fileBuffer, 0, nullptr, nullptr);
+		err = clEnqueueWriteBufferRect(commandQueues[i], rawBuffers[i], CL_TRUE, origin, origin, region, rowLen + 2*sizeof(float), 0, 0, 0, fileBuffer, 0, nullptr, nullptr);
 		checkClErrorCode(err, "clEnqueueWriteBufferRect()");
 
-		printBuffer("before_filter.txt", inBuffers[i], commandQueues[i]);
-		filterProcessor->process(inBuffers[i], outBuffers[i], commandQueues[i]);
-		printBuffer("after_filter.txt", outBuffers[i], commandQueues[i]);
+		// Enqueu the filter operation, and store the result in the second buffer.
+		printBuffer("before_filter.txt", rawBuffers[i], commandQueues[i]);
+		filterProcessor->process(rawBuffers[i], filterBuffers[i], commandQueues[i]);
+		printBuffer("after_filter.txt", filterBuffers[i], commandQueues[i]);
 	}
 
+	// Synchronize with GL so that we can use the shared buffers.
 	gl()->glFinish(); // Could be replaced by a fence.
 
+	// Enque the montage computation, and store the the result in the output buffer.
 	for (unsigned int i = 0; i < iters; ++i)
 	{
-		err = clEnqueueAcquireGLObjects(commandQueues[i], 1, &buffers[i], 0, nullptr, nullptr);
+		err = clEnqueueAcquireGLObjects(commandQueues[i], 1, &outBuffers[i], 0, nullptr, nullptr);
 		checkClErrorCode(err, "clEnqueueAcquireGLObjects()");
 
-		montageProcessor->process(montage, outBuffers[i], buffers[i], commandQueues[i], M - 1);
-		printBuffer("after_montage.txt", buffers[i], commandQueues[i]);
+		montageProcessor->process(montage, filterBuffers[i], outBuffers[i], commandQueues[i], M - 1);
+		printBuffer("after_montage.txt", outBuffers[i], commandQueues[i]);
 	}
 
+	// Release the locked buffers and wait for all operations to finish.
 	for (unsigned int i = 0; i < iters; ++i)
 	{
-		err = clFinish(commandQueues[i]); // Why is this here twice.
-		checkClErrorCode(err, "clFinish()");
+		//err = clFinish(commandQueues[i]); // Why is this here twice.
+		//checkClErrorCode(err, "clFinish()");
 
-		err = clEnqueueReleaseGLObjects(commandQueues[i], 1, &buffers[i], 0, nullptr, nullptr);
+		err = clEnqueueReleaseGLObjects(commandQueues[i], 1, &outBuffers[i], 0, nullptr, nullptr);
 		checkClErrorCode(err, "clEnqueueReleaseGLObjects()");
 
 		err = clFinish(commandQueues[i]);

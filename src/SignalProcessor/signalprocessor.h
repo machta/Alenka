@@ -46,8 +46,8 @@ class SignalProcessor : public OpenGLInterface
 	unsigned int parallelQueues, montageCopyCount, fileChannels;
 
 	std::vector<cl_command_queue> commandQueues;
-	std::vector<cl_mem> inBuffers;
-	std::vector<cl_mem> outBuffers;
+	std::vector<cl_mem> rawBuffers;
+	std::vector<cl_mem> filterBuffers;
 	float* fileBuffer;
 
 	OpenDataFile* file;
@@ -99,7 +99,7 @@ public:
 	 *
 	 * When called ready() should be true.
 	 */
-	void process(const std::vector<int>& index, const std::vector<cl_mem>& buffers);
+	void process(const std::vector<int>& index, const std::vector<cl_mem>& outBuffers);
 
 	/**
 	 * @brief Returns true if this object is ready for full operation.
