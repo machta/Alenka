@@ -87,6 +87,31 @@ protected:
 		return logger;
 	}
 
+	/**
+	 * @brief Checks if there were any OpenGL errors.
+	 *
+	 * If yes, then print a message to log. Unless the only error detected is GL_OUT_OF_MEMORY,
+	 * throw an exception.
+	 *
+	 * At most 10 messages are printed so that the output and log doesn't get flooded.
+	 * This can happen on some platforms, where (for some reason) glGetError() never stops returning errors.
+	 * In extreme cases this can lead to filling of the whole harddrive with the same error message.
+	 *
+	 * @return True if GL_OUT_OF_MEMORY was detected, false otherwise.
+	 */
+	bool checkGLErrors();
+
+	/**
+	 * @brief Call oveloaded checkGLErrors() and store last call position.
+	 */
+	bool checkGLErrors(const char* file, int line)
+	{
+		bool ret = checkGLErrors();
+		lastCallFile = file;
+		lastCallLine = line;
+		return ret;
+	}
+
 	// Part of OpenGL 3.0.
 	void glGenVertexArrays(GLsizei n, GLuint* arrays, const char* file, int line)
 	{
@@ -147,26 +172,9 @@ protected:
 
 private:
 	/**
-	 * @brief Checks if there are any OpenGL errors.
-	 *
-	 * If there are, print a message to the log and throw an exception.
-	 *
-	 * At most 10 messages are printed so that the output and log doesn't get flooded.
-	 * This can happen on some platforms, where (for some reason) glGetError() never stops returning errors.
-	 * In extreme cases this can lead to filling of the whole harddrive with the same error message.
-	 */
-	void checkGLErrors();
-	void checkGLErrors(const char* file, int line)
-	{
-		checkGLErrors();
-		lastCallFile = file;
-		lastCallLine = line;
-	}
-
-	/**
 	 * @brief Converts enum item to a string name.
 	 */
-	std::string getErrorCode(GLenum code);
+	std::string glErrorCodeToString(GLenum code);
 };
 
 #endif // OPENGLINTERFACE_H

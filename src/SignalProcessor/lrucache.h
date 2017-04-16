@@ -80,7 +80,6 @@ public:
 		updateLastUsed(maxElement);
 
 		assert(elements[maxElement]);
-
 		return elements[maxElement];
 	}
 
@@ -130,13 +129,16 @@ private:
 		unsigned int maxElement = 0;
 		unsigned int max = lastUsed[maxElement];
 
-		for (unsigned int i = 1; i < capacity; ++i)
+		for (unsigned int i = 0; i < capacity; ++i)
 		{
 			if (!elements[i])
-				return i;
+				return i; // Return early if an empty slot is found.
 
 			if (max < lastUsed[i])
+			{
 				maxElement = i;
+				max = lastUsed[i];
+			}
 		}
 
 		return maxElement;
@@ -154,7 +156,10 @@ private:
 		for (unsigned int i = maxElement + 1; i < capacity; ++i)
 		{
 			if (elements[i] && max < lastUsed[i])
+			{
 				maxElement = i;
+				max = lastUsed[i];
+			}
 		}
 
 		return maxElement;

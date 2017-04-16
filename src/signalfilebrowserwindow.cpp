@@ -623,7 +623,7 @@ void SignalFileBrowserWindow::openFile()
 
 	if (suffix == "gdf") // TODO: Add BDF support through Edflib.
 	{
-		file = new GDF2(stdFileName);
+		file = new GDF2(stdFileName, PROGRAM_OPTIONS["uncalibratedGDF"].as<bool>());
 	}
 	else if (suffix == "edf")
 	{
@@ -840,7 +840,7 @@ void SignalFileBrowserWindow::openFile()
 	});
 	openFileConnections.push_back(c);
 
-	int ms = 1000*PROGRAM_OPTIONS["autoSaveInterval"].as<int>();
+	int ms = 1000*PROGRAM_OPTIONS["autosaveInterval"].as<int>();
 	autoSaveTimer->setInterval(ms);
 	autoSaveTimer->start();
 }

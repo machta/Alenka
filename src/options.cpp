@@ -35,37 +35,35 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	options_description commandLineOnly("Command line options", lineWidth);
 	commandLineOnly.add_options()
 	("help", "help message")
-	("config,c", value<string>()->default_value(configDefault), "config file")
-	("printBuffers", "print the values in buffers during signal processing")
+	("config,c", value<string>()->default_value(configDefault), "config file path")
 	("clInfo", "print OpenCL platform and device info")
 	("glInfo", "print OpenGL info")
+	("printBuffers", "dump OpenCL buffers for debugging")
 #ifdef TESTS
-	("test", "run unit test")
+	("test", "run unit tests")
 #endif
 	;
 
 	options_description configuration("Configuration", lineWidth);
 	configuration.add_options()
 	("locale", value<string>()->default_value("en_us"), "the locale to be use; mostly controls decimal number format")
-	("uncalibrated", value<bool>()->default_value(false), "assume uncalibrated data in gdf files")
-	("clPlatform", value<int>()->default_value(0), "OpenCL platform id")
-	("clDevice", value<int>()->default_value(0), "OpenCL device id to be used in SignalProcessor")
-	("blockSize", value<unsigned int>()->default_value(32*1024), "size of one block of signal data")
-	("gpuMemorySize", value<int64_t>()->default_value(0), "the maximum amount of GPU memory used; if <= 0 then the value is relative to the implementation defined maximum, otherwise it is absolute")
-	("dataFileCacheSize", value<int64_t>()->default_value(0), "maximum total memory used by the data file cache; zero means don't use cache")
-	("printBuffersFolder", value<string>()->default_value("."), "path to the folder to which the values will be saved (no end slash), only in debug build")
-	("notchFrequency", value<double>()->default_value(50), "frequency used to filter power interference with the signal")
-	("onlineFilter", value<bool>()->default_value(false), "should the signal be filtered every time before it is rendered")
-	("gl20", value<bool>()->default_value(false), "use Opengl plus some extensions 2.0 instead of the default 3.0")
-	("gl43", value<bool>()->default_value(false), "use Opengl 4.3 instead of the default 3.0")
-	("eventRenderMode", value<int>()->default_value(2), "controls rendering of single-channel events; accepted values (from simplest mode) are 1, 2")
 	("log", value<string>()->default_value("%Y-%m-%d--%H-%M-%S.log"), "string passed to strftime() to create the file name")
-	("kernelCacheSize", value<int>()->default_value(0), "the maximum number of montage kernels that will be cached; if 0, the existing file is removed")
+	("uncalibratedGDF", value<bool>()->default_value(false), "treat GDF files as uncalibrated")
+	("autosaveInterval", value<int>()->default_value(2*60), "in seconds")
+	("kernelCacheSize", value<int>()->default_value(0), "how many montage kernels can be cached; if 0, the existing file is removed")
 	("kernelCacheDir", value<string>()->default_value(""), "directory for storing cache files (empty means the same dir as the executable)")
-	("autoSaveInterval", value<int>()->default_value(2*60), "in seconds")
+	("gl20", value<bool>()->default_value(false), "use Opengl 2.0 plus some extensions instead of the default 3.0")
+	("gl43", value<bool>()->default_value(false), "use Opengl 4.3 instead of the default 3.0")
+	("clPlatform", value<int>()->default_value(0), "OpenCL platform ID")
+	("clDevice", value<int>()->default_value(0), "OpenCL device ID")
+	("blockSize", value<unsigned int>()->default_value(32*1024), "how many samples per channel are in one block")
+	("gpuMemorySize", value<int>()->default_value(0), "allowed GPU memory in MB; 0 means no limit")
+	("parallelProcessors", value<unsigned int>()->default_value(4), "parallel signal processor queue count")
+	("dataFileCacheSize", value<int>()->default_value(100), "allowed RAM for caching signal files in MB")
+	("notchFrequency", value<double>()->default_value(50), "frequency used to filter power interference")
 	;
 
-	options_description spikedet("Spikedet", lineWidth);
+	options_description spikedet("Spikedet settings", lineWidth);
 	spikedet.add_options()
 	("fl", value<int>()->default_value(10), "lowpass filter frequency")
 	("fh", value<int>()->default_value(60), "highpass filter frequency")
@@ -120,11 +118,9 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 
 void Options::validateValues()
 {
-	const int mode = get("eventRenderMode").as<int>();
-	if (mode != 1 && mode != 2)
-	{
-		throw validation_error(validation_error::invalid_option_value, "eventRenderMode", to_string(mode));
-	}
+	const int autosaveInterval = get("autosaveInterval").as<int>();
+	if (autosaveInterval <= 0)
+		throw validation_error(validation_error::invalid_option_value, "autosaveInterval", to_string(autosaveInterval));
 }
 
 void Options::logConfigFile() const

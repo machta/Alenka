@@ -66,6 +66,7 @@ class Canvas : public QOpenGLWidget, public OpenGLInterface
 	AlenkaSignal::OpenCLContext* context = nullptr;
 	int nBlock, nMontage, nSamples, M;
 	bool duplicateSignal;
+	unsigned int parallelQueues;
 
 public:
 	explicit Canvas(QWidget* parent = nullptr);

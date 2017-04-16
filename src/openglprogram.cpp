@@ -47,7 +47,7 @@ OpenGLProgram::~OpenGLProgram()
 {
 	gl()->glDeleteProgram(program);
 
-	gl();
+	checkGLErrors();
 }
 
 void OpenGLProgram::addShader(const string& sourceText, GLenum type)

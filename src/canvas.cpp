@@ -41,8 +41,6 @@ namespace
 const double HORIZONTAL_ZOOM = 1.3;
 const double VERTICAL_ZOOM = 1.3;
 const double TRACK_ZOOM = VERTICAL_ZOOM;
-const unsigned int PARALLEL_PROCESSOR_QUEUES = 8;
-const unsigned int CACHE_CAP = 10;
 
 void getEventTypeColorOpacity(OpenDataFile* file, int type, QColor* color, double* opacity)
 {
@@ -182,17 +180,55 @@ public:
 	virtual bool constructElement(GPUCacheItem** ptr) override
 	{
 		*ptr = new GPUCacheItem();
-		GPUCacheItem& item = **ptr;
+		bool ret = initializeElement(**ptr);
+
+		if (!ret)
+		{
+			logToFileAndConsole("Memory allocation failed. The GPU cache will not grow anymore.");
+		}
+
+		return ret;
+	}
+	virtual void destroyElement(GPUCacheItem* ptr) override
+	{
+		if (ptr)
+		{
+			if (ptr->signalArray)
+				glDeleteVertexArrays(1, &ptr->signalArray);
+
+			if (ptr->eventArray)
+				glDeleteVertexArrays(1, &ptr->eventArray);
+
+			if (ptr->sharedBuffer)
+			{
+				cl_int err = clReleaseMemObject(ptr->sharedBuffer);
+				checkClErrorCode(err, "clReleaseMemObject()");
+			}
+
+			if (ptr->signalBuffer)
+				gl()->glDeleteBuffers(1, &ptr->signalBuffer);
+
+			delete ptr;
+		}
+	}
+
+private:
+	bool initializeElement(GPUCacheItem& item)
+	{
+		item.signalBuffer = item.signalArray = item.eventArray = 0;
+		item.sharedBuffer = nullptr;
 
 		gl()->glGenBuffers(1, &item.signalBuffer);
+		gl()->glBindBuffer(GL_ARRAY_BUFFER, item.signalBuffer);
+		gl()->glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_STATIC_DRAW);
+
+		if (checkGLErrors())
+			return false;
 
 		GLuint arrays[2];
 		glGenVertexArrays(2, arrays);
 		item.signalArray = arrays[0];
 		item.eventArray = arrays[1];
-
-		gl()->glBindBuffer(GL_ARRAY_BUFFER, item.signalBuffer);
-		gl()->glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_STATIC_DRAW);
 
 #define offset (duplicateSignal ? 2 : 1)*sizeof(float)
 
@@ -213,6 +249,7 @@ public:
 		{
 			glBindVertexBuffer(0, item.signalBuffer, 0, 0);
 			glVertexBindingDivisor(0, 2);
+
 			for (int i = 0; i < 3; ++i)
 			{
 				glVertexAttribFormat(i, 1, GL_FLOAT, GL_FALSE, offset*i);
@@ -225,30 +262,23 @@ public:
 		gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		cl_mem_flags flags = CL_MEM_READ_WRITE;
-	#ifdef NDEBUG
+#ifdef NDEBUG
 		flags = CL_MEM_WRITE_ONLY;
-	#endif
+#endif
 
 		cl_int err;
 		item.sharedBuffer = clCreateFromGLBuffer(context->getCLContext(), flags, item.signalBuffer, &err);
-		checkClErrorCode(err, "clCreateFromGLBuffer()");
 
-		return true; // TODO: React to out of memory error.
-	}
-	virtual void destroyElement(GPUCacheItem* ptr) override
-	{
-		if (ptr)
+		if (err == CL_OUT_OF_HOST_MEMORY)
 		{
-			GLuint arrays[2] {ptr->signalArray, ptr->eventArray};
-			glDeleteVertexArrays(2, arrays);
-
-			cl_int err = clReleaseMemObject(ptr->sharedBuffer);
-			checkClErrorCode(err, "clReleaseMemObject()");
-
-			gl()->glDeleteBuffers(1, &ptr->signalBuffer);
-
-			delete ptr;
+			return false;
 		}
+		else
+		{
+			checkClErrorCode(err, "clCreateFromGLBuffer()");
+		}
+
+		return true;
 	}
 };
 
@@ -259,6 +289,7 @@ Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent)
 	setFocusPolicy(Qt::ClickFocus);
 	setMouseTracking(true);
 
+	parallelQueues = PROGRAM_OPTIONS["parallelProcessors"].as<unsigned int>();
 	nBlock = PROGRAM_OPTIONS["blockSize"].as<unsigned int>();
 	duplicateSignal = !PROGRAM_OPTIONS["gl43"].as<bool>(); // TODO: Fix the OpenGL 4.3 optimization.
 }
@@ -278,7 +309,7 @@ Canvas::~Canvas()
 	delete context;
 	delete cache;
 
-	gl();
+	checkGLErrors();
 
 	doneCurrent();
 }
@@ -314,7 +345,7 @@ void Canvas::changeFile(OpenDataFile* file)
 		samplingFrequency = file->file->getSamplingFrequency();
 
 		delete signalProcessor;
-		signalProcessor = new SignalProcessor(nBlock, PARALLEL_PROCESSOR_QUEUES, duplicateSignal ? 2 : 1, file, context);
+		signalProcessor = new SignalProcessor(nBlock, parallelQueues, duplicateSignal ? 2 : 1, file, context);
 	}
 	else
 	{
@@ -552,13 +583,13 @@ void Canvas::paintGL()
 		gl()->glFlush();
 		auto it = indexSet.begin();
 
-		for (unsigned int i = 0; i < indexSet.size(); i += PARALLEL_PROCESSOR_QUEUES)
+		for (unsigned int i = 0; i < indexSet.size(); i += parallelQueues)
 		{
 			vector<int> indexVector;
 			vector<cl_mem> bufferVector;
 			vector<GPUCacheItem*> items;
 
-			for (unsigned int j = 0; j < PARALLEL_PROCESSOR_QUEUES && j + i < indexSet.size(); ++j)
+			for (unsigned int j = 0; j < parallelQueues && j + i < indexSet.size(); ++j)
 			{
 				int index = *(it++);
 				cacheItem = cache->setOldest(index);
@@ -728,9 +759,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent* event)
 		if (isDrawingEvent)
 		{
 			isDrawingEvent = false;
-
 			addEvent(eventTrack);
-
 			update();
 		}
 	}
@@ -767,24 +796,34 @@ void Canvas::updateProcessor()
 	if (duplicateSignal)
 		size *= 2;
 
+	cl_ulong gpuMemorySize = PROGRAM_OPTIONS["gpuMemorySize"].as<int>();
+	gpuMemorySize *= 1000*1000;
+
+	if (gpuMemorySize <= 0)
+	{
+		cl_int err = clGetDeviceInfo(context->getCLDevice(), CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &gpuMemorySize, nullptr);
+		checkClErrorCode(err, "clGetDeviceInfo()");
+
+		// The desktop environment usually needs some memory to work with, so we leave it 25%.
+		gpuMemorySize *= 0.75;
+	}
+
+	unsigned int cacheCapacity = static_cast<unsigned int>(gpuMemorySize/size - parallelQueues*2);
+	if (cacheCapacity == 0)
+		throw runtime_error("Not enough GPU memory to create cache with non zero capacity.");
+
+	logToFile("Creating GPU cache with " << cacheCapacity << " capacity and blocks of size " << size << ".");
+
 	delete cache;
-	cache = new LRUCache<int, GPUCacheItem>(CACHE_CAP, new GPUCacheAllocator(size, duplicateSignal, context));
+	cache = new LRUCache<int, GPUCacheItem>(cacheCapacity, new GPUCacheAllocator(size, duplicateSignal, context));
 }
 
 void Canvas::drawBlock(int index, GPUCacheItem* cacheItem, const vector<tuple<int, int, int, int>>& singleChannelEvents)
 {
+	assert(cacheItem);
+
 	signalArray = cacheItem->signalArray;
 	eventArray = cacheItem->eventArray;
-
-//	gl()->glBindBuffer(GL_COPY_READ_BUFFER, cacheItem->signalBuffer);
-//	gl()->glBindBuffer(GL_COPY_WRITE_BUFFER, eventBuffer);
-
-//	int size = nMontage*signalProcessor->getTrackCount();
-//	for (int i = 0; i < size; ++i)
-//	{
-//		gl()->glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, i*sizeof(float), 2*i*sizeof(float), sizeof(float));
-//		gl()->glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, i*sizeof(float), (2*i + 1)*sizeof(float), sizeof(float));
-//	}
 
 	drawSingleChannelEvents(index, singleChannelEvents);
 	drawSignal(index);
@@ -823,19 +862,17 @@ void Canvas::drawAllChannelEvents(const vector<tuple<int, int, int>>& eventVecto
 		{
 			QColor color(Qt::blue);
 			double opacity = 0.5;
+
 			int type = OpenDataFile::infoTable.getSelectedType();
 			if (type != -1)
-			{
 				getEventTypeColorOpacity(file, type, &color, &opacity);
-			}
+
 			setUniformColor(rectangleLineProgram->getGLProgram(), color, opacity);
 
 			int start = eventStart, end = eventEnd;
 
 			if (end < start)
-			{
 				swap(start, end);
-			}
 
 			drawAllChannelEvent(start, end);
 		}

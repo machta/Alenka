@@ -67,25 +67,36 @@ void OpenGLInterface::initializeOpenGLInterface()
 	}
 }
 
-void OpenGLInterface::checkGLErrors()
+bool OpenGLInterface::checkGLErrors()
 {
 	GLenum err;
 	int errorsDetected = 0;
+	int outOfMemoryErrorsDetected = 0;
 
 	while (err = functions->glGetError(), err != GL_NO_ERROR && errorsDetected <= 10)
 	{
-		++errorsDetected;
+		if (err == GL_OUT_OF_MEMORY)
+		{
+			++outOfMemoryErrorsDetected;
+		}
+		else
+		{
+			++errorsDetected;
 
-		logToFileAndConsole("OpenGL error: " << getErrorCode(err) << " last call from " << lastCallFile << ":" << lastCallLine);
+			logToFileAndConsole("OpenGL error: " << glErrorCodeToString(err) << " last call from " << lastCallFile << ":" << lastCallLine);
+		}
+
 	}
 
-	if (errorsDetected > 0)
+	if (errorsDetected)
 		throw runtime_error(to_string(errorsDetected) + " OpenGL errors detected.");
+
+	return 0 < outOfMemoryErrorsDetected;
 }
 
 #define CASE(a_) case a_: return #a_
 
-string OpenGLInterface::getErrorCode(GLenum code)
+string OpenGLInterface::glErrorCodeToString(GLenum code)
 {
 	switch (code)
 	{
