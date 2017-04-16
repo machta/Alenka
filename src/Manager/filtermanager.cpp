@@ -80,7 +80,7 @@ FilterManager::FilterManager(QWidget* parent) : QWidget(parent)
 	checkBox = new QCheckBox("freeze");
 	checkBox->setToolTip("Freeze spectrum graph");
 	connect(checkBox, SIGNAL(clicked(bool)), filterVisulizer, SLOT(setFreezeSpectrum(bool)));
-	checkBox->setChecked(false);
+	checkBox->setChecked(true);
 	hbox->addWidget(checkBox);
 
 	box2->addLayout(hbox);

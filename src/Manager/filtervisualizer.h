@@ -66,7 +66,7 @@ private:
 	std::vector<float> buffer;
 	int channelToDisplay = 0;
 	int secondToDisplay = 2;
-	bool freezeSpectrum = false;
+	bool freezeSpectrum = true;
 	QtCharts::QChart* chart;
 	QtCharts::QLineSeries* spectrumSeries;
 	QtCharts::QLineSeries* responseSeries;
