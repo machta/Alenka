@@ -50,6 +50,7 @@
 #include <QCloseEvent>
 
 #include <locale>
+#include <algorithm>
 
 using namespace std;
 using namespace AlenkaFile;
@@ -689,11 +690,24 @@ void SignalFileBrowserWindow::openFile()
 	signalViewer->changeFile(openDataFile);
 
 	// Update Filter tool bar.
-	QStringList comboOptions;
-	comboOptions << "---" << "0" << "5" << "10";
+	vector<double> comboNumbers{0, 5, 10};
+	for (int i = 25; i <= file->getSamplingFrequency()/2; i *= 2)
+		comboNumbers.push_back(i);
 
-	for (int i = 50; i <= file->getSamplingFrequency()/2; i *= 2)
-		comboOptions << QString::number(i);
+	double lpf = OpenDataFile::infoTable.getLowpassFrequency();
+	if (lpf > 0 && lpf <= file->getSamplingFrequency()/2)
+		comboNumbers.push_back(lpf);
+
+	double hpf = OpenDataFile::infoTable.getLowpassFrequency();
+	if (hpf > 0 && hpf <= file->getSamplingFrequency()/2)
+		comboNumbers.push_back(hpf);
+
+	sort(comboNumbers.begin(), comboNumbers.end());
+	comboNumbers.erase(unique(comboNumbers.begin(), comboNumbers.end()), comboNumbers.end());
+
+	QStringList comboOptions("---");
+	for (double e : comboNumbers)
+		comboOptions << locale().toString(e, 'f', 2);
 
 	QMetaObject::Connection c;
 
