@@ -60,6 +60,25 @@ void multiplySamples(vector<float>* samples)
 		(*samples)[i] *= multipliers[i];
 }
 
+class FloatAllocator : public LRUCacheAllocator<float>
+{
+	const int size;
+	int* destroyCounter;
+
+public:
+	FloatAllocator(int size) : size(size) {}
+
+	virtual bool constructElement(float** ptr) override
+	{
+		*ptr = new float[size];
+		return true;
+	}
+	virtual void destroyElement(float* ptr) override
+	{
+		delete[] ptr;
+	}
+};
+
 } // namespace
 
 SignalProcessor::SignalProcessor(unsigned int nBlock, unsigned int parallelQueues, int montageCopyCount, OpenDataFile* file, AlenkaSignal::OpenCLContext* context)
@@ -88,7 +107,13 @@ SignalProcessor::SignalProcessor(unsigned int nBlock, unsigned int parallelQueue
 		checkClErrorCode(err, "clCreateBuffer()");
 	}
 
-	fileBuffer = new float[nBlock*fileChannels];
+	int blockSize = nBlock*fileChannels;
+	int64_t fileCacheMemory = PROGRAM_OPTIONS["fileCacheSize"].as<int>();
+	fileCacheMemory *= 1000*1000;
+	unsigned int capacity = max(1, static_cast<int>(fileCacheMemory/blockSize));
+
+	cache = new LRUCache<int, float>(capacity, new FloatAllocator(blockSize));
+
 	filterProcessor = new AlenkaSignal::FilterProcessor<float>(nBlock, fileChannels, context);
 
 	QFile headerFile(":/montageHeader.cl"); // TODO: Consolidate the 4 copies of this into one instance.
@@ -117,7 +142,7 @@ SignalProcessor::~SignalProcessor()
 		checkClErrorCode(err, "clReleaseMemObject()");
 	}
 
-	delete[] fileBuffer;
+	delete cache;
 	delete filterProcessor;
 	delete montageProcessor;
 }
@@ -175,12 +200,18 @@ void SignalProcessor::setUpdateMontageFlag()
 	}
 }
 
-void SignalProcessor::process(const vector<int>& index, const vector<cl_mem>& outBuffers)
+void SignalProcessor::process(const vector<int>& indexVector, const vector<cl_mem>& outBuffers)
 {
+#ifndef NDEBUG
 	assert(ready());
-	assert(0 < index.size());
-	assert(static_cast<unsigned int>(index.size()) <= parallelQueues);
-	assert(index.size() == outBuffers.size());
+	assert(0 < indexVector.size());
+	assert(static_cast<unsigned int>(indexVector.size()) <= parallelQueues);
+	assert(indexVector.size() == outBuffers.size());
+
+	for (unsigned int i = 0; i < outBuffers.size(); ++i)
+		for (unsigned int j = 0; j < outBuffers.size(); ++j)
+			assert(i == j || (outBuffers[i] != outBuffers[j] && indexVector[i] != indexVector[j]));
+#endif
 
 	if (updateMontageFlag)
 	{
@@ -189,17 +220,30 @@ void SignalProcessor::process(const vector<int>& index, const vector<cl_mem>& ou
 	}
 
 	cl_int err;
-	const unsigned int iters = min(parallelQueues, static_cast<unsigned int>(index.size()));
+	const unsigned int iters = min(parallelQueues, static_cast<unsigned int>(indexVector.size()));
 
 	for (unsigned int i = 0; i < iters; ++i)
 	{
-		// Load the signal data into an auxiliary buffer.
-		auto fromTo = blockIndexToSampleRange(index[i], nSamples);
-		fromTo.first += -M + nDelay;
-		fromTo.second += nDelay + 1;
-		assert(fromTo.second - fromTo.first + 1 == nBlock);
+		// Load the signal data into the file cache.
+		int index = indexVector[i], cacheIndex;
 
-		file->file->readSignal(fileBuffer, fromTo.first, fromTo.second);
+		float* fileBuffer = cache->getAny(set<int>{index}, &cacheIndex);
+		assert (!fileBuffer || cacheIndex == index);
+
+		if (!fileBuffer)
+		{
+			fileBuffer = cache->setOldest(index);
+			logToFileAndConsole("Loading block " << index << " to File cache.");
+
+			auto fromTo = blockIndexToSampleRange(index, nSamples);
+			fromTo.first += -M + nDelay;
+			fromTo.second += nDelay + 1;
+			assert(fromTo.second - fromTo.first + 1 == nBlock);
+
+			file->file->readSignal(fileBuffer, fromTo.first, fromTo.second);
+		}
+
+		assert(fileBuffer);
 		printBuffer("after_readSignal.txt", fileBuffer, nBlock*fileChannels);
 
 		size_t origin[] = {0, 0, 0};

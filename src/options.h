@@ -7,7 +7,7 @@
  *
  * Then PROGRAM_OPTIONS macro can be used to retrieve the values like this:
  * @code{.cpp}
-int64_t memoryAvailable = PROGRAM_OPTIONS["dataFileCacheSize"].as<int64_t>();
+int memoryAvailable = PROGRAM_OPTIONS["fileCacheSize"].as<int>();
  * @endcode
  *
  * @file

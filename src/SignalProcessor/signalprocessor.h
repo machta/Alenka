@@ -3,6 +3,7 @@
 
 #include "../openglinterface.h"
 #include <AlenkaSignal/montage.h>
+#include "lrucache.h"
 
 #include <CL/cl_gl.h>
 
@@ -48,7 +49,7 @@ class SignalProcessor : public OpenGLInterface
 	std::vector<cl_command_queue> commandQueues;
 	std::vector<cl_mem> rawBuffers;
 	std::vector<cl_mem> filterBuffers;
-	float* fileBuffer;
+	LRUCache<int, float>* cache;
 
 	OpenDataFile* file;
 	AlenkaSignal::OpenCLContext* context;
@@ -99,7 +100,7 @@ public:
 	 *
 	 * When called ready() should be true.
 	 */
-	void process(const std::vector<int>& index, const std::vector<cl_mem>& outBuffers);
+	void process(const std::vector<int>& indexVector, const std::vector<cl_mem>& outBuffers);
 
 	/**
 	 * @brief Returns true if this object is ready for full operation.

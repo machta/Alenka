@@ -59,7 +59,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("blockSize", value<unsigned int>()->default_value(32*1024), "how many samples per channel are in one block")
 	("gpuMemorySize", value<int>()->default_value(0), "allowed GPU memory in MB; 0 means no limit")
 	("parallelProcessors", value<unsigned int>()->default_value(4), "parallel signal processor queue count")
-	("dataFileCacheSize", value<int>()->default_value(100), "allowed RAM for caching signal files in MB")
+	("fileCacheSize", value<int>()->default_value(0), "allowed RAM for caching signal files in MB")
 	("notchFrequency", value<double>()->default_value(50), "frequency used to filter power interference")
 	;
 
