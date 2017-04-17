@@ -788,6 +788,12 @@ void Canvas::focusInEvent(QFocusEvent* /*event*/)
 
 void Canvas::updateProcessor()
 {
+	delete cache;
+	cache = nullptr;
+
+	if (!ready())
+		return;
+
 	M = file->file->getSamplingFrequency() + 1;
 	nMontage = nBlock - M + 1;
 	nSamples = nMontage - 2;
@@ -814,7 +820,6 @@ void Canvas::updateProcessor()
 
 	logToFile("Creating GPU cache with " << cacheCapacity << " capacity and blocks of size " << size << ".");
 
-	delete cache;
 	cache = new LRUCache<int, GPUCacheItem>(cacheCapacity, new GPUCacheAllocator(size, duplicateSignal, context));
 }
 
