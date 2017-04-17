@@ -81,13 +81,11 @@ public:
 
 } // namespace
 
-SignalProcessor::SignalProcessor(unsigned int nBlock, unsigned int parallelQueues, int montageCopyCount, OpenDataFile* file, AlenkaSignal::OpenCLContext* context)
-	: nBlock(nBlock), parallelQueues(parallelQueues), montageCopyCount(montageCopyCount), file(file), context(context)
+SignalProcessor::SignalProcessor(unsigned int nBlock, unsigned int parallelQueues, int montageCopyCount, function<void ()> glSharing, OpenDataFile* file, AlenkaSignal::OpenCLContext* context)
+	: nBlock(nBlock), parallelQueues(parallelQueues), montageCopyCount(montageCopyCount), glSharing(glSharing), file(file), context(context)
 {
 	fileChannels = file->file->getChannelCount();
 	cl_int err;
-
-	initializeOpenGLInterface();
 
 	for (unsigned int i = 0; i < parallelQueues; ++i)
 	{
@@ -260,13 +258,17 @@ void SignalProcessor::process(const vector<int>& indexVector, const vector<cl_me
 	}
 
 	// Synchronize with GL so that we can use the shared buffers.
-	gl()->glFinish(); // Could be replaced by a fence.
+	if (glSharing)
+		glSharing(); // Could be replaced by a fence.
 
 	// Enque the montage computation, and store the the result in the output buffer.
 	for (unsigned int i = 0; i < iters; ++i)
 	{
-		err = clEnqueueAcquireGLObjects(commandQueues[i], 1, &outBuffers[i], 0, nullptr, nullptr);
-		checkClErrorCode(err, "clEnqueueAcquireGLObjects()");
+		if (glSharing)
+		{
+			err = clEnqueueAcquireGLObjects(commandQueues[i], 1, &outBuffers[i], 0, nullptr, nullptr);
+			checkClErrorCode(err, "clEnqueueAcquireGLObjects()");
+		}
 
 		montageProcessor->process(montage, filterBuffers[i], outBuffers[i], commandQueues[i], M - 1);
 		printBuffer("after_montage.txt", outBuffers[i], commandQueues[i]);
@@ -275,11 +277,11 @@ void SignalProcessor::process(const vector<int>& indexVector, const vector<cl_me
 	// Release the locked buffers and wait for all operations to finish.
 	for (unsigned int i = 0; i < iters; ++i)
 	{
-		//err = clFinish(commandQueues[i]); // Why is this here twice.
-		//checkClErrorCode(err, "clFinish()");
-
-		err = clEnqueueReleaseGLObjects(commandQueues[i], 1, &outBuffers[i], 0, nullptr, nullptr);
-		checkClErrorCode(err, "clEnqueueReleaseGLObjects()");
+		if (glSharing)
+		{
+			err = clEnqueueReleaseGLObjects(commandQueues[i], 1, &outBuffers[i], 0, nullptr, nullptr);
+			checkClErrorCode(err, "clEnqueueReleaseGLObjects()");
+		}
 
 		err = clFinish(commandQueues[i]);
 		checkClErrorCode(err, "clFinish()");

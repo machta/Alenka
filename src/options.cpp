@@ -54,6 +54,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("kernelCacheDir", value<string>()->default_value(""), "directory for storing cache files (empty means the same dir as the executable)")
 	("gl20", value<bool>()->default_value(false), "use Opengl 2.0 plus some extensions instead of the default 3.0")
 	("gl43", value<bool>()->default_value(false), "use Opengl 4.3 instead of the default 3.0")
+	("glSharing", value<bool>()->default_value(true), "use cl_khr_gl_sharing extension; this causes problems with Mesa")
 	("clPlatform", value<int>()->default_value(0), "OpenCL platform ID")
 	("clDevice", value<int>()->default_value(0), "OpenCL device ID")
 	("blockSize", value<unsigned int>()->default_value(32*1024), "how many samples per channel are in one block")

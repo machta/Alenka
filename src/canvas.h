@@ -65,8 +65,11 @@ class Canvas : public QOpenGLWidget, public OpenGLInterface
 	LRUCache<int, GPUCacheItem>* cache = nullptr;
 	AlenkaSignal::OpenCLContext* context = nullptr;
 	int nBlock, nMontage, nSamples, M;
-	bool duplicateSignal;
+	bool duplicateSignal, glSharing;
 	unsigned int parallelQueues;
+	cl_command_queue commandQueue = nullptr;
+	float* processorSyncBuffer = nullptr;
+	std::vector<cl_mem> processorOutputBuffers;
 
 public:
 	explicit Canvas(QWidget* parent = nullptr);
@@ -157,7 +160,7 @@ private:
 			emit cursorPositionTrackChanged(track);
 		}
 	}
-	void createSharableContext();
+	void createContext();
 
 private slots:
 	void updateFilter();

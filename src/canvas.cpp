@@ -168,11 +168,12 @@ void getEventsForRendering(OpenDataFile* file, int firstSample, int lastSample, 
 class GPUCacheAllocator : public LRUCacheAllocator<GPUCacheItem>, public OpenGLInterface
 {
 	size_t size;
-	bool duplicateSignal;
+	bool duplicateSignal, glSharing;
 	OpenCLContext* context;
 
 public:
-	GPUCacheAllocator(size_t size, bool duplicateSignal, OpenCLContext* context) : size(size), duplicateSignal(duplicateSignal), context(context)
+	GPUCacheAllocator(size_t size, bool duplicateSignal, bool glSharing, OpenCLContext* context)
+		: size(size), duplicateSignal(duplicateSignal), glSharing(glSharing), context(context)
 	{
 		initializeOpenGLInterface();
 	}
@@ -257,25 +258,33 @@ private:
 				gl()->glEnableVertexAttribArray(i);
 			}
 		}
+
 #undef offset
 
 		gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-		cl_mem_flags flags = CL_MEM_READ_WRITE;
-#ifdef NDEBUG
-		flags = CL_MEM_WRITE_ONLY;
-#endif
-
-		cl_int err;
-		item.sharedBuffer = clCreateFromGLBuffer(context->getCLContext(), flags, item.signalBuffer, &err);
-
-		if (err == CL_OUT_OF_HOST_MEMORY)
+		if (glSharing)
 		{
-			return false;
+			cl_int err;
+			cl_mem_flags flags = CL_MEM_READ_WRITE;
+#ifdef NDEBUG
+			flags = CL_MEM_WRITE_ONLY;
+#endif
+			item.sharedBuffer = clCreateFromGLBuffer(context->getCLContext(), flags, item.signalBuffer, &err);
+
+			if (err == CL_OUT_OF_HOST_MEMORY)
+			{
+				return false;
+			}
+			else
+			{
+				checkClErrorCode(err, "clCreateFromGLBuffer()");
+			}
+
 		}
 		else
 		{
-			checkClErrorCode(err, "clCreateFromGLBuffer()");
+			item.sharedBuffer = nullptr;
 		}
 
 		return true;
@@ -292,6 +301,7 @@ Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent)
 	parallelQueues = PROGRAM_OPTIONS["parallelProcessors"].as<unsigned int>();
 	nBlock = PROGRAM_OPTIONS["blockSize"].as<unsigned int>();
 	duplicateSignal = !PROGRAM_OPTIONS["gl43"].as<bool>(); // TODO: Fix the OpenGL 4.3 optimization.
+	glSharing = PROGRAM_OPTIONS["glSharing"].as<bool>();
 }
 
 Canvas::~Canvas()
@@ -308,9 +318,22 @@ Canvas::~Canvas()
 
 	delete context;
 	delete cache;
+	delete processorSyncBuffer;
+
+	cl_int err;
+	for (cl_mem e : processorOutputBuffers)
+	{
+		err = clReleaseMemObject(e);
+		checkClErrorCode(err, "clReleaseMemObject()");
+	}
+
+	if (commandQueue)
+	{
+		err = clReleaseCommandQueue(commandQueue);
+		checkClErrorCode(err, "clReleaseCommandQueue()");
+	}
 
 	checkGLErrors();
-
 	doneCurrent();
 }
 
@@ -345,7 +368,12 @@ void Canvas::changeFile(OpenDataFile* file)
 		samplingFrequency = file->file->getSamplingFrequency();
 
 		delete signalProcessor;
-		signalProcessor = new SignalProcessor(nBlock, parallelQueues, duplicateSignal ? 2 : 1, file, context);
+
+		function<void ()> sharingFunction = nullptr;
+		if (glSharing)
+			sharingFunction = [this] () { gl()->glFinish(); };
+
+		signalProcessor = new SignalProcessor(nBlock, parallelQueues, duplicateSignal ? 2 : 1, sharingFunction, file, context);
 	}
 	else
 	{
@@ -499,7 +527,14 @@ void Canvas::initializeGL()
 		MyApplication::mainExit();
 	}
 
-	createSharableContext();
+	createContext();
+
+	if (!glSharing)
+	{
+		cl_int err;
+		commandQueue = clCreateCommandQueue(context->getCLContext(), context->getCLDevice(), 0, &err);
+		checkClErrorCode(err, "clCreateCommandQueue()");
+	}
 
 	checkGLMessages();
 }
@@ -596,15 +631,35 @@ void Canvas::paintGL()
 				logToFileAndConsole("Loading block " << index << " to GPU cache.");
 
 				indexVector.push_back(index);
-				bufferVector.push_back(cacheItem->sharedBuffer);
+				bufferVector.push_back(glSharing ? cacheItem->sharedBuffer : processorOutputBuffers[j]);
 				items.push_back(cacheItem);
 			}
 
 			signalProcessor->process(indexVector, bufferVector);
 
-			for (unsigned int j = 0; j < indexVector.size(); ++j)
+			if (!glSharing)
 			{
-				drawBlock(indexVector[j], items[j], singleChannelEvents);
+				// Pull the data from CL buffer and copy it to the GL buffer.
+				cl_int err;
+				size_t size = nMontage*signalProcessor->getTrackCount()*sizeof(float);
+				if (duplicateSignal)
+					size *= 2;
+
+				for (unsigned int j = 0; j < indexVector.size(); ++j)
+				{
+					err = clEnqueueReadBuffer(commandQueue, processorOutputBuffers[j], CL_TRUE, 0, size, processorSyncBuffer, 0, nullptr, nullptr);
+					checkClErrorCode(err, "clEnqueueReadBuffer");
+
+					gl()->glBindBuffer(GL_ARRAY_BUFFER, items[j]->signalBuffer);
+					gl()->glBufferData(GL_ARRAY_BUFFER, size, processorSyncBuffer, GL_STATIC_DRAW);
+
+					drawBlock(indexVector[j], items[j], singleChannelEvents);
+				}
+			}
+			else
+			{
+				for (unsigned int j = 0; j < indexVector.size(); ++j)
+					drawBlock(indexVector[j], items[j], singleChannelEvents);
 			}
 
 			gl()->glFlush();
@@ -788,8 +843,22 @@ void Canvas::focusInEvent(QFocusEvent* /*event*/)
 
 void Canvas::updateProcessor()
 {
-	delete cache;
-	cache = nullptr;
+	cl_int err;
+
+	delete cache; cache = nullptr;
+
+	if (!glSharing)
+	{
+		delete processorSyncBuffer; processorSyncBuffer = nullptr;
+
+		for (cl_mem e : processorOutputBuffers)
+		{
+			err = clReleaseMemObject(e);
+			checkClErrorCode(err, "clReleaseMemObject()");
+		}
+		processorOutputBuffers.clear();
+	}
+	assert(processorOutputBuffers.empty());
 
 	if (!ready())
 		return;
@@ -814,13 +883,28 @@ void Canvas::updateProcessor()
 		gpuMemorySize *= 0.75;
 	}
 
-	unsigned int cacheCapacity = static_cast<unsigned int>(gpuMemorySize/size - parallelQueues*2);
-	if (cacheCapacity == 0)
+	unsigned int cacheCapacity = static_cast<unsigned int>(gpuMemorySize/size);
+	cacheCapacity -= parallelQueues*(glSharing ? 2 : 3);
+
+	if (cacheCapacity <= 0)
 		throw runtime_error("Not enough GPU memory to create cache with non zero capacity.");
 
 	logToFile("Creating GPU cache with " << cacheCapacity << " capacity and blocks of size " << size << ".");
 
-	cache = new LRUCache<int, GPUCacheItem>(cacheCapacity, new GPUCacheAllocator(size, duplicateSignal, context));
+	cache = new LRUCache<int, GPUCacheItem>(cacheCapacity, new GPUCacheAllocator(size, duplicateSignal, glSharing, context));
+
+	if (!glSharing)
+	{
+		processorSyncBuffer = new float[size/sizeof(float)];
+
+		for (unsigned int i = 0; i < parallelQueues; ++i)
+		{
+			cl_mem_flags flags = CL_MEM_READ_WRITE;
+
+			processorOutputBuffers.push_back(clCreateBuffer(context->getCLContext(), flags, size, nullptr, &err));
+			checkClErrorCode(err, "clCreateBuffer()");
+		}
+	}
 }
 
 void Canvas::drawBlock(int index, GPUCacheItem* cacheItem, const vector<tuple<int, int, int, int>>& singleChannelEvents)
@@ -1153,10 +1237,13 @@ int Canvas::countHiddenTracks(int track)
 	return hidden;
 }
 
-void Canvas::createSharableContext()
+void Canvas::createContext()
 {
 	vector<cl_context_properties> properties;
-	properties.push_back(CL_GL_CONTEXT_KHR);
+
+	if (glSharing)
+	{
+		properties.push_back(CL_GL_CONTEXT_KHR);
 
 #if defined WIN_BUILD
 		properties.push_back(reinterpret_cast<cl_context_properties>(wglGetCurrentContext()));
@@ -1169,6 +1256,7 @@ void Canvas::createSharableContext()
 		properties.push_back(CL_GLX_DISPLAY_KHR);
 		properties.push_back(reinterpret_cast<cl_context_properties>(glXGetCurrentDisplay()));
 #endif
+	}
 
 	context = new AlenkaSignal::OpenCLContext(PROGRAM_OPTIONS["clPlatform"].as<int>(), PROGRAM_OPTIONS["clDevice"].as<int>(), properties);
 }

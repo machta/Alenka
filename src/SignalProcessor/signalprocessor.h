@@ -7,9 +7,12 @@
 
 #include <CL/cl_gl.h>
 
+#include <QString>
+
 #include <cinttypes>
 #include <set>
 #include <vector>
+#include <functional>
 
 namespace AlenkaSignal
 {
@@ -38,7 +41,7 @@ doneCurrent();
  * @endcode
  *
  */
-class SignalProcessor : public OpenGLInterface
+class SignalProcessor
 {
 	int trackCount = 0;
 	bool updateMontageFlag = false;
@@ -51,6 +54,7 @@ class SignalProcessor : public OpenGLInterface
 	std::vector<cl_mem> filterBuffers;
 	LRUCache<int, float>* cache;
 
+	std::function<void ()> glSharing;
 	OpenDataFile* file;
 	AlenkaSignal::OpenCLContext* context;
 	AlenkaSignal::FilterProcessor<float>* filterProcessor;
@@ -59,7 +63,7 @@ class SignalProcessor : public OpenGLInterface
 	std::string header;
 
 public:
-	SignalProcessor(unsigned int nBlock, unsigned int parallelQueues, int montageCopyCount, OpenDataFile* file, AlenkaSignal::OpenCLContext* context);
+	SignalProcessor(unsigned int nBlock, unsigned int parallelQueues, int montageCopyCount, std::function<void ()> glSharing, OpenDataFile* file, AlenkaSignal::OpenCLContext* context);
 	~SignalProcessor();
 
 	/**

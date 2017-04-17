@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 #include <set>
+#include <cassert>
 
 template<class T>
 class LRUCacheAllocator
