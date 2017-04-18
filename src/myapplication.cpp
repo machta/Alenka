@@ -40,12 +40,12 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 	catch (exception& e)
 	{
 		QMessageBox::critical(nullptr, "Exception caught", QString::fromStdString(e.what()));
-		abort();
+		mainExit(EXIT_FAILURE);
 	}
 	catch (...)
 	{
 		QMessageBox::critical(nullptr, "Exception caught", "Unknown exception caught.");
-		abort();
+		mainExit(EXIT_FAILURE);
 	}
 
 	// Log the command line parameters and config file.
@@ -131,13 +131,14 @@ bool MyApplication::notify(QObject* receiver, QEvent* event)
 	}
 	catch (exception& e)
 	{
-		logToFileAndConsole("Exception caught: " << e.what());
+		logToFileAndConsole("Standard exception caught: " << e.what());
 	}
 	catch (...)
 	{
 		logToFileAndConsole("Unknown exception caught.");
 	}
 
+	mainExit(EXIT_FAILURE);
 	return false;
 }
 

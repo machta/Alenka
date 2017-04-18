@@ -56,7 +56,7 @@ int main(int argc, char** argv)
 	}
 	catch (exception& e)
 	{
-		logToFileAndConsole("Exception caught: " << e.what());
+		logToFileAndConsole("Standard exception caught: " << e.what());
 	}
 	catch (...)
 	{
