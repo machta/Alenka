@@ -61,9 +61,12 @@ class SignalProcessor
 	AlenkaSignal::MontageProcessor<float>* montageProcessor = nullptr;
 	std::vector<AlenkaSignal::Montage<float>*> montage;
 	std::string header;
+	int extraSamplesFront, extraSamplesBack;
 
 public:
-	SignalProcessor(unsigned int nBlock, unsigned int parallelQueues, int montageCopyCount, std::function<void ()> glSharing, OpenDataFile* file, AlenkaSignal::OpenCLContext* context);
+	SignalProcessor(unsigned int nBlock, unsigned int parallelQueues, int montageCopyCount,
+		std::function<void ()> glSharing, OpenDataFile* file, AlenkaSignal::OpenCLContext* context,
+		int extraSamplesFront = 0, int extraSamplesBack = 0);
 	~SignalProcessor();
 
 	/**

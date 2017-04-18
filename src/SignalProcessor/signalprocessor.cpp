@@ -81,8 +81,10 @@ public:
 
 } // namespace
 
-SignalProcessor::SignalProcessor(unsigned int nBlock, unsigned int parallelQueues, int montageCopyCount, function<void ()> glSharing, OpenDataFile* file, AlenkaSignal::OpenCLContext* context)
-	: nBlock(nBlock), parallelQueues(parallelQueues), montageCopyCount(montageCopyCount), glSharing(glSharing), file(file), context(context)
+SignalProcessor::SignalProcessor(unsigned int nBlock, unsigned int parallelQueues, int montageCopyCount, function<void ()> glSharing,
+	OpenDataFile* file, AlenkaSignal::OpenCLContext* context, int extraSamplesFront, int extraSamplesBack)
+	: nBlock(nBlock), parallelQueues(parallelQueues), montageCopyCount(montageCopyCount), glSharing(glSharing),
+		file(file), context(context), extraSamplesFront(extraSamplesFront), extraSamplesBack(extraSamplesBack)
 {
 	fileChannels = file->file->getChannelCount();
 	cl_int err;
@@ -97,9 +99,8 @@ SignalProcessor::SignalProcessor(unsigned int nBlock, unsigned int parallelQueue
 		checkClErrorCode(err, "clCreateBuffer()");
 
 #ifdef NDEBUG
-#if CL_1_2
-		flags |= CL_MEM_HOST_NO_ACCESS;
-#endif
+		if (!PROGRAM_OPTIONS["cl11"].as<bool>())
+			flags |= CL_MEM_HOST_NO_ACCESS;
 #endif
 		filterBuffers.push_back(clCreateBuffer(context->getCLContext(), flags, (nBlock + 2)*fileChannels*sizeof(float), nullptr, &err));
 		checkClErrorCode(err, "clCreateBuffer()");
@@ -173,7 +174,7 @@ void SignalProcessor::updateFilter()
 
 	nDelay = filterProcessor->delaySamples();
 	nMontage = nBlock - M + 1;
-	nSamples = nMontage - 2;
+	nSamples = nMontage - (extraSamplesFront + extraSamplesBack);
 
 	OpenDataFile::infoTable.setFilterCoefficients(filterProcessor->getCoefficients());
 }
@@ -234,8 +235,8 @@ void SignalProcessor::process(const vector<int>& indexVector, const vector<cl_me
 			logToFileAndConsole("Loading block " << index << " to File cache.");
 
 			auto fromTo = blockIndexToSampleRange(index, nSamples);
-			fromTo.first += -M + nDelay;
-			fromTo.second += nDelay + 1;
+			fromTo.first += - (M - 1) + nDelay - extraSamplesFront;
+			fromTo.second += nDelay + extraSamplesBack;
 			assert(fromTo.second - fromTo.first + 1 == nBlock);
 
 			file->file->readSignal(fileBuffer, fromTo.first, fromTo.second);
@@ -248,7 +249,9 @@ void SignalProcessor::process(const vector<int>& indexVector, const vector<cl_me
 		size_t rowLen = nBlock*sizeof(float);
 		size_t region[] = {rowLen, fileChannels, 1};
 
-		err = clEnqueueWriteBufferRect(commandQueues[i], rawBuffers[i], CL_TRUE, origin, origin, region, rowLen + 2*sizeof(float), 0, 0, 0, fileBuffer, 0, nullptr, nullptr);
+		err = clEnqueueWriteBufferRect(commandQueues[i], rawBuffers[i], CL_TRUE,
+			origin, origin, region, rowLen + 2*sizeof(float), 0, 0, 0,
+			fileBuffer, 0, nullptr, nullptr);
 		checkClErrorCode(err, "clEnqueueWriteBufferRect()");
 
 		// Enqueu the filter operation, and store the result in the second buffer.
@@ -288,7 +291,8 @@ void SignalProcessor::process(const vector<int>& indexVector, const vector<cl_me
 	}
 }
 
-vector<AlenkaSignal::Montage<float>*> SignalProcessor::makeMontage(const vector<string>& montageCode, AlenkaSignal::OpenCLContext* context, KernelCache* kernelCache, const string& header)
+vector<AlenkaSignal::Montage<float>*> SignalProcessor::makeMontage(const vector<string>& montageCode,
+	AlenkaSignal::OpenCLContext* context, KernelCache* kernelCache, const string& header)
 {
 	using namespace chrono;
 #ifndef NDEBUG

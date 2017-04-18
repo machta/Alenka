@@ -3,7 +3,6 @@
 #include "error.h"
 
 #include <fstream>
-#include <cstdint>
 
 #ifdef UNIX_BUILD
 #include <sys/ioctl.h>
@@ -52,9 +51,10 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("autosaveInterval", value<int>()->default_value(2*60), "in seconds")
 	("kernelCacheSize", value<int>()->default_value(0), "how many montage kernels can be cached; if 0, the existing file is removed")
 	("kernelCacheDir", value<string>()->default_value(""), "directory for storing cache files (empty means the same dir as the executable)")
-	("gl20", value<bool>()->default_value(false), "use Opengl 2.0 plus some extensions instead of the default 3.0")
-	("gl43", value<bool>()->default_value(false), "use Opengl 4.3 instead of the default 3.0")
-	("glSharing", value<bool>()->default_value(true), "use cl_khr_gl_sharing extension; this causes problems with Mesa")
+	("gl20", value<bool>()->default_value(false), "use OpenGL 2.0 plus some extensions instead of the default 3.0")
+	("gl43", value<bool>()->default_value(false), "use OpenGL 4.3 instead of the default 3.0")
+	("cl11", value<bool>()->default_value(false), "use OpenCL 1.1 instead of the default 1.2")
+	("glSharing", value<bool>()->default_value(true), "use cl_khr_gl_sharing extension; this causes problems with Mesa, so set it to 0")
 	("clPlatform", value<int>()->default_value(0), "OpenCL platform ID")
 	("clDevice", value<int>()->default_value(0), "OpenCL device ID")
 	("blockSize", value<unsigned int>()->default_value(32*1024), "how many samples per channel are in one block")
@@ -122,6 +122,9 @@ void Options::validateValues()
 	const int autosaveInterval = get("autosaveInterval").as<int>();
 	if (autosaveInterval <= 0)
 		throw validation_error(validation_error::invalid_option_value, "autosaveInterval", to_string(autosaveInterval));
+
+	if (get("gl43").as<bool>())
+		throw runtime_error("Option 'gl43' is disabled at the moment.");
 }
 
 void Options::logConfigFile() const

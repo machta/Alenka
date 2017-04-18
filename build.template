@@ -36,7 +36,6 @@ INCLUDEPATH += $$SIGNAL_LIB/include $$FILE_LIB/include
 
 DEFINES += \
 	CL_USE_DEPRECATED_OPENCL_1_2_APIS \ # This is to silence some warnings.
-	CL_1_2
 
 LIBS += \
 	-L$$SIGNAL_LIB/lib \

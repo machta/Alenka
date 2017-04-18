@@ -65,6 +65,7 @@ class Canvas : public QOpenGLWidget, public OpenGLInterface
 	LRUCache<int, GPUCacheItem>* cache = nullptr;
 	AlenkaSignal::OpenCLContext* context = nullptr;
 	int nBlock, nMontage, nSamples, M;
+	int extraSamplesFront, extraSamplesBack;
 	bool duplicateSignal, glSharing;
 	unsigned int parallelQueues;
 	cl_command_queue commandQueue = nullptr;

@@ -169,11 +169,12 @@ class GPUCacheAllocator : public LRUCacheAllocator<GPUCacheItem>, public OpenGLI
 {
 	size_t size;
 	bool duplicateSignal, glSharing;
+	int extraSamplesFront;
 	OpenCLContext* context;
 
 public:
-	GPUCacheAllocator(size_t size, bool duplicateSignal, bool glSharing, OpenCLContext* context)
-		: size(size), duplicateSignal(duplicateSignal), glSharing(glSharing), context(context)
+	GPUCacheAllocator(size_t size, bool duplicateSignal, bool glSharing, int extraSamplesFront, OpenCLContext* context)
+		: size(size), duplicateSignal(duplicateSignal), glSharing(glSharing), extraSamplesFront(extraSamplesFront), context(context)
 	{
 		initializeOpenGLInterface();
 	}
@@ -231,7 +232,7 @@ private:
 		item.signalArray = arrays[0];
 		item.eventArray = arrays[1];
 
-#define offset (duplicateSignal ? 2 : 1)*sizeof(float)
+#define offset (duplicateSignal ? 2 : 1)*extraSamplesFront*sizeof(float)
 
 		glBindVertexArray(item.signalArray);
 		gl()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, duplicateSignal ? 2*sizeof(float) : 0, reinterpret_cast<void*>(offset));
@@ -302,6 +303,7 @@ Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent)
 	nBlock = PROGRAM_OPTIONS["blockSize"].as<unsigned int>();
 	duplicateSignal = !PROGRAM_OPTIONS["gl43"].as<bool>(); // TODO: Fix the OpenGL 4.3 optimization.
 	glSharing = PROGRAM_OPTIONS["glSharing"].as<bool>();
+	extraSamplesFront = extraSamplesBack = 0; // TODO: Test this with other values if it is ever needed for for the "pretty" event rendering;
 }
 
 Canvas::~Canvas()
@@ -373,7 +375,7 @@ void Canvas::changeFile(OpenDataFile* file)
 		if (glSharing)
 			sharingFunction = [this] () { gl()->glFinish(); };
 
-		signalProcessor = new SignalProcessor(nBlock, parallelQueues, duplicateSignal ? 2 : 1, sharingFunction, file, context);
+		signalProcessor = new SignalProcessor(nBlock, parallelQueues, duplicateSignal ? 2 : 1, sharingFunction, file, context, extraSamplesFront, extraSamplesBack);
 	}
 	else
 	{
@@ -865,7 +867,7 @@ void Canvas::updateProcessor()
 
 	M = file->file->getSamplingFrequency() + 1;
 	nMontage = nBlock - M + 1;
-	nSamples = nMontage - 2;
+	nSamples = nMontage - (extraSamplesFront + extraSamplesBack);
 
 	size_t size = nMontage*signalProcessor->getTrackCount()*sizeof(float);
 	if (duplicateSignal)
@@ -891,7 +893,7 @@ void Canvas::updateProcessor()
 
 	logToFile("Creating GPU cache with " << cacheCapacity << " capacity and blocks of size " << size << ".");
 
-	cache = new LRUCache<int, GPUCacheItem>(cacheCapacity, new GPUCacheAllocator(size, duplicateSignal, glSharing, context));
+	cache = new LRUCache<int, GPUCacheItem>(cacheCapacity, new GPUCacheAllocator(size, duplicateSignal, glSharing, extraSamplesFront, context));
 
 	if (!glSharing)
 	{

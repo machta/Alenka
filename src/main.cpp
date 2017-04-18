@@ -1,14 +1,7 @@
 /**
  * @brief Definition of main().
  *
- * Compile time checks of program-wide macros are done here:
- *
- * * check whether a supported version of OpenGL (GL_2_0, GL_3_0 or GL_3_2) and
- * * OpenCL was selected (CL_1_1 or CL_1_2),
- * * check whether Windows or Unix build was specified (WIN_BUILD or UNIX_BUILD).
- *
- * Conflicting definitions are not allowed and result in early errors
- * to prevent potential problems.
+ * Checks whether Windows or Unix build was specified (WIN_BUILD or UNIX_BUILD).
  *
  * @file
  */
@@ -24,27 +17,6 @@
 #include <stdexcept>
 
 using namespace std;
-
-// Enforce proper definition of a CL_ macro.
-#if defined CL_1_1
-	#if defined CL_1_2
-		#error Only one of CL_1_1 or CL_1_2 can be defined.
-	#endif
-
-	#if !CL_VERSION_1_1
-		#error OpenCL 1.1 is required.
-	#endif
-#elif defined CL_1_2
-	#if defined GL_1_1
-		#error Only one of CL_1_1 or CL_1_2 can be defined.
-	#endif
-
-	#if !CL_VERSION_1_2
-		#error OpenCL 1.2 is required.
-	#endif
-#else
-	#error You must define one of CL_1_1 or CL_1_2 to select the OpenCL version to be used.
-#endif
 
 // Enforce definition of either WIN_BUILD or UNIX_BUILD.
 #if defined WIN_BUILD
