@@ -48,14 +48,41 @@ void testKey(int key, float* ptr0, float* ptr1)
 	}
 }
 
+void randomTest(int cap, int iters, int range, int clearInterval)
+{
+	LRUCache<int, float> cache(cap, new FloatAllocator(nullptr));
+
+	for (int i = 0; i < iters; ++i)
+	{
+		int r = rand()%range;
+
+		int key;
+		float* ptr = cache.getAny(set<int>{r}, &key);
+
+		if (ptr)
+		{
+			EXPECT_EQ(key, r);
+			EXPECT_EQ(static_cast<int>(*ptr), r);
+		}
+		else
+		{
+			ptr = cache.setOldest(r);
+			*ptr = r;
+		}
+
+		if (clearInterval && i % clearInterval == 0)
+			cache.clear();
+	}
+}
+
 } // namespace
 
-TEST(lrucache_test, float_cache)
+TEST(lrucache_test, adhoc)
 {
 	int destroyCounter = 0;
 	{
 		LRUCache<int, float> cache(10, new FloatAllocator(&destroyCounter));
-		EXPECT_EQ(cache.getCapacity(), 10);
+		EXPECT_EQ(cache.getCapacity(), static_cast<unsigned int>(10));
 
 		int key0, key1;
 		EXPECT_FALSE(cache.getAny(set<int>{1}, &key0));
@@ -97,6 +124,18 @@ TEST(lrucache_test, float_cache)
 		EXPECT_FALSE(cache.getAny(set<int>{0}, &key0));
 	}
 	EXPECT_EQ(destroyCounter, 10);
+}
+
+TEST(lrucache_test, random)
+{
+	for (int i = 1; i < 7; ++i)
+		randomTest(11*i*i, 1000*i*i*i, 99*i*i, 0);
+}
+
+TEST(lrucache_test, random_clear)
+{
+	for (int i = 1; i < 7; ++i)
+		randomTest(13*i*i, 1000*i*i*i, 111*i*i, 1000*i*i);
 }
 
 #endif // TESTS

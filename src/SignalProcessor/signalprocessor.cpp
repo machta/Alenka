@@ -3,7 +3,6 @@
 #include "../DataModel/opendatafile.h"
 #include <AlenkaFile/datafile.h>
 #include "../myapplication.h"
-#include "signalblock.h"
 #include <AlenkaSignal/openclcontext.h>
 #include <AlenkaSignal/filter.h>
 #include <AlenkaSignal/filterprocessor.h>
@@ -88,6 +87,7 @@ SignalProcessor::SignalProcessor(unsigned int nBlock, unsigned int parallelQueue
 {
 	fileChannels = file->file->getChannelCount();
 	cl_int err;
+	size_t size = (nBlock + 2)*fileChannels*sizeof(float);
 
 	for (unsigned int i = 0; i < parallelQueues; ++i)
 	{
@@ -95,25 +95,26 @@ SignalProcessor::SignalProcessor(unsigned int nBlock, unsigned int parallelQueue
 		checkClErrorCode(err, "clCreateCommandQueue()");
 
 		cl_mem_flags flags = CL_MEM_READ_WRITE;
-		rawBuffers.push_back(clCreateBuffer(context->getCLContext(), flags, (nBlock + 2)*fileChannels*sizeof(float), nullptr, &err));
+		rawBuffers.push_back(clCreateBuffer(context->getCLContext(), flags, size, nullptr, &err));
 		checkClErrorCode(err, "clCreateBuffer()");
 
 #ifdef NDEBUG
 		if (!PROGRAM_OPTIONS["cl11"].as<bool>())
 			flags |= CL_MEM_HOST_NO_ACCESS;
 #endif
-		filterBuffers.push_back(clCreateBuffer(context->getCLContext(), flags, (nBlock + 2)*fileChannels*sizeof(float), nullptr, &err));
+		filterBuffers.push_back(clCreateBuffer(context->getCLContext(), flags, size, nullptr, &err));
 		checkClErrorCode(err, "clCreateBuffer()");
+
+		filterProcessors.push_back(new AlenkaSignal::FilterProcessor<float>(nBlock, fileChannels, context));
 	}
 
-	int blockSize = nBlock*fileChannels;
+	int blockFloats = nBlock*fileChannels;
 	int64_t fileCacheMemory = PROGRAM_OPTIONS["fileCacheSize"].as<int>();
-	fileCacheMemory *= 1000*1000;
-	unsigned int capacity = max(1, static_cast<int>(fileCacheMemory/blockSize));
+	fileCacheMemory *= 1000*1000/sizeof(float);
+	int capacity = max(1, static_cast<int>(fileCacheMemory/blockFloats));
 
-	cache = new LRUCache<int, float>(capacity, new FloatAllocator(blockSize));
-
-	filterProcessor = new AlenkaSignal::FilterProcessor<float>(nBlock, fileChannels, context);
+	logToFile("Creating File cache with " << capacity << " capacity and blocks of size " << blockFloats*sizeof(float) << ".");
+	cache = new LRUCache<int, float>(capacity, new FloatAllocator(blockFloats));
 
 	QFile headerFile(":/montageHeader.cl"); // TODO: Consolidate the 4 copies of this into one instance.
 	headerFile.open(QIODevice::ReadOnly);
@@ -139,10 +140,11 @@ SignalProcessor::~SignalProcessor()
 
 		err = clReleaseMemObject(filterBuffers[i]);
 		checkClErrorCode(err, "clReleaseMemObject()");
+
+		delete filterProcessors[i];
 	}
 
 	delete cache;
-	delete filterProcessor;
 	delete montageProcessor;
 }
 
@@ -169,14 +171,17 @@ void SignalProcessor::updateFilter()
 	if (OpenDataFile::infoTable.getFrequencyMultipliersOn())
 		multiplySamples(&samples);
 
-	filterProcessor->changeSampleFilter(M, samples);
-	filterProcessor->applyWindow(OpenDataFile::infoTable.getFilterWindow());
+	for (unsigned int i = 0; i < parallelQueues; ++i)
+	{
+		filterProcessors[i]->changeSampleFilter(M, samples);
+		filterProcessors[i]->applyWindow(OpenDataFile::infoTable.getFilterWindow());
+	}
 
-	nDelay = filterProcessor->delaySamples();
+	nDelay = filterProcessors[0]->delaySamples();
 	nMontage = nBlock - M + 1;
 	nSamples = nMontage - (extraSamplesFront + extraSamplesBack);
 
-	OpenDataFile::infoTable.setFilterCoefficients(filterProcessor->getCoefficients());
+	OpenDataFile::infoTable.setFilterCoefficients(filterProcessors[0]->getCoefficients());
 }
 
 void SignalProcessor::setUpdateMontageFlag()
@@ -256,7 +261,7 @@ void SignalProcessor::process(const vector<int>& indexVector, const vector<cl_me
 
 		// Enqueu the filter operation, and store the result in the second buffer.
 		printBuffer("before_filter.txt", rawBuffers[i], commandQueues[i]);
-		filterProcessor->process(rawBuffers[i], filterBuffers[i], commandQueues[i]);
+		filterProcessors[i]->process(rawBuffers[i], filterBuffers[i], commandQueues[i]);
 		printBuffer("after_filter.txt", filterBuffers[i], commandQueues[i]);
 	}
 

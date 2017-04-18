@@ -6,7 +6,6 @@
 #include "error.h"
 #include <AlenkaFile/datafile.h>
 #include "signalviewer.h"
-#include "SignalProcessor/signalblock.h"
 #include "SignalProcessor/signalprocessor.h"
 #include "DataModel/opendatafile.h"
 #include "DataModel/vitnessdatamodel.h"
@@ -136,7 +135,9 @@ pair<int64_t, int64_t> sampleRangeToBlockRange(int64_t from, int64_t to, unsigne
 	return make_pair(from, to);
 }
 
-void getEventsForRendering(OpenDataFile* file, int firstSample, int lastSample, vector<tuple<int, int, int>>* allChannelEvents, vector<tuple<int, int, int, int>>* singleChannelEvents)
+void getEventsForRendering(OpenDataFile* file, int firstSample, int lastSample,
+	vector<tuple<int, int, int>>* allChannelEvents,
+	vector<tuple<int, int, int, int>>* singleChannelEvents)
 {
 	const AbstractEventTable* eventTable = getEventTable(file);
 
@@ -222,7 +223,8 @@ private:
 
 		gl()->glGenBuffers(1, &item.signalBuffer);
 		gl()->glBindBuffer(GL_ARRAY_BUFFER, item.signalBuffer);
-		gl()->glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_STATIC_DRAW);
+		if (glSharing)
+			gl()->glBufferData(GL_ARRAY_BUFFER, size, nullptr, /*GL_STATIC_DRAW*/GL_DYNAMIC_DRAW);
 
 		if (checkGLErrors())
 			return false;
@@ -281,7 +283,6 @@ private:
 			{
 				checkClErrorCode(err, "clCreateFromGLBuffer()");
 			}
-
 		}
 		else
 		{
@@ -885,14 +886,17 @@ void Canvas::updateProcessor()
 		gpuMemorySize *= 0.75;
 	}
 
-	unsigned int cacheCapacity = static_cast<unsigned int>(gpuMemorySize/size);
-	cacheCapacity -= parallelQueues*(glSharing ? 2 : 3);
+	int cacheCapacity = static_cast<int>(gpuMemorySize/size);
+
+	// SignalProcessor uses 2 temporary buffers plus 1 FilterProcessor per queue.
+	// Additionally when sharing is turned off another set of output buffers is needed.
+	// So lessen the capacity to make sure there is enough space for these objects.
+	cacheCapacity -= parallelQueues*(glSharing ? 3 : 4);
 
 	if (cacheCapacity <= 0)
 		throw runtime_error("Not enough GPU memory to create cache with non zero capacity.");
 
 	logToFile("Creating GPU cache with " << cacheCapacity << " capacity and blocks of size " << size << ".");
-
 	cache = new LRUCache<int, GPUCacheItem>(cacheCapacity, new GPUCacheAllocator(size, duplicateSignal, glSharing, extraSamplesFront, context));
 
 	if (!glSharing)
@@ -972,7 +976,9 @@ void Canvas::drawAllChannelEvents(const vector<tuple<int, int, int>>& eventVecto
 
 void Canvas::drawAllChannelEvent(int from, int to)
 {
-	float data[8] = {static_cast<float>(from), 0, static_cast<float>(to), 0, static_cast<float>(from), static_cast<float>(height()), static_cast<float>(to), static_cast<float>(height())};
+	float data[8] = {static_cast<float>(from), 0, static_cast<float>(to), 0,
+		static_cast<float>(from), static_cast<float>(height()),
+		static_cast<float>(to), static_cast<float>(height())};
 
 	gl()->glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
 
@@ -1039,9 +1045,11 @@ void Canvas::drawCross()
 
 	double ratio = samplesRecorded/OpenDataFile::infoTable.getVirtualWidth();
 
-	double position = (OpenDataFile::infoTable.getPosition() + pos.x())*ratio;
+	float position = static_cast<float>((OpenDataFile::infoTable.getPosition() + pos.x())*ratio);
 
-	float data[8] = {static_cast<float>(position), 0, static_cast<float>(position), static_cast<float>(height()), 0, static_cast<float>(pos.y()), static_cast<float>(samplesRecorded), static_cast<float>(pos.y())};
+	float data[8] = {position, 0, position,static_cast<float>(height()), 0,
+		static_cast<float>(pos.y()), static_cast<float>(samplesRecorded),
+		static_cast<float>(pos.y())};
 
 	gl()->glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
 

@@ -1,7 +1,6 @@
 #ifndef SIGNALPROCESSOR_H
 #define SIGNALPROCESSOR_H
 
-#include "../openglinterface.h"
 #include <AlenkaSignal/montage.h>
 #include "lrucache.h"
 
@@ -57,7 +56,7 @@ class SignalProcessor
 	std::function<void ()> glSharing;
 	OpenDataFile* file;
 	AlenkaSignal::OpenCLContext* context;
-	AlenkaSignal::FilterProcessor<float>* filterProcessor;
+	std::vector<AlenkaSignal::FilterProcessor<float>*> filterProcessors;
 	AlenkaSignal::MontageProcessor<float>* montageProcessor = nullptr;
 	std::vector<AlenkaSignal::Montage<float>*> montage;
 	std::string header;
