@@ -695,11 +695,13 @@ void SignalFileBrowserWindow::openFile()
 		comboNumbers.push_back(i);
 
 	double lpf = OpenDataFile::infoTable.getLowpassFrequency();
-	if (lpf > 0 && lpf <= file->getSamplingFrequency()/2)
+	bool lowpassOn = OpenDataFile::infoTable.getLowpassOn();
+	if (lowpassOn && 0 < lpf && lpf <= file->getSamplingFrequency()/2)
 		comboNumbers.push_back(lpf);
 
-	double hpf = OpenDataFile::infoTable.getLowpassFrequency();
-	if (hpf > 0 && hpf <= file->getSamplingFrequency()/2)
+	double hpf = OpenDataFile::infoTable.getHighpassFrequency();
+	bool highpassOn = OpenDataFile::infoTable.getHighpassOn();
+	if (highpassOn && 0 < hpf && hpf <= file->getSamplingFrequency()/2)
 		comboNumbers.push_back(hpf);
 
 	sort(comboNumbers.begin(), comboNumbers.end());
@@ -717,6 +719,8 @@ void SignalFileBrowserWindow::openFile()
 	openFileConnections.push_back(c);
 	c = connect(&OpenDataFile::infoTable, SIGNAL(lowpassFrequencyChanged(double)), this, SLOT(lowpassComboBoxUpdate(double)));
 	openFileConnections.push_back(c);
+	c = connect(&OpenDataFile::infoTable, SIGNAL(lowpassOnChanged(bool)), this, SLOT(lowpassComboBoxUpdate(bool)));
+	openFileConnections.push_back(c);
 
 	highpassComboBox->clear();
 	highpassComboBox->addItems(comboOptions);
@@ -724,10 +728,12 @@ void SignalFileBrowserWindow::openFile()
 	openFileConnections.push_back(c);
 	c = connect(&OpenDataFile::infoTable, SIGNAL(highpassFrequencyChanged(double)), this, SLOT(highpassComboBoxUpdate(double)));
 	openFileConnections.push_back(c);
-
-	c = connect(notchCheckBox, SIGNAL(toggled(bool)), &OpenDataFile::infoTable, SLOT(setNotch(bool)));
+	c = connect(&OpenDataFile::infoTable, SIGNAL(highpassOnChanged(bool)), this, SLOT(highpassComboBoxUpdate(bool)));
 	openFileConnections.push_back(c);
-	c = connect(&OpenDataFile::infoTable, SIGNAL(notchChanged(bool)), notchCheckBox, SLOT(setChecked(bool)));
+
+	c = connect(notchCheckBox, SIGNAL(toggled(bool)), &OpenDataFile::infoTable, SLOT(setNotchOn(bool)));
+	openFileConnections.push_back(c);
+	c = connect(&OpenDataFile::infoTable, SIGNAL(notchOnChanged(bool)), notchCheckBox, SLOT(setChecked(bool)));
 	openFileConnections.push_back(c);
 
 	// Set up table models and managers.
@@ -786,9 +792,13 @@ void SignalFileBrowserWindow::openFile()
 	openFileConnections.push_back(c);
 	c = connect(&OpenDataFile::infoTable, SIGNAL(lowpassFrequencyChanged(double)), signalViewer, SLOT(updateSignalViewer()));
 	openFileConnections.push_back(c);
+	c = connect(&OpenDataFile::infoTable, SIGNAL(lowpassOnChanged(bool)), signalViewer, SLOT(updateSignalViewer()));
+	openFileConnections.push_back(c);
 	c = connect(&OpenDataFile::infoTable, SIGNAL(highpassFrequencyChanged(double)), signalViewer, SLOT(updateSignalViewer()));
 	openFileConnections.push_back(c);
-	c = connect(&OpenDataFile::infoTable, SIGNAL(notchChanged(bool)), signalViewer, SLOT(updateSignalViewer()));
+	c = connect(&OpenDataFile::infoTable, SIGNAL(highpassOnChanged(bool)), signalViewer, SLOT(updateSignalViewer()));
+	openFileConnections.push_back(c);
+	c = connect(&OpenDataFile::infoTable, SIGNAL(notchOnChanged(bool)), signalViewer, SLOT(updateSignalViewer()));
 	openFileConnections.push_back(c);
 	c = connect(&OpenDataFile::infoTable, SIGNAL(filterWindowChanged(AlenkaSignal::WindowFunction)), signalViewer, SLOT(updateSignalViewer()));
 	openFileConnections.push_back(c);
@@ -910,8 +920,18 @@ void SignalFileBrowserWindow::lowpassComboBoxUpdate(const QString& text)
 
 		if (ok)
 			OpenDataFile::infoTable.setLowpassFrequency(tmp);
+		OpenDataFile::infoTable.setLowpassOn(ok);
+	}
+}
+
+void SignalFileBrowserWindow::lowpassComboBoxUpdate(bool on)
+{
+	if (file)
+	{
+		if (on)
+			lowpassComboBoxUpdate(OpenDataFile::infoTable.getLowpassFrequency());
 		else
-			OpenDataFile::infoTable.setLowpassFrequency(1000000); // TODO: properly turn of/on
+			lowpassComboBox->setCurrentIndex(0);
 	}
 }
 
@@ -920,7 +940,7 @@ void SignalFileBrowserWindow::lowpassComboBoxUpdate(double value)
 	if (file)
 	{
 		if (value < 0 || value > file->getSamplingFrequency()/2)
-			lowpassComboBox->setCurrentIndex(0);
+			lowpassComboBoxUpdate(false);
 		else
 			lowpassComboBox->setCurrentText(locale().toString(value, 'f', 2));
 	}
@@ -935,8 +955,18 @@ void SignalFileBrowserWindow::highpassComboBoxUpdate(const QString& text)
 
 		if (ok)
 			OpenDataFile::infoTable.setHighpassFrequency(tmp);
+		OpenDataFile::infoTable.setHighpassOn(ok);
+	}
+}
+
+void SignalFileBrowserWindow::highpassComboBoxUpdate(bool on)
+{
+	if (file)
+	{
+		if (on)
+			highpassComboBoxUpdate(OpenDataFile::infoTable.getHighpassFrequency());
 		else
-			OpenDataFile::infoTable.setHighpassFrequency(-1000000); // TODO: properly turn of/on
+			highpassComboBox->setCurrentIndex(0);
 	}
 }
 
@@ -945,7 +975,7 @@ void SignalFileBrowserWindow::highpassComboBoxUpdate(double value)
 	if (file)
 	{
 		if (value < 0 || value > file->getSamplingFrequency()/2)
-			highpassComboBox->setCurrentIndex(0);
+			highpassComboBoxUpdate(false);
 		else
 			highpassComboBox->setCurrentText(locale().toString(value, 'f', 2));
 	}

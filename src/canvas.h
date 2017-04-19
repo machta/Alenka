@@ -64,7 +64,7 @@ class Canvas : public QOpenGLWidget, public OpenGLInterface
 	std::vector<QMetaObject::Connection> montageConnections;
 	LRUCache<int, GPUCacheItem>* cache = nullptr;
 	AlenkaSignal::OpenCLContext* context = nullptr;
-	int nBlock, nMontage, nSamples, M;
+	int nBlock, nSamples;
 	int extraSamplesFront, extraSamplesBack;
 	bool duplicateSignal, glSharing;
 	unsigned int parallelQueues;

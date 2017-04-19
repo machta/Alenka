@@ -20,6 +20,8 @@ template<class T>
 class FilterProcessor;
 template<class T>
 class MontageProcessor;
+template<class T>
+class Filter;
 }
 class OpenDataFile;
 class SignalBlock;
@@ -45,7 +47,7 @@ class SignalProcessor
 	int trackCount = 0;
 	bool updateMontageFlag = false;
 
-	int nBlock, nMontage, nSamples, M, nDelay;
+	int nBlock, nMontage, nSamples, M, nDelay, nDiscard;
 	unsigned int parallelQueues, montageCopyCount, fileChannels;
 
 	std::vector<cl_command_queue> commandQueues;
@@ -61,6 +63,7 @@ class SignalProcessor
 	std::vector<AlenkaSignal::Montage<float>*> montage;
 	std::string header;
 	int extraSamplesFront, extraSamplesBack;
+	AlenkaSignal::Filter<float>* filter = nullptr;
 
 public:
 	SignalProcessor(unsigned int nBlock, unsigned int parallelQueues, int montageCopyCount,
@@ -75,6 +78,8 @@ public:
 	{
 		return trackCount;
 	}
+
+	int montageLength() { return nMontage; }
 
 	/**
 	 * @brief Updates the currently used filter according to the values set in the InfoTable.

@@ -19,10 +19,19 @@ void InfoTable::writeXML(const string& filePath, const AlenkaSignal::DETECTOR_SE
 	browser.append_attribute("virtualWidth").set_value(virtualWidth);
 
 	xml_node filter = document.append_child("filter");
-	filter.append_attribute("lowpassFrequency").set_value(lowpassFrequency);
-	filter.append_attribute("highPassFrequency").set_value(highPassFrequency);
-	filter.append_attribute("notch").set_value(notch);
 	filter.append_attribute("filterWindow").set_value(static_cast<int>(filterWindow));
+
+	xml_node lowpass = filter.append_child("lowpass");
+	lowpass.append_attribute("on").set_value(lowpassOn);
+	lowpass.append_attribute("f").set_value(lowpassFrequency);
+
+	xml_node highpass = filter.append_child("highpass");
+	highpass.append_attribute("on").set_value(highpassOn);
+	highpass.append_attribute("f").set_value(highpassFrequency);
+
+	xml_node notch = filter.append_child("notch");
+	notch.append_attribute("on").set_value(notchOn);
+	//notch.append_attribute("f").set_value(notchFrequency);
 
 	xml_node selection = document.append_child("selection");
 	selection.append_attribute("selectedMontage").set_value(selectedMontage);
@@ -78,10 +87,19 @@ void InfoTable::readXML(const string& filePath, AlenkaSignal::DETECTOR_SETTINGS*
 	virtualWidth = browser.attribute("virtualWidth").as_int(virtualWidth);
 
 	xml_node filter = document.child("filter");
-	lowpassFrequency = filter.attribute("lowpassFrequency").as_double(lowpassFrequency);
-	highPassFrequency = filter.attribute("highPassFrequency").as_double(highPassFrequency);
-	notch = filter.attribute("notch").as_bool(notch);
 	filterWindow = static_cast<AlenkaSignal::WindowFunction>(browser.attribute("filterWindow").as_int(static_cast<int>(filterWindow)));
+
+	xml_node lowpass = filter.child("lowpass");
+	lowpassOn = lowpass.attribute("on").as_bool(lowpassOn);
+	lowpassFrequency = lowpass.attribute("f").as_double(lowpassFrequency);
+
+	xml_node highpass = filter.child("highpass");
+	highpassOn = highpass.attribute("on").as_bool(highpassOn);
+	highpassFrequency = highpass.attribute("f").as_double(highpassFrequency);
+
+	xml_node notch= filter.child("notch");
+	notchOn = notch.attribute("on").as_bool(notchOn);
+	//notchFrequency = notch.attribute("f").as_double(notchFrequency);
 
 	xml_node selection = document.child("selection");
 	selectedMontage = selection.attribute("selectedMontage").as_int(selectedMontage);

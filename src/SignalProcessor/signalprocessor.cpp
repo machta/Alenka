@@ -146,6 +146,7 @@ SignalProcessor::~SignalProcessor()
 
 	delete cache;
 	delete montageProcessor;
+	delete filter;
 }
 
 void SignalProcessor::updateFilter()
@@ -156,18 +157,20 @@ void SignalProcessor::updateFilter()
 		return;
 
 	M = file->file->getSamplingFrequency() + 1;
-	AlenkaSignal::Filter<float> filter(M, file->file->getSamplingFrequency()); // TODO: Possibly could save this object so that it won't be created from scratch every time.
 
-	filter.lowpass(true);
-	filter.setLowpass(OpenDataFile::infoTable.getLowpassFrequency());
+	delete filter;
+	filter = new AlenkaSignal::Filter<float>(M, file->file->getSamplingFrequency());
 
-	filter.highpass(true);
-	filter.setHighpass(OpenDataFile::infoTable.getHighpassFrequency());
+	filter->setLowpassOn(OpenDataFile::infoTable.getLowpassOn());
+	filter->setLowpass(OpenDataFile::infoTable.getLowpassFrequency());
 
-	filter.notch(OpenDataFile::infoTable.getNotch());
-	filter.setNotch(PROGRAM_OPTIONS["notchFrequency"].as<double>());
+	filter->setHighpassOn(OpenDataFile::infoTable.getHighpassOn());
+	filter->setHighpass(OpenDataFile::infoTable.getHighpassFrequency());
 
-	auto samples = filter.computeSamples();
+	filter->setNotchOn(OpenDataFile::infoTable.getNotchOn());
+	filter->setNotch(PROGRAM_OPTIONS["notchFrequency"].as<double>());
+
+	auto samples = filter->computeSamples();
 	if (OpenDataFile::infoTable.getFrequencyMultipliersOn())
 		multiplySamples(&samples);
 
@@ -177,8 +180,9 @@ void SignalProcessor::updateFilter()
 		filterProcessors[i]->applyWindow(OpenDataFile::infoTable.getFilterWindow());
 	}
 
+	nDiscard = filterProcessors[0]->discardSamples();
 	nDelay = filterProcessors[0]->delaySamples();
-	nMontage = nBlock - M + 1;
+	nMontage = nBlock - nDiscard;
 	nSamples = nMontage - (extraSamplesFront + extraSamplesBack);
 
 	OpenDataFile::infoTable.setFilterCoefficients(filterProcessors[0]->getCoefficients());
@@ -240,7 +244,7 @@ void SignalProcessor::process(const vector<int>& indexVector, const vector<cl_me
 			logToFileAndConsole("Loading block " << index << " to File cache.");
 
 			auto fromTo = blockIndexToSampleRange(index, nSamples);
-			fromTo.first += - (M - 1) + nDelay - extraSamplesFront;
+			fromTo.first += - nDiscard + nDelay - extraSamplesFront;
 			fromTo.second += nDelay + extraSamplesBack;
 			assert(fromTo.second - fromTo.first + 1 == nBlock);
 
@@ -259,10 +263,13 @@ void SignalProcessor::process(const vector<int>& indexVector, const vector<cl_me
 			fileBuffer, 0, nullptr, nullptr);
 		checkClErrorCode(err, "clEnqueueWriteBufferRect()");
 
-		// Enqueu the filter operation, and store the result in the second buffer.
-		printBuffer("before_filter.txt", rawBuffers[i], commandQueues[i]);
-		filterProcessors[i]->process(rawBuffers[i], filterBuffers[i], commandQueues[i]);
-		printBuffer("after_filter.txt", filterBuffers[i], commandQueues[i]);
+		if (!filter->isAllpass())
+		{
+			// Enqueu the filter operation, and store the result in the second buffer.
+			printBuffer("before_filter.txt", rawBuffers[i], commandQueues[i]);
+			filterProcessors[i]->process(rawBuffers[i], filterBuffers[i], commandQueues[i]);
+			printBuffer("after_filter.txt", filterBuffers[i], commandQueues[i]);
+		}
 	}
 
 	// Synchronize with GL so that we can use the shared buffers.
@@ -278,7 +285,15 @@ void SignalProcessor::process(const vector<int>& indexVector, const vector<cl_me
 			checkClErrorCode(err, "clEnqueueAcquireGLObjects()");
 		}
 
-		montageProcessor->process(montage, filterBuffers[i], outBuffers[i], commandQueues[i], M - 1);
+		cl_mem buffer = filterBuffers[i];
+		int offset = nDiscard;
+		if (filter->isAllpass())
+		{
+			buffer = rawBuffers[i];
+			offset -= nDelay;
+		}
+
+		montageProcessor->process(montage, buffer, outBuffers[i], commandQueues[i], nMontage, offset);
 		printBuffer("after_montage.txt", outBuffers[i], commandQueues[i]);
 	}
 
@@ -299,9 +314,9 @@ void SignalProcessor::process(const vector<int>& indexVector, const vector<cl_me
 vector<AlenkaSignal::Montage<float>*> SignalProcessor::makeMontage(const vector<string>& montageCode,
 	AlenkaSignal::OpenCLContext* context, KernelCache* kernelCache, const string& header)
 {
-	using namespace chrono;
 #ifndef NDEBUG
-	auto start = high_resolution_clock::now(); // TODO: Remove this after the compilation time issue is solved.
+	using namespace chrono;
+	auto start = high_resolution_clock::now(); // TODO: Remove this after the compilation time issue is solved, or perhaps log this info to a file.
 	int needToCompile = 0;
 #endif
 
@@ -360,7 +375,7 @@ void SignalProcessor::updateMontage()
 	assert(ready());
 
 	delete montageProcessor;
-	montageProcessor = new AlenkaSignal::MontageProcessor<float>(nBlock + 2, nMontage, fileChannels, montageCopyCount);
+	montageProcessor = new AlenkaSignal::MontageProcessor<float>(nBlock + 2, fileChannels, montageCopyCount);
 
 	deleteMontage();
 	vector<string> montageCode;

@@ -128,13 +128,16 @@ TEST(lrucache_test, adhoc)
 
 TEST(lrucache_test, random)
 {
-	for (int i = 1; i < 7; ++i)
+	srand(5);
+
+	for (int i = 1; i < 4; ++i)
 		randomTest(11*i*i, 1000*i*i*i, 99*i*i, 0);
 }
 
 TEST(lrucache_test, random_clear)
 {
-	for (int i = 1; i < 7; ++i)
+	srand(6);
+	for (int i = 1; i < 5; ++i)
 		randomTest(13*i*i, 1000*i*i*i, 111*i*i, 1000*i*i);
 }
 

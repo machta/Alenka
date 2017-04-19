@@ -49,50 +49,60 @@ public:
 		emit virtualWidthChanged(virtualWidth);
 		emit positionChanged(position);
 		emit lowpassFrequencyChanged(lowpassFrequency);
-		emit highpassFrequencyChanged(highPassFrequency);
-		emit notchChanged(notch);
+		emit lowpassOnChanged(lowpassOn);
+		emit highpassFrequencyChanged(highpassFrequency);
+		emit highpassOnChanged(highpassOn);
+		emit notchOnChanged(notchOn);
 		emit filterWindowChanged(filterWindow);
 		emit selectedMontageChanged(selectedMontage);
 		emit timeModeChanged(timeMode);
 		emit selectedTypeChanged(selectedType);
 		emit timeLineIntervalChanged(timeLineInterval);
 		emit positionIndicatorChanged(positionIndicator);
-		emit pixelViewWidthChanged(pixelViewWidth);
 		emit frequencyMultipliersChanged();
+		emit frequencyMultipliersOnChanged(frequencyMultipliersOn);
+
+		emit pixelViewWidthChanged(pixelViewWidth);
 		emit frequencyMultipliersOnChanged(frequencyMultipliersOn);
 	}
 
 	int getVirtualWidth() const { return virtualWidth; }
 	int getPosition() const { return position; }
 	double getLowpassFrequency() const { return lowpassFrequency; }
-	double getHighpassFrequency() const { return highPassFrequency; }
-	bool getNotch() const {	return notch; }
+	bool getLowpassOn() const { return lowpassOn; }
+	double getHighpassFrequency() const { return highpassFrequency; }
+	bool getHighpassOn() const { return highpassOn; }
+	bool getNotchOn() const { return notchOn; }
 	AlenkaSignal::WindowFunction getFilterWindow() const { return filterWindow; }
 	int getSelectedMontage() const { return selectedMontage; }
 	InfoTable::TimeMode getTimeMode() const { return timeMode;	}
 	int getSelectedType() const { return selectedType; }
 	double getTimeLineInterval() const { return timeLineInterval; }
 	double getPositionIndicator() const { return positionIndicator; }
-	int getPixelViewWidth() const { return pixelViewWidth; }
 	const std::vector<std::pair<double, double>>& getFrequencyMultipliers() const { return frequencyMultipliers; }
 	bool getFrequencyMultipliersOn() const { return frequencyMultipliersOn; }
+
+	int getPixelViewWidth() const { return pixelViewWidth; }
 	const std::vector<float>& getFilterCoefficients() const { return filterCoefficients; }
 
 signals:
 	void virtualWidthChanged(int);
 	void positionChanged(int);
 	void lowpassFrequencyChanged(double);
+	void lowpassOnChanged(bool);
 	void highpassFrequencyChanged(double);
-	void notchChanged(bool);
+	void highpassOnChanged(bool);
+	void notchOnChanged(bool);
 	void filterWindowChanged(AlenkaSignal::WindowFunction);
 	void selectedMontageChanged(int);
 	void timeModeChanged(InfoTable::TimeMode);
 	void selectedTypeChanged(int);
 	void timeLineIntervalChanged(double);
 	void positionIndicatorChanged(double);
-	void pixelViewWidthChanged(int);
 	void frequencyMultipliersChanged();
 	void frequencyMultipliersOnChanged(bool);
+
+	void pixelViewWidthChanged(int);
 	void filterCoefficientsChanged();
 
 public slots:
@@ -120,20 +130,36 @@ public slots:
 			emit lowpassFrequencyChanged(value);
 		}
 	}
+	void setLowpassOn(bool value)
+	{
+		if (value != lowpassOn)
+		{
+			lowpassOn = value;
+			emit lowpassOnChanged(value);
+		}
+	}
 	void setHighpassFrequency(double value)
 	{
-		if (value != highPassFrequency)
+		if (value != highpassFrequency)
 		{
-			highPassFrequency = value;
+			highpassFrequency = value;
 			emit highpassFrequencyChanged(value);
 		}
 	}
-	void setNotch(bool value)
+	void setHighpassOn(bool value)
 	{
-		if (value != notch)
+		if (value != highpassOn)
 		{
-			notch = value;
-			emit notchChanged(value);
+			highpassOn = value;
+			emit highpassOnChanged(value);
+		}
+	}
+	void setNotchOn(bool value)
+	{
+		if (value != notchOn)
+		{
+			notchOn = value;
+			emit notchOnChanged(value);
 		}
 	}
 	void setFilterWindow(AlenkaSignal::WindowFunction value)
@@ -184,14 +210,6 @@ public slots:
 			emit positionIndicatorChanged(value);
 		}
 	}
-	void setPixelViewWidth(int value)
-	{
-		if (value != pixelViewWidth)
-		{
-			pixelViewWidth = value;
-			emit pixelViewWidthChanged(value);
-		}
-	}
 	void setFrequencyMultipliers(const std::vector<std::pair<double, double>>& value)
 	{
 		if (value != frequencyMultipliers)
@@ -208,18 +226,32 @@ public slots:
 			emit frequencyMultipliersOnChanged(value);
 		}
 	}
+
+	void setPixelViewWidth(int value)
+	{
+		if (value != pixelViewWidth)
+		{
+			pixelViewWidth = value;
+			emit pixelViewWidthChanged(value);
+		}
+	}
 	void setFilterCoefficients(const std::vector<float>& value)
 	{
-		filterCoefficients = value;
-		emit filterCoefficientsChanged();
+		if (value != filterCoefficients)
+		{
+			filterCoefficients = value;
+			emit filterCoefficientsChanged();
+		}
 	}
 
 private:
 	int virtualWidth = 100000;
 	int position = 0;
 	double lowpassFrequency = 1000000;
-	double highPassFrequency = -1000000;
-	bool notch = false;
+	bool lowpassOn = false;
+	double highpassFrequency = -1000000;
+	bool highpassOn = false;
+	bool notchOn = false; // TODO: Add notch frequency.
 	AlenkaSignal::WindowFunction filterWindow = AlenkaSignal::WindowFunction::None;
 	int selectedMontage = 0;
 	InfoTable::TimeMode timeMode = InfoTable::TimeMode::offset;

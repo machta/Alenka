@@ -111,8 +111,10 @@ private slots:
 	bool closeFile();
 	void saveFile();
 	void lowpassComboBoxUpdate(const QString& text);
+	void lowpassComboBoxUpdate(bool on);
 	void lowpassComboBoxUpdate(double value);
 	void highpassComboBoxUpdate(const QString& text);
+	void highpassComboBoxUpdate(bool on);
 	void highpassComboBoxUpdate(double value);
 	void updateManagers(int value);
 	void updateTimeMode(InfoTable::TimeMode mode);

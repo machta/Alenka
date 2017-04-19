@@ -350,9 +350,13 @@ void Canvas::changeFile(OpenDataFile* file)
 	{
 		auto c = connect(&OpenDataFile::infoTable, SIGNAL(lowpassFrequencyChanged(double)), this, SLOT(updateFilter()));
 		openFileConnections.push_back(c);
+		c = connect(&OpenDataFile::infoTable, SIGNAL(lowpassOnChanged(bool)), this, SLOT(updateFilter()));
+		openFileConnections.push_back(c);
 		c = connect(&OpenDataFile::infoTable, SIGNAL(highpassFrequencyChanged(double)), this, SLOT(updateFilter()));
 		openFileConnections.push_back(c);
-		c = connect(&OpenDataFile::infoTable, SIGNAL(notchChanged(bool)), this, SLOT(updateFilter()));
+		c = connect(&OpenDataFile::infoTable, SIGNAL(highpassOnChanged(bool)), this, SLOT(updateFilter()));
+		openFileConnections.push_back(c);
+		c = connect(&OpenDataFile::infoTable, SIGNAL(notchOnChanged(bool)), this, SLOT(updateFilter()));
 		openFileConnections.push_back(c);
 		c = connect(&OpenDataFile::infoTable, SIGNAL(filterWindowChanged(AlenkaSignal::WindowFunction)), this, SLOT(updateFilter()));
 		openFileConnections.push_back(c);
@@ -644,7 +648,7 @@ void Canvas::paintGL()
 			{
 				// Pull the data from CL buffer and copy it to the GL buffer.
 				cl_int err;
-				size_t size = nMontage*signalProcessor->getTrackCount()*sizeof(float);
+				size_t size = signalProcessor->montageLength()*signalProcessor->getTrackCount()*sizeof(float);
 				if (duplicateSignal)
 					size *= 2;
 
@@ -866,11 +870,9 @@ void Canvas::updateProcessor()
 	if (!ready())
 		return;
 
-	M = file->file->getSamplingFrequency() + 1;
-	nMontage = nBlock - M + 1;
-	nSamples = nMontage - (extraSamplesFront + extraSamplesBack);
+	nSamples = signalProcessor->montageLength() - (extraSamplesFront + extraSamplesBack);
 
-	size_t size = nMontage*signalProcessor->getTrackCount()*sizeof(float);
+	size_t size = signalProcessor->montageLength()*signalProcessor->getTrackCount()*sizeof(float);
 	if (duplicateSignal)
 		size *= 2;
 
@@ -1150,7 +1152,7 @@ void Canvas::drawSingleChannelEvent(int index, int track, int from, int to)
 		from = max(firstSample, from);
 		to = min(lastSample, to);
 
-		gl()->glDrawArrays(GL_TRIANGLE_STRIP, 2*(track*nMontage + from - firstSample), 2*(to - from + 1));
+		gl()->glDrawArrays(GL_TRIANGLE_STRIP, 2*(track*signalProcessor->montageLength() + from - firstSample), 2*(to - from + 1));
 	}
 }
 
@@ -1172,7 +1174,7 @@ void Canvas::drawSignal(int index)
 
 		setUniformColor(signalProgram->getGLProgram(), color, 1);
 
-		gl()->glDrawArrays(GL_LINE_STRIP, track*nMontage, nSamples);
+		gl()->glDrawArrays(GL_LINE_STRIP, track*signalProcessor->montageLength(), nSamples);
 	}
 }
 
@@ -1190,7 +1192,7 @@ void Canvas::setUniformTrack(GLuint program, int track, int hidden, int index)
 
 	location = gl()->glGetUniformLocation(program, "bufferOffset");
 	checkNotErrorCode(location,static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-	gl()->glUniform1i(location, SignalProcessor::blockIndexToSampleRange(index, nSamples).first - (track - hidden)*nMontage);
+	gl()->glUniform1i(location, SignalProcessor::blockIndexToSampleRange(index, nSamples).first - (track - hidden)*signalProcessor->montageLength());
 }
 
 void Canvas::setUniformColor(GLuint program, const QColor& color, double opacity)

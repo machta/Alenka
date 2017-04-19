@@ -34,7 +34,7 @@ public:
 	Loader(AlenkaFile::DataFile* file, const vector<Montage<T>*>& montage, OpenCLContext* context) :
 		file(file), montage(montage), inChannels(file->getChannelCount()), outChannels(static_cast<int>(montage.size()))
 	{
-		processor = new MontageProcessor<T>(BLOCK_LENGTH, BLOCK_LENGTH, inChannels);
+		processor = new MontageProcessor<T>(BLOCK_LENGTH, inChannels);
 
 		cl_int err;
 		cl_mem_flags flags = CL_MEM_READ_WRITE;
@@ -94,7 +94,7 @@ public:
 				BLOCK_LENGTH*sizeof(T), 0, 0, 0, tmpData.data(), 0, nullptr, nullptr); // SEGFAULT
 			checkClErrorCode(err, "clEnqueueWriteBufferRect()");
 
-			processor->process(montage, inBuffer, outBuffer, queue);
+			processor->process(montage, inBuffer, outBuffer, queue, BLOCK_LENGTH);
 			//OpenCLContext::printBuffer("after_process.txt", outBuffer, queue);
 
 			size_t outRegion[] = {rowLen, static_cast<size_t>(outChannels), 1};
