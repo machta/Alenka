@@ -263,7 +263,7 @@ void SignalProcessor::process(const vector<int>& indexVector, const vector<cl_me
 			fileBuffer, 0, nullptr, nullptr);
 		checkClErrorCode(err, "clEnqueueWriteBufferRect()");
 
-		if (!filter->isAllpass())
+		if (!allpass())
 		{
 			// Enqueu the filter operation, and store the result in the second buffer.
 			printBuffer("before_filter.txt", rawBuffers[i], commandQueues[i]);
@@ -287,7 +287,7 @@ void SignalProcessor::process(const vector<int>& indexVector, const vector<cl_me
 
 		cl_mem buffer = filterBuffers[i];
 		int offset = nDiscard;
-		if (filter->isAllpass())
+		if (allpass())
 		{
 			buffer = rawBuffers[i];
 			offset -= nDelay;
@@ -395,4 +395,9 @@ void SignalProcessor::deleteMontage()
 	for (auto e : montage)
 		delete e;
 	montage.clear();
+}
+
+bool SignalProcessor::allpass()
+{
+	return OpenDataFile::infoTable.getFrequencyMultipliersOn() == false && filter->isAllpass();
 }

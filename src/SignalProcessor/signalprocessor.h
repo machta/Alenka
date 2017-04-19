@@ -144,6 +144,7 @@ private:
 	 */
 	void updateMontage();
 	void deleteMontage();
+	bool allpass();
 };
 
 #endif // SIGNALPROCESSOR_H
