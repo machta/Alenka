@@ -14,32 +14,32 @@ CONFIG(debug, debug|release) {
 	DEFINES += TESTS
 
 	contains(QMAKE_HOST.arch, x86_64) {
-		SIGNAL_LIB = $$SIGNAL_LIB/build-Debug-64/install-dir
-		FILE_LIB = $$FILE_LIB/build-Debug-64/install-dir
+		SIGNAL_LIB_BUILD = $$SIGNAL_LIB/build-Debug-64/install-dir
+		FILE_LIB_BUILD = $$FILE_LIB/build-Debug-64/install-dir
 	} else {
-		SIGNAL_LIB = $$SIGNAL_LIB/build-Debug-32/install-dir
-		FILE_LIB = $$FILE_LIB/build-Debug-32/install-dir
+		SIGNAL_LIB_BUILD = $$SIGNAL_LIB/build-Debug-32/install-dir
+		FILE_LIB_BUILD = $$FILE_LIB/build-Debug-32/install-dir
 	}
 } else {
 	DEFINES += NDEBUG
 
 	contains(QMAKE_HOST.arch, x86_64) {
-		SIGNAL_LIB = $$SIGNAL_LIB/build-Release-64/install-dir
-		FILE_LIB = $$FILE_LIB/build-Release-64/install-dir
+		SIGNAL_LIB_BUILD = $$SIGNAL_LIB/build-Release-64/install-dir
+		FILE_LIB_BUILD = $$FILE_LIB/build-Release-64/install-dir
 	} else {
-		SIGNAL_LIB = $$SIGNAL_LIB/build-Release-32/install-dir
-		FILE_LIB = $$FILE_LIB/build-Release-32/install-dir
+		SIGNAL_LIB_BUILD = $$SIGNAL_LIB/build-Release-32/install-dir
+		FILE_LIB_BUILD = $$FILE_LIB/build-Release-32/install-dir
 	}
 }
 
-INCLUDEPATH += $$SIGNAL_LIB/include $$FILE_LIB/include
+INCLUDEPATH += $$SIGNAL_LIB_BUILD/include $$FILE_LIB_BUILD/include
 
 DEFINES += \
 	CL_USE_DEPRECATED_OPENCL_1_2_APIS \ # This is to silence some warnings.
 
 LIBS += \
-	-L$$SIGNAL_LIB/lib \
-	-L$$FILE_LIB/lib \
+	-L$$SIGNAL_LIB_BUILD/lib \
+	-L$$FILE_LIB_BUILD/lib \
 	-lOpenCL \
 	-lalenka-signal \
 	-lalenka-file \
@@ -71,9 +71,19 @@ win32 {
 	OPENCL_DIR = C:/Program Files (x86)/AMD APP SDK/3.0
 
 	contains(QMAKE_HOST.arch, x86_64) {
-		LIBS += -L"$$OPENCL_DIR"/lib/x86_64 # This is where OpenCL.lib is.
+		LIBS += \
+			-L"$$OPENCL_DIR"/lib/x86_64 \# This is where OpenCL.lib is.
+			-L$$FILE_LIB/matio/matio-msvc2015/x64
+
+		libmatio1.commands = copy /y $$shell_path($$FILE_LIB/matio/matio-msvc2015/x64/libmatio.dll $$OUT_PWD/debug)
+		libmatio2.commands = copy /y $$shell_path($$FILE_LIB/matio/matio-msvc2015/x64/libmatio.dll $$OUT_PWD/release)
 	} else {
-		LIBS += -L"$$OPENCL_DIR"/lib/x86
+		LIBS += \
+			-L"$$OPENCL_DIR"/lib/x86 \
+			-L$$FILE_LIB/matio/matio-msvc2015/x86
+
+		libmatio1.commands = copy /y $$shell_path($$FILE_LIB/matio/matio-msvc2015/x86/libmatio.dll $$OUT_PWD/debug)
+		libmatio2.commands = copy /y $$shell_path($$FILE_LIB/matio/matio-msvc2015/x86/libmatio.dll $$OUT_PWD/release)
 	}
 
 	LIBS += -lopengl32
@@ -86,4 +96,8 @@ win32 {
 	QMAKE_CXXFLAGS += -openmp
 
 	CONFIG += console
+
+	# Copy libmatio.dll.
+	QMAKE_EXTRA_TARGETS += libmatio1 libmatio2
+	POST_TARGETDEPS += libmatio1 libmatio2
 }

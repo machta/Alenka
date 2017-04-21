@@ -24,10 +24,11 @@ echo -e Deploying to $name.zip and $name-32.zip'\n'
 mkdir -p $folder/$name/platforms
 mkdir -p $folder32/$name-32/platforms
 
-cp -v `find .. -name Alenka.exe | grep Alenka | grep 64 | grep Release | grep 5.7` $folder/$name/Alenka.exe && alenka=OK || alenka=fail
-cp -v `find .. -name Alenka.exe | grep Alenka | grep 32 | grep Release | grep 5.7` $folder32/$name-32/Alenka.exe && alenka32=OK || alenka32=fail
+cp -v `find .. -name Alenka.exe | grep Alenka | grep 64 | grep Release | grep 5.7` $folder/$name && alenka=OK || alenka=fail
+cp -v `find .. -name Alenka.exe | grep Alenka | grep 32 | grep Release | grep 5.7` $folder32/$name-32 && alenka32=OK || alenka32=fail
 
 QT_DIR=C:/Qt/5.7/msvc2015_64 &&
+cp -v `find .. -name libmatio.dll | grep Alenka | grep 64 | grep Release | grep 5.7 | head -1` $folder/$name &&
 cp -v $QT_DIR/bin/Qt5Core.dll $folder/$name &&
 cp -v $QT_DIR/bin/Qt5Gui.dll $folder/$name &&
 cp -v $QT_DIR/bin/Qt5Widgets.dll $folder/$name &&
@@ -38,6 +39,7 @@ cp -v $QT_DIR/plugins/platforms/qwindows.dll $folder/$name/platforms &&
 libraries=OK || libraries=fail
 
 QT_DIR=C:/Qt/5.7/msvc2015 &&
+cp -v `find .. -name libmatio.dll | grep Alenka | grep 32 | grep Release | grep 5.7 | head -1` $folder32/$name-32 &&
 cp -v $QT_DIR/bin/Qt5Core.dll $folder32/$name-32 &&
 cp -v $QT_DIR/bin/Qt5Gui.dll $folder32/$name-32 &&
 cp -v $QT_DIR/bin/Qt5Widgets.dll $folder32/$name-32 &&
