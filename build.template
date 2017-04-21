@@ -45,7 +45,8 @@ LIBS += \
 	-lalenka-file \
 	-lclFFT \
 	-lGDF \
-	-lpugixml
+	-lpugixml \
+	-lmatio \
 
 unix {
 	LIBS += \

@@ -27,6 +27,7 @@
 #include <AlenkaSignal/montage.h>
 #include <AlenkaFile/gdf2.h>
 #include <AlenkaFile/edf.h>
+#include <AlenkaFile/mat.h>
 
 #include <QAction>
 #include <QMenuBar>
@@ -590,7 +591,7 @@ void SignalFileBrowserWindow::openFile()
 	if (!closeFile())
 		return; // User chose to keep open the current file.
 
-	QString fileName = QFileDialog::getOpenFileName(this, "Open File", "", "Signal files (*.edf *.gdf);;EDF file (*.edf);;GDF file (*.gdf)");
+	QString fileName = QFileDialog::getOpenFileName(this, "Open File", "", "Signal files (*.edf *.gdf *.mat);;EDF files (*.edf);;GDF files (*.gdf);;MAT files (*.mat)");
 
 	if (fileName.isNull())
 		return; // No file was selected.
@@ -628,6 +629,10 @@ void SignalFileBrowserWindow::openFile()
 	else if (suffix == "edf")
 	{
 		file = new EDF(stdFileName);
+	}
+	else if (suffix == "mat")
+	{
+		file = new MAT(stdFileName);
 	}
 	else
 	{
