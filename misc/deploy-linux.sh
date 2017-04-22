@@ -27,6 +27,7 @@ PLUGIN=/opt/Qt/5.7/gcc_64/plugins &&
 cp -v $PLUGIN/platforms/libqxcb.so $folder/$name/platforms &&
 cp -v $PLUGIN/xcbglintegrations/* $folder/$name/xcbglintegrations &&
 cp -v $(realpath -s `ldd $folder/$name/Alenka $PLUGIN/platforms/libqxcb.so | grep -i qt | awk '{print $3}'` | sort | uniq) $folder/$name &&
+cp -v misc/alenkaSave.m $folder/$name &&
 libraries=OK || libraries=fail
 
 echo '#!/bin/sh
@@ -68,6 +69,9 @@ Use "./runAlenka-AMD" to override the default OpenCL driver so that AMD APP SDK
 can be found.
 
 Use --help to get a list of all the available options.
+
+You can use "alenkaSave.m" to export a Matlab matrix to a MAT file in the format
+that can then be opend by Alenka.
 ' > $folder/$name/README
 
 cd $folder &&
