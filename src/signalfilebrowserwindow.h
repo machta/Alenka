@@ -98,6 +98,7 @@ private:
 	KernelCache* kernelCache = nullptr;
 	QAction* saveFileAction;
 	QAction* closeFileAction;
+	QAction* exportToEdfAction;
 	QAction* runSpikedetAction;
 	bool allowSaveOnClean;
 
@@ -110,6 +111,7 @@ private slots:
 	void openFile();
 	bool closeFile();
 	void saveFile();
+	void exportToEdf();
 	void lowpassComboBoxUpdate(const QString& text);
 	void lowpassComboBoxUpdate(bool on);
 	void lowpassComboBoxUpdate(double value);

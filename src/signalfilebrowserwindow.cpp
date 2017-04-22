@@ -166,6 +166,13 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	saveFileAction->setEnabled(false);
 	connect(saveFileAction, SIGNAL(triggered()), this, SLOT(saveFile()));
 
+	exportToEdfAction = new QAction("Export to EDF", this);
+	//exportToEdfAction->setShortcut(QKeySequence::Open);
+	exportToEdfAction->setToolTip("Export opened file to EDF.");
+	exportToEdfAction->setStatusTip(exportToEdfAction->toolTip());
+	//exportToEdfAction->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
+	connect(exportToEdfAction, SIGNAL(triggered()), this, SLOT(exportToEdf()));
+
 	QAction* undoAction = undoStack->createUndoAction(this);
 	undoAction->setShortcut(QKeySequence::Undo);
 	//undoAction->setIcon(QIcon::fromTheme("edit-undo"));
@@ -381,6 +388,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	fileMenu->addAction(openFileAction);
 	fileMenu->addAction(closeFileAction);
 	fileMenu->addAction(saveFileAction);
+	fileMenu->addAction(exportToEdfAction);
 	fileMenu->addSeparator();
 	fileMenu->addAction(undoAction);
 	fileMenu->addAction(redoAction);
@@ -392,6 +400,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	viewMenu->addAction(horizontalZoomOutAction);
 	viewMenu->addAction(verticalZoomInAction);
 	viewMenu->addAction(verticalZoomOutAction);
+	viewMenu->addSeparator();
 
 	QMenu* timeModeMenu = new QMenu("Time Mode", this);
 	timeModeMenu->addAction(timeModeAction0);
@@ -654,7 +663,10 @@ void SignalFileBrowserWindow::openFile()
 
 	if (QFileInfo(autoSaveName.c_str()).exists())
 	{
-		auto res = QMessageBox::question(this, "Load Autosave File?", "An autosave file was detected. Would you like to load it?", QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+		auto res = QMessageBox::question(this,
+			"Load Autosave File?", "An autosave file was detected. Would you like to load it?",
+			QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+
 		useAutoSave = res == QMessageBox::Yes;
 	}
 
@@ -678,6 +690,7 @@ void SignalFileBrowserWindow::openFile()
 	{
 		allowSaveOnClean = false;
 	}
+	cleanChanged(undoStack->isClean());
 
 	setWindowTitle(fileInfo.fileName() + " - " + TITLE);
 
@@ -914,6 +927,23 @@ void SignalFileBrowserWindow::saveFile()
 		saveFileAction->setEnabled(false);
 		autoSaveTimer->start();
 	}
+}
+
+void SignalFileBrowserWindow::exportToEdf()
+{
+	assert(file);
+
+	QFileInfo fileInfo(QString::fromStdString(file->getFilePath()));
+	QString fileName = QFileDialog::getSaveFileName(this, "Export to EDF file", fileInfo.dir().absolutePath(), "EDF files (*.edf)");
+
+	if (fileName.isNull())
+		return; // No file was selected.
+
+	QFileInfo newFileInfo(fileName);
+	if (newFileInfo.suffix() != "edf")
+		fileName += ".edf";
+
+	EDF::saveAs(fileName.toStdString(), file);
 }
 
 void SignalFileBrowserWindow::lowpassComboBoxUpdate(const QString& text)
@@ -1242,4 +1272,5 @@ void SignalFileBrowserWindow::setEnableFileActions(bool enable)
 {
 	closeFileAction->setEnabled(enable);
 	runSpikedetAction->setEnabled(enable);
+	exportToEdfAction->setEnabled(enable);
 }
