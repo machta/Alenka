@@ -20,9 +20,8 @@ uniform float yScale;
 
 void main()
 {
-	float x = float(bufferOffset) + float(gl_VertexID);
-
-	float y = y0 + yScale*sampleValue1;
+	float x = float(bufferOffset + gl_VertexID);
+	float y = y0 + sampleValue1*yScale;
 
 	gl_Position = transformMatrix*vec4(x, y, 0, 1);
 }

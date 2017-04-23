@@ -61,6 +61,8 @@ public:
 		emit positionIndicatorChanged(positionIndicator);
 		emit frequencyMultipliersChanged();
 		emit frequencyMultipliersOnChanged(frequencyMultipliersOn);
+		emit sampleScaleChanged(sampleScale);
+		emit sampleUnitsChanged(sampleUnits);
 
 		emit pixelViewWidthChanged(pixelViewWidth);
 		emit frequencyMultipliersOnChanged(frequencyMultipliersOn);
@@ -81,6 +83,8 @@ public:
 	double getPositionIndicator() const { return positionIndicator; }
 	const std::vector<std::pair<double, double>>& getFrequencyMultipliers() const { return frequencyMultipliers; }
 	bool getFrequencyMultipliersOn() const { return frequencyMultipliersOn; }
+	float getSampleScale() const { return sampleScale; }
+	int getSampleUnits() const { return sampleUnits; }
 
 	int getPixelViewWidth() const { return pixelViewWidth; }
 	const std::vector<float>& getFilterCoefficients() const { return filterCoefficients; }
@@ -101,6 +105,8 @@ signals:
 	void positionIndicatorChanged(double);
 	void frequencyMultipliersChanged();
 	void frequencyMultipliersOnChanged(bool);
+	void sampleScaleChanged(float);
+	void sampleUnitsChanged(int);
 
 	void pixelViewWidthChanged(int);
 	void filterCoefficientsChanged();
@@ -226,6 +232,22 @@ public slots:
 			emit frequencyMultipliersOnChanged(value);
 		}
 	}
+	void setSampleScale(float value)
+	{
+		if (value != sampleScale)
+		{
+			sampleScale = value;
+			emit sampleScaleChanged(value);
+		}
+	}
+	void setSampleUnits(int value)
+	{
+		if (value != sampleUnits)
+		{
+			sampleUnits = value;
+			emit sampleUnitsChanged(value);
+		}
+	}
 
 	void setPixelViewWidth(int value)
 	{
@@ -260,6 +282,8 @@ private:
 	double positionIndicator = 0.5;
 	std::vector<std::pair<double, double>> frequencyMultipliers;
 	bool frequencyMultipliersOn = true;
+	float sampleScale = 1;
+	int sampleUnits = 1;
 
 	// The following values are not saved to .info files.
 	int pixelViewWidth = 0;

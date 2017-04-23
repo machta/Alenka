@@ -352,17 +352,38 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	selectToolBar->setObjectName("Select QToolBar");
 	selectToolBar->layout()->setSpacing(spacing);
 
-	selectToolBar->addWidget(new QLabel("Montage:", this));
+	label = new QLabel("Mont:", this);
+	label->setToolTip("Montage");
+	selectToolBar->addWidget(label);
 	montageComboBox = new QComboBox(this);
 	montageComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 	montageComboBox->setMaximumWidth(200);
 	selectToolBar->addWidget(montageComboBox);
 
-	selectToolBar->addWidget(new QLabel("Event Type:", this));
+	label = new QLabel("ET:", this);
+	label->setToolTip("Event Type");
+	selectToolBar->addWidget(label);
 	eventTypeComboBox = new QComboBox(this);
 	eventTypeComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 	eventTypeComboBox->setMaximumWidth(200);
 	selectToolBar->addWidget(eventTypeComboBox);
+
+	label = new QLabel("Res:", this);
+	label->setToolTip("Vertical resolution -- units per cm");
+	selectToolBar->addWidget(label);
+	resolutionComboBox = new QComboBox(this);
+	resolutionComboBox->setEditable(true);
+	selectToolBar->addWidget(resolutionComboBox);
+
+	label = new QLabel("Units:", this);
+	label->setToolTip("Signal sample units");
+	selectToolBar->addWidget(label);
+	QComboBox* unitsComboBox = new QComboBox(this);
+	unitsComboBox->addItems(QStringList() << QChar(0x00B5) + QString("V") << "mV" << "V" << "kV");
+	unitsComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+	selectToolBar->addWidget(unitsComboBox);
+	connect(unitsComboBox, SIGNAL(currentIndexChanged(int)), &OpenDataFile::infoTable, SLOT(setSampleUnits(int)));
+	connect(&OpenDataFile::infoTable, SIGNAL(sampleUnitsChanged(int)), unitsComboBox, SLOT(setCurrentIndex(int)));
 
 	// Construct Zoom tool bar.
 	QToolBar* zoomToolBar = addToolBar("Zoom Tool Bar");
@@ -791,6 +812,23 @@ void SignalFileBrowserWindow::openFile()
 	});
 	openFileConnections.push_back(c);
 
+	vector<float> resolutionNumbers{1, 2, 3, 6, 12};
+	float sampleScaleValue = OpenDataFile::infoTable.getSampleScale();
+	resolutionNumbers.push_back(sampleScaleValue);
+	sort(resolutionNumbers.begin(), resolutionNumbers.end());
+	resolutionNumbers.erase(unique(resolutionNumbers.begin(), resolutionNumbers.end()), resolutionNumbers.end());
+
+	QStringList resolutionOptions;
+	for (double e : resolutionNumbers)
+		resolutionOptions << locale().toString(e, 'f', 2);
+	resolutionComboBox->clear();
+	resolutionComboBox->addItems(resolutionOptions);
+
+	c = connect(resolutionComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(resolutionComboBoxUpdate(QString)));
+	openFileConnections.push_back(c);
+	c = connect(&OpenDataFile::infoTable, SIGNAL(sampleScaleChanged(float)), this, SLOT(resolutionComboBoxUpdate(float)));
+	openFileConnections.push_back(c);
+
 	// Update the status bar.
 	QString str = "Start: " + sampleToDateTimeString(file, 0, InfoTable::TimeMode::real);
 	str += " Total time: " + sampleToDateTimeString(file, file->getSamplesRecorded(), InfoTable::TimeMode::offset);
@@ -804,6 +842,7 @@ void SignalFileBrowserWindow::openFile()
 	openFileConnections.push_back(c);
 
 	// Connect slot SignalViewer::updateSignalViewer() to make sure that the SignalViewer gets updated when needed.
+	// TODO: Perhaps move this block to signalViewer.
 	c = connect(&OpenDataFile::infoTable, SIGNAL(virtualWidthChanged(int)), signalViewer, SLOT(updateSignalViewer()));
 	openFileConnections.push_back(c);
 	c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int)), signalViewer, SLOT(updateSignalViewer()));
@@ -830,6 +869,10 @@ void SignalFileBrowserWindow::openFile()
 	openFileConnections.push_back(c);
 	c = connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersOnChanged(bool)), signalViewer, SLOT(updateSignalViewer()));
 	openFileConnections.push_back(c);
+	c = connect(&OpenDataFile::infoTable, SIGNAL(sampleScaleChanged(float)), signalViewer, SLOT(updateSignalViewer()));
+	openFileConnections.push_back(c);
+	c = connect(&OpenDataFile::infoTable, SIGNAL(sampleUnitsChanged(int)), signalViewer, SLOT(updateSignalViewer()));
+	openFileConnections.push_back(c);
 
 	cc = connectVitness(VitnessMontageTable::vitness(dataModel->montageTable()), [this] () { signalViewer->updateSignalViewer(); });
 	openFileConnections.insert(openFileConnections.end(), cc.begin(), cc.end());
@@ -840,8 +883,7 @@ void SignalFileBrowserWindow::openFile()
 
 	// Update the View submenus.
 	c = connect(&OpenDataFile::infoTable, SIGNAL(timeModeChanged(InfoTable::TimeMode)), this, SLOT(updateTimeMode(InfoTable::TimeMode)));
-	c = connect(&OpenDataFile::infoTable, &InfoTable::timeLineIntervalChanged, [this] (double value)
-	{
+	c = connect(&OpenDataFile::infoTable, &InfoTable::timeLineIntervalChanged, [this] (double value) {
 		setTimeLineIntervalAction->setToolTip("The time line interval is " + locale().toString(value) + " s.");
 		setTimeLineIntervalAction->setStatusTip(setTimeLineIntervalAction->toolTip());
 	});
@@ -1013,6 +1055,26 @@ void SignalFileBrowserWindow::highpassComboBoxUpdate(double value)
 			highpassComboBoxUpdate(false);
 		else
 			highpassComboBox->setCurrentText(locale().toString(value, 'f', 2));
+	}
+}
+
+void SignalFileBrowserWindow::resolutionComboBoxUpdate(const QString& text)
+{
+	if (file)
+	{
+		bool ok;
+		float tmp = locale().toFloat(text, &ok);
+
+		if (ok)
+			OpenDataFile::infoTable.setSampleScale(tmp);
+	}
+}
+
+void SignalFileBrowserWindow::resolutionComboBoxUpdate(float value)
+{
+	if (file)
+	{
+		resolutionComboBox->setCurrentText(locale().toString(value, 'f', 2));
 	}
 }
 

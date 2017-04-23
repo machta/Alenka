@@ -71,6 +71,7 @@ class Canvas : public QOpenGLWidget, public OpenGLInterface
 	cl_command_queue commandQueue = nullptr;
 	float* processorSyncBuffer = nullptr;
 	std::vector<cl_mem> processorOutputBuffers;
+	float sampleScale;
 
 public:
 	explicit Canvas(QWidget* parent = nullptr);
@@ -162,6 +163,8 @@ private:
 		}
 	}
 	void createContext();
+	void setUniformTransformMatrix(OpenGLProgram* program, float* data);
+	void setUniformEventWidth(OpenGLProgram* program, float value);
 
 private slots:
 	void updateFilter();

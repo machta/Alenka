@@ -41,6 +41,10 @@ void InfoTable::writeXML(const string& filePath, const AlenkaSignal::DETECTOR_SE
 	window.append_attribute("timeMode").set_value(static_cast<int>(timeMode));
 	window.append_attribute("timeLineInterval").set_value(timeLineInterval);
 
+	xml_node sample = document.append_child("sample");
+	sample.append_attribute("scale").set_value(sampleScale);
+	sample.append_attribute("units").set_value(sampleUnits);
+
 	xml_node spikedet = document.append_child("spikedet");
 	spikedet.append_attribute("fl").set_value(spikedetSettings.m_band_low);
 	spikedet.append_attribute("fh").set_value(spikedetSettings.m_band_high);
@@ -108,6 +112,10 @@ void InfoTable::readXML(const string& filePath, AlenkaSignal::DETECTOR_SETTINGS*
 	xml_node window = document.child("window");
 	timeMode = static_cast<TimeMode>(window.attribute("timeMode").as_int(static_cast<int>(timeMode)));
 	timeLineInterval = window.attribute("timeLineInterval").as_double(timeLineInterval);
+
+	xml_node sample = document.child("sample");
+	sampleScale = sample.attribute("scale").as_float(sampleScale);
+	sampleUnits = sample.attribute("units").as_int(sampleUnits);
 
 	xml_node spikedet = document.child("spikedet");
 	spikedetSettings->m_band_low = spikedet.attribute("fl").as_int(spikedetSettings->m_band_low);

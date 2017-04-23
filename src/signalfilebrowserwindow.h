@@ -70,6 +70,7 @@ private:
 	QCheckBox* notchCheckBox;
 	QComboBox* montageComboBox;
 	QComboBox* eventTypeComboBox;
+	QComboBox* resolutionComboBox;
 	QActionGroup* timeModeActionGroup;
 	QActionGroup* timeLineIntervalActionGroup;
 	QAction* setTimeLineIntervalAction;
@@ -118,6 +119,8 @@ private slots:
 	void highpassComboBoxUpdate(const QString& text);
 	void highpassComboBoxUpdate(bool on);
 	void highpassComboBoxUpdate(double value);
+	void resolutionComboBoxUpdate(const QString& text);
+	void resolutionComboBoxUpdate(float value);
 	void updateManagers(int value);
 	void updateTimeMode(InfoTable::TimeMode mode);
 	void updatePositionStatusLabel();

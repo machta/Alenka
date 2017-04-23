@@ -235,6 +235,7 @@ private:
 		item.eventArray = arrays[1];
 
 #define offset (duplicateSignal ? 2 : 1)*extraSamplesFront*sizeof(float)
+		const int inputAttributes = 1; // Set this to 3 if you ever needed the adjecent samples during rendering.
 
 		glBindVertexArray(item.signalArray);
 		gl()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, duplicateSignal ? 2*sizeof(float) : 0, reinterpret_cast<void*>(offset));
@@ -243,7 +244,7 @@ private:
 		glBindVertexArray(item.eventArray);
 		if (duplicateSignal)
 		{
-			for (int i = 0; i < 3; ++i)
+			for (int i = 0; i < inputAttributes; ++i)
 			{
 				gl()->glVertexAttribPointer(i, 1, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(offset*i));
 				gl()->glEnableVertexAttribArray(i);
@@ -254,7 +255,7 @@ private:
 			glBindVertexBuffer(0, item.signalBuffer, 0, 0);
 			glVertexBindingDivisor(0, 2);
 
-			for (int i = 0; i < 3; ++i)
+			for (int i = 0; i < inputAttributes; ++i)
 			{
 				glVertexAttribFormat(i, 1, GL_FLOAT, GL_FALSE, offset*i);
 				glVertexAttribBinding(i, 0);
@@ -566,28 +567,23 @@ void Canvas::paintGL()
 
 		QMatrix4x4 matrix;
 		matrix.ortho(QRectF(OpenDataFile::infoTable.getPosition()*ratio, 0, width()*ratio, height()));
+		// TODO: Shift the view so that the left edge is sways at (or near) 0.
+		// Then there can be no problems with limited float range.
+
+		// Set uniform variables.
+		vector<float> units = {1000*1000, 1000, 1, 0.001};
+		sampleScale = OpenDataFile::infoTable.getSampleScale()*units[OpenDataFile::infoTable.getSampleUnits()];
+		sampleScale /= physicalDpiY()/2.54;
 
 		gl()->glUseProgram(signalProgram->getGLProgram());
-
-		GLuint location = gl()->glGetUniformLocation(signalProgram->getGLProgram(), "transformMatrix");
-		checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-		gl()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
+		setUniformTransformMatrix(signalProgram, matrix.data());
 
 		gl()->glUseProgram(eventProgram->getGLProgram());
-
-		location = gl()->glGetUniformLocation(eventProgram->getGLProgram(), "transformMatrix");
-		checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-		gl()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
-
-		location = gl()->glGetUniformLocation(eventProgram->getGLProgram(), "eventWidth");
-		checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-		gl()->glUniform1f(location, 0.45*height()/signalProcessor->getTrackCount());
+		setUniformTransformMatrix(eventProgram, matrix.data());
+		setUniformEventWidth(eventProgram, 0.45*height()/signalProcessor->getTrackCount());
 
 		gl()->glUseProgram(rectangleLineProgram->getGLProgram());
-
-		location = gl()->glGetUniformLocation(rectangleLineProgram->getGLProgram(), "transformMatrix");
-		checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
-		gl()->glUniformMatrix4fv(location, 1, GL_FALSE, matrix.data());
+		setUniformTransformMatrix(rectangleLineProgram, matrix.data());
 
 		// Create the data block range needed.
 		int firstSample = static_cast<int>(floor(OpenDataFile::infoTable.getPosition()*ratio));
@@ -604,6 +600,8 @@ void Canvas::paintGL()
 			indexSet.insert(i);
 
 		// Get events.
+		// TODO: This can take a long time when there are a lot of events on the screen.
+		// Perhaps it doesn't need to be done every time?
 		vector<tuple<int, int, int>> allChannelEvents;
 		vector<tuple<int, int, int, int>> singleChannelEvents;
 		getEventsForRendering(file, firstSample, lastSample, &allChannelEvents, &singleChannelEvents);
@@ -1188,7 +1186,7 @@ void Canvas::setUniformTrack(GLuint program, int track, int hidden, int index)
 	location = gl()->glGetUniformLocation(program, "yScale");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
 	float yScale = getTrackTable(file)->row(track).amplitude;
-	gl()->glUniform1f(location, yScale*height());
+	gl()->glUniform1f(location, -1*yScale/sampleScale);
 
 	location = gl()->glGetUniformLocation(program, "bufferOffset");
 	checkNotErrorCode(location,static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
@@ -1271,6 +1269,20 @@ void Canvas::createContext()
 	}
 
 	context = new AlenkaSignal::OpenCLContext(PROGRAM_OPTIONS["clPlatform"].as<int>(), PROGRAM_OPTIONS["clDevice"].as<int>(), properties);
+}
+
+void Canvas::setUniformTransformMatrix(OpenGLProgram* program, float* data)
+{
+	GLuint location = gl()->glGetUniformLocation(program->getGLProgram(), "transformMatrix");
+	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
+	gl()->glUniformMatrix4fv(location, 1, GL_FALSE, data);
+}
+
+void Canvas::setUniformEventWidth(OpenGLProgram* program, float value)
+{
+	GLuint location = gl()->glGetUniformLocation(program->getGLProgram(), "eventWidth");
+	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
+	gl()->glUniform1f(location, value);
 }
 
 void Canvas::updateFilter()

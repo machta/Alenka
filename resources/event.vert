@@ -8,13 +8,13 @@
 
 #ifdef GLSL_110
 #extension GL_EXT_gpu_shader4 : enable
-attribute float sampleValue0;
+//attribute float sampleValue0;
 attribute float sampleValue1;
-attribute float sampleValue2;
+//attribute float sampleValue2;
 #else
-in float sampleValue0;
+//in float sampleValue0;
 in float sampleValue1;
-in float sampleValue2;
+//in float sampleValue2;
 #endif
 
 uniform mat4 transformMatrix;
@@ -25,9 +25,8 @@ uniform float eventWidth;
 
 void main()
 {
-	float x = float(bufferOffset) + float(gl_VertexID/2);
-
-	float y = y0 + yScale*sampleValue1 + eventWidth*float(1 - 2*(gl_VertexID & 1));
+	float x = float(bufferOffset + gl_VertexID/2);
+	float y = y0 + sampleValue1*yScale + eventWidth*float(1 - 2*(gl_VertexID & 1));
 
 	gl_Position = transformMatrix*vec4(x, y, 0, 1);
 }
