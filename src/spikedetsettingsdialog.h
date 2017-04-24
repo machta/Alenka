@@ -7,18 +7,15 @@
 
 class QSpinBox;
 class QDoubleSpinBox;
+class QCheckBox;
 
 class SpikedetSettingsDialog : public QDialog
 {
 	Q_OBJECT
 
-public:
-	explicit SpikedetSettingsDialog(AlenkaSignal::DETECTOR_SETTINGS* settings, double* eventDuration, QWidget* parent = 0);
-	static void resetSettings(AlenkaSignal::DETECTOR_SETTINGS* settings, double* eventDuration);
-
-private:
 	AlenkaSignal::DETECTOR_SETTINGS* settings;
 	double* eventDuration;
+	bool* originalDecimation;
 
 	QSpinBox* fl_box;
 	QSpinBox* fh_box;
@@ -33,7 +30,13 @@ private:
 	QDoubleSpinBox* pt_box;
 	QSpinBox* dec_box;
 	QDoubleSpinBox* sed_box;
+	QCheckBox* odm_box;
 
+public:
+	explicit SpikedetSettingsDialog(AlenkaSignal::DETECTOR_SETTINGS* settings, double* eventDuration, bool* originalDecimation, QWidget* parent = 0);
+	static void resetSettings(AlenkaSignal::DETECTOR_SETTINGS* settings, double* eventDuration, bool* originalDecimation);
+
+private:
 	void setValues();
 };
 

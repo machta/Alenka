@@ -119,11 +119,11 @@ public:
 
 } // namespace
 
-void SpikedetAnalysis::runAnalysis(OpenDataFile* file, const vector<Montage<float>*>& montage, QProgressDialog* progress)
+void SpikedetAnalysis::runAnalysis(OpenDataFile* file, const vector<Montage<float>*>& montage, QProgressDialog* progress, bool originalDecimation)
 {
 	assert(file);
 
-	Spikedet<float> spikedet(file->file->getSamplingFrequency(), static_cast<int>(montage.size()), settings, context);
+	Spikedet<float> spikedet(file->file->getSamplingFrequency(), static_cast<int>(montage.size()), originalDecimation, settings, context);
 	Loader<float> loader(file->file, montage, context);
 
 	delete output;

@@ -272,6 +272,8 @@ void SignalProcessor::process(const vector<int>& indexVector, const vector<cl_me
 		}
 	}
 
+	// TODO: Right here would be a great place to load a few extra neighbouring blocks.
+
 	// Synchronize with GL so that we can use the shared buffers.
 	if (glSharing)
 		glSharing(); // Could be replaced by a fence.

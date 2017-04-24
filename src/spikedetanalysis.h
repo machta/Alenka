@@ -40,7 +40,7 @@ public:
 		return settings;
 	}
 
-	void runAnalysis(OpenDataFile* file, const std::vector<AlenkaSignal::Montage<float>*>& montage, QProgressDialog* progress);
+	void runAnalysis(OpenDataFile* file, const std::vector<AlenkaSignal::Montage<float>*>& montage, QProgressDialog* progress, bool originalDecimation);
 
 private:
 	AlenkaSignal::OpenCLContext* context;

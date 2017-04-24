@@ -39,6 +39,8 @@ KernelCache::KernelCache()
 
 	if (file.is_open())
 	{
+		file.exceptions(ifstream::failbit | ifstream::badbit);
+
 		int size;
 		file >> size;
 
@@ -79,6 +81,8 @@ KernelCache::~KernelCache()
 
 	if (file.is_open())
 	{
+		file.exceptions(ifstream::failbit | ifstream::badbit);
+
 		file << size << endl;
 		const auto& keys = cache.keys();
 

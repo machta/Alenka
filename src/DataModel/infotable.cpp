@@ -8,7 +8,7 @@
 using namespace std;
 using namespace pugi;
 
-void InfoTable::writeXML(const string& filePath, const AlenkaSignal::DETECTOR_SETTINGS& spikedetSettings, double spikeDuration) const
+void InfoTable::writeXML(const string& filePath, const AlenkaSignal::DETECTOR_SETTINGS& spikedetSettings, double spikeDuration, bool originalDecimation) const
 {
 	xml_document file;
 	xml_node document = file.append_child("document");
@@ -59,6 +59,7 @@ void InfoTable::writeXML(const string& filePath, const AlenkaSignal::DETECTOR_SE
 	spikedet.append_attribute("pt").set_value(spikedetSettings.m_polyspike_union_time);
 	spikedet.append_attribute("dec").set_value(spikedetSettings.m_decimation);
 	spikedet.append_attribute("sed").set_value(spikeDuration);
+	spikedet.append_attribute("odm").set_value(originalDecimation);
 
 	xml_node multipliers = document.append_child("multipliers");
 	multipliers.append_attribute("on").set_value(frequencyMultipliersOn);
@@ -75,7 +76,7 @@ void InfoTable::writeXML(const string& filePath, const AlenkaSignal::DETECTOR_SE
 	}
 }
 
-void InfoTable::readXML(const string& filePath, AlenkaSignal::DETECTOR_SETTINGS* spikedetSettings, double* spikeDuration)
+void InfoTable::readXML(const string& filePath, AlenkaSignal::DETECTOR_SETTINGS* spikedetSettings, double* spikeDuration, bool* originalDecimation)
 {
 	xml_document file;
 	xml_parse_result res = file.load_file(filePath.c_str());
@@ -131,6 +132,7 @@ void InfoTable::readXML(const string& filePath, AlenkaSignal::DETECTOR_SETTINGS*
 	spikedetSettings->m_polyspike_union_time = spikedet.attribute("pt").as_double(spikedetSettings->m_polyspike_union_time);
 	spikedetSettings->m_decimation = spikedet.attribute("dec").as_int(spikedetSettings->m_decimation);
 	*spikeDuration = spikedet.attribute("sed").as_double(*spikeDuration);
+	*originalDecimation = spikedet.attribute("odm").as_bool(*originalDecimation);
 
 	xml_node multipliers = document.child("multipliers");
 	frequencyMultipliersOn = multipliers.attribute("on").as_bool(frequencyMultipliersOn);

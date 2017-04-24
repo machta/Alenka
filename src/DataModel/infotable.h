@@ -31,12 +31,12 @@ public:
 	/**
 	 * @brief Writes info file.
 	 */
-	void writeXML(const std::string& filePath, const AlenkaSignal::DETECTOR_SETTINGS& spikedetSettings, double spikeDuration) const;
+	void writeXML(const std::string& filePath, const AlenkaSignal::DETECTOR_SETTINGS& spikedetSettings, double spikeDuration, bool originalDecimation) const;
 
 	/**
 	 * @brief Reads info file.
 	 */
-	void readXML(const std::string& filePath, AlenkaSignal::DETECTOR_SETTINGS* spikedetSettings, double* spikeDuration);
+	void readXML(const std::string& filePath, AlenkaSignal::DETECTOR_SETTINGS* spikedetSettings, double* spikeDuration, bool* originalDecimation);
 
 	/**
 	 * @brief Emit all signals defined by this class.

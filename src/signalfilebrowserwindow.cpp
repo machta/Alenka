@@ -228,13 +228,15 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	connect(spikedetSettingsAction, &QAction::triggered, [this] () {
 		AlenkaSignal::DETECTOR_SETTINGS settings = spikedetAnalysis->getSettings();
 		double newDuration = spikeDuration;
+		bool newDecimation = originalDecimation;
 
-		SpikedetSettingsDialog dialog(&settings, &newDuration, this);
+		SpikedetSettingsDialog dialog(&settings, &newDuration, &newDecimation, this);
 
 		if (dialog.exec() == QDialog::Accepted)
 		{
 			spikedetAnalysis->setSettings(settings);
 			spikeDuration = newDuration;
+			originalDecimation = newDecimation;
 		}
 	});
 
@@ -497,7 +499,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	spikedetAnalysis = new SpikedetAnalysis(globalContext.get());
 
 	auto settings = spikedetAnalysis->getSettings();
-	SpikedetSettingsDialog::resetSettings(&settings, &spikeDuration);
+	SpikedetSettingsDialog::resetSettings(&settings, &spikeDuration, &originalDecimation);
 	spikedetAnalysis->setSettings(settings);
 
 	setEnableFileActions(false);
@@ -699,7 +701,7 @@ void SignalFileBrowserWindow::openFile()
 			secondaryFileExists = file->load();
 
 		AlenkaSignal::DETECTOR_SETTINGS settings;
-		OpenDataFile::infoTable.readXML(file->getFilePath() + ".info", &settings, &spikeDuration);
+		OpenDataFile::infoTable.readXML(file->getFilePath() + ".info", &settings, &spikeDuration, &originalDecimation);
 	});
 
 	if (useAutoSave || !secondaryFileExists)
@@ -936,7 +938,7 @@ bool SignalFileBrowserWindow::closeFile()
 	if (file)
 	{
 		executeWithCLocale([this] () {
-			OpenDataFile::infoTable.writeXML(file->getFilePath() + ".info", spikedetAnalysis->getSettings(), spikeDuration);
+			OpenDataFile::infoTable.writeXML(file->getFilePath() + ".info", spikedetAnalysis->getSettings(), spikeDuration, originalDecimation);
 		});
 	}
 
@@ -1167,8 +1169,6 @@ void SignalFileBrowserWindow::runSpikedet()
 	undoFactory->beginMacro("run Spikedet");
 
 	// Build montage from code.
-
-
 	QFile headerFile(":/montageHeader.cl");
 	headerFile.open(QIODevice::ReadOnly);
 	string header = headerFile.readAll().toStdString();
@@ -1186,7 +1186,7 @@ void SignalFileBrowserWindow::runSpikedet()
 	progress.setMinimumDuration(0); // This is to show the dialog immediately.
 	progress.setValue(1);
 
-	spikedetAnalysis->runAnalysis(openDataFile, montage, &progress);
+	spikedetAnalysis->runAnalysis(openDataFile, montage, &progress, originalDecimation);
 
 	// Add three new event types for the different levels of spike events.
 	const AbstractEventTypeTable* eventTypeTable = openDataFile->dataModel->eventTypeTable();

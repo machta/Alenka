@@ -79,6 +79,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("pt", value<double>()->default_value(0.12), "polyspike union time")
 	("dec", value<int>()->default_value(200), "decimation")
 	("sed", value<double>()->default_value(0.1), "spike event duration in seconds")
+	("odm", value<bool>()->default_value(true), "use original decimation method")
 	;
 
 	configuration.add(spikedet);

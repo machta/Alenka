@@ -9,11 +9,12 @@
 #include <QSpinBox>
 #include <QDoubleSpinBox>
 #include <QAbstractButton>
+#include <QCheckBox>
 
 using namespace std;
 
-SpikedetSettingsDialog::SpikedetSettingsDialog(AlenkaSignal::DETECTOR_SETTINGS* settings, double* eventDuration, QWidget* parent) :
-	QDialog(parent), settings(settings), eventDuration(eventDuration)
+SpikedetSettingsDialog::SpikedetSettingsDialog(AlenkaSignal::DETECTOR_SETTINGS* settings, double* eventDuration, bool* originalDecimation, QWidget* parent)
+	: QDialog(parent), settings(settings), eventDuration(eventDuration), originalDecimation(originalDecimation)
 {
 	QVBoxLayout* box = new QVBoxLayout();
 
@@ -24,10 +25,10 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(AlenkaSignal::DETECTOR_SETTINGS* 
 	connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
 	connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);	
 
-	connect(buttonBox, &QDialogButtonBox::clicked, [this, buttonBox, settings, eventDuration] (QAbstractButton* button) {
+	connect(buttonBox, &QDialogButtonBox::clicked, [this, buttonBox, settings, eventDuration, originalDecimation] (QAbstractButton* button) {
 		if (buttonBox->buttonRole(button) == QDialogButtonBox::ResetRole)
 		{
-			resetSettings(settings, eventDuration);
+			resetSettings(settings, eventDuration, originalDecimation);
 			setValues();
 		}
 	});
@@ -41,21 +42,21 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(AlenkaSignal::DETECTOR_SETTINGS* 
 	const int maxDecimals = 3;
 
 	label = new QLabel("Band low:");
-	label->setToolTip("Lowpass filter frequency (-fl)");
+	label->setToolTip("Lowpass filter frequency (--fl)");
 	fl_box = new QSpinBox();
 	fl_box->setMaximum(maxFrequency);
 	connect(fl_box, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [settings] (int val) { settings->m_band_low = val; });
 	grid->addRow(label, fl_box);
 
 	label = new QLabel("Band high:");
-	label->setToolTip("Highpass filter frequency (-fh)");
+	label->setToolTip("Highpass filter frequency (--fh)");
 	fh_box = new QSpinBox();
 	fh_box->setMaximum(maxFrequency);
 	connect(fh_box, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [settings] (int val) { settings->m_band_high = val; });
 	grid->addRow(label, fh_box);
 
 	label = new QLabel("K1:");
-	label->setToolTip("(-k1)");
+	label->setToolTip("(--k1)");
 	k1_box = new QDoubleSpinBox();
 	k1_box->setDecimals(maxDecimals);
 	k1_box->setMaximum(1000);
@@ -63,7 +64,7 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(AlenkaSignal::DETECTOR_SETTINGS* 
 	grid->addRow(label, k1_box);
 
 	label = new QLabel("K2:");
-	label->setToolTip("if K2=K1, K2 is ignored (-k2)");
+	label->setToolTip("if K2=K1, K2 is ignored (--k2)");
 	k2_box = new QDoubleSpinBox();
 	k2_box->setDecimals(maxDecimals);
 	k2_box->setMaximum(1000);
@@ -71,7 +72,7 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(AlenkaSignal::DETECTOR_SETTINGS* 
 	grid->addRow(label, k2_box);
 
 	label = new QLabel("K3:");
-	label->setToolTip("(-k3)");
+	label->setToolTip("(--k3)");
 	k3_box = new QDoubleSpinBox();
 	k3_box->setDecimals(maxDecimals);
 	k3_box->setMaximum(1000);
@@ -79,14 +80,14 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(AlenkaSignal::DETECTOR_SETTINGS* 
 	grid->addRow(label, k3_box);
 
 	label = new QLabel("Winsize:");
-	label->setToolTip("(-w)");
+	label->setToolTip("(--w)");
 	w_box = new QSpinBox();
 	//spinBox->setMaximum();
 	connect(w_box , static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [settings] (int val) { settings->m_winsize = val; });
 	grid->addRow(label, w_box );
 
 	label = new QLabel("Noverlap:");
-	label->setToolTip("(-n)");
+	label->setToolTip("(--n)");
 	n_box = new QDoubleSpinBox();
 	n_box->setDecimals(maxDecimals);
 	//n_box->setMaximum();
@@ -94,21 +95,21 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(AlenkaSignal::DETECTOR_SETTINGS* 
 	grid->addRow(label, n_box);
 
 	label = new QLabel("Buffering:");
-	label->setToolTip("(-buf)");
+	label->setToolTip("(--buf)");
 	buf_box = new QSpinBox();
 	buf_box ->setMaximum(10000);
 	connect(buf_box , static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [settings] (int val) { settings->m_buffering = val; });
 	grid->addRow(label, buf_box );
 
 	label = new QLabel("Main hum. freq.:");
-	label->setToolTip("(-h)");
+	label->setToolTip("(--h)");
 	h_box = new QSpinBox();
 	h_box->setMaximum(maxFrequency);
 	connect(h_box , static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [settings] (int val) { settings->m_main_hum_freq = val; });
 	grid->addRow(label, h_box );
 
 	label = new QLabel("Discharge tol.:");
-	label->setToolTip("(-dt)");
+	label->setToolTip("(--dt)");
 	dt_box = new QDoubleSpinBox();
 	dt_box->setDecimals(maxDecimals);
 	//dt_box->setMaximum();
@@ -116,7 +117,7 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(AlenkaSignal::DETECTOR_SETTINGS* 
 	grid->addRow(label, dt_box);
 
 	label = new QLabel("Polyspike union time:");
-	label->setToolTip("(-pt)");
+	label->setToolTip("(--pt)");
 	pt_box = new QDoubleSpinBox();
 	pt_box->setDecimals(maxDecimals);
 	//ps_box->setMaximum();
@@ -124,24 +125,30 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(AlenkaSignal::DETECTOR_SETTINGS* 
 	grid->addRow(label, pt_box);
 
 	label = new QLabel("Decimation:");
-	label->setToolTip("(-dec)");
+	label->setToolTip("(--dec)");
 	dec_box = new QSpinBox();
 	dec_box ->setMaximum(maxFrequency);
 	connect(dec_box , static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [settings] (int val) { settings->m_decimation = val; });
 	grid->addRow(label, dec_box );
 
 	label = new QLabel("Spike event duration:");
-	label->setToolTip("in seconds (-sed)");
+	label->setToolTip("in seconds (--sed)");
 	sed_box = new QDoubleSpinBox();
 	sed_box->setDecimals(maxDecimals);
 	//sed_box->setMaximum();
 	connect(sed_box, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [eventDuration] (double val) { *eventDuration = val; });
 	grid->addRow(label, sed_box);
 
+	label = new QLabel("Decimation method:");
+	label->setToolTip("Use orginal decimation method (--odm)");
+	odm_box = new QCheckBox();
+	connect(odm_box, &QCheckBox::clicked, [originalDecimation] (bool val) { *originalDecimation = val; });
+	grid->addRow(label, odm_box);
+
 	setValues();
 }
 
-void SpikedetSettingsDialog::resetSettings(AlenkaSignal::DETECTOR_SETTINGS* settings, double* eventDuration)
+void SpikedetSettingsDialog::resetSettings(AlenkaSignal::DETECTOR_SETTINGS* settings, double* eventDuration, bool* originalDecimation)
 {
 	settings->m_band_low = PROGRAM_OPTIONS["fl"].as<int>();
 	settings->m_band_high = PROGRAM_OPTIONS["fh"].as<int>();
@@ -157,6 +164,7 @@ void SpikedetSettingsDialog::resetSettings(AlenkaSignal::DETECTOR_SETTINGS* sett
 	settings->m_decimation = PROGRAM_OPTIONS["dec"].as<int>();
 
 	*eventDuration = PROGRAM_OPTIONS["sed"].as<double>();
+	*originalDecimation = PROGRAM_OPTIONS["odm"].as<bool>();
 }
 
 void SpikedetSettingsDialog::setValues()
@@ -174,4 +182,5 @@ void SpikedetSettingsDialog::setValues()
 	pt_box->setValue(settings->m_polyspike_union_time);
 	dec_box->setValue(settings->m_decimation);
 	sed_box->setValue(*eventDuration);
+	odm_box->setChecked(*originalDecimation);
 }

@@ -80,6 +80,7 @@ private:
 	QLabel* cursorStatusLabel;
 	SpikedetAnalysis* spikedetAnalysis;
 	double spikeDuration;
+	bool originalDecimation;
 	SyncServer* syncServer;
 	SyncClient* syncClient;
 	SyncDialog* syncDialog;
