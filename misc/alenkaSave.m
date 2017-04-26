@@ -15,7 +15,7 @@ function [] = alenkaSave(fileName, data, Fs)
 % other than memory and disk space.
 % 
 
-save(fileName, 'Fs', '-v4');
+save(fileName, 'fs', '-v4');
 
 samples = size(data, 1);
 channels = size(data, 2);

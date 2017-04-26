@@ -283,7 +283,7 @@ private:
 	std::vector<std::pair<double, double>> frequencyMultipliers;
 	bool frequencyMultipliersOn = true;
 	float sampleScale = 1;
-	int sampleUnits = 1;
+	int sampleUnits = 3;
 
 	// The following values are not saved to .info files.
 	int pixelViewWidth = 0;

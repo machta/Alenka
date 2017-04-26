@@ -3,7 +3,6 @@
 #include "options.h"
 #include "error.h"
 #include <AlenkaSignal/openclcontext.h>
-#include <clFFT.h>
 
 #include <QSurfaceFormat>
 #include <QMessageBox>
@@ -70,14 +69,7 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 	globalContext.reset(new AlenkaSignal::OpenCLContext(PROGRAM_OPTIONS["clPlatform"].as<int>(), PROGRAM_OPTIONS["clDevice"].as<int>()));
 
 	// Set up the clFFT library.
-	clfftStatus errFFT;
-	clfftSetupData setupData;
-
-	errFFT = clfftInitSetupData(&setupData);
-	checkClfftErrorCode(errFFT, "clfftInitSetupData()");
-
-	errFFT = clfftSetup(&setupData);
-	checkClfftErrorCode(errFFT, "clfftSetup()");
+	AlenkaSignal::OpenCLContext::clfftInit();
 
 	// Set some OpenGL context details.
 	QSurfaceFormat format = QSurfaceFormat::defaultFormat();
@@ -117,8 +109,7 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 
 MyApplication::~MyApplication()
 {
-	clfftStatus errFFT = clfftTeardown();
-	checkClfftErrorCode(errFFT, "clfftTeardown()");
+	AlenkaSignal::OpenCLContext::clfftDeinit();
 
 	delete options;
 }

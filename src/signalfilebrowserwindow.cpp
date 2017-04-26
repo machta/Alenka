@@ -370,22 +370,21 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	eventTypeComboBox->setMaximumWidth(200);
 	selectToolBar->addWidget(eventTypeComboBox);
 
+	selectToolBar->addSeparator();
 	label = new QLabel("Res:", this);
-	label->setToolTip("Vertical resolution -- units per cm");
+	label->setToolTip("Vertical resolution");
 	selectToolBar->addWidget(label);
 	resolutionComboBox = new QComboBox(this);
 	resolutionComboBox->setEditable(true);
 	selectToolBar->addWidget(resolutionComboBox);
 
-	label = new QLabel("Units:", this);
-	label->setToolTip("Signal sample units");
-	selectToolBar->addWidget(label);
 	QComboBox* unitsComboBox = new QComboBox(this);
-	unitsComboBox->addItems(QStringList() << QChar(0x00B5) + QString("V") << "mV" << "V" << "kV");
 	unitsComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+	unitsComboBox->addItems(QStringList() << QChar(0x00B5) + QString("V") << "mV" << "V" << "kV" << "MV");
 	selectToolBar->addWidget(unitsComboBox);
 	connect(unitsComboBox, SIGNAL(currentIndexChanged(int)), &OpenDataFile::infoTable, SLOT(setSampleUnits(int)));
 	connect(&OpenDataFile::infoTable, SIGNAL(sampleUnitsChanged(int)), unitsComboBox, SLOT(setCurrentIndex(int)));
+	selectToolBar->addWidget(new QLabel("/cm"));
 
 	// Construct Zoom tool bar.
 	QToolBar* zoomToolBar = addToolBar("Zoom Tool Bar");
@@ -814,7 +813,7 @@ void SignalFileBrowserWindow::openFile()
 	});
 	openFileConnections.push_back(c);
 
-	vector<float> resolutionNumbers{1, 2, 3, 6, 12};
+	vector<float> resolutionNumbers{1, 2, 5, 7.5, 10, 20, 50, 75, 100, 200, 500, 750};
 	float sampleScaleValue = OpenDataFile::infoTable.getSampleScale();
 	resolutionNumbers.push_back(sampleScaleValue);
 	sort(resolutionNumbers.begin(), resolutionNumbers.end());

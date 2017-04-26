@@ -571,8 +571,8 @@ void Canvas::paintGL()
 		// Then there can be no problems with limited float range.
 
 		// Set uniform variables.
-		vector<float> units = {1000*1000, 1000, 1, 0.001f};
-		sampleScale = OpenDataFile::infoTable.getSampleScale()*units[OpenDataFile::infoTable.getSampleUnits()];
+		vector<float> units = {1000*1000, 1000, 1, 0.001f, 0.001*0.001f};
+		sampleScale = OpenDataFile::infoTable.getSampleScale()/units[OpenDataFile::infoTable.getSampleUnits()];
 		sampleScale /= physicalDpiY()/2.54;
 
 		gl()->glUseProgram(signalProgram->getGLProgram());
