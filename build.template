@@ -32,7 +32,7 @@ CONFIG(debug, debug|release) {
 	}
 }
 
-INCLUDEPATH += $$SIGNAL_LIB_BUILD/include $$FILE_LIB_BUILD/include
+INCLUDEPATH += $$SIGNAL_LIB/include $$FILE_LIB/include
 
 DEFINES += \
 	CL_USE_DEPRECATED_OPENCL_1_2_APIS \ # This is to silence some warnings.
@@ -56,8 +56,8 @@ unix {
 
 	DEFINES += UNIX_BUILD
 
-	QMAKE_CXXFLAGS += -pedantic -Wall -fopenmp
-	QMAKE_LFLAGS += -fopenmp
+	QMAKE_CXXFLAGS += -pedantic -Wall -fopenmp #--coverage
+	QMAKE_LFLAGS += -fopenmp #--coverage
 
 	QMAKE_CXXFLAGS_DEBUG += -O0 -D_GLIBCXX_DEBUG
 	QMAKE_LFLAGS_DEBUG += -O0

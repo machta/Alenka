@@ -123,7 +123,8 @@ void SpikedetAnalysis::runAnalysis(OpenDataFile* file, const vector<Montage<floa
 {
 	assert(file);
 
-	Spikedet<float> spikedet(file->file->getSamplingFrequency(), static_cast<int>(montage.size()), originalDecimation, settings, context);
+	int Fs = static_cast<int>(round(file->file->getSamplingFrequency()));
+	Spikedet<float> spikedet(Fs, static_cast<int>(montage.size()), originalDecimation, settings, context);
 	Loader<float> loader(file->file, montage, context);
 
 	delete output;

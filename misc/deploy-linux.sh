@@ -47,7 +47,7 @@ echo '$DIR/Alenka.debug "$@"' | tee -a $folder/$name/runAlenka.debug >> $folder/
 chmod u+x $folder/$name/run*
 
 echo \
-'This is a standalone Linux package, and no additional software should be needed.
+'Install Matio library (package libmatio2).
 
 You need to install the OpenCL driver (libOpenCL.so) and the implementation
 appropriate for your system. If you have a dedicated GPU, install the driver
