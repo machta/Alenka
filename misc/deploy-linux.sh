@@ -21,29 +21,26 @@ mkdir -p $folder/$name/platforms
 mkdir -p $folder/$name/xcbglintegrations
 
 cp -v `find .. -type f -name Alenka | grep Alenka | grep Release | grep 5.7` $folder/$name/Alenka && alenka=OK || alenka=fail
-cp -v `find .. -type f -name Alenka | grep Alenka | grep Debug | grep 5.7` $folder/$name/Alenka.debug && alenkaDebug=OK || alenkaDebug=fail
 
 PLUGIN=/opt/Qt/5.7/gcc_64/plugins &&
 cp -v $PLUGIN/platforms/libqxcb.so $folder/$name/platforms &&
 cp -v $PLUGIN/xcbglintegrations/* $folder/$name/xcbglintegrations &&
 cp -v $(realpath -s `ldd $folder/$name/Alenka $PLUGIN/platforms/libqxcb.so | grep -i qt | awk '{print $3}'` | sort | uniq) $folder/$name &&
-cp -v misc/alenkaSave.m $folder/$name &&
 libraries=OK || libraries=fail
 
 echo '#!/bin/sh
 
 DIR=`dirname $0`
 export LD_LIBRARY_PATH=$DIR:$LD_LIBRARY_PATH
-' | tee $folder/$name/runAlenka > $folder/$name/runAlenka.debug
+' > $folder/$name/runAlenka
 
 echo '#!/bin/sh
 
 DIR=`dirname $0`
 export LD_LIBRARY_PATH=$DIR:$AMDAPPSDKROOT/lib/x86_64/sdk:$LD_LIBRARY_PATH
-' | tee $folder/$name/runAlenka-AMD > $folder/$name/runAlenka-AMD.debug
+' > $folder/$name/runAlenka-AMD
 
 echo '$DIR/Alenka "$@"' | tee -a $folder/$name/runAlenka >> $folder/$name/runAlenka-AMD
-echo '$DIR/Alenka.debug "$@"' | tee -a $folder/$name/runAlenka.debug >> $folder/$name/runAlenka-AMD.debug
 chmod u+x $folder/$name/run*
 
 echo \
@@ -69,9 +66,6 @@ Use "./runAlenka-AMD" to override the default OpenCL driver so that AMD APP SDK
 can be found.
 
 Use --help to get a list of all the available options.
-
-You can use "alenkaSave.m" to export a Matlab matrix to a MAT file in the format
-that can then be opend by Alenka.
 ' > $folder/$name/README
 
 cd $folder &&
@@ -86,7 +80,6 @@ echo ========= Deployment summary =========
 echo "Files                   Status"
 echo ======================================
 echo "Alenka                  $alenka"
-echo "Alenka.debug            $alenkaDebug"
 echo "shared libraries        $libraries"
 echo "zip                     $zip"
 

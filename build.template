@@ -46,13 +46,16 @@ LIBS += \
 	-lclFFT \
 	-lGDF \
 	-lpugixml \
-	-lmatio \
 
 unix {
-	LIBS += \
-		/usr/lib/gcc/x86_64-linux-gnu/5/libstdc++.a \
+	LIBS += -ldl \
+		/usr/lib/gcc/x86_64-linux-gnu/5/libstdc++.a \ # These libraries are specified explicitly to force static linkage.
 		/usr/lib/gcc/x86_64-linux-gnu/5/libgomp.a \
-		-ldl
+		/usr/lib/x86_64-linux-gnu/libmatio.a \
+		/usr/lib/x86_64-linux-gnu/libhdf5_serial.a \
+		/usr/lib/x86_64-linux-gnu/libsz.a\
+		/usr/lib/x86_64-linux-gnu/libaec.a \
+		/usr/lib/x86_64-linux-gnu/libz.a \
 
 	DEFINES += UNIX_BUILD
 
@@ -86,7 +89,7 @@ win32 {
 		libmatio2.commands = copy /y $$shell_path($$FILE_LIB/matio/matio-msvc2015/x86/libmatio.dll $$OUT_PWD/release)
 	}
 
-	LIBS += -lopengl32
+	LIBS += -lopengl32 -lmatio
 
 	INCLUDEPATH += "$$OPENCL_DIR"/include
 
