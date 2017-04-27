@@ -108,6 +108,7 @@ private:
 	void mode(int m);
 	bool shouldSynchronizeView();
 	void deleteAutoSave();
+	void errorMessage(const QString& text, const QString& title = "Error");
 
 private slots:
 	void openFile();

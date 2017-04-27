@@ -617,6 +617,11 @@ void SignalFileBrowserWindow::deleteAutoSave()
 	autoSaveTimer->start();
 }
 
+void SignalFileBrowserWindow::errorMessage(const QString& text, const QString& title)
+{
+	QMessageBox::critical(this, title, text);
+}
+
 void SignalFileBrowserWindow::openFile()
 {
 	if (!closeFile())
@@ -645,30 +650,30 @@ void SignalFileBrowserWindow::openFile()
 		return;
 	}
 
-	logToFile("Opening file '" << fileName.toStdString() << "'.");
-
-	setEnableFileActions(true);
-
 	string stdFileName = fileName.toStdString();
 	auto suffix = fileInfo.suffix().toLower();
-	assert(!file);
+	assert(!file && "Make sure there is no already opened file.");
 
-	if (suffix == "gdf") // TODO: Add BDF support through Edflib.
+	try
 	{
-		file = new GDF2(stdFileName, PROGRAM_OPTIONS["uncalibratedGDF"].as<bool>());
+		// TODO: Add BDF support through Edflib.
+		if (suffix == "gdf")
+			file = new GDF2(stdFileName, PROGRAM_OPTIONS["uncalibratedGDF"].as<bool>());
+		else if (suffix == "edf")
+			file = new EDF(stdFileName);
+		else if (suffix == "mat")
+			file = new MAT(stdFileName, PROGRAM_OPTIONS["matD"].as<string>(), PROGRAM_OPTIONS["matFs"].as<string>(), PROGRAM_OPTIONS["matMults"].as<string>());
+		else
+			throw runtime_error("Unknown file extension.");
 	}
-	else if (suffix == "edf")
+	catch (runtime_error e)
 	{
-		file = new EDF(stdFileName);
+		errorMessage(e.what(), "Error while opening file");
+		return; // Ignore opening of the file as there was an error.
 	}
-	else if (suffix == "mat")
-	{
-		file = new MAT(stdFileName, PROGRAM_OPTIONS["matD"].as<string>(), PROGRAM_OPTIONS["matFs"].as<string>(), PROGRAM_OPTIONS["matMults"].as<string>());
-	}
-	else
-	{
-		throw runtime_error("Unknown file extension.");
-	}
+
+	logToFile("Opening file '" << fileName.toStdString() << "'.");
+	setEnableFileActions(true);
 
 	dataModel = new DataModel(new VitnessEventTypeTable(), new VitnessMontageTable());
 	file->setDataModel(dataModel);
@@ -904,10 +909,17 @@ void SignalFileBrowserWindow::openFile()
 		if (undoStack->isClean())
 			return;
 
-		executeWithCLocale([this] () {
-			file->saveSecondaryFile(autoSaveName);
-			logToFileAndConsole("Autosaving to " << autoSaveName);
-		});
+		try
+		{
+			executeWithCLocale([this] () {
+				file->saveSecondaryFile(autoSaveName);
+				logToFileAndConsole("Autosaving to " << autoSaveName);
+			});
+		}
+		catch (runtime_error e)
+		{
+			errorMessage(e.what());
+		}
 	});
 	openFileConnections.push_back(c);
 
@@ -936,9 +948,16 @@ bool SignalFileBrowserWindow::closeFile()
 
 	if (file)
 	{
-		executeWithCLocale([this] () {
-			OpenDataFile::infoTable.writeXML(file->getFilePath() + ".info", spikedetAnalysis->getSettings(), spikeDuration, originalDecimation);
-		});
+		try
+		{
+			executeWithCLocale([this] () {
+				OpenDataFile::infoTable.writeXML(file->getFilePath() + ".info", spikedetAnalysis->getSettings(), spikeDuration, originalDecimation);
+			});
+		}
+		catch (runtime_error e)
+		{
+			errorMessage(e.what(), "Error while autosaving file");
+		}
 	}
 
 	OpenDataFile::infoTable.setFilterCoefficients(vector<float>());
@@ -959,9 +978,16 @@ void SignalFileBrowserWindow::saveFile()
 
 	if (file)
 	{
-		executeWithCLocale([this] () {
-			file->save();
-		});
+		try
+		{
+			executeWithCLocale([this] () {
+				file->save();
+			});
+		}
+		catch (runtime_error e)
+		{
+			errorMessage(e.what(), "Error while saving file");
+		}
 
 		deleteAutoSave();
 
@@ -986,7 +1012,14 @@ void SignalFileBrowserWindow::exportToEdf()
 	if (newFileInfo.suffix() != "edf")
 		fileName += ".edf";
 
-	EDF::saveAs(fileName.toStdString(), file);
+	try
+	{
+		EDF::saveAs(fileName.toStdString(), file);
+	}
+	catch (runtime_error e)
+	{
+		errorMessage(e.what(), "Error while exporting file");
+	}
 }
 
 void SignalFileBrowserWindow::lowpassComboBoxUpdate(const QString& text)
