@@ -663,7 +663,7 @@ void SignalFileBrowserWindow::openFile()
 	}
 	else if (suffix == "mat")
 	{
-		file = new MAT(stdFileName);
+		file = new MAT(stdFileName, PROGRAM_OPTIONS["matD"].as<string>(), PROGRAM_OPTIONS["matFs"].as<string>(), PROGRAM_OPTIONS["matMults"].as<string>());
 	}
 	else
 	{

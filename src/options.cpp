@@ -62,6 +62,9 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("parallelProcessors", value<unsigned int>()->default_value(2), "parallel signal processor queue count")
 	("fileCacheSize", value<int>()->default_value(0), "allowed RAM for caching signal files in MB")
 	("notchFrequency", value<double>()->default_value(50), "frequency used to filter power interference")
+	("matD", value<string>()->default_value("d"), "data var name for MAT files")
+	("matFs", value<string>()->default_value("fs"), "sample rate var name for MAT files")
+	("matMults", value<string>()->default_value("mults"), "channel multipliers var name for MAT files")
 	;
 
 	options_description spikedet("Spikedet settings", lineWidth);
