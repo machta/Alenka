@@ -78,15 +78,13 @@ win32 {
 			-L"$$OPENCL_DIR"/lib/x86_64 \# This is where OpenCL.lib is.
 			-L$$FILE_LIB/matio/matio-msvc2015/x64
 
-		libmatio1.commands = copy /y $$shell_path($$FILE_LIB/matio/matio-msvc2015/x64/libmatio.dll $$OUT_PWD/debug)
-		libmatio2.commands = copy /y $$shell_path($$FILE_LIB/matio/matio-msvc2015/x64/libmatio.dll $$OUT_PWD/release)
+		ARCH = x64
 	} else {
 		LIBS += \
 			-L"$$OPENCL_DIR"/lib/x86 \
 			-L$$FILE_LIB/matio/matio-msvc2015/x86
 
-		libmatio1.commands = copy /y $$shell_path($$FILE_LIB/matio/matio-msvc2015/x86/libmatio.dll $$OUT_PWD/debug)
-		libmatio2.commands = copy /y $$shell_path($$FILE_LIB/matio/matio-msvc2015/x86/libmatio.dll $$OUT_PWD/release)
+		ARCH = x86
 	}
 
 	LIBS += -lopengl32 -lmatio
@@ -100,7 +98,19 @@ win32 {
 
 	CONFIG += console
 
-	# Copy libmatio.dll.
+	# Copy Matio related DLLs.
+	libmatio1.commands = \
+	copy /y $$shell_path($$FILE_LIB/matio/matio-msvc2015/$$ARCH/hdf5.dll) $$shell_path($$OUT_PWD/debug) & \
+	copy /y $$shell_path($$FILE_LIB/matio/matio-msvc2015/$$ARCH/libmatio.dll) $$shell_path($$OUT_PWD/debug) & \
+	copy /y $$shell_path($$FILE_LIB/matio/matio-msvc2015/$$ARCH/szip.dll) $$shell_path($$OUT_PWD/debug) & \
+	copy /y $$shell_path($$FILE_LIB/matio/matio-msvc2015/$$ARCH/zlib.dll) $$shell_path($$OUT_PWD/debug)
+
+	libmatio2.commands = \
+	copy /y $$shell_path($$FILE_LIB/matio/matio-msvc2015/$$ARCH/hdf5.dll) $$shell_path($$OUT_PWD/release) & \
+	copy /y $$shell_path($$FILE_LIB/matio/matio-msvc2015/$$ARCH/libmatio.dll) $$shell_path($$OUT_PWD/release) & \
+	copy /y $$shell_path($$FILE_LIB/matio/matio-msvc2015/$$ARCH/szip.dll) $$shell_path($$OUT_PWD/release) & \
+	copy /y $$shell_path($$FILE_LIB/matio/matio-msvc2015/$$ARCH/zlib.dll) $$shell_path($$OUT_PWD/release)
+
 	QMAKE_EXTRA_TARGETS += libmatio1 libmatio2
 	POST_TARGETDEPS += libmatio1 libmatio2
 }

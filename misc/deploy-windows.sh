@@ -28,7 +28,10 @@ cp -v `find .. -name Alenka.exe | grep Alenka | grep 64 | grep Release | grep 5.
 cp -v `find .. -name Alenka.exe | grep Alenka | grep 32 | grep Release | grep 5.7` $folder32/$name-32 && alenka32=OK || alenka32=fail
 
 QT_DIR=C:/Qt/5.7/msvc2015_64 &&
+cp -v `find .. -name hdf5.dll | grep Alenka | grep 64 | grep Release | grep 5.7 | head -1` $folder/$name &&
 cp -v `find .. -name libmatio.dll | grep Alenka | grep 64 | grep Release | grep 5.7 | head -1` $folder/$name &&
+cp -v `find .. -name szip.dll | grep Alenka | grep 64 | grep Release | grep 5.7 | head -1` $folder/$name &&
+cp -v `find .. -name zlib.dll | grep Alenka | grep 64 | grep Release | grep 5.7 | head -1` $folder/$name &&
 cp -v $QT_DIR/bin/Qt5Core.dll $folder/$name &&
 cp -v $QT_DIR/bin/Qt5Gui.dll $folder/$name &&
 cp -v $QT_DIR/bin/Qt5Widgets.dll $folder/$name &&
@@ -36,11 +39,13 @@ cp -v $QT_DIR/bin/Qt5Network.dll $folder/$name &&
 cp -v $QT_DIR/bin/Qt5WebSockets.dll $folder/$name &&
 cp -v $QT_DIR/bin/Qt5Charts.dll $folder/$name &&
 cp -v $QT_DIR/plugins/platforms/qwindows.dll $folder/$name/platforms &&
-cp -v misc/alenkaSave.m $folder/$name &&
 libraries=OK || libraries=fail
 
 QT_DIR=C:/Qt/5.7/msvc2015 &&
+cp -v `find .. -name hdf5.dll | grep Alenka | grep 32 | grep Release | grep 5.7 | head -1` $folder32/$name-32 &&
 cp -v `find .. -name libmatio.dll | grep Alenka | grep 32 | grep Release | grep 5.7 | head -1` $folder32/$name-32 &&
+cp -v `find .. -name szip.dll | grep Alenka | grep 32 | grep Release | grep 5.7 | head -1` $folder32/$name-32 &&
+cp -v `find .. -name zlib.dll | grep Alenka | grep 32 | grep Release | grep 5.7 | head -1` $folder32/$name-32 &&
 cp -v $QT_DIR/bin/Qt5Core.dll $folder32/$name-32 &&
 cp -v $QT_DIR/bin/Qt5Gui.dll $folder32/$name-32 &&
 cp -v $QT_DIR/bin/Qt5Widgets.dll $folder32/$name-32 &&
@@ -48,7 +53,6 @@ cp -v $QT_DIR/bin/Qt5Network.dll $folder32/$name-32 &&
 cp -v $QT_DIR/bin/Qt5WebSockets.dll $folder32/$name-32 &&
 cp -v $QT_DIR/bin/Qt5Charts.dll $folder32/$name-32 &&
 cp -v $QT_DIR/plugins/platforms/qwindows.dll $folder32/$name-32/platforms &&
-cp -v misc/alenkaSave.m $folder32/$name-32 &&
 libraries32=OK || libraries32=fail
 
 README='Visual C++ 2015 redistributable is required.\r
@@ -60,9 +64,6 @@ Nvidia cards downloading the driver from their website is usually better.\r
 Use "./Alenka" to launch the program from command line or double-click.\r
 \r
 Use --help to get a list of all the available options.\r
-\r
-You can use "alenkaSave.m" to export a Matlab matrix to a MAT file in the format\r
-that can then be opend by Alenka.\r
 '
 echo -e "$README" > $folder/$name/README.txt
 echo -e "$README" > $folder32/$name-32/README.txt
