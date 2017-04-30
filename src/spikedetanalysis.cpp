@@ -1,12 +1,14 @@
 #include "spikedetanalysis.h"
 
 #include "DataModel/opendatafile.h"
-
+#include "DataModel/undocommandfactory.h"
+#include "SignalProcessor/signalprocessor.h"
 #include <AlenkaSignal/openclcontext.h>
 #include <AlenkaSignal/montage.h>
 #include <AlenkaSignal/montageprocessor.h>
 
 #include <QProgressDialog>
+#include <QFile>
 
 #include <thread>
 
@@ -17,13 +19,12 @@ namespace
 {
 
 template<class T>
-class Loader : public SpikedetDataLoader<T>
+class Loader : public SpikedetDataLoader
 {
-	const int BLOCK_LENGTH = 8*1024/*512*/;
+	const int BLOCK_LENGTH = 8*1024;
 
 	AlenkaFile::DataFile* file;
 	const vector<Montage<T>*>& montage;
-
 	MontageProcessor<T>* processor;
 	vector<T> tmpData;
 	int inChannels, outChannels;
@@ -67,6 +68,7 @@ public:
 			err = clReleaseMemObject(inBuffer);
 			checkClErrorCode(err, "clReleaseMemObject()");
 		}
+
 		if (outBuffer)
 		{
 			err = clReleaseMemObject(outBuffer);
@@ -91,7 +93,7 @@ public:
 			size_t inRegion[] = {rowLen, static_cast<size_t>(inChannels), 1};
 
 			err = clEnqueueWriteBufferRect(queue, inBuffer, CL_TRUE, origin, origin, inRegion,
-				BLOCK_LENGTH*sizeof(T), 0, 0, 0, tmpData.data(), 0, nullptr, nullptr); // SEGFAULT
+				BLOCK_LENGTH*sizeof(T), 0, 0, 0, tmpData.data(), 0, nullptr, nullptr);
 			checkClErrorCode(err, "clEnqueueWriteBufferRect()");
 
 			processor->process(montage, inBuffer, outBuffer, queue, BLOCK_LENGTH);
@@ -117,15 +119,87 @@ public:
 	}
 };
 
+template<class T>
+vector<Montage<T>*> makeMontage(OpenDataFile* file, OpenCLContext* context)
+{
+	QFile headerFile(":/montageHeader.cl");
+	headerFile.open(QIODevice::ReadOnly);
+	string header = headerFile.readAll().toStdString();
+
+	const AlenkaFile::AbstractTrackTable* trackTable = file->dataModel->montageTable()->trackTable(OpenDataFile::infoTable.getSelectedMontage());
+	vector<string> montageCode;
+
+	for (int i = 0; i < trackTable->rowCount(); ++i)
+		montageCode.push_back(trackTable->row(i).code);
+
+	return SignalProcessor::makeMontage<T>(montageCode, context, file->kernelCache, header);
+}
+
+void processOutput(OpenDataFile* file, SpikedetAnalysis* spikedetAnalysis, double spikeDuration)
+{
+	using namespace AlenkaFile;
+
+	// Add three new event types for the different levels of spike events.
+	file->undoFactory->beginMacro("run Spikedet");
+
+	const AbstractEventTypeTable* eventTypeTable = file->dataModel->eventTypeTable();
+	int index = eventTypeTable->rowCount();
+	file->undoFactory->insertEventType(index, 3);
+
+	QColor colors[3] = {QColor(0, 0, 255), QColor(0, 255, 0), QColor(0, 255, 255)};
+	for (int i = 0; i < 3; ++i)
+	{
+		EventType et = eventTypeTable->row(index + i);
+
+		et.name = "Spikedet K" + to_string(i + 1);
+		DataModel::color2array(colors[i], et.color);
+
+		file->undoFactory->changeEventType(index + i, et);
+	}
+
+	// Process the output structure.
+	const AbstractEventTable* eventTable = file->dataModel->montageTable()->eventTable(OpenDataFile::infoTable.getSelectedMontage());
+
+	CDetectorOutput* out = spikedetAnalysis->getOutput();
+	assert(out);
+	int count = static_cast<int>(out->m_pos.size());
+
+	if (count > 0)
+	{
+		assert(static_cast<int>(out->m_chan.size()) == count);
+
+		int etIndex = eventTable->rowCount();
+		file->undoFactory->insertEvent(OpenDataFile::infoTable.getSelectedMontage(), etIndex, count);
+
+		for (int i = 0; i < count; i++)
+		{
+			Event e = eventTable->row(etIndex + i);
+
+			e.label = "Spike " + to_string(i);
+			e.type = index + (out->m_con[i] == 0.5 ? 1 : 0); // TODO: Figure out what should be used as the third type.
+			e.position = out->m_pos[i]*file->file->getSamplingFrequency();
+			e.duration = file->file->getSamplingFrequency()*spikeDuration;
+			//e.duration = out->m_dur[i]*file->getSamplingFrequency();
+			e.channel = out->m_chan[i] - 1;
+
+			file->undoFactory->changeEvent(OpenDataFile::infoTable.getSelectedMontage(), etIndex + i, e);
+		}
+	}
+
+	file->undoFactory->endMacro();
+}
+
 } // namespace
 
-void SpikedetAnalysis::runAnalysis(OpenDataFile* file, const vector<Montage<float>*>& montage, QProgressDialog* progress, bool originalDecimation)
+void SpikedetAnalysis::runAnalysis(OpenDataFile* file, QProgressDialog* progress, bool originalSpikedet)
 {
 	assert(file);
 
+	vector<Montage<SIGNALTYPE>*> montage = makeMontage<SIGNALTYPE>(file, context);
+
 	int Fs = static_cast<int>(round(file->file->getSamplingFrequency()));
-	Spikedet<float> spikedet(Fs, static_cast<int>(montage.size()), originalDecimation, settings, context);
-	Loader<float> loader(file->file, montage, context);
+	Spikedet spikedet(Fs, static_cast<int>(montage.size()), originalSpikedet, settings);
+	Loader<SIGNALTYPE> loader(file->file, montage, context);
 
 	delete output;
 	output = new CDetectorOutput;
@@ -156,4 +230,6 @@ void SpikedetAnalysis::runAnalysis(OpenDataFile* file, const vector<Montage<floa
 
 	t.join();
 	progress->setValue(100);
+
+	processOutput(file, this, spikeDuration);
 }

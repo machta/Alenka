@@ -15,7 +15,6 @@
 #include <cassert>
 #include <algorithm>
 #include <stdexcept>
-#include <chrono>
 #include <sstream>
 
 using namespace std;
@@ -313,65 +312,6 @@ void SignalProcessor::process(const vector<int>& indexVector, const vector<cl_me
 	}
 }
 
-vector<AlenkaSignal::Montage<float>*> SignalProcessor::makeMontage(const vector<string>& montageCode,
-	AlenkaSignal::OpenCLContext* context, KernelCache* kernelCache, const string& header)
-{
-#ifndef NDEBUG
-	using namespace chrono;
-	auto start = high_resolution_clock::now(); // TODO: Remove this after the compilation time issue is solved, or perhaps log this info to a file.
-	int needToCompile = 0;
-#endif
-
-	vector<AlenkaSignal::Montage<float>*> montage;
-
-	for (unsigned int i = 0; i < montageCode.size(); i++)
-	{
-		AlenkaSignal::Montage<float>* m;
-		QString code = QString::fromStdString(simplifyMontage(montageCode[i]));
-
-		auto ptr = kernelCache ? kernelCache->find(code) : nullptr;
-
-		if (ptr)
-		{
-			assert(0 < ptr->size());
-			m = new AlenkaSignal::Montage<float>(ptr, context);
-		}
-		else
-		{
-#ifndef NDEBUG
-			++needToCompile;
-#endif
-			m = new AlenkaSignal::Montage<float>(code.toStdString(), context, header);
-
-			if (kernelCache)
-			{
-				auto binary = m->getBinary();
-				if (binary->size() > 0)
-					kernelCache->insert(code, binary);
-			}
-		}
-
-		montage.push_back(m);
-	}
-
-#ifndef NDEBUG
-	auto end = high_resolution_clock::now();
-	nanoseconds time = end - start;
-	string str = "Need to compile " + to_string(needToCompile) + " montages: " + to_string(static_cast<double>(time.count())/1000/1000) + " ms";
-	if (needToCompile > 0)
-	{
-		logToFileAndConsole(str);
-	}
-	else
-	{
-		logToFileAndConsole(str)
-		//logToFile(str);
-	}
-#endif
-
-	return montage;
-}
-
 void SignalProcessor::updateMontage()
 {
 	assert(ready());
@@ -389,7 +329,7 @@ void SignalProcessor::updateMontage()
 			montageCode.push_back(t.code);
 	}
 
-	montage = makeMontage(montageCode, context, file->kernelCache, header);
+	montage = makeMontage<float>(montageCode, context, file->kernelCache, header);
 }
 
 void SignalProcessor::deleteMontage()

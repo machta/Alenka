@@ -3,6 +3,8 @@
 
 #include <AlenkaSignal/montage.h>
 #include "lrucache.h"
+#include "../DataModel/kernelcache.h"
+#include "../error.h"
 
 #include <CL/cl_gl.h>
 
@@ -12,6 +14,7 @@
 #include <set>
 #include <vector>
 #include <functional>
+#include <chrono>
 
 namespace AlenkaSignal
 {
@@ -25,7 +28,6 @@ class Filter;
 }
 class OpenDataFile;
 class SignalBlock;
-class KernelCache;
 
 /**
  * @brief A class used for retrieving the processed signal blocks.
@@ -121,12 +123,72 @@ public:
 		return file && trackCount > 0;
 	}
 
+	template<class T>
 	static std::string simplifyMontage(const std::string& str)
 	{
-		QString qstr = AlenkaSignal::Montage<float>::stripComments(str).c_str();
+		QString qstr = AlenkaSignal::Montage<T>::stripComments(str).c_str();
 		return qstr.simplified().toStdString();
 	}
-	static std::vector<AlenkaSignal::Montage<float>*> makeMontage(const std::vector<std::string>& montageCode, AlenkaSignal::OpenCLContext* context, KernelCache* kernelCache, const std::string& header);
+
+	template<class T>
+	static std::vector<AlenkaSignal::Montage<T>*> makeMontage(const std::vector<std::string>& montageCode, AlenkaSignal::OpenCLContext* context, KernelCache* kernelCache, const std::string& header)
+	{
+		using namespace std;
+	#ifndef NDEBUG
+		using namespace chrono;
+		auto start = high_resolution_clock::now(); // TODO: Remove this after the compilation time issue is solved, or perhaps log this info to a file.
+		int needToCompile = 0;
+	#endif
+
+		vector<AlenkaSignal::Montage<T>*> montage;
+
+		for (unsigned int i = 0; i < montageCode.size(); i++)
+		{
+			AlenkaSignal::Montage<T>* m;
+			QString code = QString::fromStdString(simplifyMontage<T>(montageCode[i]));
+
+			auto ptr = kernelCache ? kernelCache->find(code) : nullptr;
+
+			if (ptr)
+			{
+				assert(0 < ptr->size());
+				m = new AlenkaSignal::Montage<T>(ptr, context);
+			}
+			else
+			{
+	#ifndef NDEBUG
+				++needToCompile;
+	#endif
+				m = new AlenkaSignal::Montage<T>(code.toStdString(), context, header);
+
+				if (kernelCache)
+				{
+					auto binary = m->getBinary();
+					if (binary->size() > 0)
+						kernelCache->insert(code, binary);
+				}
+			}
+
+			montage.push_back(m);
+		}
+
+	#ifndef NDEBUG
+		auto end = high_resolution_clock::now();
+		nanoseconds time = end - start;
+		string str = "Need to compile " + to_string(needToCompile) + " montages: " + to_string(static_cast<double>(time.count())/1000/1000) + " ms";
+		if (needToCompile > 0)
+		{
+			logToFileAndConsole(str);
+		}
+		else
+		{
+			logToFileAndConsole(str);
+			//logToFile(str);
+		}
+	#endif
+
+		return montage;
+	}
 
 	static std::pair<std::int64_t, std::int64_t> blockIndexToSampleRange(int index, unsigned int blockSize)
 	{

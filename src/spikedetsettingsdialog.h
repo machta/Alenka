@@ -13,9 +13,9 @@ class SpikedetSettingsDialog : public QDialog
 {
 	Q_OBJECT
 
-	AlenkaSignal::DETECTOR_SETTINGS* settings;
+	DETECTOR_SETTINGS* settings;
 	double* eventDuration;
-	bool* originalDecimation;
+	bool* originalSpikedet;
 
 	QSpinBox* fl_box;
 	QSpinBox* fh_box;
@@ -33,8 +33,8 @@ class SpikedetSettingsDialog : public QDialog
 	QCheckBox* odm_box;
 
 public:
-	explicit SpikedetSettingsDialog(AlenkaSignal::DETECTOR_SETTINGS* settings, double* eventDuration, bool* originalDecimation, QWidget* parent = 0);
-	static void resetSettings(AlenkaSignal::DETECTOR_SETTINGS* settings, double* eventDuration, bool* originalDecimation);
+	explicit SpikedetSettingsDialog(DETECTOR_SETTINGS* settings, double* eventDuration, bool* originalSpikedet, QWidget* parent = 0);
+	static void resetSettings(DETECTOR_SETTINGS* settings, double* eventDuration, bool* originalSpikedet);
 
 private:
 	void setValues();

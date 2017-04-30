@@ -6,14 +6,18 @@
 namespace AlenkaSignal
 {
 class OpenCLContext;
-template<class T>
-class Montage;
 }
 class OpenDataFile;
 class QProgressDialog;
 
 class SpikedetAnalysis
 {
+	double spikeDuration;
+	AlenkaSignal::OpenCLContext* context;
+	DETECTOR_SETTINGS settings = AlenkaSignal::Spikedet::defaultSettings();
+	CDetectorOutput* output = nullptr;
+	CDischarges* discharges = nullptr;
+
 public:
 	SpikedetAnalysis(AlenkaSignal::OpenCLContext* context) : context(context) {}
 	~SpikedetAnalysis()
@@ -22,31 +26,30 @@ public:
 		delete discharges;
 	}
 
-	AlenkaSignal::CDetectorOutput* getOutput()
+	CDetectorOutput* getOutput()
 	{
 		return output;
 	}
-	AlenkaSignal::CDischarges* getDischarges()
+	CDischarges* getDischarges()
 	{
 		return discharges;
 	}
 
-	void setSettings(const AlenkaSignal::DETECTOR_SETTINGS& s)
+	void setSettings(const DETECTOR_SETTINGS& s)
 	{
 		settings = s;
 	}
-	AlenkaSignal::DETECTOR_SETTINGS getSettings() const
+	DETECTOR_SETTINGS getSettings() const
 	{
 		return settings;
 	}
 
-	void runAnalysis(OpenDataFile* file, const std::vector<AlenkaSignal::Montage<float>*>& montage, QProgressDialog* progress, bool originalDecimation);
+	void setSpikeDuration(double val)
+	{
+		spikeDuration = val;
+	}
 
-private:
-	AlenkaSignal::OpenCLContext* context;
-	AlenkaSignal::DETECTOR_SETTINGS settings;
-	AlenkaSignal::CDetectorOutput* output = nullptr;
-	AlenkaSignal::CDischarges* discharges = nullptr;
+	void runAnalysis(OpenDataFile* file, QProgressDialog* progress, bool originalSpikedet);
 };
 
 #endif // SPIKEDETANALYSIS_H

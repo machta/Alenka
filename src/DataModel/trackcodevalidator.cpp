@@ -22,7 +22,7 @@ TrackCodeValidator::TrackCodeValidator()
 
 bool TrackCodeValidator::validate(const QString& input, QString* errorMessage)
 {
-	string code = SignalProcessor::simplifyMontage(input.toStdString());
+	string code = SignalProcessor::simplifyMontage<float>(input.toStdString());
 
 	if (errorMessage)
 	{

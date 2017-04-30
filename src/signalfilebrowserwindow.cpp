@@ -226,17 +226,17 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	spikedetSettingsAction->setToolTip("Change Spikedet settings.");
 	spikedetSettingsAction->setStatusTip(spikedetSettingsAction->toolTip());
 	connect(spikedetSettingsAction, &QAction::triggered, [this] () {
-		AlenkaSignal::DETECTOR_SETTINGS settings = spikedetAnalysis->getSettings();
+		DETECTOR_SETTINGS settings = spikedetAnalysis->getSettings();
 		double newDuration = spikeDuration;
-		bool newDecimation = originalDecimation;
+		bool newOriginalSpikedet= originalSpikedet;
 
-		SpikedetSettingsDialog dialog(&settings, &newDuration, &newDecimation, this);
+		SpikedetSettingsDialog dialog(&settings, &newDuration, &newOriginalSpikedet, this);
 
 		if (dialog.exec() == QDialog::Accepted)
 		{
 			spikedetAnalysis->setSettings(settings);
 			spikeDuration = newDuration;
-			originalDecimation = newDecimation;
+			originalSpikedet = newOriginalSpikedet;
 		}
 	});
 
@@ -498,7 +498,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	spikedetAnalysis = new SpikedetAnalysis(globalContext.get());
 
 	auto settings = spikedetAnalysis->getSettings();
-	SpikedetSettingsDialog::resetSettings(&settings, &spikeDuration, &originalDecimation);
+	SpikedetSettingsDialog::resetSettings(&settings, &spikeDuration, &originalSpikedet);
 	spikedetAnalysis->setSettings(settings);
 
 	setEnableFileActions(false);
@@ -704,8 +704,8 @@ void SignalFileBrowserWindow::openFile()
 		else
 			secondaryFileExists = file->load();
 
-		AlenkaSignal::DETECTOR_SETTINGS settings;
-		OpenDataFile::infoTable.readXML(file->getFilePath() + ".info", &settings, &spikeDuration, &originalDecimation);
+		DETECTOR_SETTINGS settings = AlenkaSignal::Spikedet::defaultSettings();
+		OpenDataFile::infoTable.readXML(file->getFilePath() + ".info", &settings, &spikeDuration, &originalSpikedet);
 	});
 
 	if (useAutoSave || !secondaryFileExists)
@@ -951,7 +951,7 @@ bool SignalFileBrowserWindow::closeFile()
 		try
 		{
 			executeWithCLocale([this] () {
-				OpenDataFile::infoTable.writeXML(file->getFilePath() + ".info", spikedetAnalysis->getSettings(), spikeDuration, originalDecimation);
+				OpenDataFile::infoTable.writeXML(file->getFilePath() + ".info", spikedetAnalysis->getSettings(), spikeDuration, originalSpikedet);
 			});
 		}
 		catch (runtime_error e)
@@ -1190,82 +1190,22 @@ void SignalFileBrowserWindow::runSpikedet()
 	if (!file)
 		return;
 
-	const AbstractMontageTable* montageTable = openDataFile->dataModel->montageTable();
+	const AlenkaFile::AbstractMontageTable* montageTable = dataModel->montageTable();
 	if (montageTable->rowCount() <= 0)
 		return;
 
-	const AbstractTrackTable* trackTable = montageTable->trackTable(OpenDataFile::infoTable.getSelectedMontage());
+	const AlenkaFile::AbstractTrackTable* trackTable = montageTable->trackTable(OpenDataFile::infoTable.getSelectedMontage());
 	if (trackTable->rowCount() <= 0)
 		return;
 
-	undoFactory->beginMacro("run Spikedet");
-
-	// Build montage from code.
-	QFile headerFile(":/montageHeader.cl");
-	headerFile.open(QIODevice::ReadOnly);
-	string header = headerFile.readAll().toStdString();
-
-	vector<string> montageCode;
-	for (int i = 0; i < trackTable->rowCount(); ++i)
-		montageCode.push_back(trackTable->row(i).code);
-
-	auto montage = SignalProcessor::makeMontage(montageCode, globalContext.get(), kernelCache, header);
-
-	// Run Spikedet.
 	QProgressDialog progress("Running Spikedet analysis", "Abort", 0, 100, this);
 	progress.setWindowModality(Qt::WindowModal);
 
 	progress.setMinimumDuration(0); // This is to show the dialog immediately.
 	progress.setValue(1);
 
-	spikedetAnalysis->runAnalysis(openDataFile, montage, &progress, originalDecimation);
-
-	// Add three new event types for the different levels of spike events.
-	const AbstractEventTypeTable* eventTypeTable = openDataFile->dataModel->eventTypeTable();
-	int index = eventTypeTable->rowCount();
-	undoFactory->insertEventType(index, 3);
-
-	QColor colors[3] = {QColor(0, 0, 255), QColor(0, 255, 0), QColor(0, 255, 255)};
-	for (int i = 0; i < 3; ++i)
-	{
-		EventType et = eventTypeTable->row(index + i);
-
-		et.name = "Spikedet K" + to_string(i + 1);
-		DataModel::color2array(colors[i], et.color);
-
-		undoFactory->changeEventType(index + i, et);
-	}
-
-	// Process the output structure.
-	const AbstractEventTable* eventTable = montageTable->eventTable(OpenDataFile::infoTable.getSelectedMontage());
-
-	AlenkaSignal::CDetectorOutput* out = spikedetAnalysis->getOutput();
-	assert(out);
-	int count = static_cast<int>(out->m_pos.size());
-
-	if (count > 0)
-	{
-		assert(static_cast<int>(out->m_chan.size()) == count);
-
-		int etIndex = eventTable->rowCount();
-		undoFactory->insertEvent(OpenDataFile::infoTable.getSelectedMontage(), etIndex, count);
-
-		for (int i = 0; i < count; i++)
-		{
-			Event e = eventTable->row(etIndex + i);
-
-			e.label = "Spike " + to_string(i);
-			e.type = index + (out->m_con[i] == 0.5 ? 1 : 0); // TODO: Figure out what should be used as the third type.
-			e.position = out->m_pos[i]*file->getSamplingFrequency();
-			e.duration = file->getSamplingFrequency()*spikeDuration;
-			//e.duration = out->m_dur[i]*file->getSamplingFrequency();
-			e.channel = out->m_chan[i] - 1;
-
-			undoFactory->changeEvent(OpenDataFile::infoTable.getSelectedMontage(), etIndex + i, e);
-		}
-	}
-
-	undoFactory->endMacro();
+	spikedetAnalysis->setSpikeDuration(spikeDuration);
+	spikedetAnalysis->runAnalysis(openDataFile, &progress, originalSpikedet);
 }
 
 void SignalFileBrowserWindow::receiveSyncMessage(const QByteArray& message)

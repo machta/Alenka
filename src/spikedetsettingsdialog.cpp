@@ -13,8 +13,8 @@
 
 using namespace std;
 
-SpikedetSettingsDialog::SpikedetSettingsDialog(AlenkaSignal::DETECTOR_SETTINGS* settings, double* eventDuration, bool* originalDecimation, QWidget* parent)
-	: QDialog(parent), settings(settings), eventDuration(eventDuration), originalDecimation(originalDecimation)
+SpikedetSettingsDialog::SpikedetSettingsDialog(DETECTOR_SETTINGS* settings, double* eventDuration, bool* originalSpikedet, QWidget* parent)
+	: QDialog(parent), settings(settings), eventDuration(eventDuration), originalSpikedet(originalSpikedet)
 {
 	QVBoxLayout* box = new QVBoxLayout();
 
@@ -25,10 +25,10 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(AlenkaSignal::DETECTOR_SETTINGS* 
 	connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
 	connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);	
 
-	connect(buttonBox, &QDialogButtonBox::clicked, [this, buttonBox, settings, eventDuration, originalDecimation] (QAbstractButton* button) {
+	connect(buttonBox, &QDialogButtonBox::clicked, [this, buttonBox, settings, eventDuration, originalSpikedet] (QAbstractButton* button) {
 		if (buttonBox->buttonRole(button) == QDialogButtonBox::ResetRole)
 		{
-			resetSettings(settings, eventDuration, originalDecimation);
+			resetSettings(settings, eventDuration, originalSpikedet);
 			setValues();
 		}
 	});
@@ -140,15 +140,15 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(AlenkaSignal::DETECTOR_SETTINGS* 
 	grid->addRow(label, sed_box);
 
 	label = new QLabel("Decimation method:");
-	label->setToolTip("Use orginal decimation method (--odm)");
+	label->setToolTip("Use orginal Spikedet implementation (--osd)");
 	odm_box = new QCheckBox();
-	connect(odm_box, &QCheckBox::clicked, [originalDecimation] (bool val) { *originalDecimation = val; });
+	connect(odm_box, &QCheckBox::clicked, [originalSpikedet] (bool val) { *originalSpikedet = val; });
 	grid->addRow(label, odm_box);
 
 	setValues();
 }
 
-void SpikedetSettingsDialog::resetSettings(AlenkaSignal::DETECTOR_SETTINGS* settings, double* eventDuration, bool* originalDecimation)
+void SpikedetSettingsDialog::resetSettings(DETECTOR_SETTINGS* settings, double* eventDuration, bool* originalSpikedet)
 {
 	settings->m_band_low = PROGRAM_OPTIONS["fl"].as<int>();
 	settings->m_band_high = PROGRAM_OPTIONS["fh"].as<int>();
@@ -164,7 +164,7 @@ void SpikedetSettingsDialog::resetSettings(AlenkaSignal::DETECTOR_SETTINGS* sett
 	settings->m_decimation = PROGRAM_OPTIONS["dec"].as<int>();
 
 	*eventDuration = PROGRAM_OPTIONS["sed"].as<double>();
-	*originalDecimation = PROGRAM_OPTIONS["odm"].as<bool>();
+	*originalSpikedet = PROGRAM_OPTIONS["osd"].as<bool>();
 }
 
 void SpikedetSettingsDialog::setValues()
@@ -182,5 +182,5 @@ void SpikedetSettingsDialog::setValues()
 	pt_box->setValue(settings->m_polyspike_union_time);
 	dec_box->setValue(settings->m_decimation);
 	sed_box->setValue(*eventDuration);
-	odm_box->setChecked(*originalDecimation);
+	odm_box->setChecked(*originalSpikedet);
 }
