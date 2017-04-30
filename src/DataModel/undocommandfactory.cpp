@@ -1,5 +1,7 @@
 #include "undocommandfactory.h"
 
+#include "../DataModel/opendatafile.h"
+
 #include <QUndoStack>
 #include <QUndoCommand>
 
@@ -234,6 +236,8 @@ public:
 	virtual void redo() override
 	{
 		dataModel->montageTable()->removeRows(i, c);
+
+		emitChangedMontage();
 	}
 	virtual void undo() override
 	{
@@ -257,6 +261,18 @@ public:
 			for (int l = 0; l < count; ++l)
 				tt->row(l, tracksBefore[k][l]);
 		}
+
+		emitChangedMontage();
+	}
+
+private:
+	void emitChangedMontage()
+	{
+		int sm = OpenDataFile::infoTable.getSelectedMontage();
+		sm = min(sm, dataModel->montageTable()->rowCount() - 1);
+
+		if (i <= sm && sm < i + c)
+			emit OpenDataFile::infoTable.selectedMontageChanged(sm);
 	}
 };
 

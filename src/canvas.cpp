@@ -1336,5 +1336,5 @@ void Canvas::updateMontage()
 
 bool Canvas::ready()
 {
-	return /*file && 0 < file->dataModel->montageTable()->rowCount() &&*/ signalProcessor && signalProcessor->ready();
+	return signalProcessor && signalProcessor->ready();
 }

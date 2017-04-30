@@ -73,13 +73,15 @@ void TrackLabelBar::paintEvent(QPaintEvent* /*event*/)
 
 void TrackLabelBar::updateTrackTable(int row)
 {
-	if (file && row >= 0)
+	const AbstractMontageTable* mt = file->dataModel->montageTable();
+
+	if (file && row >= 0 && 0 < mt->rowCount())
 	{
 		for (auto e : trackConnections)
 			disconnect(e);
 		trackConnections.clear();
 
-		auto vitness = VitnessTrackTable::vitness(file->dataModel->montageTable()->trackTable(row));
+		auto vitness = VitnessTrackTable::vitness(mt->trackTable(row));
 
 		auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(updateLabels(int)));
 		trackConnections.push_back(c);
