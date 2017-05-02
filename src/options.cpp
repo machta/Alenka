@@ -38,7 +38,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("clInfo", "print OpenCL platform and device info")
 	("glInfo", "print OpenGL info")
 	("printBuffers", "dump OpenCL buffers for debugging")
-	("version", "print version number");
+	("version", "print version number")
 #ifdef TESTS
 	("test", "run unit tests")
 #endif
@@ -83,7 +83,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("pt", value<double>()->default_value(0.12), "polyspike union time")
 	("dec", value<int>()->default_value(200), "decimation")
 	("sed", value<double>()->default_value(0.1), "spike event duration in seconds")
-	("osd", value<bool>()->default_value(true), "use original Spikedet implementation")
+	("osd", value<bool>()->default_value(true), "use orginal Spikedet implementation instead of the optimized version")
 	;
 
 	configuration.add(spikedet);

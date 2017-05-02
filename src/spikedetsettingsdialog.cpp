@@ -139,8 +139,8 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(DETECTOR_SETTINGS* settings, doub
 	connect(sed_box, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [eventDuration] (double val) { *eventDuration = val; });
 	grid->addRow(label, sed_box);
 
-	label = new QLabel("Decimation method:");
-	label->setToolTip("Use orginal Spikedet implementation (--osd)");
+	label = new QLabel("Original Spikedet:");
+	label->setToolTip("Use orginal Spikedet implementation instead of the optimized version (--osd)");
 	odm_box = new QCheckBox();
 	connect(odm_box, &QCheckBox::clicked, [originalSpikedet] (bool val) { *originalSpikedet = val; });
 	grid->addRow(label, odm_box);

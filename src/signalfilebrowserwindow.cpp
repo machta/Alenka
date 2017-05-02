@@ -619,7 +619,9 @@ void SignalFileBrowserWindow::deleteAutoSave()
 
 void SignalFileBrowserWindow::errorMessage(const QString& text, const QString& title)
 {
-	QMessageBox::critical(this, title, text);
+	QString padding(max(0, title.size()*2 - text.size()), ' ');
+
+	QMessageBox::critical(this, title, text + padding);
 }
 
 void SignalFileBrowserWindow::openFile()
