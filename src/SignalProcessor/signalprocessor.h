@@ -156,15 +156,15 @@ public:
 			}
 			else
 			{
-	#ifndef NDEBUG
-				++needToCompile;
-	#endif
 				m = new AlenkaSignal::Montage<T>(code.toStdString(), context, header);
-
+#ifndef NDEBUG
+				if (!m->isCopyMontage())
+					++needToCompile;
+#endif
 				if (kernelCache)
 				{
 					auto binary = m->getBinary();
-					if (binary->size() > 0)
+					if (binary && binary->size() > 0)
 						kernelCache->insert(code, binary);
 				}
 			}

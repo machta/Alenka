@@ -1,5 +1,5 @@
 #ifdef TESTS
 
-#include "unit-test/googletest/googletest/src/gtest-all.cc"
+#include "googletest/googletest/src/gtest-all.cc"
 
 #endif // TESTS

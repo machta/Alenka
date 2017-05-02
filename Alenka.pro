@@ -25,4 +25,4 @@ RESOURCES += \
 
 # Tests.
 INCLUDEPATH += unit-test/googletest/googletest/include unit-test/googletest/googletest
-SOURCES += $$files(unit-test/*.cpp) # TODO: Include also tests from Alenka-File/Signal.
+SOURCES += $$files(unit-test/*.cpp)
