@@ -4,6 +4,7 @@
 #include <QApplication>
 
 #include <memory>
+#include <array>
 
 class Options;
 namespace AlenkaSignal
@@ -46,6 +47,8 @@ public:
 	virtual bool notify(QObject* receiver, QEvent* event) override;
 
 	static void mainExit(int status = EXIT_SUCCESS);
+
+	static std::array<int, 3> version() { return std::array<int, 3>{0, 8, 1}; }
 };
 
 extern std::unique_ptr<AlenkaSignal::OpenCLContext> globalContext;

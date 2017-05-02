@@ -28,6 +28,7 @@ string cacheFilePath()
 
 } // namespace
 
+// TODO: Reject caches from old Alenka versions and from changed devices.
 KernelCache::KernelCache()
 {
 	// TODO: Perhaps switch to byte-size based capacity system.

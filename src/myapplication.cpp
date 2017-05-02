@@ -101,6 +101,12 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 		cout << ss.str();
 		mainExit();
 	}
+	else if (PROGRAM_OPTIONS.isSet("version"))
+	{
+		auto v = version();
+		cout << "Alenka " << to_string(get<0>(v)) + '.' + to_string(get<1>(v)) + '.' + to_string(get<2>(v)) << endl;
+		mainExit();
+	}
 
 	// Set locale.
 	QLocale locale(PROGRAM_OPTIONS["locale"].as<string>().c_str());

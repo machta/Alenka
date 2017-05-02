@@ -38,6 +38,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("clInfo", "print OpenCL platform and device info")
 	("glInfo", "print OpenGL info")
 	("printBuffers", "dump OpenCL buffers for debugging")
+	("version", "print version number");
 #ifdef TESTS
 	("test", "run unit tests")
 #endif
