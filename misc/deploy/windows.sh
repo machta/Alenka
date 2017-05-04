@@ -1,14 +1,16 @@
 #!/bin/bash
 
-# Usage: ./misc/deploy-windows.sh fileName
+# Usage: ./misc/deploy/windows.sh fileName
 #
 # This script makes a standalone ZIP package for distribution on Windows.
 #
 # Tested on Windows 7/10.
 #
 # Use Git Bash or a similar tool to run this.
-# PowerShell 3 and .NET 4 is needed for the archive creation.
-# If you don't have it, comment out the last command (rm -f ...) and zip it yourself.
+#
+# PowerShell 3 and .NET 4 is needed for the archive creation. If you don't have
+# these, comment out the last command (rm -r $folder $folder32) and make the
+# archive yourself from the temporary directories.
 
 name=$1
 if [ "$name" == "" ]
@@ -163,18 +165,9 @@ cp -v $QT_DIR/qml/QtQuick.2/qtquick2plugin.dll $folder32/$name-32/QtQuick.2 &&
 cp -v $QT_DIR/qml/QtQuick.2/qmldir $folder32/$name-32/QtQuick.2 &&
 libraries32=OK || libraries32=fail
 
-README='Visual C++ 2015 redistributable is required.\r
-\r
-You need to install a fairly recent driver for your GPU. You can do this via\r
-Windows Update. This works well for the integrated Intel GPU, but for AMD and\r
-Nvidia cards downloading the driver from their website is usually better.\r
-\r
-Use "./Alenka" to launch the program from command line or double-click.\r
-\r
-Use --help to get a list of all the available options.\r
-'
-echo -e "$README" > $folder/$name/README.txt
-echo -e "$README" > $folder32/$name-32/README.txt
+README="`dirname $0`/readme-windows.txt"
+cp "$README" $folder/$name/README.txt
+cp "$README" $folder32/$name-32/README.txt
 
 # Make zip using .Net.
 rm -f "$name.zip" "$name-32.zip" &&

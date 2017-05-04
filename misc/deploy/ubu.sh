@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: ./misc/deploy-ubu.sh fileName
+# Usage: ./misc/deploy/ubu.sh fileName
 #
 # Use this script to make a ZIP package for Ubuntu 16 that has preinstalled Qt 5.5.
 #
