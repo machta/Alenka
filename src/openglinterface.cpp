@@ -19,10 +19,9 @@ void OpenGLInterface::initializeOpenGLInterface()
 	QOpenGLContext* c = QOpenGLContext::currentContext();
 	checkErrorCode(c->isValid(), true, "is current context valid");
 
-	functions = c->versionFunctions<QOpenGLFunctions_2_0>();
-	checkNotErrorCode(functions, nullptr, "versionFunctions<QOpenGLFunctions_2_0>() failed.");
-
-	checkNotErrorCode(functions->initializeOpenGLFunctions(), false, "initializeOpenGLFunctions() failed.");
+	functions20 = c->versionFunctions<QOpenGLFunctions_2_0>();
+	checkNotErrorCode(functions20, nullptr, "versionFunctions<QOpenGLFunctions_2_0>() failed.");
+	checkNotErrorCode(functions20->initializeOpenGLFunctions(), false, "initializeOpenGLFunctions() failed.");
 
 	// Initialize log.
 	logger = new QOpenGLDebugLogger();
@@ -35,35 +34,32 @@ void OpenGLInterface::initializeOpenGLInterface()
 	// Get extension function addresses.
 	QFunctionPointer ptr;
 
-	ptr = QOpenGLContext::currentContext()->getProcAddress("glGenVertexArrays");
-	checkNotErrorCode(ptr, nullptr, "getProcAddress(\"glGenVertexArrays\")");
-	genVertexArrays = reinterpret_cast<void (*)(GLsizei, GLuint*)>(ptr);
+	if (PROGRAM_OPTIONS["gl20"].as<bool>())
+	{
+		ptr = QOpenGLContext::currentContext()->getProcAddress("glGenVertexArrays");
+		checkNotErrorCode(ptr, nullptr, "getProcAddress(\"glGenVertexArrays\")");
+		genVertexArrays = reinterpret_cast<void (*)(GLsizei, GLuint*)>(ptr);
 
-	ptr = QOpenGLContext::currentContext()->getProcAddress("glDeleteVertexArrays");
-	checkNotErrorCode(ptr, nullptr, "getProcAddress(\"glDeleteVertexArrays\")");
-	deleteVertexArrays = reinterpret_cast<void (*)(GLsizei, const GLuint*)>(ptr);
+		ptr = QOpenGLContext::currentContext()->getProcAddress("glDeleteVertexArrays");
+		checkNotErrorCode(ptr, nullptr, "getProcAddress(\"glDeleteVertexArrays\")");
+		deleteVertexArrays = reinterpret_cast<void (*)(GLsizei, const GLuint*)>(ptr);
 
-	ptr = QOpenGLContext::currentContext()->getProcAddress("glBindVertexArray");
-	checkNotErrorCode(ptr, nullptr, "getProcAddress(\"glBindVertexArray\")");
-	bindVertexArray = reinterpret_cast<void (*)(GLuint)>(ptr);
+		ptr = QOpenGLContext::currentContext()->getProcAddress("glBindVertexArray");
+		checkNotErrorCode(ptr, nullptr, "getProcAddress(\"glBindVertexArray\")");
+		bindVertexArray = reinterpret_cast<void (*)(GLuint)>(ptr);
+	}
+	else
+	{
+		functions30 = c->versionFunctions<QOpenGLFunctions_3_0>();
+		checkNotErrorCode(functions30, nullptr, "versionFunctions<QOpenGLFunctions_3_0>() failed.");
+		checkNotErrorCode(functions30->initializeOpenGLFunctions(), false, "initializeOpenGLFunctions() failed.");
+	}
 
 	if (PROGRAM_OPTIONS["gl43"].as<bool>())
 	{
-		ptr = QOpenGLContext::currentContext()->getProcAddress("glBindVertexBuffer");
-		checkNotErrorCode(ptr, nullptr, "getProcAddress(\"glBindVertexBuffer\")");
-		bindVertexBuffer = reinterpret_cast<void (*)(GLuint, GLuint, GLintptr, GLintptr)>(ptr);
-
-		ptr = QOpenGLContext::currentContext()->getProcAddress("glVertexAttribFormat");
-		checkNotErrorCode(ptr, nullptr, "getProcAddress(\"glVertexAttribFormat\")");
-		vertexAttribFormat = reinterpret_cast<void (*)(GLuint, GLint, GLenum, GLboolean, GLuint)>(ptr);
-
-		ptr = QOpenGLContext::currentContext()->getProcAddress("glVertexAttribBinding");
-		checkNotErrorCode(ptr, nullptr, "getProcAddress(\"glVertexAttribBinding\")");
-		vertexAttribBinding = reinterpret_cast<void (*)(GLuint, GLuint)>(ptr);
-
-		ptr = QOpenGLContext::currentContext()->getProcAddress("glVertexBindingDivisor");
-		checkNotErrorCode(ptr, nullptr, "getProcAddress(\"glVertexBindingDivisor\")");
-		vertexBindingDivisor = reinterpret_cast<void (*)(GLuint, GLuint)>(ptr);
+		functions43 = c->versionFunctions<QOpenGLFunctions_4_3_Core>();
+		checkNotErrorCode(functions43, nullptr, "versionFunctions<QOpenGLFunctions_4_3_Core>() failed.");
+		checkNotErrorCode(functions43->initializeOpenGLFunctions(), false, "initializeOpenGLFunctions() failed.");
 	}
 }
 
@@ -73,7 +69,7 @@ bool OpenGLInterface::checkGLErrors()
 	int errorsDetected = 0;
 	int outOfMemoryErrorsDetected = 0;
 
-	while (err = functions->glGetError(), err != GL_NO_ERROR && errorsDetected <= 10)
+	while (err = functions20->glGetError(), err != GL_NO_ERROR && errorsDetected <= 10)
 	{
 		if (err == GL_OUT_OF_MEMORY)
 		{
@@ -94,10 +90,10 @@ bool OpenGLInterface::checkGLErrors()
 	return 0 < outOfMemoryErrorsDetected;
 }
 
-#define CASE(a_) case a_: return #a_
 
 string OpenGLInterface::glErrorCodeToString(GLenum code)
 {
+#define CASE(a_) case a_: return #a_
 	switch (code)
 	{
 		CASE(GL_INVALID_ENUM);
@@ -107,8 +103,7 @@ string OpenGLInterface::glErrorCodeToString(GLenum code)
 		CASE(GL_STACK_UNDERFLOW);
 		CASE(GL_OUT_OF_MEMORY);
 	}
+#undef CASE
 
 	return "unknown code " + errorCodeToString(code);
 }
-
-#undef CASE

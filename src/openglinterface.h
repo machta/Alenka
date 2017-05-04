@@ -8,6 +8,8 @@
 #define OPENGLINTERFACE_H
 
 #include <QOpenGLFunctions_2_0>
+#include <QOpenGLFunctions_3_0>
+#include <QOpenGLFunctions_4_3_Core>
 
 #include <cassert>
 #include <functional>
@@ -26,17 +28,14 @@ class QOpenGLDebugLogger;
  */
 class OpenGLInterface
 {
-	QOpenGLFunctions_2_0* functions = nullptr;
+	QOpenGLFunctions_2_0* functions20 = nullptr;
+	QOpenGLFunctions_3_0* functions30 = nullptr;
+	QOpenGLFunctions_4_3_Core* functions43 = nullptr;
 	QOpenGLDebugLogger* logger = nullptr;
 
 	std::function<void (GLsizei, GLuint*)> genVertexArrays = nullptr;
 	std::function<void (GLsizei, const GLuint*)> deleteVertexArrays = nullptr;
 	std::function<void (GLuint)> bindVertexArray = nullptr;
-
-	std::function<void (GLuint, GLuint, GLintptr, GLintptr)> bindVertexBuffer = nullptr;
-	std::function<void (GLuint, GLint, GLenum, GLboolean, GLuint)> vertexAttribFormat = nullptr;
-	std::function<void (GLuint, GLuint)> vertexAttribBinding = nullptr;
-	std::function<void (GLuint, GLuint)> vertexBindingDivisor = nullptr;
 
 	const char* lastCallFile = "";
 	int lastCallLine = -1;
@@ -62,14 +61,10 @@ protected:
 	 */
 	QOpenGLFunctions_2_0* gl(const char* file, int line)
 	{
-		assert(functions);
-		checkGLErrors(file, line);		
-		return functions;
+		checkGLErrors(file, line);
+		assert(functions20);
+		return functions20;
 	}
-
-	/**
-	 * @brief Macro that passes debug info to the gl().
-	 */
 	#define gl() gl(__FILE__, __LINE__)
 
 	/**
@@ -115,58 +110,82 @@ protected:
 	// Part of OpenGL 3.0.
 	void glGenVertexArrays(GLsizei n, GLuint* arrays, const char* file, int line)
 	{
-		assert(genVertexArrays);
 		checkGLErrors(file, line);
-		genVertexArrays(n, arrays);
+
+		if (genVertexArrays)
+		{
+			genVertexArrays(n, arrays);
+		}
+		else
+		{
+			assert(functions30);
+			functions30->glGenVertexArrays(n, arrays);
+		}
 	}
 	#define glGenVertexArrays(a_, b_) glGenVertexArrays(a_, b_, __FILE__, __LINE__)
 
 	void glDeleteVertexArrays(GLsizei n, const GLuint* arrays, const char* file, int line)
 	{
-		assert(deleteVertexArrays);
 		checkGLErrors(file, line);
-		deleteVertexArrays(n, arrays);
+
+		if (deleteVertexArrays)
+		{
+			deleteVertexArrays(n, arrays);
+		}
+		else
+		{
+			assert(functions30);
+			functions30->glDeleteVertexArrays(n, arrays);
+		}
 	}
 	#define glDeleteVertexArrays(a_, b_) glDeleteVertexArrays(a_, b_, __FILE__, __LINE__)
 
 	void glBindVertexArray(GLuint array, const char* file, int line)
 	{
-		assert(bindVertexArray);
 		checkGLErrors(file, line);
-		bindVertexArray(array);
+
+		if (bindVertexArray)
+		{
+			bindVertexArray(array);
+		}
+		else
+		{
+			assert(functions30);
+			functions30->glBindVertexArray(array);
+		}
 	}
 	#define glBindVertexArray(a_) glBindVertexArray(a_, __FILE__, __LINE__)
 
 	// Part of OpenGL 4.3.
 	void glBindVertexBuffer(GLuint bindingindex, GLuint buffer, GLintptr offset, GLintptr stride, const char* file, int line)
 	{
-		assert(bindVertexBuffer);
 		checkGLErrors(file, line);
-		bindVertexBuffer(bindingindex, buffer, offset, stride);
+		assert(functions43);
+		functions43->glBindVertexBuffer(bindingindex, buffer, offset, stride);
 	}
 	#define glBindVertexBuffer(a_, b_, c_, d_) glBindVertexBuffer(a_, b_, c_, d_, __FILE__, __LINE__)
 
 	void glVertexAttribFormat(GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset, const char* file, int line)
 	{
-		assert(vertexAttribFormat);
 		checkGLErrors(file, line);
-		vertexAttribFormat(attribindex, size, type, normalized, relativeoffset);
+		assert(functions43);
+		functions43->glVertexAttribFormat(attribindex, size, type, normalized, relativeoffset);
 	}
 	#define glVertexAttribFormat(a_, b_, c_, d_, e_) glVertexAttribFormat(a_, b_, c_, d_, e_, __FILE__, __LINE__)
 
 	void glVertexAttribBinding(GLuint attribindex, GLuint bindingindex, const char* file, int line)
 	{
-		assert(vertexAttribBinding);
 		checkGLErrors(file, line);
-		vertexAttribBinding(attribindex, bindingindex);
+		assert(functions43);
+		functions43->glVertexAttribBinding(attribindex, bindingindex);
 	}
 	#define glVertexAttribBinding(a_, b_) glVertexAttribBinding(a_, b_, __FILE__, __LINE__)
 
 	void glVertexBindingDivisor(GLuint bindingindex, GLuint divisor, const char* file, int line)
 	{
-		assert(vertexBindingDivisor);
 		checkGLErrors(file, line);
-		vertexBindingDivisor(bindingindex, divisor);
+		assert(functions43);
+		functions43->glVertexBindingDivisor(bindingindex, divisor);
 	}
 	#define glVertexBindingDivisor(a_, b_) glVertexBindingDivisor(a_, b_, __FILE__, __LINE__)
 
