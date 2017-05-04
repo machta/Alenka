@@ -46,6 +46,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 
 	options_description configuration("Configuration", lineWidth);
 	configuration.add_options()
+	("tablet", value<bool>()->default_value(false), "tablet mode")
 	("locale", value<string>()->default_value("en_us"), "the locale to be use; mostly controls decimal number format")
 	("log", value<string>()->default_value("%Y-%m-%d--%H-%M-%S.log"), "string passed to strftime() to create the file name")
 	("uncalibratedGDF", value<bool>()->default_value(false), "treat GDF files as uncalibrated")

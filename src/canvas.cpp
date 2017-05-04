@@ -786,11 +786,21 @@ void Canvas::mouseMoveEvent(QMouseEvent* /*event*/)
 	}
 }
 
+void Canvas::shiftButtonCheckEvent(bool checked)
+{
+	isShiftChecked = checked;
+}
+
+void Canvas::ctrlButtonCheckEvent(bool checked)
+{
+	isCtrlChecked = checked;
+}
+
 void Canvas::mousePressEvent(QMouseEvent* event)
 {
 	if (event->button() == Qt::LeftButton)
 	{
-		if (event->modifiers() == Qt::ShiftModifier || event->modifiers() == Qt::ControlModifier)
+		if (event->modifiers() == Qt::ShiftModifier || event->modifiers() == Qt::ControlModifier || isShiftChecked || isCtrlChecked)
 		{
 			if (ready() && 0 <= cursorTrack && cursorTrack < signalProcessor->getTrackCount())
 			{
@@ -799,9 +809,9 @@ void Canvas::mousePressEvent(QMouseEvent* event)
 				double ratio = samplesRecorded/OpenDataFile::infoTable.getVirtualWidth();
 				eventStart = eventEnd = (event->pos().x() + OpenDataFile::infoTable.getPosition())*ratio;
 
-				if (event->modifiers() == Qt::ShiftModifier)
+				if (event->modifiers() == Qt::ShiftModifier || isShiftChecked)
 					eventTrack = -1;
-				else if (event->modifiers() == Qt::ControlModifier)
+				else if (event->modifiers() == Qt::ControlModifier || isCtrlChecked)
 					eventTrack = cursorTrack;
 
 				isSelectingTrack = false;

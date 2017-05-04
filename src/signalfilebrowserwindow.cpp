@@ -49,6 +49,10 @@
 #include <QMessageBox>
 #include <QUndoStack>
 #include <QCloseEvent>
+#include <QQuickWidget>
+#include <QStackedWidget>
+#include <QPushButton>
+#include <QQmlContext>
 
 #include <locale>
 #include <algorithm>
@@ -103,8 +107,19 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	undoStack = new QUndoStack(this);
 	connect(undoStack, SIGNAL(cleanChanged(bool)), this, SLOT(cleanChanged(bool)));
 
+	view = new QQuickWidget(this);
+	view->setResizeMode(QQuickWidget::SizeRootObjectToView);
+	setFilePathInQML(); // define filePath
+	view->setSource(QUrl(QStringLiteral("qrc:/main.qml")));
+
 	signalViewer = new SignalViewer(this);
-	setCentralWidget(signalViewer);
+
+	QStackedWidget* stackedWidget = new QStackedWidget();
+	stackedWidget->addWidget(view);
+	stackedWidget->addWidget(signalViewer);
+	stackedWidget->setCurrentIndex(1);
+
+	setCentralWidget(stackedWidget);
 
 	openDataFile = new OpenDataFile();
 
@@ -185,6 +200,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 	// Construct Zoom actions.
 	QAction* horizontalZoomInAction = new QAction("Horizontal Zoom In", this);
+	horizontalZoomInAction->setIcon(QIcon(":/icons/zoom_in_horizontal.png"));
 	horizontalZoomInAction->setShortcut(QKeySequence("Alt++"));
 	horizontalZoomInAction->setToolTip("Zoom in time line.");
 	horizontalZoomInAction->setStatusTip(horizontalZoomInAction->toolTip());
@@ -193,6 +209,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	});
 
 	QAction* horizontalZoomOutAction = new QAction("Horizontal Zoom Out", this);
+	horizontalZoomOutAction->setIcon(QIcon(":/icons/zoom_out_horizontal.png"));
 	horizontalZoomOutAction->setShortcut(QKeySequence("Alt+-"));
 	horizontalZoomOutAction->setToolTip("Zoom out time line.");
 	horizontalZoomOutAction->setStatusTip(horizontalZoomOutAction->toolTip());
@@ -201,6 +218,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	});
 
 	QAction* verticalZoomInAction = new QAction("Vertical Zoom In", this);
+	verticalZoomInAction->setIcon(QIcon(":/icons/zoom_in_vertical.png"));
 	verticalZoomInAction->setShortcut(QKeySequence("Shift++"));
 	verticalZoomInAction->setToolTip("Zoom in amplitudes of signals.");
 	verticalZoomInAction->setStatusTip(verticalZoomInAction->toolTip());
@@ -209,11 +227,37 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	});
 
 	QAction* verticalZoomOutAction = new QAction("Vertical Zoom Out", this);
+	verticalZoomOutAction->setIcon(QIcon(":/icons/zoom_out_vertical.png"));
 	verticalZoomOutAction->setShortcut(QKeySequence("Shift+-"));
 	verticalZoomOutAction->setToolTip("Zoom out amplitudes of signals.");
 	verticalZoomOutAction->setStatusTip(verticalZoomOutAction->toolTip());
 	connect(verticalZoomOutAction, &QAction::triggered, [this] () {
 		signalViewer->getCanvas()->verticalZoom(true);
+	});
+
+	// Construct Keyboard actions.
+	QAction* shiftAction = new QAction("Shift", this);
+	shiftAction->setShortcut(QKeySequence("Shift"));
+	shiftAction->setCheckable(true);
+	shiftAction->setToolTip("Press Shift.");
+	shiftAction->setStatusTip(shiftAction->toolTip());
+
+	QAction* ctrlAction = new QAction("Ctrl", this);
+	ctrlAction->setShortcut(QKeySequence("Ctrl"));
+	ctrlAction->setCheckable(true);
+	ctrlAction->setToolTip("Press Ctrl.");
+	ctrlAction->setStatusTip(ctrlAction->toolTip());
+
+	connect(shiftAction, &QAction::toggled, [this, shiftAction, ctrlAction] () {
+		signalViewer->getCanvas()->shiftButtonCheckEvent(shiftAction->isChecked());
+		if (shiftAction->isChecked())
+			ctrlAction->setChecked(false);
+	});
+
+	connect(ctrlAction, &QAction::toggled, [this, ctrlAction, shiftAction] () {
+		signalViewer->getCanvas()->ctrlButtonCheckEvent(ctrlAction->isChecked());
+		if (ctrlAction->isChecked())
+			shiftAction->setChecked(false);
 	});
 
 	// Construct Spikedet actions.
@@ -389,20 +433,99 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	// Construct Zoom tool bar.
 	QToolBar* zoomToolBar = addToolBar("Zoom Tool Bar");
 	zoomToolBar->setObjectName("Zoom QToolBar");
-	zoomToolBar->layout()->setSpacing(spacing);
+	int spacingMulti = 1;
+	if (PROGRAM_OPTIONS["tablet"].as<bool>())
+	{
+		zoomToolBar->setMinimumHeight(40);
+		zoomToolBar->setIconSize(QSize(40, 40));
+		spacingMulti = 3;
+	}
+	zoomToolBar->layout()->setSpacing(spacing*spacingMulti);
 
 	zoomToolBar->addAction(horizontalZoomInAction);
 	zoomToolBar->addAction(horizontalZoomOutAction);
 	zoomToolBar->addAction(verticalZoomInAction);
 	zoomToolBar->addAction(verticalZoomOutAction);
 
+	// Construct Keyboard tool bar.
+	QToolBar* keyboardToolBar = addToolBar("Keyboard Tool Bar");
+	keyboardToolBar->setObjectName("Keyboard QToolBar");
+	keyboardToolBar->layout()->setSpacing(spacing*spacingMulti);
+
+	keyboardToolBar->addAction(shiftAction);
+	keyboardToolBar->addAction(ctrlAction);
+
 	// Construct Spikedet tool bar.
 	QToolBar* spikedetToolBar = addToolBar("Spikedet Tool Bar");
 	spikedetToolBar->setObjectName("Spikedet QToolBar");
-	spikedetToolBar->layout()->setSpacing(spacing);
+	spikedetToolBar->layout()->setSpacing(spacing*spacingMulti);
 
 	spikedetToolBar->addAction(runSpikedetAction);
 	spikedetToolBar->addAction(spikedetSettingsAction);
+
+	// Construct Switch button.
+	switchButton = new QPushButton("Switch to Elko", this);
+	switchButton->setMinimumSize(QSize(150,40));
+	switchButton->setToolTip("Switch between Alenka and Elko.");
+	switchButton->setStatusTip(switchButton->toolTip());
+	switchButton->setEnabled(false);
+
+	connect(switchButton, &QPushButton::pressed, [=] () {
+		if (stackedWidget->currentIndex() == 1)
+		{
+			setFilePathInQML();
+			stackedWidget->setCurrentIndex(0);
+			switchButton->setText("Switch to Alenka");
+
+			fileToolBar->hide();
+			filterToolBar->hide();
+			selectToolBar->hide();
+			keyboardToolBar->hide();
+			spikedetToolBar->hide();
+			zoomToolBar->hide();
+			trackManagerDockWidget->hide();
+			eventManagerDockWidget->hide();
+			eventTypeManagerDockWidget->hide();
+			montageManagerDockWidget->hide();
+			filterManagerDockWidget->hide();
+			menuBar()->hide();
+			statusBar()->hide();
+		}
+		else
+		{
+			stackedWidget->setCurrentIndex(1);
+			switchButton->setText("Switch to Elko");
+
+			fileToolBar->show();
+			filterToolBar->show();
+			selectToolBar->show();
+			keyboardToolBar->show();
+			spikedetToolBar->show();
+			zoomToolBar->show();
+			trackManagerDockWidget->show();
+			eventManagerDockWidget->show();
+			eventTypeManagerDockWidget->show();
+			montageManagerDockWidget->show();
+			filterManagerDockWidget->show();
+			menuBar()->show();
+			statusBar()->show();
+		}
+	});
+
+	// Construct Close button.
+	QPushButton* closeButton = new QPushButton("Exit", this);
+	closeButton->setMinimumSize(QSize(40,40));
+	closeButton->setToolTip("Close.");
+	closeButton->setStatusTip(closeButton->toolTip());
+	connect(closeButton, SIGNAL(clicked(bool)), this, SLOT(close()));
+
+	// Construct Switch apps tool bar.
+	QToolBar* switchToolBar = addToolBar("Switch Tool Bar");
+	switchToolBar->setObjectName("Switch QToolBar");
+	switchToolBar->layout()->setSpacing(spacing*3);
+
+	switchToolBar->addWidget(switchButton);
+	switchToolBar->addWidget(closeButton);
 
 	// Construct File menu.
 	QMenu* fileMenu = menuBar()->addMenu("&File");
@@ -449,7 +572,9 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	windowMenu->addAction(filterToolBar->toggleViewAction());
 	windowMenu->addAction(selectToolBar->toggleViewAction());
 	windowMenu->addAction(zoomToolBar->toggleViewAction());
+	windowMenu->addAction(keyboardToolBar->toggleViewAction());
 	windowMenu->addAction(spikedetToolBar->toggleViewAction());
+	windowMenu->addAction(switchToolBar->toggleViewAction());
 
 	// Construct Tools menu.
 	QMenu* toolsMenu = menuBar()->addMenu("&Tools");
@@ -928,6 +1053,8 @@ void SignalFileBrowserWindow::openFile()
 	int ms = 1000*PROGRAM_OPTIONS["autosaveInterval"].as<int>();
 	autoSaveTimer->setInterval(ms);
 	autoSaveTimer->start();
+
+	switchButton->setEnabled(true);
 }
 
 bool SignalFileBrowserWindow::closeFile()
@@ -1271,9 +1398,14 @@ void SignalFileBrowserWindow::sendSyncMessage()
 void SignalFileBrowserWindow::cleanChanged(bool clean)
 {
 	if (clean && allowSaveOnClean)
+	{
 		saveFileAction->setEnabled(true);
+		switchButton->setEnabled(true);
+	}
 	else
+	{
 		saveFileAction->setEnabled(!clean);
+	}
 }
 
 void SignalFileBrowserWindow::closeFileDestroy()
@@ -1292,6 +1424,7 @@ void SignalFileBrowserWindow::closeFileDestroy()
 	eventTypeManager->changeFile(nullptr);
 	montageManager->changeFile(nullptr);
 	filterManager->changeFile(nullptr);
+	switchButton->setEnabled(false);
 
 	delete eventTypeTable; eventTypeTable = nullptr;
 	delete montageTable; montageTable = nullptr;
@@ -1309,4 +1442,22 @@ void SignalFileBrowserWindow::setEnableFileActions(bool enable)
 	closeFileAction->setEnabled(enable);
 	runSpikedetAction->setEnabled(enable);
 	exportToEdfAction->setEnabled(enable);
+}
+
+void SignalFileBrowserWindow::setFilePathInQML()
+{
+	if (file != nullptr)
+	{
+		executeWithCLocale([this] () {
+			file->saveSecondaryFile(autoSaveName);
+			logToFileAndConsole("Autosaving to " << autoSaveName);
+		});
+
+		QString filePath = QString::fromStdString(file->getFilePath());
+		view->rootContext()->setContextProperty("filePath", QVariant::fromValue("file:///" + filePath + ".mont.autosave"));
+	}
+	else
+	{
+		view->rootContext()->setContextProperty("filePath", QVariant::fromValue(QStringLiteral("")));
+	}
 }

@@ -2,6 +2,10 @@
 
 SIGNAL_LIB = $$_PRO_FILE_PWD_/Alenka-Signal
 FILE_LIB = $$_PRO_FILE_PWD_/Alenka-File
+ELKO = $$_PRO_FILE_PWD_/elko
+
+RESOURCES += \
+	$$ELKO/resources/resources.qrc \
 
 INCLUDEPATH += \
 	$$FILE_LIB/boost \

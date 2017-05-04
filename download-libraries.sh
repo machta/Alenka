@@ -21,6 +21,14 @@ else
 	signal=OK || signal=fail
 fi
 
+if [ -d elko ]
+then
+	signal=skipped
+else
+	git clone --depth 1 https://github.com/svobolen/ElkoAlenka.git elko &&
+	elko=OK || elko=fail
+fi
+
 if [ -d unit-test/googletest ]
 then
 	googletest=skipped
@@ -36,4 +44,5 @@ echo ======================================
 echo "Alenka-File             $file"
 echo "Alenka-Signal           $signal"
 echo "unit-test/googletest    $googletest"
+echo "elko                    $elko"
 

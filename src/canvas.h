@@ -72,6 +72,8 @@ class Canvas : public QOpenGLWidget, public OpenGLInterface
 	float* processorSyncBuffer = nullptr;
 	std::vector<cl_mem> processorOutputBuffers;
 	float sampleScale;
+	bool isShiftChecked = false;
+	bool isCtrlChecked = false;
 
 public:
 	explicit Canvas(QWidget* parent = nullptr);
@@ -108,6 +110,8 @@ public:
 	void horizontalZoom(bool reverse);
 	void verticalZoom(bool reverse);
 	void trackZoom(bool reverse);
+	void shiftButtonCheckEvent(bool checked);
+	void ctrlButtonCheckEvent(bool checked);
 
 signals:
 	void cursorPositionSampleChanged(int);

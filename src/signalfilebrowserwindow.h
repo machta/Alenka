@@ -36,6 +36,8 @@ class QTimer;
 class QUndoStack;
 class UndoCommandFactory;
 class KernelCache;
+class QPushButton;
+class QQuickWidget;
 
 /**
  * @brief This class implements the top level window of the program.
@@ -60,6 +62,7 @@ private:
 	OpenDataFile* openDataFile;
 	AlenkaFile::DataModel* dataModel = nullptr;
 	SignalViewer* signalViewer;
+	QQuickWidget* view;
 	TrackManager* trackManager;
 	EventManager* eventManager;
 	EventTypeManager* eventTypeManager;
@@ -103,6 +106,7 @@ private:
 	QAction* exportToEdfAction;
 	QAction* runSpikedetAction;
 	bool allowSaveOnClean;
+	QPushButton* switchButton;
 
 	std::vector<QMetaObject::Connection> connectVitness(const DataModelVitness* vitness, std::function<void ()> f);
 	void mode(int m);
@@ -135,6 +139,7 @@ private slots:
 	void cleanChanged(bool clean);
 	void closeFileDestroy();
 	void setEnableFileActions(bool enable);
+	void setFilePathInQML();
 };
 
 #endif // SIGNALFILEBROWSERWINDOW_H

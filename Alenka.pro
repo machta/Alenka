@@ -4,7 +4,7 @@ TEMPLATE = app console
 
 CONFIG += c++11
 
-QT += widgets websockets charts
+QT += widgets websockets charts qml quick quickwidgets# core
 
 HEADERS += \
 	$$files(src/DataModel/*.h) \
@@ -21,7 +21,8 @@ SOURCES += \
 	$$files(src/*.cpp) \
 
 RESOURCES += \
-	resources/resources.qrc \
+	resources/icons/icons.qrc \
+	resources/gpu-code/gpu-code.qrc \
 
 # Tests.
 INCLUDEPATH += unit-test/googletest/googletest/include unit-test/googletest/googletest

@@ -1,0 +1,13 @@
+<RCC>
+	<qresource prefix="/icons">
+		<file>edit.png</file>
+		<file>fit.png</file>
+		<file>zoom-in.png</file>
+		<file>play.png</file>
+		<file>settings.png</file>
+		<file>zoom_in_horizontal.png</file>
+		<file>zoom_in_vertical.png</file>
+		<file>zoom_out_horizontal.png</file>
+		<file>zoom_out_vertical.png</file>
+	</qresource>
+</RCC>
