@@ -68,6 +68,8 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("matFs", value<string>()->default_value("fs"), "sample rate var name for MAT files")
 	("matMults", value<string>()->default_value("mults"), "channel multipliers var name for MAT files")
 	("matDate", value<string>()->default_value("tabs"), "date var name for MAT files")
+	("matHeader", value<string>()->default_value("header"), "header struct name for MAT files")
+	("matLabel", value<string>()->default_value("label"), "labels string cell name for MAT files")
 	;
 
 	options_description spikedet("Spikedet settings", lineWidth);

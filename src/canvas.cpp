@@ -447,6 +447,16 @@ void Canvas::trackZoom(bool reverse)
 	}
 }
 
+void Canvas::shiftButtonCheckEvent(bool checked)
+{
+	isShiftChecked = checked;
+}
+
+void Canvas::ctrlButtonCheckEvent(bool checked)
+{
+	isCtrlChecked = checked;
+}
+
 void Canvas::updateCursor()
 {
 	if (ready())
@@ -784,16 +794,6 @@ void Canvas::mouseMoveEvent(QMouseEvent* /*event*/)
 		if (isSelectingTrack || isDrawingEvent || isDrawingCross)
 			update();
 	}
-}
-
-void Canvas::shiftButtonCheckEvent(bool checked)
-{
-	isShiftChecked = checked;
-}
-
-void Canvas::ctrlButtonCheckEvent(bool checked)
-{
-	isCtrlChecked = checked;
 }
 
 void Canvas::mousePressEvent(QMouseEvent* event)

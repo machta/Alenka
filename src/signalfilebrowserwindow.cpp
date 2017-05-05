@@ -789,14 +789,29 @@ void SignalFileBrowserWindow::openFile()
 	{
 		// TODO: Add BDF support through Edflib.
 		if (suffix == "gdf")
+		{
 			file = new GDF2(stdFileName, PROGRAM_OPTIONS["uncalibratedGDF"].as<bool>());
+		}
 		else if (suffix == "edf")
+		{
 			file = new EDF(stdFileName);
+		}
 		else if (suffix == "mat")
-			file = new MAT(stdFileName, PROGRAM_OPTIONS["matD"].as<string>(), PROGRAM_OPTIONS["matFs"].as<string>(),
-				PROGRAM_OPTIONS["matMults"].as<string>(), PROGRAM_OPTIONS["matDate"].as<string>());
+		{
+			MATvars vars;
+			vars.data = PROGRAM_OPTIONS["matD"].as<string>();
+			vars.frequency = PROGRAM_OPTIONS["matFs"].as<string>();
+			vars.multipliers = PROGRAM_OPTIONS["matMults"].as<string>();
+			vars.date = PROGRAM_OPTIONS["matDate"].as<string>();
+			vars.header = PROGRAM_OPTIONS["matHeader"].as<string>();
+			vars.label = PROGRAM_OPTIONS["matLabel"].as<string>();
+
+			file = new MAT(stdFileName, vars);
+		}
 		else
+		{
 			throw runtime_error("Unknown file extension.");
+		}
 	}
 	catch (runtime_error e)
 	{
