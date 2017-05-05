@@ -644,10 +644,14 @@ QDateTime SignalFileBrowserWindow::sampleToDate(DataFile* file, int sample)
 {
 	int timeOffset = round(sample/file->getSamplingFrequency()*1000);
 
-	QDateTime date = QDateTime::fromTime_t(file->getStartDate());
+	double msec = file->getStartDate() - DataFile::daysUpTo1970;
+	msec *= 24*60*60*1000;
+
+	auto date = QDateTime::fromMSecsSinceEpoch(static_cast<qint64>(round(msec)));
 	date = date.addMSecs(timeOffset);
 
 	return date;
+	// TODO: Find out why the dates are shifter by 1 or two hours. Probably something to do with timezones.
 }
 
 QDateTime SignalFileBrowserWindow::sampleToOffset(DataFile* file, int sample)
@@ -789,7 +793,8 @@ void SignalFileBrowserWindow::openFile()
 		else if (suffix == "edf")
 			file = new EDF(stdFileName);
 		else if (suffix == "mat")
-			file = new MAT(stdFileName, PROGRAM_OPTIONS["matD"].as<string>(), PROGRAM_OPTIONS["matFs"].as<string>(), PROGRAM_OPTIONS["matMults"].as<string>());
+			file = new MAT(stdFileName, PROGRAM_OPTIONS["matD"].as<string>(), PROGRAM_OPTIONS["matFs"].as<string>(),
+				PROGRAM_OPTIONS["matMults"].as<string>(), PROGRAM_OPTIONS["matDate"].as<string>());
 		else
 			throw runtime_error("Unknown file extension.");
 	}

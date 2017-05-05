@@ -3,15 +3,15 @@ A Visualisation System for Biosignals
 
 ### Requirments
 * git
-* Qt 5.7+ (gcc/MSVC and QtCharts module)
+* Qt 5.8 (gcc/MSVC and QtCharts module)
 * g++ or Microsoft Visual C++ 2015 compiler
 * OpenCL 1.1
-* OpenGL 2.0 plus some extensions from OpenGL 3.0
+* OpenGL 2.0 and some extensions from OpenGL 3.0
 
 On Debian-like systems you can use: `sudo apt install git cmake-gui build-essential`
 
-Install Qt via the installer on their website. Select the "Qt 5.7 msvc2015 64/32-bit"
-package for Windows or "Desktop gcc 64/32-bit" for Linux.
+Install Qt via the installer on their website. Select the "Qt 5.8 msvc2015 64/32-bit"
+package for Windows, or "Desktop gcc 64/32-bit" for Linux. Also select the "QtCharts" module.
 
 MSVC compiler can be acquired by installing Visual C++ Build Tools 2015. Choose "Custom
 Installation", and uncheck all options but "Windows 8.1 SDK". If you already have Visual
