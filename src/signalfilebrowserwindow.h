@@ -46,18 +46,6 @@ class SignalFileBrowserWindow : public QMainWindow
 {
 	Q_OBJECT
 
-public:
-	explicit SignalFileBrowserWindow(QWidget* parent = nullptr);
-	~SignalFileBrowserWindow();
-
-	static QDateTime sampleToDate(AlenkaFile::DataFile* file, int sample);
-	static QDateTime sampleToOffset(AlenkaFile::DataFile* file, int sample);
-	static QString sampleToDateTimeString(AlenkaFile::DataFile* file, int sample, InfoTable::TimeMode mode = InfoTable::TimeMode::size);
-
-protected:
-	void closeEvent(QCloseEvent* event) override;
-
-private:
 	AlenkaFile::DataFile* file = nullptr;
 	OpenDataFile* openDataFile;
 	AlenkaFile::DataModel* dataModel = nullptr;
@@ -107,7 +95,20 @@ private:
 	QAction* runSpikedetAction;
 	bool allowSaveOnClean;
 	QPushButton* switchButton;
+	QByteArray windowState;
 
+public:
+	explicit SignalFileBrowserWindow(QWidget* parent = nullptr);
+	~SignalFileBrowserWindow();
+
+	static QDateTime sampleToDate(AlenkaFile::DataFile* file, int sample);
+	static QDateTime sampleToOffset(AlenkaFile::DataFile* file, int sample);
+	static QString sampleToDateTimeString(AlenkaFile::DataFile* file, int sample, InfoTable::TimeMode mode = InfoTable::TimeMode::size);
+
+protected:
+	void closeEvent(QCloseEvent* event) override;
+
+private:
 	std::vector<QMetaObject::Connection> connectVitness(const DataModelVitness* vitness, std::function<void ()> f);
 	void mode(int m);
 	bool shouldSynchronizeView();

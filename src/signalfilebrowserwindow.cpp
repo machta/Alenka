@@ -477,17 +477,22 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 			stackedWidget->setCurrentIndex(0);
 			switchButton->setText("Switch to Alenka");
 
+			// Remember the state so that we can go back to it when we switch back.
+			windowState = saveState();
+
 			fileToolBar->hide();
 			filterToolBar->hide();
 			selectToolBar->hide();
 			keyboardToolBar->hide();
 			spikedetToolBar->hide();
 			zoomToolBar->hide();
+
 			trackManagerDockWidget->hide();
 			eventManagerDockWidget->hide();
 			eventTypeManagerDockWidget->hide();
 			montageManagerDockWidget->hide();
 			filterManagerDockWidget->hide();
+
 			menuBar()->hide();
 			statusBar()->hide();
 		}
@@ -496,17 +501,9 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 			stackedWidget->setCurrentIndex(1);
 			switchButton->setText("Switch to Elko");
 
-			fileToolBar->show();
-			filterToolBar->show();
-			selectToolBar->show();
-			keyboardToolBar->show();
-			spikedetToolBar->show();
-			zoomToolBar->show();
-			trackManagerDockWidget->show();
-			eventManagerDockWidget->show();
-			eventTypeManagerDockWidget->show();
-			montageManagerDockWidget->show();
-			filterManagerDockWidget->show();
+			restoreState(windowState);
+			windowState.clear();
+
 			menuBar()->show();
 			statusBar()->show();
 		}
@@ -694,7 +691,10 @@ void SignalFileBrowserWindow::closeEvent(QCloseEvent* event)
 {
 	if (closeFile())
 	{
-		SET_PROGRAM_OPTIONS.settings("SignalFileBrowserWindow state", saveState());
+		if (windowState.isEmpty())
+			windowState = saveState();
+
+		SET_PROGRAM_OPTIONS.settings("SignalFileBrowserWindow state", windowState);
 		SET_PROGRAM_OPTIONS.settings("SignalFileBrowserWindow geometry", saveGeometry());
 
 		event->accept();
