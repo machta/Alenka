@@ -38,6 +38,7 @@ class UndoCommandFactory;
 class KernelCache;
 class QPushButton;
 class QQuickWidget;
+class QStackedWidget;
 
 /**
  * @brief This class implements the top level window of the program.
@@ -95,7 +96,8 @@ class SignalFileBrowserWindow : public QMainWindow
 	QAction* runSpikedetAction;
 	bool allowSaveOnClean;
 	QPushButton* switchButton;
-	QByteArray windowState;
+	QByteArray windowState, windowGeometry;
+	QStackedWidget* stackedWidget;
 
 public:
 	explicit SignalFileBrowserWindow(QWidget* parent = nullptr);
@@ -141,6 +143,7 @@ private slots:
 	void closeFileDestroy();
 	void setEnableFileActions(bool enable);
 	void setFilePathInQML();
+	void switchToAlenka();
 };
 
 #endif // SIGNALFILEBROWSERWINDOW_H

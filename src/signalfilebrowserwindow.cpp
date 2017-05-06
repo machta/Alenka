@@ -53,6 +53,7 @@
 #include <QStackedWidget>
 #include <QPushButton>
 #include <QQmlContext>
+#include <QQuickItem>
 
 #include <locale>
 #include <algorithm>
@@ -111,10 +112,11 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	view->setResizeMode(QQuickWidget::SizeRootObjectToView);
 	setFilePathInQML(); // define filePath
 	view->setSource(QUrl(QStringLiteral("qrc:/main.qml")));
+	connect(view->rootObject(), SIGNAL(switchToAlenka()), this, SLOT(switchToAlenka()));
 
 	signalViewer = new SignalViewer(this);
 
-	QStackedWidget* stackedWidget = new QStackedWidget();
+	stackedWidget = new QStackedWidget;
 	stackedWidget->addWidget(view);
 	stackedWidget->addWidget(signalViewer);
 	stackedWidget->setCurrentIndex(1);
@@ -463,65 +465,52 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	spikedetToolBar->addAction(runSpikedetAction);
 	spikedetToolBar->addAction(spikedetSettingsAction);
 
-	// Construct Switch button.
-	switchButton = new QPushButton("Switch to Elko", this);
-	switchButton->setMinimumSize(QSize(150,40));
-	switchButton->setToolTip("Switch between Alenka and Elko");
-	switchButton->setStatusTip(switchButton->toolTip());
-	switchButton->setEnabled(false);
-
-	connect(switchButton, &QPushButton::pressed, [=] () {
-		if (stackedWidget->currentIndex() == 1)
-		{
-			setFilePathInQML();
-			stackedWidget->setCurrentIndex(0);
-			switchButton->setText("Switch to Alenka");
-
-			// Remember the state so that we can go back to it when we switch back.
-			windowState = saveState();
-
-			fileToolBar->hide();
-			filterToolBar->hide();
-			selectToolBar->hide();
-			keyboardToolBar->hide();
-			spikedetToolBar->hide();
-			zoomToolBar->hide();
-
-			trackManagerDockWidget->hide();
-			eventManagerDockWidget->hide();
-			eventTypeManagerDockWidget->hide();
-			montageManagerDockWidget->hide();
-			filterManagerDockWidget->hide();
-
-			menuBar()->hide();
-			statusBar()->hide();
-		}
-		else
-		{
-			stackedWidget->setCurrentIndex(1);
-			switchButton->setText("Switch to Elko");
-
-			restoreState(windowState);
-			windowState.clear();
-
-			menuBar()->show();
-			statusBar()->show();
-		}
-	});
-
-	// Construct Close button.
-	QPushButton* closeButton = new QPushButton("Exit", this);
-	closeButton->setMinimumSize(QSize(40,40));
-	closeButton->setToolTip("Close");
-	closeButton->setStatusTip(closeButton->toolTip());
-	connect(closeButton, SIGNAL(clicked(bool)), this, SLOT(close()));
-
 	// Construct Switch apps tool bar.
 	QToolBar* switchToolBar = addToolBar("Switch Tool Bar");
 	switchToolBar->setObjectName("Switch QToolBar");
 	switchToolBar->layout()->setSpacing(spacing*3);
 
+	// Construct Switch button.
+	switchButton = new QPushButton("Switch to Elko", this);
+	if (PROGRAM_OPTIONS["tablet"].as<bool>())
+		switchButton->setMinimumSize(QSize(150, 40));
+	switchButton->setToolTip("Switch between Alenka and Elko");
+	switchButton->setStatusTip(switchButton->toolTip());
+	switchButton->setEnabled(false);
 	switchToolBar->addWidget(switchButton);
+
+	connect(switchButton, &QPushButton::pressed, [this] () {
+		if (stackedWidget->currentIndex() == 1)
+		{
+			setFilePathInQML();
+			stackedWidget->setCurrentIndex(0);
+
+			// Remember the state so that we can put everything where it was before the switch.
+			windowState = saveState();
+			// This is to prevent saving of full-screen geometry on exit from Elko.
+			windowGeometry = saveGeometry();
+
+			for (auto e : findChildren<QToolBar*>())
+				e->hide();
+
+			for (auto e : findChildren<QDockWidget*>())
+				e->hide();
+
+			menuBar()->hide();
+			statusBar()->hide();
+
+			if (PROGRAM_OPTIONS["tablet"].as<bool>())
+				showFullScreen();
+		}
+	});
+
+	// Construct Close button.
+	QPushButton* closeButton = new QPushButton("Exit", this);
+	if (PROGRAM_OPTIONS["tablet"].as<bool>())
+		closeButton->setMinimumSize(QSize(40, 40));
+	closeButton->setToolTip("Close");
+	closeButton->setStatusTip(closeButton->toolTip());
+	connect(closeButton, SIGNAL(clicked(bool)), this, SLOT(close()));
 	switchToolBar->addWidget(closeButton);
 
 	// Construct File menu.
@@ -694,8 +683,11 @@ void SignalFileBrowserWindow::closeEvent(QCloseEvent* event)
 		if (windowState.isEmpty())
 			windowState = saveState();
 
+		if (windowGeometry.isEmpty())
+			windowGeometry = saveGeometry();
+
 		SET_PROGRAM_OPTIONS.settings("SignalFileBrowserWindow state", windowState);
-		SET_PROGRAM_OPTIONS.settings("SignalFileBrowserWindow geometry", saveGeometry());
+		SET_PROGRAM_OPTIONS.settings("SignalFileBrowserWindow geometry", windowGeometry);
 
 		event->accept();
 	}
@@ -1480,4 +1472,19 @@ void SignalFileBrowserWindow::setFilePathInQML()
 	{
 		view->rootContext()->setContextProperty("filePath", QVariant::fromValue(QStringLiteral("")));
 	}
+}
+
+void SignalFileBrowserWindow::switchToAlenka()
+{
+	stackedWidget->setCurrentIndex(1);
+
+	restoreState(windowState);
+	windowState.clear();
+	windowGeometry.clear();
+
+	menuBar()->show();
+	statusBar()->show();
+
+	if (PROGRAM_OPTIONS["tablet"].as<bool>())
+		showMaximized();
 }
