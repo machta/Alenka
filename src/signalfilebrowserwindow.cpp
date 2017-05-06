@@ -161,21 +161,21 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	// Construct File actions.
 	QAction* openFileAction = new QAction("&Open File", this);
 	openFileAction->setShortcut(QKeySequence::Open);
-	openFileAction->setToolTip("Open an existing file.");
+	openFileAction->setToolTip("Open an existing file");
 	openFileAction->setStatusTip(openFileAction->toolTip());
 	openFileAction->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
 	connect(openFileAction, SIGNAL(triggered()), this, SLOT(openFile()));
 
 	closeFileAction = new QAction("Close File", this);
 	closeFileAction->setShortcut(QKeySequence::Close);
-	closeFileAction->setToolTip("Close the currently opened file.");
+	closeFileAction->setToolTip("Close the currently opened file");
 	closeFileAction->setStatusTip(closeFileAction->toolTip());
 	closeFileAction->setIcon(style()->standardIcon(QStyle::SP_DialogCloseButton));
 	connect(closeFileAction, SIGNAL(triggered()), this, SLOT(closeFile()));
 
 	saveFileAction = new QAction("Save File", this);
 	saveFileAction->setShortcut(QKeySequence::Save);
-	saveFileAction->setToolTip("Save the currently opened file.");
+	saveFileAction->setToolTip("Save the currently opened file");
 	saveFileAction->setStatusTip(saveFileAction->toolTip());
 	saveFileAction->setIcon(style()->standardIcon(QStyle::SP_DialogSaveButton));
 	saveFileAction->setEnabled(false);
@@ -183,7 +183,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 	exportToEdfAction = new QAction("Export to EDF", this);
 	//exportToEdfAction->setShortcut(QKeySequence::Open);
-	exportToEdfAction->setToolTip("Export opened file to EDF.");
+	exportToEdfAction->setToolTip("Export the opened file to EDF");
 	exportToEdfAction->setStatusTip(exportToEdfAction->toolTip());
 	//exportToEdfAction->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
 	connect(exportToEdfAction, SIGNAL(triggered()), this, SLOT(exportToEdf()));
@@ -202,7 +202,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	QAction* horizontalZoomInAction = new QAction("Horizontal Zoom In", this);
 	horizontalZoomInAction->setIcon(QIcon(":/icons/zoom_in_horizontal.png"));
 	horizontalZoomInAction->setShortcut(QKeySequence("Alt++"));
-	horizontalZoomInAction->setToolTip("Zoom in time line.");
+	horizontalZoomInAction->setToolTip("Zoom in time line");
 	horizontalZoomInAction->setStatusTip(horizontalZoomInAction->toolTip());
 	connect(horizontalZoomInAction, &QAction::triggered, [this] () {
 		signalViewer->getCanvas()->horizontalZoom(false);
@@ -211,7 +211,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	QAction* horizontalZoomOutAction = new QAction("Horizontal Zoom Out", this);
 	horizontalZoomOutAction->setIcon(QIcon(":/icons/zoom_out_horizontal.png"));
 	horizontalZoomOutAction->setShortcut(QKeySequence("Alt+-"));
-	horizontalZoomOutAction->setToolTip("Zoom out time line.");
+	horizontalZoomOutAction->setToolTip("Zoom out time line");
 	horizontalZoomOutAction->setStatusTip(horizontalZoomOutAction->toolTip());
 	connect(horizontalZoomOutAction, &QAction::triggered, [this] () {
 		signalViewer->getCanvas()->horizontalZoom(true);
@@ -220,7 +220,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	QAction* verticalZoomInAction = new QAction("Vertical Zoom In", this);
 	verticalZoomInAction->setIcon(QIcon(":/icons/zoom_in_vertical.png"));
 	verticalZoomInAction->setShortcut(QKeySequence("Shift++"));
-	verticalZoomInAction->setToolTip("Zoom in amplitudes of signals.");
+	verticalZoomInAction->setToolTip("Zoom in amplitudes of signals");
 	verticalZoomInAction->setStatusTip(verticalZoomInAction->toolTip());
 	connect(verticalZoomInAction, &QAction::triggered, [this] () {
 		signalViewer->getCanvas()->verticalZoom(false);
@@ -229,7 +229,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	QAction* verticalZoomOutAction = new QAction("Vertical Zoom Out", this);
 	verticalZoomOutAction->setIcon(QIcon(":/icons/zoom_out_vertical.png"));
 	verticalZoomOutAction->setShortcut(QKeySequence("Shift+-"));
-	verticalZoomOutAction->setToolTip("Zoom out amplitudes of signals.");
+	verticalZoomOutAction->setToolTip("Zoom out amplitudes of signals");
 	verticalZoomOutAction->setStatusTip(verticalZoomOutAction->toolTip());
 	connect(verticalZoomOutAction, &QAction::triggered, [this] () {
 		signalViewer->getCanvas()->verticalZoom(true);
@@ -239,13 +239,13 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	QAction* shiftAction = new QAction("Shift", this);
 	shiftAction->setShortcut(QKeySequence("Shift"));
 	shiftAction->setCheckable(true);
-	shiftAction->setToolTip("Press Shift.");
+	shiftAction->setToolTip("Simulate pressed down shift button when using a touch screen");
 	shiftAction->setStatusTip(shiftAction->toolTip());
 
 	QAction* ctrlAction = new QAction("Ctrl", this);
 	ctrlAction->setShortcut(QKeySequence("Ctrl"));
 	ctrlAction->setCheckable(true);
-	ctrlAction->setToolTip("Press Ctrl.");
+	ctrlAction->setToolTip("Simulate pressed down ctrl button when using a touch screen");
 	ctrlAction->setStatusTip(ctrlAction->toolTip());
 
 	connect(shiftAction, &QAction::toggled, [this, shiftAction, ctrlAction] () {
@@ -262,12 +262,12 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 	// Construct Spikedet actions.
 	runSpikedetAction = new QAction(QIcon(":/icons/play.png"), "Run Spikedet Analysis", this);
-	runSpikedetAction->setToolTip("Run Spikedet analysis on the current montage.");
+	runSpikedetAction->setToolTip("Run Spikedet analysis on the current montage");
 	runSpikedetAction->setStatusTip(runSpikedetAction->toolTip());
 	connect(runSpikedetAction, &QAction::triggered, [this] () { runSpikedet(); } );
 
 	QAction* spikedetSettingsAction = new QAction(QIcon(":/icons/settings.png"), "Spikedet Settings", this);
-	spikedetSettingsAction->setToolTip("Change Spikedet settings.");
+	spikedetSettingsAction->setToolTip("Change Spikedet settings");
 	spikedetSettingsAction->setStatusTip(spikedetSettingsAction->toolTip());
 	connect(spikedetSettingsAction, &QAction::triggered, [this] () {
 		DETECTOR_SETTINGS settings = spikedetAnalysis->getSettings();
@@ -288,21 +288,21 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	timeModeActionGroup = new QActionGroup(this);
 
 	QAction* timeModeAction0 = new QAction("Sample", this);
-	timeModeAction0->setToolTip("Samples from the start.");
+	timeModeAction0->setToolTip("Samples from the start");
 	timeModeAction0->setStatusTip(timeModeAction0->toolTip());
 	timeModeAction0->setActionGroup(timeModeActionGroup);
 	timeModeAction0->setCheckable(true);
 	connect(timeModeAction0, &QAction::triggered, [this] () { mode(0); });
 
 	QAction* timeModeAction1 = new QAction("Offset", this);
-	timeModeAction1->setToolTip("Time offset from the start.");
+	timeModeAction1->setToolTip("Time offset from the start");
 	timeModeAction1->setStatusTip(timeModeAction1->toolTip());
 	timeModeAction1->setActionGroup(timeModeActionGroup);
 	timeModeAction1->setCheckable(true);
 	connect(timeModeAction1, &QAction::triggered, [this] () { mode(1); });
 
 	QAction* timeModeAction2 = new QAction("Real", this);
-	timeModeAction2->setToolTip("Real time.");
+	timeModeAction2->setToolTip("Real time and date");
 	timeModeAction2->setStatusTip(timeModeAction2->toolTip());
 	timeModeAction2->setActionGroup(timeModeActionGroup);
 	timeModeAction2->setCheckable(true);
@@ -312,7 +312,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	timeLineIntervalActionGroup = new QActionGroup(this);
 
 	QAction* timeLineOffAction = new QAction("Off", this);
-	timeLineOffAction->setToolTip("Turn off the time lines.");
+	timeLineOffAction->setToolTip("Turn off the time lines");
 	timeLineOffAction->setStatusTip(timeLineOffAction->toolTip());
 	connect(timeLineOffAction, &QAction::triggered, [this] () {
 		if (file)
@@ -466,7 +466,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	// Construct Switch button.
 	switchButton = new QPushButton("Switch to Elko", this);
 	switchButton->setMinimumSize(QSize(150,40));
-	switchButton->setToolTip("Switch between Alenka and Elko.");
+	switchButton->setToolTip("Switch between Alenka and Elko");
 	switchButton->setStatusTip(switchButton->toolTip());
 	switchButton->setEnabled(false);
 
@@ -515,7 +515,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	// Construct Close button.
 	QPushButton* closeButton = new QPushButton("Exit", this);
 	closeButton->setMinimumSize(QSize(40,40));
-	closeButton->setToolTip("Close.");
+	closeButton->setToolTip("Close");
 	closeButton->setStatusTip(closeButton->toolTip());
 	connect(closeButton, SIGNAL(clicked(bool)), this, SLOT(close()));
 
@@ -1037,7 +1037,7 @@ void SignalFileBrowserWindow::openFile()
 	// Update the View submenus.
 	c = connect(&OpenDataFile::infoTable, SIGNAL(timeModeChanged(InfoTable::TimeMode)), this, SLOT(updateTimeMode(InfoTable::TimeMode)));
 	c = connect(&OpenDataFile::infoTable, &InfoTable::timeLineIntervalChanged, [this] (double value) {
-		setTimeLineIntervalAction->setToolTip("The time line interval is " + locale().toString(value) + " s.");
+		setTimeLineIntervalAction->setToolTip("The time line interval is " + locale().toString(value) + " s");
 		setTimeLineIntervalAction->setStatusTip(setTimeLineIntervalAction->toolTip());
 	});
 	openFileConnections.push_back(c);

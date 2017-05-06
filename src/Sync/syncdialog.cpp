@@ -106,7 +106,7 @@ void SyncDialog::buildClientControls()
 	QGridLayout* grid = new QGridLayout();
 
 	QLabel* label = new QLabel("Server address or IP:");
-	label->setToolTip("Web address e.g. ws://example.com, or 10.0.0.10 (Note that you must use the WebSocket protocol.)");
+	label->setToolTip("Examples: www.example.com, 10.0.0.10");
 	grid->addWidget(label, 0, 0);
 	QHBoxLayout* hbox = new QHBoxLayout();
 	label = new QLabel("ws://");
