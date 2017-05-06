@@ -20,6 +20,10 @@ class Manager : public QWidget
 {
 	Q_OBJECT
 
+	const int buttonsPerRow = 4;
+	int buttonsAdded = 0;
+	QGridLayout* buttonLayout;
+
 public:
 	explicit Manager(QWidget* parent = nullptr);
 	virtual ~Manager() {}
@@ -55,16 +59,14 @@ protected slots:
 	virtual bool insertRowBack() = 0;
 
 private:
-	const int buttonsPerRow = 4;
-	int buttonsAdded = 0;
-	QGridLayout* buttonLayout;
-
 	/**
 	 * @brief Returns the selected cells as a ordered data structure.
 	 *
 	 * The key for accessing the cells in the map is an ordered pair (row, column).
 	 */
 	std::map<std::pair<int, int>, QString> textOfSelection();
+
+	void addSeparator();
 
 private slots:
 	/**
@@ -94,6 +96,8 @@ private slots:
 	 * are used for the extra cells.
 	 */
 	void paste();
+
+	void setColumn();
 };
 
 #endif // MANAGER_H

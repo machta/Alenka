@@ -16,13 +16,14 @@ using namespace AlenkaFile;
 
 EventManager::EventManager(QWidget* parent) : Manager(parent)
 {
-	QAction* goToAction = new QAction("Go To", this);
-	goToAction->setShortcut(QKeySequence("g"));
+	QAction* goToAction = new QAction("Go to Event", this);
+	goToAction->setStatusTip("Scroll to the position of the event on the selected row");
+	goToAction->setShortcut(QKeySequence("Ctrl+g"));
 	goToAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
 	connect(goToAction, SIGNAL(triggered()), this, SLOT(goToEvent()));
 	tableView->addAction(goToAction);
 
-	QPushButton* goToButton = new QPushButton("Go To", this);
+	QPushButton* goToButton = new QPushButton("Go to Event", this);
 	connect(goToButton, SIGNAL(clicked()), this, SLOT(goToEvent()));
 	addButton(goToButton);
 }

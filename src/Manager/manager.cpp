@@ -60,32 +60,40 @@ Manager::Manager(QWidget* parent) : QWidget(parent, Qt::Window)
 {
 	// Construct the table widget.
 	tableView = new QTableView(this);
-
 	tableView->setSortingEnabled(true);
 	tableView->sortByColumn(0, Qt::AscendingOrder);
-
 	tableView->setSelectionMode(QAbstractItemView::ContiguousSelection);
-
 	tableView->setContextMenuPolicy(Qt::ActionsContextMenu);
 
 	// Add some actions to the tableView.
 	QAction* addRowAction = new QAction("Add Row", this);
+	addRowAction->setStatusTip("Add rows at the end");
 	connect(addRowAction, SIGNAL(triggered()), this, SLOT(insertRowBack()));
 	tableView->addAction(addRowAction);
 
 	QAction* removeRowsAction = new QAction("Remove Rows", this);
+	removeRowsAction->setStatusTip("Remove selected rows");
 	removeRowsAction->setShortcut(QKeySequence::Delete);
 	removeRowsAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
 	connect(removeRowsAction, SIGNAL(triggered()), this, SLOT(removeRows()));
 	tableView->addAction(removeRowsAction);
 
+	QAction* setColumnAction = new QAction("Set Column", this);
+	setColumnAction->setStatusTip("Set all cells in a column to the selected value");
+	connect(setColumnAction, SIGNAL(triggered()), this, SLOT(setColumn()));
+	tableView->addAction(setColumnAction);
+
+	addSeparator();
+
 	QAction* copyAction = new QAction("Copy", this);
+	copyAction->setStatusTip("Copy as tab separated table");
 	copyAction->setShortcut(QKeySequence::Copy);
 	copyAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
 	connect(copyAction, SIGNAL(triggered()), this, SLOT(copy()));
 	tableView->addAction(copyAction);
 
 	QAction* copyHtmlAction = new QAction("Copy HTML", this);
+	copyHtmlAction->setStatusTip("Copy as a HTML table");
 	connect(copyHtmlAction, SIGNAL(triggered()), this, SLOT(copyHtml()));
 	tableView->addAction(copyHtmlAction);
 
@@ -95,22 +103,24 @@ Manager::Manager(QWidget* parent) : QWidget(parent, Qt::Window)
 	connect(pasteAction, SIGNAL(triggered()), this, SLOT(paste()));
 	tableView->addAction(pasteAction);
 
-	// Construct other.
+	addSeparator();
+
+	// Construct buttons.
 	QPushButton* addRowButton = new QPushButton("Add Row", this);
 	connect(addRowButton, SIGNAL(clicked()), this, SLOT(insertRowBack()));
 
 	QPushButton* removeRowButton = new QPushButton("Remove Rows", this);
 	connect(removeRowButton, SIGNAL(clicked()), this, SLOT(removeRows()));
 
-	// Add the widgets to a layout.
+	// Add the widgets to the layout.
 	buttonLayout = new QGridLayout;
 	addButton(addRowButton);
 	addButton(removeRowButton);
 
-	QVBoxLayout* box1 = new QVBoxLayout;
-	box1->addLayout(buttonLayout);
-	box1->addWidget(tableView);
-	setLayout(box1);
+	QVBoxLayout* box = new QVBoxLayout;
+	box->addLayout(buttonLayout);
+	box->addWidget(tableView);
+	setLayout(box);
 }
 
 void Manager::setModel(TableModel* model)
@@ -149,6 +159,13 @@ map<pair<int, int>, QString> Manager::textOfSelection()
 	}
 
 	return cells;
+}
+
+void Manager::addSeparator()
+{
+	QAction* separator = new QAction(this);
+	separator->setSeparator(true);
+	tableView->addAction(separator);
 }
 
 void Manager::removeRows()
@@ -303,4 +320,27 @@ void Manager::paste()
 	}
 
 	file->undoFactory->endMacro();
+}
+
+void Manager::setColumn()
+{
+	if (!file)
+		return;
+
+	auto currentIndex = tableView->selectionModel()->currentIndex();
+
+	if (file && currentIndex.isValid())
+	{
+		auto model = tableView->model();
+		int col = currentIndex.column();
+		auto val = model->index(currentIndex.row(), col).data(Qt::EditRole);
+		int rc = model->rowCount();
+
+		file->undoFactory->beginMacro("set column");
+
+		for (int i = 0; i < rc; ++i)
+			model->setData(model->index(i, col), val);
+
+		file->undoFactory->endMacro();
+	}
 }
