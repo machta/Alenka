@@ -113,6 +113,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	setFilePathInQML(); // define filePath
 	view->setSource(QUrl(QStringLiteral("qrc:/main.qml")));
 	connect(view->rootObject(), SIGNAL(switchToAlenka()), this, SLOT(switchToAlenka()));
+	connect(view->rootObject(), SIGNAL(exit()), this, SLOT(close()));
 
 	signalViewer = new SignalViewer(this);
 
@@ -503,15 +504,6 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 				showFullScreen();
 		}
 	});
-
-	// Construct Close button.
-	QPushButton* closeButton = new QPushButton("Exit", this);
-	if (PROGRAM_OPTIONS["tablet"].as<bool>())
-		closeButton->setMinimumSize(QSize(40, 40));
-	closeButton->setToolTip("Close");
-	closeButton->setStatusTip(closeButton->toolTip());
-	connect(closeButton, SIGNAL(clicked(bool)), this, SLOT(close()));
-	switchToolBar->addWidget(closeButton);
 
 	// Construct File menu.
 	QMenu* fileMenu = menuBar()->addMenu("&File");
