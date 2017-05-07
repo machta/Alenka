@@ -195,6 +195,9 @@ void Manager::removeRows()
 
 void Manager::copy()
 {
+	if (!file)
+		return;
+
 	auto cells = textOfSelection();
 
 	QString text;
@@ -230,6 +233,9 @@ void Manager::copy()
 
 void Manager::copyHtml()
 {
+	if (!file)
+		return;
+
 	auto cells = textOfSelection();
 
 	QString text;
