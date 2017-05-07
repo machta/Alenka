@@ -106,6 +106,7 @@ public:
 	static QDateTime sampleToDate(AlenkaFile::DataFile* file, int sample);
 	static QDateTime sampleToOffset(AlenkaFile::DataFile* file, int sample);
 	static QString sampleToDateTimeString(AlenkaFile::DataFile* file, int sample, InfoTable::TimeMode mode = InfoTable::TimeMode::size);
+	void openCommandLineFile();
 
 protected:
 	void closeEvent(QCloseEvent* event) override;
@@ -119,6 +120,7 @@ private:
 
 private slots:
 	void openFile();
+	void openFile(const QString& fileName);
 	bool closeFile();
 	void saveFile();
 	void exportToEdf();

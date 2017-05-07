@@ -51,6 +51,7 @@ int main(int argc, char** argv)
 
 		SignalFileBrowserWindow window;
 		window.show();
+		window.openCommandLineFile();
 
 		if (PROGRAM_OPTIONS["tablet"].as<bool>())
 			window.showMaximized();

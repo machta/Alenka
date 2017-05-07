@@ -668,6 +668,15 @@ QString SignalFileBrowserWindow::sampleToDateTimeString(DataFile* file, int samp
 	return QString();
 }
 
+void SignalFileBrowserWindow::openCommandLineFile()
+{
+	if (PROGRAM_OPTIONS.isSet("filename"))
+	{
+		auto fn = PROGRAM_OPTIONS["filename"].as<vector<string>>();
+		openFile(QString::fromStdString(fn[0]));
+	}
+}
+
 void SignalFileBrowserWindow::closeEvent(QCloseEvent* event)
 {
 	if (closeFile())
@@ -747,6 +756,11 @@ void SignalFileBrowserWindow::openFile()
 	if (fileName.isNull())
 		return; // No file was selected.
 
+	openFile(fileName);
+}
+
+void SignalFileBrowserWindow::openFile(const QString& fileName)
+{
 	QFileInfo fileInfo(fileName);
 
 	if (fileInfo.exists() == false)

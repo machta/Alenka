@@ -301,8 +301,8 @@ Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent)
 	setFocusPolicy(Qt::ClickFocus);
 	setMouseTracking(true);
 
-	parallelQueues = PROGRAM_OPTIONS["parallelProcessors"].as<unsigned int>();
-	nBlock = PROGRAM_OPTIONS["blockSize"].as<unsigned int>();
+	parallelQueues = PROGRAM_OPTIONS["parallelProcessors"].as<int>();
+	nBlock = PROGRAM_OPTIONS["blockSize"].as<int>();
 	duplicateSignal = !PROGRAM_OPTIONS["gl43"].as<bool>(); // TODO: Fix the OpenGL 4.3 optimization.
 	glSharing = PROGRAM_OPTIONS["glSharing"].as<bool>();
 	extraSamplesFront = extraSamplesBack = 0; // TODO: Test this with other values if it is ever needed for for the "pretty" event rendering;
@@ -643,7 +643,7 @@ void Canvas::paintGL()
 			{
 				int index = *(it++);
 				cacheItem = cache->setOldest(index);
-				logToFileAndConsole("Loading block " << index << " to GPU cache.");
+				logToFile("Loading block " << index << " to GPU cache.");
 
 				indexVector.push_back(index);
 				bufferVector.push_back(glSharing ? cacheItem->sharedBuffer : processorOutputBuffers[j]);

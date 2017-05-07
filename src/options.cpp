@@ -3,6 +3,7 @@
 #include "error.h"
 
 #include <fstream>
+#include <sstream>
 
 #ifdef UNIX_BUILD
 #include <sys/ioctl.h>
@@ -59,9 +60,9 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("glSharing", value<bool>()->default_value(true), "use cl_khr_gl_sharing extension; this causes problems with Mesa, so set it to 0")
 	("clPlatform", value<int>()->default_value(0), "OpenCL platform ID")
 	("clDevice", value<int>()->default_value(0), "OpenCL device ID")
-	("blockSize", value<unsigned int>()->default_value(32*1024), "how many samples per channel are in one block")
+	("blockSize", value<int>()->default_value(32*1024), "how many samples per channel are in one block")
 	("gpuMemorySize", value<int>()->default_value(0), "allowed GPU memory in MB; 0 means no limit")
-	("parallelProcessors", value<unsigned int>()->default_value(2), "parallel signal processor queue count")
+	("parallelProcessors", value<int>()->default_value(2), "parallel signal processor queue count")
 	("fileCacheSize", value<int>()->default_value(0), "allowed RAM for caching signal files in MB")
 	("notchFrequency", value<double>()->default_value(50), "frequency used to filter power interference")
 	("matD", value<string>()->default_value("d"), "data var name for MAT files")
@@ -92,12 +93,22 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 
 	configuration.add(spikedet);
 
-	// TODO: Write some info on the first line (like "Usage: ./Alenka", version, some description what this program does).
 	options_description all("", lineWidth);
 	all.add(commandLineOnly).add(configuration);
 
-	// Parse the command-line input.
-	store(parse_command_line(argc, argv, all), vm);
+	stringstream ss;
+	ss << all;
+	desc = ss.str();
+
+	// Parse the command-line input including the input-file name.
+	all.add_options()
+	("filename", value<vector<string>>());
+	;
+
+	positional_options_description pos;
+	pos.add("filename", 1);
+
+	store(command_line_parser(argc, argv).options(all).positional(pos).run(), vm);
 	notify(vm);
 
 	// Parse the config file.
@@ -121,9 +132,6 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	}
 
 	validateValues();
-
-	// Store for later.
-	desc.add(all);
 }
 
 void Options::validateValues()
@@ -134,6 +142,14 @@ void Options::validateValues()
 
 	if (get("gl43").as<bool>())
 		throw runtime_error("Option 'gl43' is disabled at the moment.");
+
+	const int parallelProcessors = get("parallelProcessors").as<int>();
+	if (parallelProcessors <= 0)
+		throw validation_error(validation_error::invalid_option_value, "parallelProcessors", to_string(parallelProcessors));
+
+	const int blockSize = get("blockSize").as<int>();
+	if (blockSize <= 0)
+		throw validation_error(validation_error::invalid_option_value, "blockSize", to_string(blockSize));
 }
 
 void Options::logConfigFile() const

@@ -93,6 +93,7 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 
 	if (PROGRAM_OPTIONS.isSet("help"))
 	{
+		cout << "Usage: Alenka [OPTION]... [FILE]" << endl;
 		cout << PROGRAM_OPTIONS.getDescription() << endl;
 		mainExit();
 	}

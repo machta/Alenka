@@ -38,6 +38,10 @@ int memoryAvailable = PROGRAM_OPTIONS["fileCacheSize"].as<int>();
  */
 class Options
 {
+	boost::program_options::variables_map vm;
+	std::string desc;
+	QSettings programSettings;
+
 public:
 	/**
 	 * @brief Constructor. Parameters from main are redirected here.
@@ -76,9 +80,9 @@ public:
 	}
 
 	/**
-	 * @brief Returns a reference to a description object.
+	 * @brief Returns options description text.
 	 */
-	const boost::program_options::options_description& getDescription() const
+	const std::string& getDescription() const
 	{
 		return desc;
 	}
@@ -105,10 +109,6 @@ public:
 	void logConfigFile() const;
 
 private:
-	boost::program_options::variables_map vm;
-	boost::program_options::options_description desc;
-	QSettings programSettings;
-
 	/**
 	 * @brief In this method should be defined all tests of the options that have limited accepted values.
 	 */

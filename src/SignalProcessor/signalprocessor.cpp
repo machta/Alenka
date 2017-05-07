@@ -240,7 +240,7 @@ void SignalProcessor::process(const vector<int>& indexVector, const vector<cl_me
 		if (!fileBuffer)
 		{
 			fileBuffer = cache->setOldest(index);
-			logToFileAndConsole("Loading block " << index << " to File cache.");
+			logToFile("Loading block " << index << " to File cache.");
 
 			auto fromTo = blockIndexToSampleRange(index, nSamples);
 			fromTo.first += - nDiscard + nDelay - extraSamplesFront;

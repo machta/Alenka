@@ -21,7 +21,7 @@ echo -e Deploying to $name'\n'
 mkdir -p $folder/$name/platforms
 mkdir -p $folder/$name/xcbglintegrations
 
-cp -v `find .. -type f -name Alenka | grep Alenka | grep Release | grep 5.8` $folder/$name/Alenka && alenka=OK || alenka=fail
+cp -v `find .. -type f -name Alenka | grep Alenka | grep Release | grep 5.8` $folder/$name/Alenka.bin && alenka=OK || alenka=fail
 
 QT_DIR=/opt/Qt/5.8/gcc_64
 
@@ -40,17 +40,17 @@ libraries=OK || libraries=fail
 echo '#!/bin/sh
 
 DIR=`dirname $0`
-export LD_LIBRARY_PATH=$DIR:$LD_LIBRARY_PATH
-' > $folder/$name/runAlenka
+export LD_LIBRARY_PATH=$DIR
+' > $folder/$name/Alenka
 
 echo '#!/bin/sh
 
 DIR=`dirname $0`
-export LD_LIBRARY_PATH=$DIR:$AMDAPPSDKROOT/lib/x86_64/sdk:$LD_LIBRARY_PATH
-' > $folder/$name/runAlenka-AMD
+export LD_LIBRARY_PATH=$DIR:$AMDAPPSDKROOT/lib/x86_64/sdk
+' > $folder/$name/Alenka-AMD
 
-echo '$DIR/Alenka "$@"' | tee -a $folder/$name/runAlenka >> $folder/$name/runAlenka-AMD
-chmod u+x $folder/$name/run*
+echo '$DIR/Alenka.bin "$@"' | tee -a $folder/$name/Alenka >> $folder/$name/Alenka-AMD
+chmod u+x $folder/$name/Alenka*
 
 cp -v "`dirname $0`/readme-linux.txt" $folder/$name/README
 

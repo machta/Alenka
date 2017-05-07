@@ -14,9 +14,9 @@ only implementation of OpenCL. This is also the only way to run this on
 VirtualBox. Don't forget to install the VB Guest Additions and set some decent
 performance related settings (number of processors, RAM, video memory etc.).
 
-Use "./runAlenka" to launch the program.
-Use "./runAlenka-AMD" to override the default OpenCL driver so that AMD APP SDK
+Use "./Alenka" to launch the program.
+Use "./Alenka-AMD" to override the default OpenCL driver so that AMD APP SDK
 can be found.
 
-Use "./runAlenka --help" to get a list of all the available options.
+Use "./Alenka --help" to get a list of all the available options.
 
