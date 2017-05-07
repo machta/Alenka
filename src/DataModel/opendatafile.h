@@ -5,11 +5,11 @@
 
 #include "infotable.h"
 #include <AlenkaFile/datafile.h>
-#include "kernelcache.h"
 
 #include <vector>
 
 class UndoCommandFactory;
+class KernelCache;
 
 class OpenDataFile
 {

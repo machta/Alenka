@@ -3,8 +3,7 @@
 
 #include <QWidget>
 
-#include "filtervisualizer.h"
-
+class FilterVisualizer;
 class OpenDataFile;
 class QPlainTextEdit;
 class QSlider;

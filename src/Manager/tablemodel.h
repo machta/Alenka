@@ -1,9 +1,6 @@
 #ifndef TABLEMODEL_H
 #define TABLEMODEL_H
 
-#include "../DataModel/opendatafile.h"
-#include "../DataModel/infotable.h"
-
 #include <QAbstractTableModel>
 #include <QStyledItemDelegate>
 #include <QColor>
@@ -15,6 +12,8 @@
 const std::string NO_TYPE_STRING = "<No Type>";
 const std::string NO_CHANNEL_STRING = "<No Channel>";
 const std::string ALL_CHANNEL_STRING = "<All>";
+
+class OpenDataFile;
 
 class TableColumn
 {

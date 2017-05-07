@@ -1,5 +1,6 @@
 #include "eventtypetablemodel.h"
 
+#include "../DataModel/opendatafile.h"
 #include "../signalfilebrowserwindow.h"
 #include "../DataModel/vitnessdatamodel.h"
 #include "../DataModel/undocommandfactory.h"

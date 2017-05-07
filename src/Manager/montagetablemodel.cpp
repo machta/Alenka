@@ -1,5 +1,6 @@
 #include "montagetablemodel.h"
 
+#include "../DataModel/opendatafile.h"
 #include "../DataModel/vitnessdatamodel.h"
 #include "../DataModel/undocommandfactory.h"
 

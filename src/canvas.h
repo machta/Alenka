@@ -18,7 +18,6 @@ class OpenCLContext;
 }
 class OpenDataFile;
 class SignalProcessor;
-class SignalBlock;
 class OpenGLProgram;
 
 struct GPUCacheItem

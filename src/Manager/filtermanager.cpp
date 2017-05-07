@@ -1,5 +1,6 @@
 #include "filtermanager.h"
 
+#include "filtervisualizer.h"
 #include "../DataModel/opendatafile.h"
 
 #include <QVBoxLayout>

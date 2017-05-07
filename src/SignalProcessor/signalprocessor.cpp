@@ -1,14 +1,13 @@
 #include "signalprocessor.h"
 
-#include "../DataModel/opendatafile.h"
 #include <AlenkaFile/datafile.h>
+#include "../DataModel/opendatafile.h"
 #include "../myapplication.h"
 #include <AlenkaSignal/openclcontext.h>
 #include <AlenkaSignal/filter.h>
 #include <AlenkaSignal/filterprocessor.h>
 #include <AlenkaSignal/montageprocessor.h>
 #include "../options.h"
-#include "../error.h"
 
 #include <QFile>
 

@@ -3,6 +3,7 @@
 #include "../myapplication.h"
 #include "tablemodel.h"
 #include "sortproxymodel.h"
+#include "../DataModel/opendatafile.h"
 #include "../DataModel/undocommandfactory.h"
 
 #include <QTableView>

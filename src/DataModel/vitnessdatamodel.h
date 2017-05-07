@@ -1,7 +1,7 @@
 #ifndef VITNESSDATAMODEL_H
 #define VITNESSDATAMODEL_H
 
-#include "AlenkaFile/datamodel.h"
+#include <AlenkaFile/datamodel.h>
 
 #include <QObject>
 

@@ -15,6 +15,7 @@
 #include <vector>
 #include <functional>
 #include <chrono>
+#include <cassert>
 
 namespace AlenkaSignal
 {
@@ -27,7 +28,6 @@ template<class T>
 class Filter;
 }
 class OpenDataFile;
-class SignalBlock;
 
 /**
  * @brief A class used for retrieving the processed signal blocks.

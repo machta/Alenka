@@ -1,5 +1,8 @@
 #include "tablemodel.h"
 
+#include "../DataModel/opendatafile.h"
+#include "../DataModel/infotable.h"
+
 #include <QCollator>
 #include <QColorDialog>
 #include <QLineEdit>

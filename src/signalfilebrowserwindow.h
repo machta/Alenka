@@ -22,7 +22,6 @@ class MontageManager;
 class FilterManager;
 class QComboBox;
 class QCheckBox;
-class QAbstractTableModel;
 class QActionGroup;
 class QLabel;
 class QAction;
