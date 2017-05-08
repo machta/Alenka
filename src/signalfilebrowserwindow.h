@@ -38,6 +38,7 @@ class KernelCache;
 class QPushButton;
 class QQuickWidget;
 class QStackedWidget;
+class QFileInfo;
 
 /**
  * @brief This class implements the top level window of the program.
@@ -102,10 +103,12 @@ public:
 	explicit SignalFileBrowserWindow(QWidget* parent = nullptr);
 	~SignalFileBrowserWindow();
 
+	void openCommandLineFile();
+
 	static QDateTime sampleToDate(AlenkaFile::DataFile* file, int sample);
 	static QDateTime sampleToOffset(AlenkaFile::DataFile* file, int sample);
 	static QString sampleToDateTimeString(AlenkaFile::DataFile* file, int sample, InfoTable::TimeMode mode = InfoTable::TimeMode::size);
-	void openCommandLineFile();
+	static AlenkaFile::DataFile* dataFileBySuffix(const QFileInfo& fileInfo);
 
 protected:
 	void closeEvent(QCloseEvent* event) override;
@@ -115,7 +118,6 @@ private:
 	void mode(int m);
 	bool shouldSynchronizeView();
 	void deleteAutoSave();
-	void errorMessage(const QString& text, const QString& title = "Error");
 
 private slots:
 	void openFile();

@@ -9,12 +9,16 @@
 #include "error.h"
 #include "myapplication.h"
 #include "signalfilebrowserwindow.h"
+#include "options.h"
+#include "spikedetanalysis.h"
 
 #ifdef TESTS
 #include <gtest/gtest.h>
 #endif
 
 #include <stdexcept>
+#include <string>
+
 
 using namespace std;
 
@@ -49,13 +53,28 @@ int main(int argc, char** argv)
 		}
 #endif
 
+		if (PROGRAM_OPTIONS.isSet("spikedet"))
+		{
+			if (PROGRAM_OPTIONS.isSet("filename"))
+			{
+				SpikedetAnalysis::analyseCommandLineFile();
+				MyApplication::mainExit();
+			}
+			else
+			{
+				cerr << "Error: no input file specified" << endl;
+				MyApplication::mainExit(EXIT_FAILURE);
+			}
+		}
+
 		SignalFileBrowserWindow window;
-		window.show();
-		window.openCommandLineFile();
 
 		if (PROGRAM_OPTIONS["tablet"].as<bool>())
 			window.showMaximized();
+		else
+			window.show();
 
+		window.openCommandLineFile();
 		ret = app.exec();
 	}
 	catch (exception& e)

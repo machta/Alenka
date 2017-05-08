@@ -13,7 +13,9 @@ INCLUDEPATH += \
 	$$SIGNAL_LIB/eigen \
 	$$SIGNAL_LIB/spikedet/src \
 
-SOURCES += $$files($$FILE_LIB/boost/libs/program_options/src/*.cpp)
+SOURCES += \
+	$$files($$FILE_LIB/boost/libs/program_options/src/*.cpp) \
+	$$SIGNAL_LIB/spikedet/src/CResultsModel.cpp \
 
 CONFIG(debug, debug|release) {
 	DEFINES += TESTS

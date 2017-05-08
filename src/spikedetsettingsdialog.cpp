@@ -163,8 +163,11 @@ void SpikedetSettingsDialog::resetSettings(DETECTOR_SETTINGS* settings, double* 
 	settings->m_polyspike_union_time = PROGRAM_OPTIONS["pt"].as<double>();
 	settings->m_decimation = PROGRAM_OPTIONS["dec"].as<int>();
 
-	*eventDuration = PROGRAM_OPTIONS["sed"].as<double>();
-	*originalSpikedet = PROGRAM_OPTIONS["osd"].as<bool>();
+	if (eventDuration)
+		*eventDuration = PROGRAM_OPTIONS["sed"].as<double>();
+
+	if (originalSpikedet)
+		*originalSpikedet = PROGRAM_OPTIONS["osd"].as<bool>();
 }
 
 void SpikedetSettingsDialog::setValues()

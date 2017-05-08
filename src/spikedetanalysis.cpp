@@ -1,5 +1,8 @@
 #include "spikedetanalysis.h"
 
+#include "signalfilebrowserwindow.h"
+#include "myapplication.h"
+#include "spikedetsettingsdialog.h"
 #include "DataModel/opendatafile.h"
 #include "DataModel/undocommandfactory.h"
 #include "SignalProcessor/signalprocessor.h"
@@ -9,8 +12,10 @@
 
 #include <QProgressDialog>
 #include <QFile>
+#include <QFileInfo>
 
 #include <thread>
+#include <memory>
 
 using namespace std;
 using namespace AlenkaSignal;
@@ -19,7 +24,7 @@ namespace
 {
 
 template<class T>
-class Loader : public SpikedetDataLoader
+class Loader : public AbstractSpikedetLoader<T>
 {
 	const int BLOCK_LENGTH = 8*1024;
 
@@ -189,6 +194,8 @@ void processOutput(OpenDataFile* file, SpikedetAnalysis* spikedetAnalysis, doubl
 	file->undoFactory->endMacro();
 }
 
+const int SLEEP_FOR_MS = 1;
+
 } // namespace
 
 void SpikedetAnalysis::runAnalysis(OpenDataFile* file, QProgressDialog* progress, bool originalSpikedet)
@@ -213,8 +220,6 @@ void SpikedetAnalysis::runAnalysis(OpenDataFile* file, QProgressDialog* progress
 
 	while (1)
 	{
-		this_thread::sleep_for(std::chrono::milliseconds(10));
-
 		int percentage = spikedet.progressPercentage();
 		progress->setValue(percentage);
 
@@ -226,10 +231,69 @@ void SpikedetAnalysis::runAnalysis(OpenDataFile* file, QProgressDialog* progress
 
 		if (percentage == 100)
 			break;
+
+		this_thread::sleep_for(std::chrono::milliseconds(SLEEP_FOR_MS));
 	}
 
 	t.join();
 	progress->setValue(100);
 
 	processOutput(file, this, spikeDuration);
+}
+
+void SpikedetAnalysis::analyseCommandLineFile()
+{
+	unique_ptr<AlenkaFile::DataFile> file;
+
+	try
+	{
+		auto fn = PROGRAM_OPTIONS["filename"].as<vector<string>>();
+		QFileInfo fileInfo(QString::fromStdString(fn[0]));
+
+		file.reset(SignalFileBrowserWindow::dataFileBySuffix(fileInfo));
+	}
+	catch (runtime_error e)
+	{
+		cerr << "Error while opening file: " << e.what() << endl;
+		MyApplication::mainExit(EXIT_FAILURE);
+	}
+
+	int Fs = static_cast<int>(round(file->getSamplingFrequency()));
+	bool originalSpikedet = PROGRAM_OPTIONS["osd"].as<bool>();
+
+	auto settings = AlenkaSignal::Spikedet::defaultSettings();
+	SpikedetSettingsDialog::resetSettings(&settings, nullptr, &originalSpikedet);
+
+	Spikedet spikedet(Fs, static_cast<int>(file->getChannelCount()), originalSpikedet, settings);
+	FileSpikedetLoader<SIGNALTYPE> loader(file.get());
+
+	unique_ptr<CDetectorOutput> output(new CDetectorOutput);
+	unique_ptr<CDischarges> discharges(new CDischarges(loader.channelCount()));
+
+	thread t([&] () {
+		spikedet.runAnalysis(&loader, output.get(), discharges.get());
+	});
+
+	int lastPercentage = -1;
+
+	while (1)
+	{
+		int percentage = spikedet.progressPercentage();
+
+		if (percentage < 100 && lastPercentage < percentage)
+		{
+			fprintf(stderr, "progress: %3d%%\n", percentage);
+			lastPercentage = percentage;
+		}
+
+		if (percentage == 100)
+			break;
+
+		this_thread::sleep_for(std::chrono::milliseconds(SLEEP_FOR_MS));
+	}
+
+	t.join();
+
+	const char* fileName = PROGRAM_OPTIONS["spikedet"].as<string>().c_str();
+	CResultsModel::SaveResultsMAT(fileName, output.get(), discharges.get());
 }

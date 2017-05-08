@@ -34,6 +34,7 @@ class SpikedetSettingsDialog : public QDialog
 
 public:
 	explicit SpikedetSettingsDialog(DETECTOR_SETTINGS* settings, double* eventDuration, bool* originalSpikedet, QWidget* parent = 0);
+
 	static void resetSettings(DETECTOR_SETTINGS* settings, double* eventDuration, bool* originalSpikedet);
 
 private:

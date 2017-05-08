@@ -50,6 +50,8 @@ public:
 	}
 
 	void runAnalysis(OpenDataFile* file, QProgressDialog* progress, bool originalSpikedet);
+
+	static void analyseCommandLineFile();
 };
 
 #endif // SPIKEDETANALYSIS_H

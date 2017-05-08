@@ -92,6 +92,13 @@ void executeWithCLocale(function<void ()> code)
 	std::locale::global(localeCopy);
 }
 
+void errorMessage(QWidget* parent, const QString& text, const QString& title = "Error")
+{
+	QString padding(max(0, title.size()*2 - text.size()), ' ');
+
+	QMessageBox::critical(parent, title, text + padding);
+}
+
 } // namespace
 
 SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(parent)
@@ -668,6 +675,38 @@ QString SignalFileBrowserWindow::sampleToDateTimeString(DataFile* file, int samp
 	return QString();
 }
 
+DataFile* SignalFileBrowserWindow::dataFileBySuffix(const QFileInfo& fileInfo)
+{
+	string stdFileName = fileInfo.filePath().toStdString();
+	QString suffix = fileInfo.suffix().toLower();
+
+	// TODO: Add BDF support through Edflib.
+	if (suffix == "gdf")
+	{
+		return new GDF2(stdFileName, PROGRAM_OPTIONS["uncalibratedGDF"].as<bool>());
+	}
+	else if (suffix == "edf")
+	{
+		return new EDF(stdFileName);
+	}
+	else if (suffix == "mat")
+	{
+		MATvars vars;
+		vars.data = PROGRAM_OPTIONS["matData"].as<string>();
+		vars.frequency = PROGRAM_OPTIONS["matFs"].as<string>();
+		vars.multipliers = PROGRAM_OPTIONS["matMults"].as<string>();
+		vars.date = PROGRAM_OPTIONS["matDate"].as<string>();
+		vars.header = PROGRAM_OPTIONS["matHeader"].as<string>();
+		vars.label = PROGRAM_OPTIONS["matLabel"].as<string>();
+
+		return new MAT(stdFileName, vars);
+	}
+	else
+	{
+		throw runtime_error("Unknown file extension.");
+	}
+}
+
 void SignalFileBrowserWindow::openCommandLineFile()
 {
 	if (PROGRAM_OPTIONS.isSet("filename"))
@@ -683,13 +722,13 @@ void SignalFileBrowserWindow::closeEvent(QCloseEvent* event)
 	{
 		if (windowState.isEmpty())
 			windowState = saveState();
-
+		
 		if (windowGeometry.isEmpty())
 			windowGeometry = saveGeometry();
-
+		
 		SET_PROGRAM_OPTIONS.settings("SignalFileBrowserWindow state", windowState);
 		SET_PROGRAM_OPTIONS.settings("SignalFileBrowserWindow geometry", windowGeometry);
-
+		
 		event->accept();
 	}
 	else
@@ -701,7 +740,7 @@ void SignalFileBrowserWindow::closeEvent(QCloseEvent* event)
 vector<QMetaObject::Connection> SignalFileBrowserWindow::connectVitness(const DataModelVitness* vitness, std::function<void ()> f)
 {
 	vector<QMetaObject::Connection> connections;
-
+	
 	auto c = connect(vitness, &DataModelVitness::valueChanged, f);
 	connections.push_back(c);
 	c = connect(vitness, &DataModelVitness::rowsInserted, f);
@@ -739,13 +778,6 @@ void SignalFileBrowserWindow::deleteAutoSave()
 	autoSaveTimer->start();
 }
 
-void SignalFileBrowserWindow::errorMessage(const QString& text, const QString& title)
-{
-	QString padding(max(0, title.size()*2 - text.size()), ' ');
-
-	QMessageBox::critical(this, title, text + padding);
-}
-
 void SignalFileBrowserWindow::openFile()
 {
 	if (!closeFile())
@@ -779,41 +811,15 @@ void SignalFileBrowserWindow::openFile(const QString& fileName)
 		return;
 	}
 
-	string stdFileName = fileName.toStdString();
-	auto suffix = fileInfo.suffix().toLower();
 	assert(!file && "Make sure there is no already opened file.");
 
 	try
 	{
-		// TODO: Add BDF support through Edflib.
-		if (suffix == "gdf")
-		{
-			file = new GDF2(stdFileName, PROGRAM_OPTIONS["uncalibratedGDF"].as<bool>());
-		}
-		else if (suffix == "edf")
-		{
-			file = new EDF(stdFileName);
-		}
-		else if (suffix == "mat")
-		{
-			MATvars vars;
-			vars.data = PROGRAM_OPTIONS["matData"].as<string>();
-			vars.frequency = PROGRAM_OPTIONS["matFs"].as<string>();
-			vars.multipliers = PROGRAM_OPTIONS["matMults"].as<string>();
-			vars.date = PROGRAM_OPTIONS["matDate"].as<string>();
-			vars.header = PROGRAM_OPTIONS["matHeader"].as<string>();
-			vars.label = PROGRAM_OPTIONS["matLabel"].as<string>();
-
-			file = new MAT(stdFileName, vars);
-		}
-		else
-		{
-			throw runtime_error("Unknown file extension.");
-		}
+		file = dataFileBySuffix(fileInfo);
 	}
 	catch (runtime_error e)
 	{
-		errorMessage(e.what(), "Error while opening file");
+		errorMessage(this, e.what(), "Error while opening file");
 		return; // Ignore opening of the file as there was an error.
 	}
 
@@ -1063,7 +1069,7 @@ void SignalFileBrowserWindow::openFile(const QString& fileName)
 		}
 		catch (runtime_error e)
 		{
-			errorMessage(e.what());
+			errorMessage(this, e.what());
 		}
 	});
 	openFileConnections.push_back(c);
@@ -1103,7 +1109,7 @@ bool SignalFileBrowserWindow::closeFile()
 		}
 		catch (runtime_error e)
 		{
-			errorMessage(e.what(), "Error while autosaving file");
+			errorMessage(this, e.what(), "Error while autosaving file");
 		}
 	}
 
@@ -1133,7 +1139,7 @@ void SignalFileBrowserWindow::saveFile()
 		}
 		catch (runtime_error e)
 		{
-			errorMessage(e.what(), "Error while saving file");
+			errorMessage(this, e.what(), "Error while saving file");
 		}
 
 		deleteAutoSave();
@@ -1165,7 +1171,7 @@ void SignalFileBrowserWindow::exportToEdf()
 	}
 	catch (runtime_error e)
 	{
-		errorMessage(e.what(), "Error while exporting file");
+		errorMessage(this, e.what(), "Error while exporting file");
 	}
 }
 
