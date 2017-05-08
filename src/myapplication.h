@@ -49,6 +49,8 @@ public:
 	static void mainExit(int status = EXIT_SUCCESS);
 
 	static std::array<int, 3> version() { return std::array<int, 3>{0, 8, 1}; }
+
+	static char dirSeparator();
 };
 
 extern std::unique_ptr<AlenkaSignal::OpenCLContext> globalContext;

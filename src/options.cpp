@@ -1,6 +1,7 @@
 #include "options.h"
 
 #include "error.h"
+#include "myapplication.h"
 
 #include <fstream>
 #include <sstream>
@@ -30,12 +31,12 @@ int getTerminalWidth()
 Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS")
 {
 	const int lineWidth = max(60, getTerminalWidth());
-	const char* configDefault = "options.cfg";
 
 	options_description commandLineOnly("Command line options", lineWidth);
 	commandLineOnly.add_options()
 	("help", "help message")
-	("config,c", value<string>()->default_value(configDefault), "config file path")
+	("config", value<string>()->value_name("path"), "override default config file path")
+	("spikedet", value<string>()->value_name("OUTPUT_FILE"), "Spikedet only mode")
 	("clInfo", "print OpenCL platform and device info")
 	("glInfo", "print OpenGL info")
 	("printBuffers", "dump OpenCL buffers for debugging")
@@ -47,48 +48,47 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 
 	options_description configuration("Configuration", lineWidth);
 	configuration.add_options()
-	("tablet", value<bool>()->default_value(false), "tablet mode")
-	("locale", value<string>()->default_value("en_us"), "the locale to be use; mostly controls decimal number format")
-	("log", value<string>()->default_value("%Y-%m-%d--%H-%M-%S.log"), "string passed to strftime() to create the file name")
-	("uncalibratedGDF", value<bool>()->default_value(false), "treat GDF files as uncalibrated")
-	("autosaveInterval", value<int>()->default_value(2*60), "in seconds")
-	("kernelCacheSize", value<int>()->default_value(0), "how many montage kernels can be cached; if 0, the existing file is removed")
-	("kernelCacheDir", value<string>()->default_value(""), "directory for storing cache files (empty means the same dir as the executable)")
-	("gl20", value<bool>()->default_value(false), "use OpenGL 2.0 plus some extensions instead of the default 3.0")
-	("gl43", value<bool>()->default_value(false), "use OpenGL 4.3 instead of the default 3.0")
-	("cl11", value<bool>()->default_value(false), "use OpenCL 1.1 instead of the default 1.2")
-	("glSharing", value<bool>()->default_value(true), "use cl_khr_gl_sharing extension; this causes problems with Mesa, so set it to 0")
-	("clPlatform", value<int>()->default_value(0), "OpenCL platform ID")
-	("clDevice", value<int>()->default_value(0), "OpenCL device ID")
-	("blockSize", value<int>()->default_value(32*1024), "how many samples per channel are in one block")
-	("gpuMemorySize", value<int>()->default_value(0), "allowed GPU memory in MB; 0 means no limit")
-	("parallelProcessors", value<int>()->default_value(2), "parallel signal processor queue count")
-	("fileCacheSize", value<int>()->default_value(0), "allowed RAM for caching signal files in MB")
-	("notchFrequency", value<double>()->default_value(50), "frequency used to filter power interference")
-	("matD", value<string>()->default_value("d"), "data var name for MAT files")
-	("matFs", value<string>()->default_value("fs"), "sample rate var name for MAT files")
-	("matMults", value<string>()->default_value("mults"), "channel multipliers var name for MAT files")
-	("matDate", value<string>()->default_value("tabs"), "date var name for MAT files")
-	("matHeader", value<string>()->default_value("header"), "header struct name for MAT files")
-	("matLabel", value<string>()->default_value("label"), "labels string cell name for MAT files")
+	("tablet", value<bool>()->default_value(false)->value_name("bool"), "tablet mode")
+	("locale", value<string>()->default_value("en_us")->value_name("lang"), "mostly controls decimal number format")
+	("uncalibratedGDF", value<bool>()->default_value(false)->value_name("bool"), "assume uncalibrated data in GDF")
+	("autosave", value<int>()->default_value(2*60)->value_name("seconds"), "interval between saves")
+	("kernelCacheSize", value<int>()->default_value(0)->value_name("count"), "if 0, the existing file is removed")
+	("kernelCacheDir", value<string>()->value_name("path"), "default is install dir")
+	("gl20", value<bool>()->default_value(false)->value_name("bool"), "use OpenGL 2.0 instead of 3.0")
+	("gl43", value<bool>()->default_value(false)->value_name("bool"), "use OpenGL 4.3 instead of 3.0; disabled")
+	("cl11", value<bool>()->default_value(false)->value_name("bool"), "use OpenCL 1.1 instead of 1.2")
+	("glSharing", value<bool>()->default_value(true)->value_name("bool"), "use cl_khr_gl_sharing extension")
+	("clPlatform", value<int>()->default_value(0)->value_name("ID"), "select OpenCL platform")
+	("clDevice", value<int>()->default_value(0)->value_name("ID"), "OpenCL device")
+	("blockSize", value<int>()->default_value(32*1024)->value_name("val"), "samples per channel per block")
+	("gpuMemorySize", value<int>()->default_value(0)->value_name("MB"), "allowed GPU memory; 0 means no limit")
+	("parProc", value<int>()->default_value(2)->value_name("val"), "parallel signal processor queue count")
+	("fileCacheSize", value<int>()->default_value(0)->value_name("MB"), "allowed RAM for caching signal files")
+	("notchFrequency", value<double>()->default_value(50)->value_name("f"), "power interference filter")
+	("matData", value<string>()->default_value("d")->value_name("val"), "data var name for MAT files")
+	("matFs", value<string>()->default_value("fs")->value_name("val"), "sample rate var name for MAT files")
+	("matMults", value<string>()->default_value("mults")->value_name("val"), "channel multipliers var name for MAT files")
+	("matDate", value<string>()->default_value("tabs")->value_name("val"), "date var name for MAT files")
+	("matHeader", value<string>()->default_value("header")->value_name("val"), "header struct name for MAT files")
+	("matLabel", value<string>()->default_value("label")->value_name("val"), "labels string cell name for MAT files")
 	;
 
 	options_description spikedet("Spikedet settings", lineWidth);
 	spikedet.add_options()
-	("fl", value<int>()->default_value(10), "lowpass filter frequency")
-	("fh", value<int>()->default_value(60), "highpass filter frequency")
-	("k1", value<double>()->default_value(3.65), "K1")
-	("k2", value<double>()->default_value(3.65), "K2")
-	("k3", value<double>()->default_value(0), "K3")
-	("w", value<int>()->default_value(5), "winsize")
-	("n", value<double>()->default_value(4), "noverlap")
-	("buf", value<int>()->default_value(300), "buffering")
-	("h", value<int>()->default_value(50), "main hum. freq.")
-	("dt", value<double>()->default_value(0.005), "discharge tol.")
-	("pt", value<double>()->default_value(0.12), "polyspike union time")
-	("dec", value<int>()->default_value(200), "decimation")
-	("sed", value<double>()->default_value(0.1), "spike event duration in seconds")
-	("osd", value<bool>()->default_value(true), "use orginal Spikedet implementation instead of the optimized version")
+	("fl", value<int>()->default_value(10)->value_name("f"), "lowpass filter frequency")
+	("fh", value<int>()->default_value(60)->value_name("f"), "highpass filter frequency")
+	("k1", value<double>()->default_value(3.65, "3.65")->value_name("val"), "K1")
+	("k2", value<double>()->default_value(3.65, "3.65")->value_name("val"), "K2")
+	("k3", value<double>()->default_value(0)->value_name("val"), "K3")
+	("w", value<int>()->default_value(5)->value_name("val"), "winsize")
+	("n", value<double>()->default_value(4)->value_name("val"), "noverlap")
+	("buf", value<int>()->default_value(300)->value_name("seconds"), "buffering")
+	("h", value<int>()->default_value(50)->value_name("f"), "main hum. freq.")
+	("dt", value<double>()->default_value(0.005, "0.005")->value_name("val"), "discharge tol.")
+	("pt", value<double>()->default_value(0.12, "0.12")->value_name("val"), "polyspike union time")
+	("dec", value<int>()->default_value(200)->value_name("f"), "decimation")
+	("sed", value<double>()->default_value(0.1, "0.1")->value_name("seconds"), "spike event duration")
+	("osd", value<bool>()->default_value(true)->value_name("bool"), "use orginal Spikedet implementation")
 	;
 
 	configuration.add(spikedet);
@@ -101,9 +101,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	desc = ss.str();
 
 	// Parse the command-line input including the input-file name.
-	all.add_options()
-	("filename", value<vector<string>>());
-	;
+	all.add_options()("filename", value<vector<string>>());
 
 	positional_options_description pos;
 	pos.add("filename", 1);
@@ -111,41 +109,23 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	store(command_line_parser(argc, argv).options(all).positional(pos).run(), vm);
 	notify(vm);
 
-	// Parse the config file.
-	ifstream ifs(vm["config"].as<string>());
-
-	if (ifs.good())
-	{
-		store(parse_config_file(ifs, configuration), vm);
-		notify(vm);
-	}
-	else
-	{
-		if (vm["config"].as<string>() == configDefault)
-		{
-			logToFile("Config file '" << vm["config"].as<string>() << "' not found.");
-		}
-		else
-		{
-			logToFileAndConsole("Config file '" << vm["config"].as<string>() << "' not found.");
-		}
-	}
+	parseConfigFile(configuration);
 
 	validateValues();
 }
 
 void Options::validateValues()
 {
-	const int autosaveInterval = get("autosaveInterval").as<int>();
+	const int autosaveInterval = get("autosave").as<int>();
 	if (autosaveInterval <= 0)
-		throw validation_error(validation_error::invalid_option_value, "autosaveInterval", to_string(autosaveInterval));
+		throw validation_error(validation_error::invalid_option_value, "autosave", to_string(autosaveInterval));
 
 	if (get("gl43").as<bool>())
 		throw runtime_error("Option 'gl43' is disabled at the moment.");
 
-	const int parallelProcessors = get("parallelProcessors").as<int>();
+	const int parallelProcessors = get("parProc").as<int>();
 	if (parallelProcessors <= 0)
-		throw validation_error(validation_error::invalid_option_value, "parallelProcessors", to_string(parallelProcessors));
+		throw validation_error(validation_error::invalid_option_value, "parProc", to_string(parallelProcessors));
 
 	const int blockSize = get("blockSize").as<int>();
 	if (blockSize <= 0)
@@ -154,16 +134,58 @@ void Options::validateValues()
 
 void Options::logConfigFile() const
 {
-	string fileName = get("config").as<string>();
-	ifstream ifs(fileName);
+	if (configPath.empty())
+		return;
+
+	ifstream ifs(configPath);
 
 	if (ifs.good())
 	{
-		string str;
-		while (ifs.peek() != EOF)
-			str.push_back(ifs.get());
+		string str, line;
 
-		logToFile("Config file '" << fileName << "':\n" << str);
+		while (getline(ifs, line), ifs.good())
+		{
+			if (!line.empty() && line[0] != '#')
+				str += line + '\n';
+		}
+
+		logToFile("Config file '" << configPath << "':\n" << str);
+	}
+}
+
+void Options::parseConfigFile(const options_description& configuration)
+{
+	ifstream ifs;
+
+	if (isSet("config"))
+	{
+		configPath = get("config").as<string>();
+		ifs.open(configPath);
+
+		if (!ifs.good())
+		{
+			logToFileAndConsole("Config file '" << configPath << "' not found.");
+		}
+	}
+	else
+	{
+		configPath = MyApplication::applicationDirPath().toStdString() + MyApplication::dirSeparator() + "options.ini";
+		ifs.open(configPath);
+
+		if (!ifs.good())
+		{
+			logToFile("Config file '" << configPath << "' not found.");
+		}
+	}
+
+	if (ifs.good())
+	{
+		store(parse_config_file(ifs, configuration), vm);
+		notify(vm);
+	}
+	else
+	{
+		configPath.clear();
 	}
 }
 

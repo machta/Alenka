@@ -44,14 +44,13 @@ Thumbs.db
 # ----------------------------------------------------------------------------
 
 # config file
-options*.cfg
+local-options.ini
 
 # local excludes file
 .excludes.txt
 
-# log files and log dir
+# log files
 *.log
-log
 
 # doxygen documentation
 doc/html

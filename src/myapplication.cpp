@@ -7,6 +7,7 @@
 #include <QSurfaceFormat>
 #include <QMessageBox>
 #include <QLoggingCategory>
+#include <QDir>
 
 #include <stdexcept>
 #include <string>
@@ -30,11 +31,17 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 		const int maxLogFileNameLength = 1000;
 		char logFileName[maxLogFileNameLength + 1];
 		time_t now = time(nullptr);
-		size_t len = strftime(logFileName, maxLogFileNameLength, PROGRAM_OPTIONS["log"].as<string>().c_str(), localtime(&now));
+		size_t len = strftime(logFileName, maxLogFileNameLength, "%Y-%m-%d--%H-%M-%S.log", localtime(&now));
 		logFileName[len] = 0;
 
-		LOG_FILE.open(logFileName);
-		checkErrorCode(LOG_FILE.good(), true, "Could not open log file '" + string(logFileName) + "' for writing.");
+		char s = dirSeparator();
+		string logFilePath = applicationDirPath().toStdString() + s + "log" + s + logFileName;
+		LOG_FILE.open(logFilePath);
+
+		if (!LOG_FILE.good())
+			LOG_FILE.open(logFileName);
+
+		checkErrorCode(LOG_FILE.good(), true, "Could not open log file '" + string(logFilePath) + "' for writing.");
 	}
 	catch (exception& e)
 	{
@@ -93,7 +100,10 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 
 	if (PROGRAM_OPTIONS.isSet("help"))
 	{
-		cout << "Usage: Alenka [OPTION]... [FILE]" << endl;
+		cout << "Usage:" << endl;
+		cout << "  Alenka [OPTION]... [FILE]" << endl;
+		cout << "  Alenka --spikedet OUTPUT_FILE [SPIKEDET_SETTINGS]... FILE" << endl;
+		cout << "  Alenka --help|--clInfo|--printBuffers|--version" << endl;
 		cout << PROGRAM_OPTIONS.getDescription() << endl;
 		mainExit();
 	}
@@ -144,4 +154,9 @@ void MyApplication::mainExit(int status)
 {
 	logToFile("Exiting with status " << status << ".");
 	std::exit(status);
+}
+
+char MyApplication::dirSeparator()
+{
+	return QDir::separator().toLatin1();
 }

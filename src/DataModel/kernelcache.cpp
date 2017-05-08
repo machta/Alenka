@@ -2,9 +2,9 @@
 
 #include "../error.h"
 #include "../options.h"
+#include "../myapplication.h"
 
-#include <QDir>
-#include <QCoreApplication>
+#include <QFile>
 
 #include <fstream>
 #include <sstream>
@@ -19,11 +19,13 @@ string cacheFilePath()
 	int platform = PROGRAM_OPTIONS["clPlatform"].as<int>();
 	int device = PROGRAM_OPTIONS["clDevice"].as<int>();
 
-	string str = PROGRAM_OPTIONS["kernelCacheDir"].as<string>();
-	if (str.empty())
-		str = QCoreApplication::applicationDirPath().toStdString();
+	string str;
+	if (PROGRAM_OPTIONS.isSet("kernelCacheDir"))
+		str = PROGRAM_OPTIONS["kernelCacheDir"].as<string>();
+	else
+		str = MyApplication::applicationDirPath().toStdString();
 
-	return str + QDir::separator().toLatin1() + "kernel-cache-" + to_string(platform) + '-' + to_string(device) + ".txt";
+	return str + MyApplication::dirSeparator() + "kernel-cache-" + to_string(platform) + '-' + to_string(device) + ".txt";
 }
 
 } // namespace

@@ -301,7 +301,7 @@ Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent)
 	setFocusPolicy(Qt::ClickFocus);
 	setMouseTracking(true);
 
-	parallelQueues = PROGRAM_OPTIONS["parallelProcessors"].as<int>();
+	parallelQueues = PROGRAM_OPTIONS["parProc"].as<int>();
 	nBlock = PROGRAM_OPTIONS["blockSize"].as<int>();
 	duplicateSignal = !PROGRAM_OPTIONS["gl43"].as<bool>(); // TODO: Fix the OpenGL 4.3 optimization.
 	glSharing = PROGRAM_OPTIONS["glSharing"].as<bool>();

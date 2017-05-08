@@ -797,7 +797,7 @@ void SignalFileBrowserWindow::openFile(const QString& fileName)
 		else if (suffix == "mat")
 		{
 			MATvars vars;
-			vars.data = PROGRAM_OPTIONS["matD"].as<string>();
+			vars.data = PROGRAM_OPTIONS["matData"].as<string>();
 			vars.frequency = PROGRAM_OPTIONS["matFs"].as<string>();
 			vars.multipliers = PROGRAM_OPTIONS["matMults"].as<string>();
 			vars.date = PROGRAM_OPTIONS["matDate"].as<string>();
@@ -1068,7 +1068,7 @@ void SignalFileBrowserWindow::openFile(const QString& fileName)
 	});
 	openFileConnections.push_back(c);
 
-	int ms = 1000*PROGRAM_OPTIONS["autosaveInterval"].as<int>();
+	int ms = 1000*PROGRAM_OPTIONS["autosave"].as<int>();
 	autoSaveTimer->setInterval(ms);
 	autoSaveTimer->start();
 

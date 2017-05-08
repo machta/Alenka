@@ -39,7 +39,7 @@ int memoryAvailable = PROGRAM_OPTIONS["fileCacheSize"].as<int>();
 class Options
 {
 	boost::program_options::variables_map vm;
-	std::string desc;
+	std::string desc, configPath;
 	QSettings programSettings;
 
 public:
@@ -109,6 +109,7 @@ public:
 	void logConfigFile() const;
 
 private:
+	void parseConfigFile(const boost::program_options::options_description& configuration);
 	/**
 	 * @brief In this method should be defined all tests of the options that have limited accepted values.
 	 */

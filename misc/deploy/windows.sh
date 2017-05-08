@@ -23,6 +23,7 @@ folder32=`mktemp -d -p .`
 
 echo -e Deploying to $name.zip and $name-32.zip'\n'
 
+mkdir -p $folder/$name/log
 mkdir -p $folder/$name/platforms
 mkdir -p $folder/$name/imageformats
 mkdir -p $folder/$name/Qt/labs/folderlistmodel
@@ -38,6 +39,7 @@ mkdir -p $folder/$name/QtQuick/Window.2
 mkdir -p $folder/$name/QtQuick/XmlListModel
 mkdir -p $folder/$name/QtQuick.2
 
+mkdir -p $folder32/$name-32/log
 mkdir -p $folder32/$name-32/platforms
 mkdir -p $folder32/$name-32/imageformats
 mkdir -p $folder32/$name-32/Qt/labs/folderlistmodel
@@ -166,8 +168,12 @@ cp -v $QT_DIR/qml/QtQuick.2/qmldir $folder32/$name-32/QtQuick.2 &&
 libraries32=OK || libraries32=fail
 
 README="`dirname $0`/readme-windows.txt"
-cp "$README" $folder/$name/README.txt
-cp "$README" $folder32/$name-32/README.txt
+cp -v "$README" $folder/$name/README.txt
+cp -v "$README" $folder32/$name-32/README.txt
+
+INI="`dirname $0`/options.ini"
+cp -v "$INI" $folder/$name
+cp -v "$INI" $folder32/$name-32
 
 # Make zip using .Net.
 rm -f "$name.zip" "$name-32.zip" &&

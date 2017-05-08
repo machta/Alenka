@@ -18,6 +18,7 @@ folder=`mktemp -d -p .`
 
 echo -e Deploying to $name'\n'
 
+mkdir -p $folder/$name/log
 mkdir -p $folder/$name/platforms
 mkdir -p $folder/$name/xcbglintegrations
 
@@ -53,6 +54,7 @@ echo '$DIR/Alenka.bin "$@"' | tee -a $folder/$name/Alenka >> $folder/$name/Alenk
 chmod u+x $folder/$name/Alenka*
 
 cp -v "`dirname $0`/readme-linux.txt" $folder/$name/README
+cp -v "`dirname $0`/options.ini" $folder/$name
 
 cd $folder &&
 zip -r $name.zip $name &&
