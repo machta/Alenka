@@ -96,7 +96,10 @@ win32 {
 
 	LIBS += -lopengl32 -lmatio
 
-	INCLUDEPATH += "$$OPENCL_DIR"/include
+	INCLUDEPATH += \
+		"$$OPENCL_DIR"/include \
+		$$FILE_LIB/matio/src \
+		$$FILE_LIB/matio/visual_studio \
 
 	DEFINES += WIN_BUILD _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS \
 		BOOST_PROGRAM_OPTIONS_NO_LIB # This stops Microsoft's linker from needing the static library.
