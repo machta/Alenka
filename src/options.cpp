@@ -39,8 +39,10 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("spikedet", value<string>()->value_name("OUTPUT_FILE"), "Spikedet only mode")
 	("clInfo", "print OpenCL platform and device info")
 	("glInfo", "print OpenGL info")
-	("printBuffers", "dump OpenCL buffers for debugging")
 	("version", "print version number")
+#ifndef NDEBUG
+	("printBuffers", "dump OpenCL buffers for debugging")
+#endif
 #ifdef TESTS
 	("test", "run unit tests")
 #endif
@@ -70,7 +72,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("matMults", value<string>()->default_value("mults")->value_name("val"), "channel multipliers var name for MAT files")
 	("matDate", value<string>()->default_value("tabs")->value_name("val"), "date var name for MAT files")
 	("matHeader", value<string>()->default_value("header")->value_name("val"), "header struct name for MAT files")
-	("matLabel", value<string>()->default_value("label")->value_name("val"), "labels string cell name for MAT files")
+	("matLabel", value<string>()->default_value("label")->value_name("val"), "labels var name in header for MAT files")
 	;
 
 	options_description spikedet("Spikedet settings", lineWidth);
@@ -90,6 +92,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("sed", value<double>()->default_value(0.1, "0.1")->value_name("seconds"), "spike event duration")
 	("osd", value<bool>()->default_value(true)->value_name("bool"), "use orginal Spikedet implementation")
 	;
+	// TODO: Find out why isn't here the -ft option like in Matlab.
 
 	configuration.add(spikedet);
 

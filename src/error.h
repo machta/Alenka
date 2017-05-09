@@ -87,12 +87,17 @@ void CNEC(T val, std::string message, const char* file, int line)
  */
 #define checkNotErrorCode(val_, notExpected_, message_) if((val_) == (notExpected_)) { std::stringstream ss; ss << message_; CNEC(val_, ss.str(), __FILE__, __LINE__); }
 
+#ifndef NDEBUG
 template<class... T>
 inline void printBuffer(T... p)
 {
 	if (PROGRAM_OPTIONS.isSet("printBuffers"))
 		AlenkaSignal::OpenCLContext::printBuffer(p...);
 }
+#else
+template<class... T>
+inline void printBuffer(T...) {}
+#endif
 
 /**
  * @brief Log file object.

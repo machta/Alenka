@@ -103,7 +103,7 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 		cout << "Usage:" << endl;
 		cout << "  Alenka [OPTION]... [FILE]" << endl;
 		cout << "  Alenka --spikedet OUTPUT_FILE [SPIKEDET_SETTINGS]... FILE" << endl;
-		cout << "  Alenka --help|--clInfo|--printBuffers|--version" << endl;
+		cout << "  Alenka --help|--clInfo|--version" << endl;
 		cout << PROGRAM_OPTIONS.getDescription() << endl;
 		mainExit();
 	}
