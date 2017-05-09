@@ -3,6 +3,8 @@
 #include "error.h"
 #include "myapplication.h"
 
+#include <QSettings>
+
 #include <fstream>
 #include <sstream>
 
@@ -26,13 +28,15 @@ int getTerminalWidth()
 	return 80;
 }
 
+const int LINE_WIDTH = max(60, getTerminalWidth());
+
 } // namespace
 
-Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS")
+Options::Options(int argc, char** argv)
 {
-	const int lineWidth = max(60, getTerminalWidth());
+	programSettings = new QSettings("Martin Barta", "Alenka " + QString::fromStdString(MyApplication::versionString()));
 
-	options_description commandLineOnly("Command line options", lineWidth);
+	options_description commandLineOnly("Command line options", LINE_WIDTH);
 	commandLineOnly.add_options()
 	("help", "help message")
 	("config", value<string>()->value_name("path"), "override default config file path")
@@ -48,7 +52,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 #endif
 	;
 
-	options_description configuration("Configuration", lineWidth);
+	options_description configuration("Configuration", LINE_WIDTH);
 	configuration.add_options()
 	("tablet", value<bool>()->default_value(false)->value_name("bool"), "tablet mode")
 	("locale", value<string>()->default_value("en_us")->value_name("lang"), "mostly controls decimal number format")
@@ -75,7 +79,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	("matLabel", value<string>()->default_value("label")->value_name("val"), "labels var name in header for MAT files")
 	;
 
-	options_description spikedet("Spikedet settings", lineWidth);
+	options_description spikedet("Spikedet settings", LINE_WIDTH);
 	spikedet.add_options()
 	("fl", value<int>()->default_value(10)->value_name("f"), "lowpass filter frequency")
 	("fh", value<int>()->default_value(60)->value_name("f"), "highpass filter frequency")
@@ -96,7 +100,7 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 
 	configuration.add(spikedet);
 
-	options_description all("", lineWidth);
+	options_description all("", LINE_WIDTH);
 	all.add(commandLineOnly).add(configuration);
 
 	stringstream ss;
@@ -115,6 +119,21 @@ Options::Options(int argc, char** argv) : programSettings("Martin Barta", "ZSBS"
 	parseConfigFile(configuration);
 
 	validateValues();
+}
+
+Options::~Options()
+{
+	delete programSettings;
+}
+
+QVariant Options::settings(const QString& key) const
+{
+	return programSettings->value(key);
+}
+
+void Options::settings(const QString& key, const QVariant& value)
+{
+	programSettings->setValue(key, value);
 }
 
 void Options::validateValues()

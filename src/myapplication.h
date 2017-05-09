@@ -49,6 +49,12 @@ public:
 	static void mainExit(int status = EXIT_SUCCESS);
 
 	static std::array<int, 3> version() { return std::array<int, 3>{0, 8, 1}; }
+	static std::string versionString(const std::array<int, 3>& v)
+	{
+		using namespace std;
+		return to_string(get<0>(v)) + '.' + to_string(get<1>(v)) + '.' + to_string(get<2>(v));
+	}
+	static std::string versionString() { return versionString(version()); }
 
 	static char dirSeparator();
 };

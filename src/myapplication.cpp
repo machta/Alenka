@@ -54,6 +54,14 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 		mainExit(EXIT_FAILURE);
 	}
 
+#ifdef UNIX_BUILD
+	logToFile("Alenka " << versionString() << " Unix build");
+#endif
+
+#ifdef WIN_BUILD
+	logToFile("Alenka " << versionString() << " Windows build");
+#endif
+
 	// Log the command line parameters and config file.
 	{
 		stringstream ss;
@@ -114,8 +122,7 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 	}
 	else if (PROGRAM_OPTIONS.isSet("version"))
 	{
-		auto v = version();
-		cout << "Alenka " << to_string(get<0>(v)) + '.' + to_string(get<1>(v)) + '.' + to_string(get<2>(v)) << endl;
+		cout << "Alenka " << versionString() << endl;
 		mainExit();
 	}
 

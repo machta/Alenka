@@ -18,10 +18,13 @@ int memoryAvailable = PROGRAM_OPTIONS["fileCacheSize"].as<int>();
 
 #include <boost/program_options.hpp>
 
-#include <QSettings>
+#include <QVariant>
+#include <QString>
 
 #include <string>
 #include <stdexcept>
+
+class QSettings;
 
 /**
  * @brief This class makes the options and settings available for use in code.
@@ -40,13 +43,14 @@ class Options
 {
 	boost::program_options::variables_map vm;
 	std::string desc, configPath;
-	QSettings programSettings;
+	QSettings* programSettings;
 
 public:
 	/**
-	 * @brief Constructor. Parameters from main are redirected here.
+	 * @brief Constructor. Parameters from main() are redirected here.
 	 */
 	Options(int argc, char** argv);
+	~Options();
 
 	/**
 	 * @brief Redirects to get().
@@ -90,18 +94,12 @@ public:
 	/**
 	 * @brief Returns the value previously stored under key.
 	 */
-	QVariant settings(const QString& key) const
-	{
-		return programSettings.value(key);
-	}
+	QVariant settings(const QString& key) const;
 
 	/**
 	 * @brief Store value under key.
 	 */
-	void settings(const QString& key, const QVariant& value)
-	{
-		programSettings.setValue(key, value);
-	}
+	void settings(const QString& key, const QVariant& value);
 
 	/**
 	 * @brief Logs the content of the config file.
@@ -109,11 +107,11 @@ public:
 	void logConfigFile() const;
 
 private:
-	void parseConfigFile(const boost::program_options::options_description& configuration);
 	/**
-	 * @brief In this method should be defined all tests of the options that have limited accepted values.
+	 * @brief Here are all tests of the options that have limited accepted values.
 	 */
 	void validateValues();
+	void parseConfigFile(const boost::program_options::options_description& configuration);
 };
 
 extern const Options* PROGRAM_OPTIONS_POINTER;
