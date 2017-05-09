@@ -36,6 +36,7 @@ plugin=OK || plugin=fail
 
 export LD_LIBRARY_PATH=$QT_DIR/lib &&
 cp -v $(realpath -s `ldd $folder/$name/Alenka $(find $folder/$name -name '*.so') | grep -i qt | grep -v Gamepad | awk '{print $3}'` | sort | uniq) $folder/$name &&
+chmod a-x $folder/$name/lib*so* &&
 libraries=OK || libraries=fail
 
 echo '#!/bin/sh

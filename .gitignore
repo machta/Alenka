@@ -49,14 +49,6 @@ local-options.ini
 # local excludes file
 .excludes.txt
 
-# log files
-*.log
-
-# doxygen documentation
-doc/html
-doc/latex
-doc/index.html
-
 # local copy of the build script
 build
 
