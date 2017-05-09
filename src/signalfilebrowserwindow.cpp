@@ -698,6 +698,9 @@ DataFile* SignalFileBrowserWindow::dataFileBySuffix(const QFileInfo& fileInfo)
 		vars.date = PROGRAM_OPTIONS["matDate"].as<string>();
 		vars.header = PROGRAM_OPTIONS["matHeader"].as<string>();
 		vars.label = PROGRAM_OPTIONS["matLabel"].as<string>();
+		vars.events = PROGRAM_OPTIONS["matEvents"].as<string>();
+		vars.positionIndex = PROGRAM_OPTIONS["matEventsPos"].as<int>();
+		vars.durationIndex = PROGRAM_OPTIONS["matEventsDur"].as<int>();
 
 		return new MAT(stdFileName, vars);
 	}

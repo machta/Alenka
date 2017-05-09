@@ -72,11 +72,14 @@ Options::Options(int argc, char** argv)
 	("fileCacheSize", value<int>()->default_value(0)->value_name("MB"), "allowed RAM for caching signal files")
 	("notchFrequency", value<double>()->default_value(50)->value_name("f"), "power interference filter")
 	("matData", value<string>()->default_value("d")->value_name("val"), "data var name for MAT files")
-	("matFs", value<string>()->default_value("fs")->value_name("val"), "sample rate var name for MAT files")
-	("matMults", value<string>()->default_value("mults")->value_name("val"), "channel multipliers var name for MAT files")
-	("matDate", value<string>()->default_value("tabs")->value_name("val"), "date var name for MAT files")
-	("matHeader", value<string>()->default_value("header")->value_name("val"), "header struct name for MAT files")
-	("matLabel", value<string>()->default_value("label")->value_name("val"), "labels var name in header for MAT files")
+	("matFs", value<string>()->default_value("fs")->value_name("val"), "sample rate var name")
+	("matMults", value<string>()->default_value("mults")->value_name("val"), "channel multipliers var name")
+	("matDate", value<string>()->default_value("tabs")->value_name("val"), "start date var name")
+	("matHeader", value<string>()->default_value("header")->value_name("val"), "header struct name")
+	("matLabel", value<string>()->default_value("label")->value_name("val"), "labels var name in header")
+	("matEvents", value<string>()->default_value("evts")->value_name("val"), "events struct array var name")
+	("matEventsPos", value<int>()->default_value(0)->value_name("index"), "events date field index")
+	("matEventsDur", value<int>()->default_value(1)->value_name("index"), "events duration field index (in seconds)")
 	;
 
 	options_description spikedet("Spikedet settings", LINE_WIDTH);
@@ -96,7 +99,7 @@ Options::Options(int argc, char** argv)
 	("sed", value<double>()->default_value(0.1, "0.1")->value_name("seconds"), "spike event duration")
 	("osd", value<bool>()->default_value(true)->value_name("bool"), "use orginal Spikedet implementation")
 	;
-	// TODO: Find out why isn't here the -ft option like in Matlab.
+	// TODO: Find out why there isn't the -ft option like in Matlab.
 
 	configuration.add(spikedet);
 
