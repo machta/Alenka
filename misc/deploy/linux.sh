@@ -21,6 +21,7 @@ echo -e Deploying to $name'\n'
 mkdir -p $folder/$name/log
 mkdir -p $folder/$name/platforms
 mkdir -p $folder/$name/xcbglintegrations
+mkdir -p $folder/$name/imageformats
 
 cp -v `find .. -type f -name Alenka | grep Alenka | grep Release | grep 5.8` $folder/$name/Alenka.bin && alenka=OK || alenka=fail
 
@@ -36,6 +37,7 @@ plugin=OK || plugin=fail
 
 export LD_LIBRARY_PATH=$QT_DIR/lib &&
 cp -v $(realpath -s `ldd $folder/$name/Alenka.bin $(find $folder/$name -name '*.so') | grep -i qt | grep -v Gamepad | awk '{print $3}'` | sort | uniq) $folder/$name &&
+cp -v $QT_DIR/plugins/imageformats/libqjpeg.so $folder/$name/imageformats &&
 chmod a-x $folder/$name/lib*so* &&
 libraries=OK || libraries=fail
 
