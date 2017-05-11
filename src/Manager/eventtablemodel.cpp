@@ -76,7 +76,12 @@ public:
 		if (role == Qt::EditRole)
 		{
 			Event e = currentEventTable(file)->row(row);
-			e.type = value.toInt();
+
+			int type = value.toInt();
+			if (type < -1 || file->dataModel->eventTypeTable()->rowCount() <= type)
+				type = -1;
+			e.type = type;
+
 			file->undoFactory->changeEvent(OpenDataFile::infoTable.getSelectedMontage(), row, e, "change Type");
 			return true;
 		}
@@ -93,7 +98,8 @@ public:
 		combo->addItem(NO_TYPE_STRING.c_str());
 		for (int i = 0; i < file->dataModel->eventTypeTable()->rowCount(); ++i)
 		{
-			combo->addItem(QString::fromStdString(file->dataModel->eventTypeTable()->row(i).name));
+			string text = file->dataModel->eventTypeTable()->row(i).name;
+			combo->addItem(QString::fromStdString(text));
 		}
 
 		*widget = combo;
@@ -219,7 +225,12 @@ public:
 		if (role == Qt::EditRole)
 		{
 			Event e = currentEventTable(file)->row(row);
-			e.channel = value.toInt();
+
+			int channel = value.toInt();
+			if (channel < -2 || currentTrackTable(file)->rowCount() <= channel)
+				channel = -2;
+			e.channel = channel;
+
 			file->undoFactory->changeEvent(OpenDataFile::infoTable.getSelectedMontage(), row, e, "change Channel");
 			return true;
 		}
