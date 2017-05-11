@@ -1059,27 +1059,31 @@ void SignalFileBrowserWindow::openFile(const QString& fileName)
 	OpenDataFile::infoTable.emitAllSignals();
 
 	// Set up autosave.
-	c = connect(autoSaveTimer, &QTimer::timeout, [this] () {
-		if (undoStack->isClean())
-			return;
-
-		try
-		{
-			executeWithCLocale([this] () {
-				file->saveSecondaryFile(autoSaveName);
-				logToFileAndConsole("Autosaving to " << autoSaveName);
-			});
-		}
-		catch (runtime_error e)
-		{
-			errorMessage(this, e.what());
-		}
-	});
-	openFileConnections.push_back(c);
-
 	int ms = 1000*PROGRAM_OPTIONS["autosave"].as<int>();
-	autoSaveTimer->setInterval(ms);
-	autoSaveTimer->start();
+
+	if (ms > 0)
+	{
+		c = connect(autoSaveTimer, &QTimer::timeout, [this] () {
+			try
+			{
+				if (undoStack->isClean())
+					return;
+
+				executeWithCLocale([this] () {
+					file->saveSecondaryFile(autoSaveName);
+					logToFileAndConsole("Autosaving to " << autoSaveName);
+				});
+			}
+			catch (runtime_error e)
+			{
+				errorMessage(this, e.what());
+			}
+		});
+		openFileConnections.push_back(c);
+
+		autoSaveTimer->setInterval(ms);
+		autoSaveTimer->start();
+	}
 
 	switchButton->setEnabled(true);
 }

@@ -57,7 +57,7 @@ Options::Options(int argc, char** argv)
 	("tablet", value<bool>()->default_value(false)->value_name("bool"), "tablet mode")
 	("locale", value<string>()->default_value("en_us")->value_name("lang"), "mostly controls decimal number format")
 	("uncalibratedGDF", value<bool>()->default_value(false)->value_name("bool"), "assume uncalibrated data in GDF")
-	("autosave", value<int>()->default_value(2*60)->value_name("seconds"), "interval between saves")
+	("autosave", value<int>()->default_value(2*60)->value_name("seconds"), "interval between saves; 0 to disable")
 	("kernelCacheSize", value<int>()->default_value(0)->value_name("count"), "if 0, the existing file is removed")
 	("kernelCacheDir", value<string>()->value_name("path"), "default is install dir")
 	("gl20", value<bool>()->default_value(false)->value_name("bool"), "use OpenGL 2.0 instead of 3.0")
@@ -141,10 +141,6 @@ void Options::settings(const QString& key, const QVariant& value)
 
 void Options::validateValues()
 {
-	const int autosaveInterval = get("autosave").as<int>();
-	if (autosaveInterval <= 0)
-		throw validation_error(validation_error::invalid_option_value, "autosave", to_string(autosaveInterval));
-
 	if (get("gl43").as<bool>())
 		throw runtime_error("Option 'gl43' is disabled at the moment.");
 
