@@ -10,7 +10,6 @@
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSplitter>
-#include <QSlider>
 #include <QSpinBox>
 #include <QCheckBox>
 #include <QAction>
@@ -23,27 +22,17 @@ FilterManager::FilterManager(QWidget* parent) : QWidget(parent)
 {
 	filterVisulizer = new FilterVisualizer();
 
+	QVBoxLayout* box = new QVBoxLayout();
 	QSplitter* splitter = new QSplitter(Qt::Vertical);
 
-	QVBoxLayout* box = new QVBoxLayout();
-	splitter->addWidget(filterVisulizer);
-
 	QVBoxLayout* box2 = new QVBoxLayout();
-	QHBoxLayout* hbox = new QHBoxLayout();
-
-	QLabel* label = new QLabel("Frequency multipliers:");
-	label->setToolTip("Enter one pair of numbers per line [f, multiplier]; frequencies > f are modified by the multiplier");
-	hbox->addWidget(label);
-
-	QCheckBox* checkBox = new QCheckBox("on");
-	checkBox->setToolTip("Enable/disable multipliers");
-	connect(checkBox, SIGNAL(clicked(bool)), &OpenDataFile::infoTable, SLOT(setFrequencyMultipliersOn(bool)));
-	connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersOnChanged(bool)), checkBox, SLOT(setChecked(bool)));
-	hbox->addWidget(checkBox);
-
-	hbox->addStretch();
+	box2->setMargin(0);
+	box2->addWidget(filterVisulizer);
 
 	// Visulizer controls.
+	QHBoxLayout* hbox = new QHBoxLayout();
+	hbox->addStretch();
+
 	QPushButton* button = new QPushButton();
 	button->setIcon(filterVisulizer->getResetAction()->icon());
 	button->setToolTip(filterVisulizer->getResetAction()->toolTip());
@@ -57,41 +46,48 @@ FilterManager::FilterManager(QWidget* parent) : QWidget(parent)
 	connect(button, SIGNAL(clicked(bool)), filterVisulizer->getZoomAction(), SLOT(setChecked(bool)));
 	hbox->addWidget(button);
 
-	label = new QLabel("Channel");
+	QLabel* label = new QLabel("Channel");
 	label->setToolTip("Index of the channel from the original file to be used as input for the spectrum graph");
 	hbox->addWidget(label);
-	channelSlider = new QSlider(Qt::Horizontal);
-	connect(channelSlider, SIGNAL(valueChanged(int)), filterVisulizer, SLOT(setChannelToDisplay(int)));
-	label = new QLabel("0");
-	connect(channelSlider, &QSlider::valueChanged, [label] (int value) {
-		label->setText(QString::number(value));
-	});
-	hbox->addWidget(label);
-	hbox->addWidget(channelSlider);
+	channelSpinBox = new QSpinBox();
+	connect(channelSpinBox, SIGNAL(valueChanged(int)), filterVisulizer, SLOT(setChannelToDisplay(int)));
+	hbox->addWidget(channelSpinBox);
 
 	QSpinBox* spinBox = new QSpinBox();
 	spinBox->setRange(0, 100);
 	connect(spinBox, SIGNAL(valueChanged(int)), filterVisulizer, SLOT(setSecondsToDisplay(int)));
 	spinBox->setValue(2);
 	hbox->addWidget(spinBox);
-	label = new QLabel("s");
+	label = new QLabel("sec");
 	label->setToolTip("Interval in seconds to be used for the spectrum graph");
 	hbox->addWidget(label);
 
-	checkBox = new QCheckBox("freeze");
+	QCheckBox* checkBox = new QCheckBox("freeze");
 	checkBox->setToolTip("Freeze spectrum graph");
 	connect(checkBox, SIGNAL(clicked(bool)), filterVisulizer, SLOT(setFreezeSpectrum(bool)));
 	checkBox->setChecked(true);
 	hbox->addWidget(checkBox);
 
 	box2->addLayout(hbox);
+	box2->addSpacing(5);
+	QWidget* widget = new QWidget();
+	widget->setLayout(box2);
+	splitter->addWidget(widget);
 
 	// Multipliers text field.
+	box2 = new QVBoxLayout();
+	box2->setMargin(0);
+	box2->addSpacing(5);
+
+	label = new QLabel("Frequency multipliers:");
+	label->setToolTip("Enter one pair of numbers per line [f, multiplier]; frequencies > f are modified by the multiplier");
+	box2->addWidget(label);
+
 	multipliersEdit = new QPlainTextEdit();
 	connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersChanged()), this, SLOT(setMultipliersText()));
 	box2->addWidget(multipliersEdit);
 
-	QWidget* widget = new QWidget();
+	widget = new QWidget();
 	widget->setLayout(box2);
 	splitter->addWidget(widget);
 	box->addWidget(splitter);
@@ -114,12 +110,19 @@ FilterManager::FilterManager(QWidget* parent) : QWidget(parent)
 	});
 	hbox->addWidget(windowCombo);
 
+	hbox->addStretch();
+
 	QPushButton* applyButton = new QPushButton("Apply");
 	applyButton->setToolTip("Apply multipliers");
 	connect(applyButton, SIGNAL(clicked(bool)), this, SLOT(applyMultipliers()));
 	hbox->addWidget(applyButton);
 
-	hbox->addStretch();
+	checkBox = new QCheckBox("on");
+	checkBox->setToolTip("Enable/disable multipliers");
+	connect(checkBox, SIGNAL(clicked(bool)), &OpenDataFile::infoTable, SLOT(setFrequencyMultipliersOn(bool)));
+	connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersOnChanged(bool)), checkBox, SLOT(setChecked(bool)));
+	hbox->addWidget(checkBox);
+
 	box->addLayout(hbox);
 	setLayout(box);
 }
@@ -131,8 +134,8 @@ void FilterManager::changeFile(OpenDataFile* file)
 
 	if (file)
 	{
-		channelSlider->setRange(0, file->file->getChannelCount() - 1);
-		channelSlider->setValue(0);
+		channelSpinBox->setRange(0, file->file->getChannelCount() - 1);
+		channelSpinBox->setValue(0);
 	}
 }
 

@@ -60,6 +60,7 @@ FilterVisualizer::FilterVisualizer(QWidget* parent) : QWidget(parent)
 	chartView->addAction(zoomAction);
 
 	QVBoxLayout* box = new QVBoxLayout();
+	box->setMargin(0);
 	box->addWidget(chartView);
 	setLayout(box);
 
@@ -211,8 +212,26 @@ void FilterVisualizer::updateResponse()
 		{
 			maxVal = max(maxVal, val);
 			minVal = min(minVal, val);
-			responseSeries->append(fs*i/n2, val);
 		}
+	}
+
+	float diff = abs(maxVal - minVal);
+	if (diff < 0.001)
+	{
+		// Draw a straight line (e.g. when using an all-pass filter).
+		responseSeries->append(0, maxVal);
+		responseSeries->append(1, maxVal);
+
+		// One more point needs to be added, otherwise Qt draws nothing at all.
+		if (abs(maxVal) < 0.001)
+			responseSeries->append(1, maxVal - 1);
+		else
+			responseSeries->append(1, 0);
+	}
+	else
+	{
+		for (int i = 0; i < n2; ++i)
+			responseSeries->append(fs*i/n2, response[i]);
 	}
 
 	axisResponse->setRange(minVal, maxVal);

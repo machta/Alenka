@@ -6,7 +6,7 @@
 class FilterVisualizer;
 class OpenDataFile;
 class QPlainTextEdit;
-class QSlider;
+class QSpinBox;
 
 class FilterManager : public QWidget
 {
@@ -21,7 +21,7 @@ private:
 	OpenDataFile* file;
 	FilterVisualizer* filterVisulizer;
 	QPlainTextEdit* multipliersEdit;
-	QSlider* channelSlider;
+	QSpinBox* channelSpinBox;
 
 private slots:
 	void setMultipliersText();
