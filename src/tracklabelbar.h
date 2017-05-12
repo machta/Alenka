@@ -2,6 +2,10 @@
 #define TRACKLABELBAR_H
 
 #include <QWidget>
+#include <QString>
+#include <QColor>
+
+#include <vector>
 
 class OpenDataFile;
 
@@ -11,6 +15,14 @@ class OpenDataFile;
 class TrackLabelBar : public QWidget
 {
 	Q_OBJECT
+
+	OpenDataFile* file = nullptr;
+	int selectedTrack = -1;
+	std::vector<QMetaObject::Connection> trackConnections;
+	std::vector<QString> labels;
+	std::vector<QColor> colors;
+	std::vector<int> amplitudeArrows;
+	bool drawArrows = false;
 
 public:
 	explicit TrackLabelBar(QWidget* parent = nullptr);
@@ -36,14 +48,9 @@ public slots:
 protected:
 	virtual void paintEvent(QPaintEvent* event) override;
 
-private:
-	OpenDataFile* file = nullptr;
-	int selectedTrack = -1;
-	std::vector<QMetaObject::Connection> trackConnections;
-
 private slots:
-	void updateTrackTable(int row);
-	void updateLabels(int col);
+	void updateConnections(int row);
+	void updateLabels();
 };
 
 #endif // TRACKLABELBAR_H

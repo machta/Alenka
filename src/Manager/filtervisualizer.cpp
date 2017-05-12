@@ -231,7 +231,11 @@ void FilterVisualizer::updateResponse()
 	else
 	{
 		for (int i = 0; i < n2; ++i)
-			responseSeries->append(fs*i/n2, response[i]);
+		{
+			float val = response[i];
+			if (isfinite(val))
+				responseSeries->append(fs*i/n2, val);
+		}
 	}
 
 	axisResponse->setRange(minVal, maxVal);

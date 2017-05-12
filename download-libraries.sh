@@ -23,7 +23,7 @@ fi
 
 if [ -d elko ]
 then
-	signal=skipped
+	elko=skipped
 else
 	git clone --depth 1 https://github.com/svobolen/ElkoAlenka.git elko &&
 	elko=OK || elko=fail
