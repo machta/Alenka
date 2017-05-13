@@ -247,10 +247,15 @@ void SpikedetAnalysis::analyseCommandLineFile()
 
 	try
 	{
-		auto fn = PROGRAM_OPTIONS["filename"].as<vector<string>>();
-		QFileInfo fileInfo(QString::fromStdString(fn[0]));
+		vector<string> fn = PROGRAM_OPTIONS["filename"].as<vector<string>>();
 
-		file.reset(SignalFileBrowserWindow::dataFileBySuffix(fileInfo));
+		if (fn.size() != 1)
+			runtime_error("You must specify at least 1 input file");
+
+		QFileInfo fileInfo(QString::fromStdString(fn[0]));
+		vector<string> rest(fn.begin() + 1, fn.end());
+
+		file.reset(SignalFileBrowserWindow::dataFileBySuffix(fileInfo, rest));
 	}
 	catch (runtime_error e)
 	{

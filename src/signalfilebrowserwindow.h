@@ -109,7 +109,7 @@ public:
 	static QDateTime sampleToDate(AlenkaFile::DataFile* file, int sample);
 	static QDateTime sampleToOffset(AlenkaFile::DataFile* file, int sample);
 	static QString sampleToDateTimeString(AlenkaFile::DataFile* file, int sample, InfoTable::TimeMode mode = InfoTable::TimeMode::size);
-	static AlenkaFile::DataFile* dataFileBySuffix(const QFileInfo& fileInfo);
+	static AlenkaFile::DataFile* dataFileBySuffix(const QFileInfo& fileInfo, const std::vector<std::string>& additionalFiles);
 
 protected:
 	void closeEvent(QCloseEvent* event) override;
@@ -123,7 +123,7 @@ private:
 
 private slots:
 	void openFile();
-	void openFile(const QString& fileName);
+	void openFile(const QString& fileName, const std::vector<std::string>& additionalFiles = std::vector<std::string>());
 	bool closeFile();
 	void saveFile();
 	void exportToEdf();

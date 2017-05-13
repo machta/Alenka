@@ -71,15 +71,14 @@ Options::Options(int argc, char** argv)
 	("parProc", value<int>()->default_value(2)->value_name("val"), "parallel signal processor queue count")
 	("fileCacheSize", value<int>()->default_value(0)->value_name("MB"), "allowed RAM for caching signal files")
 	("notchFrequency", value<double>()->default_value(50)->value_name("f"), "power interference filter")
-	("matData", value<string>()->default_value("d")->value_name("val"), "data var name for MAT files")
+	("matData", value<vector<string>>()->value_name("val..."), "data var names for MAT files; default is 'd'")
 	("matFs", value<string>()->default_value("fs")->value_name("val"), "sample rate var name")
 	("matMults", value<string>()->default_value("mults")->value_name("val"), "channel multipliers var name")
 	("matDate", value<string>()->default_value("tabs")->value_name("val"), "start date var name")
-	("matHeader", value<string>()->default_value("header")->value_name("val"), "header struct name")
-	("matLabel", value<string>()->default_value("label")->value_name("val"), "labels var name in header")
-	("matEvents", value<string>()->default_value("evts")->value_name("val"), "events struct array var name")
-	("matEventsPos", value<int>()->default_value(0)->value_name("index"), "events date field index")
-	("matEventsDur", value<int>()->default_value(1)->value_name("index"), "events duration field index (in seconds)")
+	("matLabel", value<string>()->default_value("header.label")->value_name("val"), "labels var name")
+	("matEvtPos", value<string>()->default_value("out.pos")->value_name("val"), "event position var name in seconds")
+	("matEvtDur", value<string>()->default_value("out.dur")->value_name("val"), "event duration var name in seconds")
+	("matEvtChan", value<string>()->default_value("out.chan")->value_name("val"), "one-based event channel index var name")
 	;
 
 	options_description spikedet("Spikedet settings", LINE_WIDTH);
@@ -114,7 +113,7 @@ Options::Options(int argc, char** argv)
 	all.add_options()("filename", value<vector<string>>());
 
 	positional_options_description pos;
-	pos.add("filename", 1);
+	pos.add("filename", -1);
 
 	store(command_line_parser(argc, argv).options(all).positional(pos).run(), vm);
 	notify(vm);

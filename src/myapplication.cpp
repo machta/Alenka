@@ -109,8 +109,8 @@ MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 	if (PROGRAM_OPTIONS.isSet("help"))
 	{
 		cout << "Usage:" << endl;
-		cout << "  Alenka [OPTION]... [FILE]" << endl;
-		cout << "  Alenka --spikedet OUTPUT_FILE [SPIKEDET_SETTINGS]... FILE" << endl;
+		cout << "  Alenka [OPTION]... [FILE]..." << endl;
+		cout << "  Alenka --spikedet OUTPUT_FILE [SPIKEDET_SETTINGS]... FILE [FILE]..." << endl;
 		cout << "  Alenka --help|--clInfo|--version" << endl;
 		cout << PROGRAM_OPTIONS.getDescription() << endl;
 		mainExit();

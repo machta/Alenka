@@ -673,7 +673,7 @@ QString SignalFileBrowserWindow::sampleToDateTimeString(DataFile* file, int samp
 	return QString();
 }
 
-DataFile* SignalFileBrowserWindow::dataFileBySuffix(const QFileInfo& fileInfo)
+DataFile* SignalFileBrowserWindow::dataFileBySuffix(const QFileInfo& fileInfo, const vector<string>& additionalFiles)
 {
 	string stdFileName = fileInfo.filePath().toStdString();
 	QString suffix = fileInfo.suffix().toLower();
@@ -690,17 +690,22 @@ DataFile* SignalFileBrowserWindow::dataFileBySuffix(const QFileInfo& fileInfo)
 	else if (suffix == "mat")
 	{
 		MATvars vars;
-		vars.data = PROGRAM_OPTIONS["matData"].as<string>();
+
+		if (PROGRAM_OPTIONS.isSet("matData"))
+			vars.data = PROGRAM_OPTIONS["matData"].as<vector<string>>();
+
 		vars.frequency = PROGRAM_OPTIONS["matFs"].as<string>();
 		vars.multipliers = PROGRAM_OPTIONS["matMults"].as<string>();
 		vars.date = PROGRAM_OPTIONS["matDate"].as<string>();
-		vars.header = PROGRAM_OPTIONS["matHeader"].as<string>();
 		vars.label = PROGRAM_OPTIONS["matLabel"].as<string>();
-		vars.events = PROGRAM_OPTIONS["matEvents"].as<string>();
-		vars.positionIndex = PROGRAM_OPTIONS["matEventsPos"].as<int>();
-		vars.durationIndex = PROGRAM_OPTIONS["matEventsDur"].as<int>();
+		vars.eventPosition = PROGRAM_OPTIONS["matEvtPos"].as<string>();
+		vars.eventDuration = PROGRAM_OPTIONS["matEvtDur"].as<string>();
+		vars.eventChannel = PROGRAM_OPTIONS["matEvtChan"].as<string>();
 
-		return new MAT(stdFileName, vars);
+		vector<string> files{stdFileName};
+		files.insert(files.end(), additionalFiles.begin(), additionalFiles.end());
+
+		return new MAT(files, vars);
 	}
 	else
 	{
@@ -712,8 +717,10 @@ void SignalFileBrowserWindow::openCommandLineFile()
 {
 	if (PROGRAM_OPTIONS.isSet("filename"))
 	{
-		auto fn = PROGRAM_OPTIONS["filename"].as<vector<string>>();
-		openFile(QString::fromStdString(fn[0]));
+		vector<string> fn = PROGRAM_OPTIONS["filename"].as<vector<string>>();
+		vector<string> rest(fn.begin() + 1, fn.end());
+
+		openFile(QString::fromStdString(fn[0]), rest);
 	}
 }
 
@@ -814,7 +821,7 @@ void SignalFileBrowserWindow::openFile()
 	openFile(fileName);
 }
 
-void SignalFileBrowserWindow::openFile(const QString& fileName)
+void SignalFileBrowserWindow::openFile(const QString& fileName, const vector<string>& additionalFiles)
 {
 	QFileInfo fileInfo(fileName);
 
@@ -838,7 +845,7 @@ void SignalFileBrowserWindow::openFile(const QString& fileName)
 
 	try
 	{
-		file = dataFileBySuffix(fileInfo);
+		file = dataFileBySuffix(fileInfo, additionalFiles);
 	}
 	catch (runtime_error e)
 	{
@@ -1216,6 +1223,7 @@ void SignalFileBrowserWindow::lowpassComboBoxUpdate(const QString& text)
 			else
 				setCurrentInNumericCombo(lowpassComboBox, value);
 		}
+
 		OpenDataFile::infoTable.setLowpassOn(ok);
 	}
 }
@@ -1256,6 +1264,7 @@ void SignalFileBrowserWindow::highpassComboBoxUpdate(const QString& text)
 			else
 				setCurrentInNumericCombo(highpassComboBox, value);
 		}
+
 		OpenDataFile::infoTable.setHighpassOn(ok);
 	}
 }
