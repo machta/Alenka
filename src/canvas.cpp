@@ -419,19 +419,6 @@ void Canvas::horizontalZoom(bool reverse)
 	OpenDataFile::infoTable.setVirtualWidth(OpenDataFile::infoTable.getVirtualWidth()*factor);
 }
 
-void Canvas::verticalZoom(bool reverse)
-{
-	if (file)
-	{
-		double factor = VERTICAL_ZOOM;
-		if (reverse)
-			factor = 1/factor;
-
-		for (int i = 0; i < getTrackTable(file)->rowCount(); ++i)
-			zoom(file, factor, i);
-	}
-}
-
 void Canvas::trackZoom(bool reverse)
 {
 	if (file)
@@ -734,7 +721,10 @@ void Canvas::wheelEvent(QWheelEvent* event)
 	}
 	else if (event->modifiers() & Qt::ShiftModifier)
 	{
-		verticalZoom(isDown);
+		if (isDown)
+			emit shiftZoomDown();
+		else
+			emit shiftZoomUp();
 
 		update();
 		event->accept();

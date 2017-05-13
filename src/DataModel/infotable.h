@@ -45,9 +45,11 @@ public:
 	{
 		emit virtualWidthChanged(virtualWidth);
 		emit positionChanged(position);
-		emit lowpassFrequencyChanged(lowpassFrequency);
+		if (lowpassOn)
+			emit lowpassFrequencyChanged(lowpassFrequency);
 		emit lowpassOnChanged(lowpassOn);
-		emit highpassFrequencyChanged(highpassFrequency);
+		if (highpassOn)
+			emit highpassFrequencyChanged(highpassFrequency);
 		emit highpassOnChanged(highpassOn);
 		emit notchOnChanged(notchOn);
 		emit filterWindowChanged(filterWindow);

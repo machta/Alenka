@@ -98,6 +98,7 @@ class SignalFileBrowserWindow : public QMainWindow
 	QPushButton* switchButton;
 	QByteArray windowState, windowGeometry;
 	QStackedWidget* stackedWidget;
+	const int COMBO_PRECISION = 2;
 
 public:
 	explicit SignalFileBrowserWindow(QWidget* parent = nullptr);
@@ -118,6 +119,7 @@ private:
 	void mode(int m);
 	bool shouldSynchronizeView();
 	void deleteAutoSave();
+	void setCurrentInNumericCombo(QComboBox* combo, double value);
 
 private slots:
 	void openFile();
@@ -147,6 +149,8 @@ private slots:
 	void setEnableFileActions(bool enable);
 	void setFilePathInQML();
 	void switchToAlenka();
+	void verticalZoomIn();
+	void verticalZoomOut();
 };
 
 #endif // SIGNALFILEBROWSERWINDOW_H

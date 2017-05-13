@@ -232,18 +232,16 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	verticalZoomInAction->setShortcut(QKeySequence("Shift++"));
 	verticalZoomInAction->setToolTip("Zoom in amplitudes of signals");
 	verticalZoomInAction->setStatusTip(verticalZoomInAction->toolTip());
-	connect(verticalZoomInAction, &QAction::triggered, [this] () {
-		signalViewer->getCanvas()->verticalZoom(false);
-	});
+	connect(verticalZoomInAction, SIGNAL(triggered(bool)), this, SLOT(verticalZoomIn()));
+	connect(signalViewer->getCanvas(), SIGNAL(shiftZoomUp()), this, SLOT(verticalZoomIn()));
 
 	QAction* verticalZoomOutAction = new QAction("Vertical Zoom Out", this);
 	verticalZoomOutAction->setIcon(QIcon(":/icons/zoom_out_vertical.png"));
 	verticalZoomOutAction->setShortcut(QKeySequence("Shift+-"));
 	verticalZoomOutAction->setToolTip("Zoom out amplitudes of signals");
 	verticalZoomOutAction->setStatusTip(verticalZoomOutAction->toolTip());
-	connect(verticalZoomOutAction, &QAction::triggered, [this] () {
-		signalViewer->getCanvas()->verticalZoom(true);
-	});
+	connect(verticalZoomOutAction, SIGNAL(triggered(bool)), this, SLOT(verticalZoomOut()));
+	connect(signalViewer->getCanvas(), SIGNAL(shiftZoomDown()), this, SLOT(verticalZoomOut()));
 
 	// Construct Keyboard actions.
 	QAction* shiftAction = new QAction("Shift", this);
@@ -781,6 +779,28 @@ void SignalFileBrowserWindow::deleteAutoSave()
 	autoSaveTimer->start();
 }
 
+void SignalFileBrowserWindow::setCurrentInNumericCombo(QComboBox* combo, double value)
+{
+	int precisionPower = static_cast<int>(pow(10, COMBO_PRECISION));
+	double newValue = round(value*precisionPower);
+	int count = combo->count();
+
+	for (int i = 0; i < count; ++i)
+	{
+		bool ok;
+		double itemValue = round(locale().toDouble(combo->itemText(i), &ok)*precisionPower);
+
+		if (ok && itemValue == newValue)
+		{
+			combo->setCurrentIndex(i);
+			return;
+		}
+	}
+
+	combo->addItem(locale().toString(value, 'f', COMBO_PRECISION));
+	combo->setCurrentIndex(count);
+}
+
 void SignalFileBrowserWindow::openFile()
 {
 	if (!closeFile())
@@ -908,7 +928,7 @@ void SignalFileBrowserWindow::openFile(const QString& fileName)
 
 	QStringList comboOptions("---");
 	for (double e : comboNumbers)
-		comboOptions << locale().toString(e, 'f', 2);
+		comboOptions << locale().toString(e, 'f', COMBO_PRECISION);
 
 	QMetaObject::Connection c;
 
@@ -980,7 +1000,7 @@ void SignalFileBrowserWindow::openFile(const QString& fileName)
 
 	QStringList resolutionOptions;
 	for (double e : resolutionNumbers)
-		resolutionOptions << locale().toString(e, 'f', 2);
+		resolutionOptions << locale().toString(e, 'f', COMBO_PRECISION);
 	resolutionComboBox->clear();
 	resolutionComboBox->addItems(resolutionOptions);
 
@@ -1187,10 +1207,15 @@ void SignalFileBrowserWindow::lowpassComboBoxUpdate(const QString& text)
 	if (file)
 	{
 		bool ok;
-		double tmp = locale().toDouble(text, &ok);
+		double value = locale().toDouble(text, &ok);
 
 		if (ok)
-			OpenDataFile::infoTable.setLowpassFrequency(tmp);
+		{
+			if (OpenDataFile::infoTable.getLowpassFrequency() != value)
+				OpenDataFile::infoTable.setLowpassFrequency(value);
+			else
+				setCurrentInNumericCombo(lowpassComboBox, value);
+		}
 		OpenDataFile::infoTable.setLowpassOn(ok);
 	}
 }
@@ -1213,7 +1238,7 @@ void SignalFileBrowserWindow::lowpassComboBoxUpdate(double value)
 		if (value < 0 || value > file->getSamplingFrequency()/2)
 			lowpassComboBoxUpdate(false);
 		else
-			lowpassComboBox->setCurrentText(locale().toString(value, 'f', 2));
+			setCurrentInNumericCombo(lowpassComboBox, value);
 	}
 }
 
@@ -1222,10 +1247,15 @@ void SignalFileBrowserWindow::highpassComboBoxUpdate(const QString& text)
 	if (file)
 	{
 		bool ok;
-		double tmp = locale().toDouble(text, &ok);
+		double value = locale().toDouble(text, &ok);
 
 		if (ok)
-			OpenDataFile::infoTable.setHighpassFrequency(tmp);
+		{
+			if (OpenDataFile::infoTable.getHighpassFrequency() != value)
+				OpenDataFile::infoTable.setHighpassFrequency(value);
+			else
+				setCurrentInNumericCombo(highpassComboBox, value);
+		}
 		OpenDataFile::infoTable.setHighpassOn(ok);
 	}
 }
@@ -1248,7 +1278,7 @@ void SignalFileBrowserWindow::highpassComboBoxUpdate(double value)
 		if (value < 0 || value > file->getSamplingFrequency()/2)
 			highpassComboBoxUpdate(false);
 		else
-			highpassComboBox->setCurrentText(locale().toString(value, 'f', 2));
+			setCurrentInNumericCombo(highpassComboBox, value);
 	}
 }
 
@@ -1257,10 +1287,15 @@ void SignalFileBrowserWindow::resolutionComboBoxUpdate(const QString& text)
 	if (file)
 	{
 		bool ok;
-		float tmp = locale().toFloat(text, &ok);
+		float value = locale().toFloat(text, &ok);
 
 		if (ok)
-			OpenDataFile::infoTable.setSampleScale(tmp);
+		{
+			if (OpenDataFile::infoTable.getSampleScale() != value)
+				OpenDataFile::infoTable.setSampleScale(value);
+			else
+				setCurrentInNumericCombo(resolutionComboBox, value);
+		}
 	}
 }
 
@@ -1268,7 +1303,7 @@ void SignalFileBrowserWindow::resolutionComboBoxUpdate(float value)
 {
 	if (file)
 	{
-		resolutionComboBox->setCurrentText(locale().toString(value, 'f', 2));
+		setCurrentInNumericCombo(resolutionComboBox, value);
 	}
 }
 
@@ -1506,4 +1541,20 @@ void SignalFileBrowserWindow::switchToAlenka()
 
 	if (PROGRAM_OPTIONS["tablet"].as<bool>())
 		showMaximized();
+}
+
+void SignalFileBrowserWindow::verticalZoomIn()
+{
+	int index = resolutionComboBox->currentIndex() - 1;
+
+	if (0 <= index)
+		resolutionComboBox->setCurrentIndex(index);
+}
+
+void SignalFileBrowserWindow::verticalZoomOut()
+{
+	int index = resolutionComboBox->currentIndex() + 1;
+
+	if (index < resolutionComboBox->count())
+		resolutionComboBox->setCurrentIndex(index);
 }

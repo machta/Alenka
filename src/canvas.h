@@ -107,7 +107,6 @@ public:
 	static QColor modifySelectionColor(const QColor& color);
 
 	void horizontalZoom(bool reverse);
-	void verticalZoom(bool reverse);
 	void trackZoom(bool reverse);
 	void shiftButtonCheckEvent(bool checked);
 	void ctrlButtonCheckEvent(bool checked);
@@ -115,6 +114,8 @@ public:
 signals:
 	void cursorPositionSampleChanged(int);
 	void cursorPositionTrackChanged(int);
+	void shiftZoomUp();
+	void shiftZoomDown();
 
 public slots:
 	void updateCursor();
