@@ -151,6 +151,7 @@ private slots:
 	void switchToAlenka();
 	void verticalZoomIn();
 	void verticalZoomOut();
+	void exportDialog();
 };
 
 #endif // SIGNALFILEBROWSERWINDOW_H

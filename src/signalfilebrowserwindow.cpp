@@ -121,6 +121,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	view->setSource(QUrl(QStringLiteral("qrc:/main.qml")));
 	connect(view->rootObject(), SIGNAL(switchToAlenka()), this, SLOT(switchToAlenka()));
 	connect(view->rootObject(), SIGNAL(exit()), this, SLOT(close()));
+	connect(view->rootObject(), SIGNAL(exportDialog()), this, SLOT(exportDialog()));
 
 	signalViewer = new SignalViewer(this);
 
@@ -1202,6 +1203,7 @@ void SignalFileBrowserWindow::exportToEdf()
 	QFileInfo newFileInfo(fileName);
 	if (newFileInfo.suffix() != "edf")
 		fileName += ".edf";
+	// TODO: Reject file names not with the proper suffix, rather than add it automatically.
 
 	try
 	{
@@ -1575,4 +1577,16 @@ void SignalFileBrowserWindow::verticalZoomOut()
 
 	if (index < resolutionComboBox->count())
 		resolutionComboBox->setCurrentIndex(index);
+}
+
+void SignalFileBrowserWindow::exportDialog()
+{
+	QString filter = "JPEG Image (*.jpg);;PNG Image (*.png);;Bitmap Image (*.bmp)";
+	QString fileName = QFileDialog::getSaveFileName(this, "Export image file path", "", filter);
+
+	if (!fileName.isNull())
+	{
+		QVariant returnValue, arg = fileName;
+		QMetaObject::invokeMethod(view->rootObject(), "takeScreenshot", Q_RETURN_ARG(QVariant, returnValue), Q_ARG(QVariant, arg));
+	}
 }

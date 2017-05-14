@@ -19,7 +19,6 @@
 #include <stdexcept>
 #include <string>
 
-
 using namespace std;
 
 // Enforce definition of either WIN_BUILD or UNIX_BUILD.
