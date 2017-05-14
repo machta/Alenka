@@ -442,7 +442,8 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	QToolBar* zoomToolBar = addToolBar("Zoom Tool Bar");
 	zoomToolBar->setObjectName("Zoom QToolBar");
 	int spacingMulti = 1;
-	if (PROGRAM_OPTIONS["tablet"].as<bool>())
+	bool tabletMode = PROGRAM_OPTIONS["mode"].as<string>() == "tablet" || PROGRAM_OPTIONS["mode"].as<string>() == "tablet-full";
+	if (tabletMode)
 	{
 		zoomToolBar->setMinimumHeight(40);
 		zoomToolBar->setIconSize(QSize(40, 40));
@@ -478,7 +479,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 	// Construct Switch button.
 	switchButton = new QPushButton("Switch to Elko", this);
-	if (PROGRAM_OPTIONS["tablet"].as<bool>())
+	if (tabletMode)
 		switchButton->setMinimumSize(QSize(150, 40));
 	switchButton->setToolTip("Switch between Alenka and Elko");
 	switchButton->setStatusTip(switchButton->toolTip());
@@ -505,7 +506,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 			menuBar()->hide();
 			statusBar()->hide();
 
-			if (PROGRAM_OPTIONS["tablet"].as<bool>())
+			if (PROGRAM_OPTIONS["mode"].as<string>() == "tablet-full")
 				showFullScreen();
 		}
 	});
@@ -1548,7 +1549,7 @@ void SignalFileBrowserWindow::switchToAlenka()
 	menuBar()->show();
 	statusBar()->show();
 
-	if (PROGRAM_OPTIONS["tablet"].as<bool>())
+	if (PROGRAM_OPTIONS["mode"].as<string>() == "tablet" || PROGRAM_OPTIONS["mode"].as<string>() == "tablet-full")
 		showMaximized();
 }
 

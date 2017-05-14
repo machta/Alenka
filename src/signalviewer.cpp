@@ -34,7 +34,7 @@ SignalViewer::SignalViewer(QWidget* parent) : QWidget(parent)
 	splitter->setStretchFactor(1, 1);
 
 	scrollBar = new QScrollBar(Qt::Horizontal, this);
-	if (PROGRAM_OPTIONS["tablet"].as<bool>())	
+	if (PROGRAM_OPTIONS["mode"].as<string>() == "tablet" || PROGRAM_OPTIONS["mode"].as<string>() == "tablet-full")
 		scrollBar->setMinimumHeight(50);
 	box->addWidget(scrollBar);
 

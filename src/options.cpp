@@ -54,7 +54,7 @@ Options::Options(int argc, char** argv)
 
 	options_description configuration("Configuration", LINE_WIDTH);
 	configuration.add_options()
-	("tablet", value<bool>()->default_value(false)->value_name("bool"), "tablet mode")
+	("mode", value<string>()->default_value("desktop")->value_name("val"), "desktop|tablet|tablet-full")
 	("locale", value<string>()->default_value("en_us")->value_name("lang"), "mostly controls decimal number format")
 	("uncalibratedGDF", value<bool>()->default_value(false)->value_name("bool"), "assume uncalibrated data in GDF")
 	("autosave", value<int>()->default_value(2*60)->value_name("seconds"), "interval between saves; 0 to disable")

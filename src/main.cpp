@@ -69,7 +69,7 @@ int main(int argc, char** argv)
 
 		SignalFileBrowserWindow window;
 
-		if (PROGRAM_OPTIONS["tablet"].as<bool>())
+		if (PROGRAM_OPTIONS["mode"].as<string>() == "tablet" || PROGRAM_OPTIONS["mode"].as<string>() == "tablet-full")
 			window.showMaximized();
 		else
 			window.show();
