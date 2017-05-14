@@ -489,6 +489,9 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	connect(switchButton, &QPushButton::pressed, [this] () {
 		if (stackedWidget->currentIndex() == 1)
 		{
+			logToFile("Switching to Elko.");
+			signalViewer->getCanvas()->setPaintingDisabled(false);
+
 			setFilePathInQML();
 			stackedWidget->setCurrentIndex(0);
 
@@ -1540,6 +1543,9 @@ void SignalFileBrowserWindow::setFilePathInQML()
 
 void SignalFileBrowserWindow::switchToAlenka()
 {
+	logToFile("Switching to Alenka.");
+	signalViewer->getCanvas()->setPaintingDisabled(false);
+
 	stackedWidget->setCurrentIndex(1);
 
 	restoreState(windowState);

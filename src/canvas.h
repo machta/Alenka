@@ -73,6 +73,7 @@ class Canvas : public QOpenGLWidget, public OpenGLInterface
 	float sampleScale;
 	bool isShiftChecked = false;
 	bool isCtrlChecked = false;
+	bool paintingDisabled = false;
 
 public:
 	explicit Canvas(QWidget* parent = nullptr);
@@ -84,14 +85,11 @@ public:
 	 */
 	void changeFile(OpenDataFile* file);
 
-	int getCursorPositionSample() const
-	{
-		return cursorSample;
-	}
-	int getCursorPositionTrack() const
-	{
-		return cursorTrack;
-	}
+	int getCursorPositionSample() const { return cursorSample; }
+	int getCursorPositionTrack() const { return cursorTrack; }
+
+	bool getPaintingDisabled() const { return paintingDisabled; }
+	void setPaintingDisabled(bool val) { paintingDisabled = val; }
 
 	/**
 	 * @brief This method defines logic of changing color of objects during selection.

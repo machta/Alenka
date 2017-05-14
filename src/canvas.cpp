@@ -551,6 +551,9 @@ void Canvas::resizeGL(int /*w*/, int /*h*/)
 
 void Canvas::paintGL()
 {
+	if (paintingDisabled)
+		return;
+
 #ifndef NDEBUG
 	logToFile("Painting started.");
 #endif
