@@ -1532,7 +1532,9 @@ void SignalFileBrowserWindow::setFilePathInQML()
 			logToFileAndConsole("Autosaving to " << autoSaveName);
 		});
 
-		QString filePath = QString::fromStdString(file->getFilePath());
+		QFileInfo fileInfo = QString::fromStdString(file->getFilePath());
+		QString filePath = fileInfo.absoluteFilePath();
+
 		view->rootContext()->setContextProperty("filePath", QVariant::fromValue("file:///" + filePath + ".mont.autosave"));
 	}
 	else
