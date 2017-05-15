@@ -11,6 +11,7 @@
 #include <cassert>
 #include <vector>
 #include <tuple>
+#include <string>
 
 namespace AlenkaSignal
 {
@@ -74,6 +75,8 @@ class Canvas : public QOpenGLWidget, public OpenGLInterface
 	bool isShiftChecked = false;
 	bool isCtrlChecked = false;
 	bool paintingDisabled = false;
+	std::string lastGLMessage;
+	int lastGLMessageCount = 0;
 
 public:
 	explicit Canvas(QWidget* parent = nullptr);
@@ -167,6 +170,7 @@ private:
 	void createContext();
 	void setUniformTransformMatrix(OpenGLProgram* program, float* data);
 	void setUniformEventWidth(OpenGLProgram* program, float value);
+	void logLastGLMessage();
 
 private slots:
 	void updateFilter();

@@ -342,6 +342,7 @@ Canvas::~Canvas()
 		checkClErrorCode(err, "clReleaseCommandQueue()");
 	}
 
+	logLastGLMessage();
 	checkGLErrors();
 	doneCurrent();
 }
@@ -1215,7 +1216,20 @@ void Canvas::setUniformColor(GLuint program, const QColor& color, double opacity
 void Canvas::checkGLMessages()
 {
 	for (const auto& m : log()->loggedMessages())
-		logToFile("OpenGL message: " << m.message().toStdString());
+	{
+		string message = m.message().toStdString();
+
+		if (message != lastGLMessage)
+		{
+			logLastGLMessage();
+			lastGLMessageCount = 0;
+
+			logToFile("OpenGL message: " << message);
+		}
+
+		lastGLMessage = message;
+		++lastGLMessageCount;
+	}
 }
 
 void Canvas::addEvent(int channel)
@@ -1291,6 +1305,14 @@ void Canvas::setUniformEventWidth(OpenGLProgram* program, float value)
 	GLuint location = gl()->glGetUniformLocation(program->getGLProgram(), "eventWidth");
 	checkNotErrorCode(location, static_cast<GLuint>(-1), "glGetUniformLocation() failed.");
 	gl()->glUniform1f(location, value);
+}
+
+void Canvas::logLastGLMessage()
+{
+	if (lastGLMessageCount > 1)
+	{
+		logToFile("OpenGL message (" << lastGLMessageCount - 1 << "x): " << lastGLMessage);
+	}
 }
 
 void Canvas::updateFilter()
