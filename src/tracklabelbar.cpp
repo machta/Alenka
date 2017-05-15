@@ -1,10 +1,10 @@
 #include "tracklabelbar.h"
 
-#include "DataModel/opendatafile.h"
 #include "options.h"
-#include <AlenkaFile/datafile.h>
-#include "DataModel/vitnessdatamodel.h"
 #include "canvas.h"
+#include "DataModel/opendatafile.h"
+#include "DataModel/vitnessdatamodel.h"
+#include <AlenkaFile/datafile.h>
 
 #include <QPainter>
 
@@ -26,34 +26,11 @@ enum amplitudeArrow
 };
 
 const auto compareNear = [] (double a, double b) {
-	if (abs(a - b)/b < EPS)
+	if (abs((a - b)/max(abs(a), abs(b))) < EPS)
 		return false;
 	else
 		return a < b;
 };
-
-// O(n^2) version. TODO: Remove this after I will be sure the other version works well.
-//#include <set>
-//double computeMostCommonValue(const vector<double>& array)
-//{
-//	multiset<double, decltype(compareNear)> mset(array.begin(), array.end(), compareNear);
-//	int maxCount = 0;
-//	double maxValue;
-
-//	for (unsigned int i = 0; i < array.size(); ++i)
-//	{
-//		double value = array[i];
-//		int count = mset.count(value);
-
-//		if (maxCount < count)
-//		{
-//			maxCount = count;
-//			maxValue = value;
-//		}
-//	}
-
-//	return maxValue;
-//}
 
 // O(n*log(n)) version.
 double computeMostCommonValue(const vector<double>& array)
@@ -97,9 +74,15 @@ vector<int> computeAmplitudeArrows(const vector<double>& amps)
 	double mostCommonValue = computeMostCommonValue(amps);
 	vector<int> arrows;
 
+	bool negative = mostCommonValue < 0;
+	if (negative)
+		mostCommonValue *= -1;
+
 	for (unsigned int i = 0; i < amps.size(); ++i)
 	{
 		double value = amps[i];
+		if (negative)
+			value *= -1;
 		int arrow;
 
 		if (compareNear(value, mostCommonValue))
