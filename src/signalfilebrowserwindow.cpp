@@ -635,11 +635,12 @@ QDateTime SignalFileBrowserWindow::sampleToDate(DataFile* file, int sample)
 	double msec = file->getStartDate() - DataFile::daysUpTo1970;
 	msec *= 24*60*60*1000;
 
-	auto date = QDateTime::fromMSecsSinceEpoch(static_cast<qint64>(round(msec)));
+	QDateTime date(QDate (1970, 1, 1));
+	date.setTimeSpec(Qt::UTC); // To prevent the local time-zone settings from screwing up the time.
+	date = date.addMSecs(static_cast<qint64>(round(msec)));
 	date = date.addMSecs(timeOffset);
 
 	return date;
-	// TODO: Find out why the dates are shifter by 1 or two hours. Probably something to do with timezones.
 }
 
 QDateTime SignalFileBrowserWindow::sampleToOffset(DataFile* file, int sample)
