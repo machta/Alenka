@@ -64,12 +64,17 @@ class ZoomCommand : public QUndoCommand
 	DataModel* dataModel;
 	int i, j;
 	double before, after;
-	const int commandId = 0;
+	const int commandId;
 	vector<QUndoCommand*> childCommands;
 
 public:
 	ZoomCommand(DataModel* dataModel, int i, int j, double before, double after) :
-		QUndoCommand("vertical zoom"), dataModel(dataModel), i(i), j(j), before(before), after(after) {}
+		QUndoCommand(), dataModel(dataModel), i(i), j(j), before(before), after(after), commandId(i*1000*1000 + j)
+	{
+		Track t = dataModel->montageTable()->trackTable(i)->row(j);
+		string text = "zoom " + t.label;
+		setText(QString::fromStdString(text));
+	}
 	virtual ~ZoomCommand() override
 	{
 		for (QUndoCommand* c : childCommands)
