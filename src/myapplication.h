@@ -48,7 +48,7 @@ public:
 
 	static void mainExit(int status = EXIT_SUCCESS);
 
-	static std::array<int, 3> version() { return std::array<int, 3>{0, 9, 0}; }
+	static std::array<int, 3> version() { return std::array<int, 3>{0, 9, 1}; }
 	static std::string versionString(const std::array<int, 3>& v)
 	{
 		using namespace std;
