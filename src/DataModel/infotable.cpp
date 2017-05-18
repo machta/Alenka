@@ -8,6 +8,30 @@
 using namespace std;
 using namespace pugi;
 
+void InfoTable::setDefaultValues()
+{
+	virtualWidth = 100000;
+	position = 0;
+	lowpassFrequency = 1000000;
+	lowpassOn = false;
+	highpassFrequency = -1000000;
+	highpassOn = false;
+	notchOn = false;
+	filterWindow = AlenkaSignal::WindowFunction::None;
+	selectedMontage = 0;
+	timeMode = InfoTable::TimeMode::offset;
+	selectedType = 0;
+	timeLineInterval = 1;
+	positionIndicator = 0.5;
+	frequencyMultipliers.clear();
+	frequencyMultipliersOn = true;
+	sampleScale = 1;
+	sampleUnits = 3;
+
+	pixelViewWidth = 0;
+	filterCoefficients.clear();
+}
+
 void InfoTable::writeXML(const string& filePath, const DETECTOR_SETTINGS& spikedetSettings, double spikeDuration, bool originalSpikedet) const
 {
 	xml_document file;
@@ -145,4 +169,30 @@ void InfoTable::readXML(const string& filePath, DETECTOR_SETTINGS* spikedetSetti
 
 		multi = multi.next_sibling("multi");
 	}
+}
+
+void InfoTable::emitAllSignals()
+{
+	emit virtualWidthChanged(virtualWidth);
+	emit positionChanged(position);
+	if (lowpassOn)
+		emit lowpassFrequencyChanged(lowpassFrequency);
+	emit lowpassOnChanged(lowpassOn);
+	if (highpassOn)
+		emit highpassFrequencyChanged(highpassFrequency);
+	emit highpassOnChanged(highpassOn);
+	emit notchOnChanged(notchOn);
+	emit filterWindowChanged(filterWindow);
+	emit selectedMontageChanged(selectedMontage);
+	emit timeModeChanged(timeMode);
+	emit selectedTypeChanged(selectedType);
+	emit timeLineIntervalChanged(timeLineInterval);
+	emit positionIndicatorChanged(positionIndicator);
+	emit frequencyMultipliersChanged();
+	emit frequencyMultipliersOnChanged(frequencyMultipliersOn);
+	emit sampleScaleChanged(sampleScale);
+	emit sampleUnitsChanged(sampleUnits);
+
+	emit pixelViewWidthChanged(pixelViewWidth);
+	emit frequencyMultipliersOnChanged(frequencyMultipliersOn);
 }

@@ -34,7 +34,7 @@ const int LINE_WIDTH = max(60, getTerminalWidth());
 
 Options::Options(int argc, char** argv)
 {
-	programSettings = new QSettings("Martin Barta", "Alenka " + QString::fromStdString(MyApplication::versionString()));
+	programSettings = new QSettings("Martin Barta", "Alenka");
 
 	options_description commandLineOnly("Command line options", LINE_WIDTH);
 	commandLineOnly.add_options()

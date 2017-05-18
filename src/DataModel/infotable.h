@@ -25,6 +25,37 @@ public:
 		samples, offset, real, size
 	};
 
+private:
+	int virtualWidth;
+	int position;
+	double lowpassFrequency;
+	bool lowpassOn;
+	double highpassFrequency;
+	bool highpassOn;
+	bool notchOn; // TODO: Add notch frequency.
+	AlenkaSignal::WindowFunction filterWindow;
+	int selectedMontage;
+	InfoTable::TimeMode timeMode;
+	int selectedType;
+	double timeLineInterval;
+	double positionIndicator;
+	std::vector<std::pair<double, double>> frequencyMultipliers;
+	bool frequencyMultipliersOn;
+	float sampleScale;
+	int sampleUnits;
+
+	// The following values are not saved to .info files.
+	int pixelViewWidth;
+	std::vector<float> filterCoefficients;
+
+public:
+	InfoTable(QObject* parent = nullptr) : QObject(parent)
+	{
+		setDefaultValues();
+	}
+
+	void setDefaultValues();
+
 	/**
 	 * @brief Writes info file.
 	 */
@@ -41,31 +72,7 @@ public:
 	 * This method can be used to ensure that all components referencing values
 	 * governed by InfoTable are synchronized.
 	 */
-	void emitAllSignals()
-	{
-		emit virtualWidthChanged(virtualWidth);
-		emit positionChanged(position);
-		if (lowpassOn)
-			emit lowpassFrequencyChanged(lowpassFrequency);
-		emit lowpassOnChanged(lowpassOn);
-		if (highpassOn)
-			emit highpassFrequencyChanged(highpassFrequency);
-		emit highpassOnChanged(highpassOn);
-		emit notchOnChanged(notchOn);
-		emit filterWindowChanged(filterWindow);
-		emit selectedMontageChanged(selectedMontage);
-		emit timeModeChanged(timeMode);
-		emit selectedTypeChanged(selectedType);
-		emit timeLineIntervalChanged(timeLineInterval);
-		emit positionIndicatorChanged(positionIndicator);
-		emit frequencyMultipliersChanged();
-		emit frequencyMultipliersOnChanged(frequencyMultipliersOn);
-		emit sampleScaleChanged(sampleScale);
-		emit sampleUnitsChanged(sampleUnits);
-
-		emit pixelViewWidthChanged(pixelViewWidth);
-		emit frequencyMultipliersOnChanged(frequencyMultipliersOn);
-	}
+	void emitAllSignals();
 
 	int getVirtualWidth() const { return virtualWidth; }
 	int getPosition() const { return position; }
@@ -264,29 +271,6 @@ public slots:
 			emit filterCoefficientsChanged();
 		}
 	}
-
-private:
-	int virtualWidth = 100000;
-	int position = 0;
-	double lowpassFrequency = 1000000;
-	bool lowpassOn = false;
-	double highpassFrequency = -1000000;
-	bool highpassOn = false;
-	bool notchOn = false; // TODO: Add notch frequency.
-	AlenkaSignal::WindowFunction filterWindow = AlenkaSignal::WindowFunction::None;
-	int selectedMontage = 0;
-	InfoTable::TimeMode timeMode = InfoTable::TimeMode::offset;
-	int selectedType = 0;
-	double timeLineInterval = 1;
-	double positionIndicator = 0.5;
-	std::vector<std::pair<double, double>> frequencyMultipliers;
-	bool frequencyMultipliersOn = true;
-	float sampleScale = 1;
-	int sampleUnits = 3;
-
-	// The following values are not saved to .info files.
-	int pixelViewWidth = 0;
-	std::vector<float> filterCoefficients;
 };
 
 #endif // INFOTABLE_H

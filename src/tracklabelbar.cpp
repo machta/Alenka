@@ -163,24 +163,27 @@ void TrackLabelBar::paintEvent(QPaintEvent* /*event*/)
 
 void TrackLabelBar::updateConnections(int row)
 {
-	const AbstractMontageTable* mt = file->dataModel->montageTable();
+	for (auto e : trackConnections)
+		disconnect(e);
+	trackConnections.clear();
 
-	if (file && 0 <= row && 0 < mt->rowCount())
+	if (file)
 	{
-		for (auto e : trackConnections)
-			disconnect(e);
-		trackConnections.clear();
+		const AbstractMontageTable* mt = file->dataModel->montageTable();
 
-		auto vitness = VitnessTrackTable::vitness(mt->trackTable(row));
+		if (0 <= row && 0 < mt->rowCount())
+		{
+			auto vitness = VitnessTrackTable::vitness(mt->trackTable(row));
 
-		auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(updateLabels()));
-		trackConnections.push_back(c);
-		c = connect(vitness, SIGNAL(rowsInserted(int, int)), this, SLOT(updateLabels()));
-		trackConnections.push_back(c);
-		c = connect(vitness, SIGNAL(rowsRemoved(int, int)), this, SLOT(updateLabels()));
-		trackConnections.push_back(c);
+			auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(updateLabels()));
+			trackConnections.push_back(c);
+			c = connect(vitness, SIGNAL(rowsInserted(int, int)), this, SLOT(updateLabels()));
+			trackConnections.push_back(c);
+			c = connect(vitness, SIGNAL(rowsRemoved(int, int)), this, SLOT(updateLabels()));
+			trackConnections.push_back(c);
 
-		updateLabels();
+			updateLabels();
+		}
 	}
 }
 

@@ -1153,13 +1153,13 @@ bool SignalFileBrowserWindow::closeFile()
 		}
 	}
 
-	OpenDataFile::infoTable.setFilterCoefficients(vector<float>());
+	OpenDataFile::infoTable.setDefaultValues();
+	OpenDataFile::infoTable.emitAllSignals();
 
 	deleteAutoSave();
 	autoSaveName = "";
 
 	closeFileDestroy();
-
 	signalViewer->updateSignalViewer();
 
 	return true;
