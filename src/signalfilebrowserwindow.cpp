@@ -431,7 +431,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	resolutionComboBox->setEditable(true);
 	selectToolBar->addWidget(resolutionComboBox);
 
-	QComboBox* unitsComboBox = new QComboBox(this);
+	unitsComboBox = new QComboBox(this);
 	unitsComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 	unitsComboBox->addItems(QStringList() << QChar(0x00B5) + QString("V") << "mV" << "V" << "kV" << "MV");
 	selectToolBar->addWidget(unitsComboBox);
@@ -1569,7 +1569,19 @@ void SignalFileBrowserWindow::verticalZoomIn()
 	int index = resolutionComboBox->currentIndex() - 1;
 
 	if (0 <= index)
+	{
 		resolutionComboBox->setCurrentIndex(index);
+	}
+	else
+	{
+		index = unitsComboBox->currentIndex() - 1;
+
+		if (0 <= index)
+		{
+			unitsComboBox->setCurrentIndex(index);
+			resolutionComboBox->setCurrentIndex(resolutionComboBox->count() - 1);
+		}
+	}
 }
 
 void SignalFileBrowserWindow::verticalZoomOut()
@@ -1577,7 +1589,19 @@ void SignalFileBrowserWindow::verticalZoomOut()
 	int index = resolutionComboBox->currentIndex() + 1;
 
 	if (index < resolutionComboBox->count())
+	{
 		resolutionComboBox->setCurrentIndex(index);
+	}
+	else
+	{
+		index = unitsComboBox->currentIndex() + 1;
+
+		if (index < unitsComboBox->count())
+		{
+			unitsComboBox->setCurrentIndex(index);
+			resolutionComboBox->setCurrentIndex(0);
+		}
+	}
 }
 
 void SignalFileBrowserWindow::exportDialog()

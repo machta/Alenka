@@ -26,7 +26,7 @@ void InfoTable::setDefaultValues()
 	frequencyMultipliers.clear();
 	frequencyMultipliersOn = true;
 	sampleScale = 1;
-	sampleUnits = 3;
+	sampleUnits = 1;
 
 	pixelViewWidth = 0;
 	filterCoefficients.clear();

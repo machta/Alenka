@@ -80,6 +80,7 @@ public:
 	virtual void insertRows(int row, int count = 1) override;
 	virtual void removeRows(int row, int count = 1) override;
 	virtual void row(int i, const AlenkaFile::Track& value) override;
+	virtual AlenkaFile::Track defaultValue(int row) const override;
 
 	static const DataModelVitness* vitness(const AlenkaFile::AbstractTrackTable* table)
 	{

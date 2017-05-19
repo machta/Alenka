@@ -110,6 +110,13 @@ void VitnessTrackTable::row(int i, const Track& value)
 		emit vitnessObject->valueChanged(i, 4);
 }
 
+AlenkaFile::Track VitnessTrackTable::defaultValue(int row) const
+{
+	auto t = TrackTable::defaultValue(row);
+	t.amplitude = 0.000001;
+	return t;
+}
+
 void VitnessMontageTable::insertRows(int row, int count)
 {
 	if (count > 0)
