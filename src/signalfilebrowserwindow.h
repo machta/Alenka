@@ -121,6 +121,7 @@ private:
 	bool shouldSynchronizeView();
 	void deleteAutoSave();
 	void setCurrentInNumericCombo(QComboBox* combo, double value);
+	QString imageFilePathDialog();
 
 private slots:
 	void openFile();

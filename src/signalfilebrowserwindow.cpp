@@ -170,7 +170,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	tabifyDockWidget(montageManagerDockWidget, filterManagerDockWidget);
 
 	// Construct File actions.
-	QAction* openFileAction = new QAction("&Open File", this);
+	QAction* openFileAction = new QAction("&Open File...", this);
 	openFileAction->setShortcut(QKeySequence::Open);
 	openFileAction->setToolTip("Open an existing file");
 	openFileAction->setStatusTip(openFileAction->toolTip());
@@ -192,7 +192,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	saveFileAction->setEnabled(false);
 	connect(saveFileAction, SIGNAL(triggered()), this, SLOT(saveFile()));
 
-	exportToEdfAction = new QAction("Export to EDF", this);
+	exportToEdfAction = new QAction("Export to EDF...", this);
 	//exportToEdfAction->setShortcut(QKeySequence::Open);
 	exportToEdfAction->setToolTip("Export the opened file to EDF");
 	exportToEdfAction->setStatusTip(exportToEdfAction->toolTip());
@@ -275,7 +275,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	runSpikedetAction->setStatusTip(runSpikedetAction->toolTip());
 	connect(runSpikedetAction, &QAction::triggered, [this] () { runSpikedet(); } );
 
-	QAction* spikedetSettingsAction = new QAction(QIcon(":/icons/settings.png"), "Spikedet Settings", this);
+	QAction* spikedetSettingsAction = new QAction(QIcon(":/icons/settings.png"), "Spikedet Settings...", this);
 	spikedetSettingsAction->setToolTip("Change Spikedet settings");
 	spikedetSettingsAction->setStatusTip(spikedetSettingsAction->toolTip());
 	connect(spikedetSettingsAction, &QAction::triggered, [this] () {
@@ -328,7 +328,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 			OpenDataFile::infoTable.setTimeLineInterval(0);
 	});
 
-	setTimeLineIntervalAction = new QAction("Set", this);
+	setTimeLineIntervalAction = new QAction("Set...", this);
 	setTimeLineIntervalAction->setActionGroup(timeLineIntervalActionGroup);
 	connect(setTimeLineIntervalAction, &QAction::triggered, [this] () {
 		if (file)
@@ -350,7 +350,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	syncClient = new SyncClient();
 	syncDialog = new SyncDialog(syncServer, syncClient, this);
 
-	QAction* showSyncDialog = new QAction("Show Sync Dialog", this);
+	QAction* showSyncDialog = new QAction("Show Sync Dialog...", this);
 	connect(showSyncDialog, SIGNAL(triggered(bool)), syncDialog, SLOT(show()));
 
 	synchronize = new QAction("Synchronize", this);
@@ -527,7 +527,22 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	fileMenu->addAction(redoAction);
 
 	// Construct View menu.
-	QMenu* viewMenu = menuBar()->addMenu("&View");
+	QMenu* viewMenu = menuBar()->addMenu("&View"); // TODO: Add shortcuts with & to all menu options.
+
+	QAction* screenshotAction = new QAction("Save Signal View screenshot...", this);
+	connect(screenshotAction, &QAction::triggered, [this] {
+		auto canvas = signalViewer->getCanvas();
+		QRect rectangle(QPoint(), canvas->size());
+
+		QPixmap pixmap(rectangle.size());
+		canvas->render(&pixmap, QPoint(), QRegion(rectangle));
+
+		QString fileName = imageFilePathDialog();
+		if (!fileName.isNull())
+			pixmap.save(fileName);
+	});
+	viewMenu->addAction(screenshotAction);
+	viewMenu->addSeparator();
 
 	viewMenu->addAction(horizontalZoomInAction);
 	viewMenu->addAction(horizontalZoomOutAction);
@@ -812,6 +827,28 @@ void SignalFileBrowserWindow::setCurrentInNumericCombo(QComboBox* combo, double 
 
 	combo->addItem(locale().toString(value, 'f', COMBO_PRECISION));
 	combo->setCurrentIndex(count);
+}
+
+QString SignalFileBrowserWindow::imageFilePathDialog()
+{
+	QString filter = "JPEG Image (*.jpg);;PNG Image (*.png);;Bitmap Image (*.bmp)";
+	QString fileName = QFileDialog::getSaveFileName(this, "Choose image file path", "", filter);
+
+	if (fileName.isNull())
+		return fileName;
+
+	QFileInfo fileInfo(fileName);
+	QString suffix = fileInfo.suffix();
+
+	if (suffix == "jpg" || suffix == "png" || suffix == "bmp")
+	{
+		return fileName;
+	}
+	else
+	{
+		QMessageBox::critical(this, "Bad suffix", "The file name must have either of the following suffixes: jpg, png, or bmp. Try again.");
+		return imageFilePathDialog();
+	}
 }
 
 void SignalFileBrowserWindow::openFile()
@@ -1606,8 +1643,7 @@ void SignalFileBrowserWindow::verticalZoomOut()
 
 void SignalFileBrowserWindow::exportDialog()
 {
-	QString filter = "JPEG Image (*.jpg);;PNG Image (*.png);;Bitmap Image (*.bmp)";
-	QString fileName = QFileDialog::getSaveFileName(this, "Export image file path", "", filter);
+	QString fileName = imageFilePathDialog();
 
 	if (!fileName.isNull())
 	{
