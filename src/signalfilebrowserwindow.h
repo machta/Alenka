@@ -123,6 +123,7 @@ private:
 	void setCurrentInNumericCombo(QComboBox* combo, double value);
 	void sortInLastItem(QComboBox* combo);
 	QString imageFilePathDialog();
+	void setSecondsPerPage(double seconds);
 
 private slots:
 	void openFile();

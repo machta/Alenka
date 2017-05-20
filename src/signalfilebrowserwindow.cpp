@@ -385,7 +385,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	highpassComboBox = new QComboBox(this);
 	highpassComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 	highpassComboBox->setMaximumWidth(150);
-	highpassComboBox->setEditable(true);
+	highpassComboBox->setEditable(true); // TODO: Add validator.
 	filterToolBar->addWidget(highpassComboBox);
 
 	label = new QLabel("LF:", this);
@@ -394,7 +394,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	lowpassComboBox = new QComboBox(this);
 	lowpassComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 	lowpassComboBox->setMaximumWidth(150);
-	lowpassComboBox->setEditable(true);
+	lowpassComboBox->setEditable(true);  // TODO: Add validator.
 	filterToolBar->addWidget(lowpassComboBox);
 
 	notchCheckBox = new QCheckBox("Notch:", this);
@@ -561,6 +561,22 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	timeLineIntervalMenu->addAction(timeLineOffAction);
 	timeLineIntervalMenu->addAction(setTimeLineIntervalAction);
 	viewMenu->addMenu(timeLineIntervalMenu);
+	viewMenu->addSeparator();
+
+	QAction* secondsPerPageAction = new QAction("Set seconds per page...", this);
+	connect(secondsPerPageAction, &QAction::triggered, [this] {
+		bool ok;
+		double d = QInputDialog::getDouble(this, "Seconds per page", "Seconds per page:", 10, 0, 1000*1000, 2, &ok);
+		if (ok)
+			setSecondsPerPage(d);
+	});
+	viewMenu->addAction(secondsPerPageAction);
+
+	QAction* tenSecondsPerPageAction = new QAction("10 seconds per page", this);
+	connect(tenSecondsPerPageAction, &QAction::triggered, [this] {
+		setSecondsPerPage(10);
+	});
+	viewMenu->addAction(tenSecondsPerPageAction);
 
 	// Construct Window menu.
 	QMenu* windowMenu = menuBar()->addMenu("&Window");
@@ -884,6 +900,16 @@ QString SignalFileBrowserWindow::imageFilePathDialog()
 	}
 }
 
+void SignalFileBrowserWindow::setSecondsPerPage(double seconds)
+{
+	if (file)
+	{
+		double width = signalViewer->getCanvas()->width()*file->getSamplesRecorded();
+		width /= seconds*file->getSamplingFrequency();
+		OpenDataFile::infoTable.setVirtualWidth(static_cast<int>(round(width)));
+	}
+}
+
 void SignalFileBrowserWindow::openFile()
 {
 	if (!closeFile())
@@ -942,9 +968,10 @@ void SignalFileBrowserWindow::openFile(const QString& fileName, const vector<str
 	openDataFile->undoFactory = undoFactory;
 	openDataFile->kernelCache = kernelCache;
 
+	setSecondsPerPage(10); // The default vertical zoom setting for new files.
+
 	autoSaveName = file->getFilePath() + ".mont.autosave";
 	bool useAutoSave = false;
-
 	if (QFileInfo(autoSaveName.c_str()).exists())
 	{
 		auto res = QMessageBox::question(this,
