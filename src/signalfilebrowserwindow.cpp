@@ -379,16 +379,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	filterToolBar->setObjectName("Filter QToolBar");
 	filterToolBar->layout()->setSpacing(spacing);
 
-	QLabel* label = new QLabel("LF:", this);
-	label->setToolTip("Low-pass Filter frequency");
-	filterToolBar->addWidget(label);
-	lowpassComboBox = new QComboBox(this);
-	lowpassComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-	lowpassComboBox->setMaximumWidth(150);
-	lowpassComboBox->setEditable(true);
-	filterToolBar->addWidget(lowpassComboBox);
-
-	label = new QLabel("HF:", this);
+	QLabel* label = new QLabel("HF:", this);
 	label->setToolTip("High-pass Filter frequency");
 	filterToolBar->addWidget(label);
 	highpassComboBox = new QComboBox(this);
@@ -396,6 +387,15 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	highpassComboBox->setMaximumWidth(150);
 	highpassComboBox->setEditable(true);
 	filterToolBar->addWidget(highpassComboBox);
+
+	label = new QLabel("LF:", this);
+	label->setToolTip("Low-pass Filter frequency");
+	filterToolBar->addWidget(label);
+	lowpassComboBox = new QComboBox(this);
+	lowpassComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+	lowpassComboBox->setMaximumWidth(150);
+	lowpassComboBox->setEditable(true);
+	filterToolBar->addWidget(lowpassComboBox);
 
 	notchCheckBox = new QCheckBox("Notch:", this);
 	notchCheckBox->setToolTip("Notch Filter on/off");
@@ -425,7 +425,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 
 	selectToolBar->addSeparator();
 	label = new QLabel("Res:", this);
-	label->setToolTip("Vertical resolution");
+	label->setToolTip("Vertical resolution in volts per centimeter");
 	selectToolBar->addWidget(label);
 	resolutionComboBox = new QComboBox(this);
 	resolutionComboBox->setEditable(true);
@@ -1075,7 +1075,15 @@ void SignalFileBrowserWindow::openFile(const QString& fileName, const vector<str
 	});
 	openFileConnections.push_back(c);
 
-	vector<float> resolutionNumbers{1, 2, 5, 7.5, 10, 20, 50, 75, 100, 200, 500, 750};
+	vector<float> resolutionNumbers;
+	stringstream ss(PROGRAM_OPTIONS["resOptions"].as<string>());
+	while (ss)
+	{
+		float tmp;
+		if (ss >> tmp)
+			resolutionNumbers.push_back(tmp);
+	}
+
 	float sampleScaleValue = OpenDataFile::infoTable.getSampleScale();
 	resolutionNumbers.push_back(sampleScaleValue);
 	sort(resolutionNumbers.begin(), resolutionNumbers.end());
