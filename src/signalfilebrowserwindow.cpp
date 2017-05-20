@@ -385,7 +385,8 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	highpassComboBox = new QComboBox(this);
 	highpassComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 	highpassComboBox->setMaximumWidth(150);
-	highpassComboBox->setEditable(true); // TODO: Add validator.
+	highpassComboBox->setEditable(true);
+	highpassComboBox->setValidator(new QDoubleValidator);
 	filterToolBar->addWidget(highpassComboBox);
 
 	label = new QLabel("LF:", this);
@@ -394,7 +395,8 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	lowpassComboBox = new QComboBox(this);
 	lowpassComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 	lowpassComboBox->setMaximumWidth(150);
-	lowpassComboBox->setEditable(true);  // TODO: Add validator.
+	lowpassComboBox->setEditable(true);
+	lowpassComboBox->setValidator(new QDoubleValidator);
 	filterToolBar->addWidget(lowpassComboBox);
 
 	notchCheckBox = new QCheckBox("Notch:", this);
