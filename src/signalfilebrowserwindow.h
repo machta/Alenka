@@ -121,6 +121,7 @@ private:
 	bool shouldSynchronizeView();
 	void deleteAutoSave();
 	void setCurrentInNumericCombo(QComboBox* combo, double value);
+	void sortInLastItem(QComboBox* combo);
 	QString imageFilePathDialog();
 
 private slots:

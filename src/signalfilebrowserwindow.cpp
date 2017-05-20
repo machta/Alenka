@@ -429,6 +429,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	selectToolBar->addWidget(label);
 	resolutionComboBox = new QComboBox(this);
 	resolutionComboBox->setEditable(true);
+	resolutionComboBox->setValidator(new QDoubleValidator);
 	selectToolBar->addWidget(resolutionComboBox);
 
 	unitsComboBox = new QComboBox(this);
@@ -751,13 +752,13 @@ void SignalFileBrowserWindow::closeEvent(QCloseEvent* event)
 	{
 		if (windowState.isEmpty())
 			windowState = saveState();
-		
+
 		if (windowGeometry.isEmpty())
 			windowGeometry = saveGeometry();
-		
+
 		SET_PROGRAM_OPTIONS.settings("SignalFileBrowserWindow state", windowState);
 		SET_PROGRAM_OPTIONS.settings("SignalFileBrowserWindow geometry", windowGeometry);
-		
+
 		event->accept();
 	}
 	else
@@ -769,7 +770,7 @@ void SignalFileBrowserWindow::closeEvent(QCloseEvent* event)
 vector<QMetaObject::Connection> SignalFileBrowserWindow::connectVitness(const DataModelVitness* vitness, std::function<void ()> f)
 {
 	vector<QMetaObject::Connection> connections;
-	
+
 	auto c = connect(vitness, &DataModelVitness::valueChanged, f);
 	connections.push_back(c);
 	c = connect(vitness, &DataModelVitness::rowsInserted, f);
@@ -812,21 +813,53 @@ void SignalFileBrowserWindow::setCurrentInNumericCombo(QComboBox* combo, double 
 	int precisionPower = static_cast<int>(pow(10, COMBO_PRECISION));
 	double newValue = round(value*precisionPower);
 	int count = combo->count();
+	bool ok;
 
 	for (int i = 0; i < count; ++i)
 	{
-		bool ok;
-		double itemValue = round(locale().toDouble(combo->itemText(i), &ok)*precisionPower);
+		double itemValue = locale().toDouble(combo->itemText(i), &ok);
 
-		if (ok && itemValue == newValue)
+		if (ok && newValue == round(itemValue*precisionPower))
 		{
 			combo->setCurrentIndex(i);
+
+			double lastItemValue = locale().toDouble(combo->itemText(count - 1), &ok);
+
+			if (combo->currentIndex() != count - 1 && ok && newValue == round(lastItemValue*precisionPower))
+				combo->removeItem(count - 1);
+
 			return;
 		}
 	}
+}
 
-	combo->addItem(locale().toString(value, 'f', COMBO_PRECISION));
-	combo->setCurrentIndex(count);
+// TODO: Make proper sortable combo boxes instead of using this hack.
+// This method is not suitable for the filter settings because the index gets changed
+// multiple times, which in turn causes signal data to be read and processed repeatedly
+// and needlessly. This may take considerable time, so I will avoid it at the cost of
+// some "ugly" UI for now.
+void SignalFileBrowserWindow::sortInLastItem(QComboBox* combo)
+{
+	int count = combo->count();
+	bool ok;
+	double lastItemValue = locale().toDouble(combo->itemText(count - 1), &ok);
+	assert(ok);
+	int newIndex = count;
+
+	for (int i = count - 2; 0 <= i; --i)
+	{
+		double itemValue = locale().toDouble(combo->itemText(i), &ok);
+
+		if (ok && lastItemValue < itemValue)
+			newIndex = i;
+	}
+
+	if (newIndex != count)
+	{
+		combo->removeItem(count - 1);
+		combo->insertItem(newIndex, locale().toString(lastItemValue, 'f', COMBO_PRECISION));
+		combo->setCurrentIndex(newIndex);
+	}
 }
 
 QString SignalFileBrowserWindow::imageFilePathDialog()
@@ -1345,9 +1378,14 @@ void SignalFileBrowserWindow::resolutionComboBoxUpdate(const QString& text)
 		if (ok)
 		{
 			if (OpenDataFile::infoTable.getSampleScale() != value)
+			{
 				OpenDataFile::infoTable.setSampleScale(value);
+			}
 			else
+			{
 				setCurrentInNumericCombo(resolutionComboBox, value);
+				sortInLastItem(resolutionComboBox);
+			}
 		}
 	}
 }
@@ -1357,6 +1395,7 @@ void SignalFileBrowserWindow::resolutionComboBoxUpdate(float value)
 	if (file)
 	{
 		setCurrentInNumericCombo(resolutionComboBox, value);
+		sortInLastItem(resolutionComboBox);
 	}
 }
 
