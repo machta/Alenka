@@ -100,6 +100,7 @@ class SignalFileBrowserWindow : public QMainWindow
 	QByteArray windowState, windowGeometry;
 	QStackedWidget* stackedWidget;
 	const int COMBO_PRECISION = 2;
+	int nameIndex = 0;
 
 public:
 	explicit SignalFileBrowserWindow(QWidget* parent = nullptr);
