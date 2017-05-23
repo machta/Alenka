@@ -43,6 +43,7 @@ private:
 	bool frequencyMultipliersOn;
 	float sampleScale;
 	int sampleUnits;
+	QString elkoSession;
 
 	// The following values are not saved to .info files.
 	int pixelViewWidth;
@@ -91,6 +92,7 @@ public:
 	bool getFrequencyMultipliersOn() const { return frequencyMultipliersOn; }
 	float getSampleScale() const { return sampleScale; }
 	int getSampleUnits() const { return sampleUnits; }
+	QString getElkoSession() const { return elkoSession; }
 
 	int getPixelViewWidth() const { return pixelViewWidth; }
 	const std::vector<float>& getFilterCoefficients() const { return filterCoefficients; }
@@ -113,6 +115,7 @@ signals:
 	void frequencyMultipliersOnChanged(bool);
 	void sampleScaleChanged(float);
 	void sampleUnitsChanged(int);
+	void elkoSessionChanged(QString);
 
 	void pixelViewWidthChanged(int);
 	void filterCoefficientsChanged();
@@ -252,6 +255,14 @@ public slots:
 		{
 			sampleUnits = value;
 			emit sampleUnitsChanged(value);
+		}
+	}
+	void setElkoSession(const QString& value)
+	{
+		if (value != elkoSession)
+		{
+			elkoSession = value;
+			emit elkoSessionChanged(value);
 		}
 	}
 

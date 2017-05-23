@@ -119,9 +119,12 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	view->setResizeMode(QQuickWidget::SizeRootObjectToView);
 	setFilePathInQML(); // define filePath
 	view->setSource(QUrl(QStringLiteral("qrc:/main.qml")));
-	connect(view->rootObject(), SIGNAL(switchToAlenka()), this, SLOT(switchToAlenka()));
-	connect(view->rootObject(), SIGNAL(exit()), this, SLOT(close()));
-	connect(view->rootObject(), SIGNAL(exportDialog()), this, SLOT(exportDialog()));
+
+	QQuickItem* root = view->rootObject();
+	connect(root, SIGNAL(switchToAlenka()), this, SLOT(switchToAlenka()));
+	connect(root, SIGNAL(exit()), this, SLOT(close()));
+	connect(root, SIGNAL(exportDialog()), this, SLOT(exportDialog()));
+	connect(root, SIGNAL(saveSession(QString)), &OpenDataFile::infoTable, SLOT(setElkoSession(QString)));
 
 	signalViewer = new SignalViewer(this);
 
@@ -1195,6 +1198,15 @@ void SignalFileBrowserWindow::openFile(const QString& fileName, const vector<str
 	c = connect(&OpenDataFile::infoTable, SIGNAL(positionIndicatorChanged(double)), this, SLOT(sendSyncMessage()));
 	openFileConnections.push_back(c);
 
+	// Load Elko session.
+	QString elkoSession = OpenDataFile::infoTable.getElkoSession();
+
+	if (!elkoSession.isEmpty())
+	{
+		QVariant returnValue, arg = elkoSession;
+		QMetaObject::invokeMethod(view->rootObject(), "loadSession", Q_RETURN_ARG(QVariant, returnValue), Q_ARG(QVariant, arg));
+	}
+
 	// Emit all signals to ensure there are no uninitialized controls.
 	OpenDataFile::infoTable.emitAllSignals();
 
@@ -1643,7 +1655,6 @@ void SignalFileBrowserWindow::setFilePathInQML()
 {
 	if (file != nullptr)
 	{
-
 		string fileName = autoSaveName + to_string(nameIndex++ % 2);
 		executeWithCLocale([this, fileName] () {
 			file->saveSecondaryFile(fileName);

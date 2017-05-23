@@ -27,6 +27,7 @@ void InfoTable::setDefaultValues()
 	frequencyMultipliersOn = true;
 	sampleScale = 1;
 	sampleUnits = 1;
+	elkoSession.clear();
 
 	pixelViewWidth = 0;
 	filterCoefficients.clear();
@@ -93,6 +94,9 @@ void InfoTable::writeXML(const string& filePath, const DETECTOR_SETTINGS& spiked
 		multi.append_attribute("f").set_value(e.first);
 		multi.append_attribute("mag").set_value(e.second);
 	}
+
+	xml_node elko = document.append_child("elko");
+	elko.append_child(node_pcdata).set_value(elkoSession.toStdString().c_str());
 
 	if (!file.save_file(filePath.c_str()))
 	{
@@ -169,6 +173,9 @@ void InfoTable::readXML(const string& filePath, DETECTOR_SETTINGS* spikedetSetti
 
 		multi = multi.next_sibling("multi");
 	}
+
+	xml_node elko = document.child("elko");
+	elkoSession = QString(elko.text().as_string(elkoSession.toStdString().c_str()));
 }
 
 void InfoTable::emitAllSignals()
@@ -192,6 +199,7 @@ void InfoTable::emitAllSignals()
 	emit frequencyMultipliersOnChanged(frequencyMultipliersOn);
 	emit sampleScaleChanged(sampleScale);
 	emit sampleUnitsChanged(sampleUnits);
+	emit elkoSessionChanged(elkoSession);
 
 	emit pixelViewWidthChanged(pixelViewWidth);
 	emit frequencyMultipliersOnChanged(frequencyMultipliersOn);
