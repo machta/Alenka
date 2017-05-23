@@ -72,6 +72,8 @@ Options::Options(int argc, char** argv)
 	("fileCacheSize", value<int>()->default_value(0)->value_name("MB"), "allowed RAM for caching signal files")
 	("notchFrequency", value<double>()->default_value(50)->value_name("f"), "power interference filter")
 	("resOptions", value<string>()->default_value("1 2 5 7.5 10 20 50 75 100 200 500 750", "1 2 ...")->value_name("list"), "resolution combo options")
+	("screenPath", value<string>()->value_name("path"), "screenshot output dir path")
+	("screenType", value<string>()->default_value("jpg")->value_name("type"), "screenshot file type; jpg, png, or bmp")
 	("matData", value<vector<string>>()->value_name("val..."), "data var names for MAT files; default is 'd'")
 	("matFs", value<string>()->default_value("fs")->value_name("val"), "sample rate var name")
 	("matMults", value<string>()->default_value("mults")->value_name("val"), "channel multipliers var name")
@@ -151,6 +153,10 @@ void Options::validateValues()
 	const int blockSize = get("blockSize").as<int>();
 	if (blockSize <= 0)
 		throw validation_error(validation_error::invalid_option_value, "blockSize", to_string(blockSize));
+
+	const string screenType = get("screenType").as<string>();
+	if (!(screenType == "jpg" || screenType == "png" || screenType == "bmp"))
+		throw validation_error(validation_error::invalid_option_value, "screenType", screenType);
 }
 
 void Options::logConfigFile() const

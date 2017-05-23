@@ -54,6 +54,7 @@
 #include <QPushButton>
 #include <QQmlContext>
 #include <QQuickItem>
+#include <QStandardPaths>
 
 #include <locale>
 #include <algorithm>
@@ -1732,11 +1733,36 @@ void SignalFileBrowserWindow::verticalZoomOut()
 
 void SignalFileBrowserWindow::exportDialog()
 {
-	QString fileName = imageFilePathDialog();
+	QString picutres;
 
-	if (!fileName.isNull())
+	if (PROGRAM_OPTIONS.isSet("screenPath"))
 	{
-		QVariant returnValue, arg = fileName;
-		QMetaObject::invokeMethod(view->rootObject(), "takeScreenshot", Q_RETURN_ARG(QVariant, returnValue), Q_ARG(QVariant, arg));
+		picutres = QString::fromStdString(PROGRAM_OPTIONS["screenPath"].as<string>());
+	}
+	else
+	{
+		auto pathList = QStandardPaths::standardLocations(QStandardPaths::PicturesLocation);
+
+		if (pathList.size() > 0)
+			picutres = pathList.at(0);
+		else
+			runtime_error("Cannot find pictures dir.");
+	}
+
+	QString type = QString::fromStdString(PROGRAM_OPTIONS["screenType"].as<string>());
+	QString baseName = QFileInfo(QString::fromStdString(file->getFilePath())).baseName();
+	int i = 0;
+
+	while (1)
+	{
+		QFileInfo fileInfo(picutres + QDir::separator() + baseName + "-" + QString::number(i++) + "." + type);
+
+		if (!fileInfo.exists())
+		{
+			QVariant returnValue, arg = fileInfo.absoluteFilePath();
+			QMetaObject::invokeMethod(view->rootObject(), "takeScreenshot", Q_RETURN_ARG(QVariant, returnValue), Q_ARG(QVariant, arg));
+
+			return;
+		}
 	}
 }
