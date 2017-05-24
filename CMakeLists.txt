@@ -15,6 +15,9 @@ if(UNIX)
 		add_definitions(-D_GLIBCXX_DEBUG)
 	endif()
 elseif(WIN32)
+	#set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} )
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP") # Parallel compilation mode for cl.exe.
+
 	add_definitions(-DWIN_BUILD -D_USE_MATH_DEFINES -D_CRT_SECURE_NO_WARNINGS
 		# This stops Microsoft's linker from needing the static library.
 		-DBOOST_PROGRAM_OPTIONS_NO_LIB)
@@ -23,9 +26,8 @@ endif()
 
 # Find packages.
 find_package (Threads)
+find_package(OpenCL)
 
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
 find_package(Qt5Widgets)
 find_package(Qt5WebSockets)
 find_package(Qt5Charts)
@@ -36,6 +38,9 @@ find_package(Qt5QuickWidgets)
 # Dependencies.
 add_subdirectory(Alenka-File)
 add_subdirectory(Alenka-Signal)
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
 
 # Tests.
 if(DEBUG)
@@ -49,7 +54,7 @@ add_definitions(-DCL_USE_DEPRECATED_OPENCL_1_2_APIS)
 
 include_directories(Alenka-File/include Alenka-Signal/include
 	${Alenka-File_SOURCE_DIR}/boost ${Alenka-File_SOURCE_DIR}/pugixml/src
-	${Alenka-Signal_SOURCE_DIR}/eigen)
+	${Alenka-Signal_SOURCE_DIR}/eigen ${OpenCL_INCLUDE_DIRS})
 
 file(GLOB_RECURSE SRC src/*.cpp src/*.h) # TODO: Specify each source file explicitly.
 file(GLOB SRC_BOOST_PO Alenka-File/boost/libs/program_options/src/*.cpp)
@@ -59,8 +64,8 @@ add_executable(Alenka
 	${SRC} ${SRC_BOOST_PO} ${RESOURCE} ${SRC_TESTS}
 	Alenka-Signal/spikedet/src/CResultsModel.cpp)
 
-target_link_libraries(Alenka OpenCL alenka-signal alenka-file clFFT GDF pugixml
-	${CMAKE_THREAD_LIBS_INIT}
+target_link_libraries(Alenka alenka-signal alenka-file clFFT GDF pugixml
+	${CMAKE_THREAD_LIBS_INIT} ${OpenCL_LIBRARIES}
 	Qt5::Widgets Qt5::WebSockets Qt5::Charts Qt5::Qml Qt5::Quick Qt5::QuickWidgets)
 
 if(UNIX)
@@ -74,22 +79,26 @@ if(UNIX)
 		/usr/lib/x86_64-linux-gnu/libaec.a
 		/usr/lib/x86_64-linux-gnu/libz.a)
 elseif(WIN32)
-	target_link_libraries(Alenka opengl32 matio)
 	include_directories(Alenka-File/matio/src Alenka-File/matio/visual_studio)
+	target_link_libraries(Alenka opengl32)
 
 	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+		target_link_libraries(Alenka ${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x64/matio.lib)
+
 		add_custom_command(TARGET Alenka POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
-			"Alenka-File/matio/matio-msvc2015/x64/hdf5.dll"
-			"Alenka-File/matio/matio-msvc2015/x64/libmatio.dll"
-			"Alenka-File/matio/matio-msvc2015/x64/szip.dll"
-			"Alenka-File/matio/matio-msvc2015/x64/zlib.dll"
+			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x64/hdf5.dll"
+			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x64/libmatio.dll"
+			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x64/szip.dll"
+			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x64/zlib.dll"
 			$<TARGET_FILE_DIR:Alenka>)
 	else()
+		target_link_libraries(Alenka ${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x86/matio.lib)
+
 		add_custom_command(TARGET Alenka POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
-			"Alenka-File/matio/matio-msvc2015/x64/hdf5.dll"
-			"Alenka-File/matio/matio-msvc2015/x64/libmatio.dll"
-			"Alenka-File/matio/matio-msvc2015/x64/szip.dll"
-			"Alenka-File/matio/matio-msvc2015/x64/zlib.dll"
+			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x64/hdf5.dll"
+			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x64/libmatio.dll"
+			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x64/szip.dll"
+			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x64/zlib.dll"
 			$<TARGET_FILE_DIR:Alenka>)
 	endif()
 elseif(APPLE)
