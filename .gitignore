@@ -42,6 +42,8 @@ Thumbs.db
 
 # Added by me
 # ----------------------------------------------------------------------------
+CMakeLists.txt.user
+build*
 
 # config file
 local-options.ini

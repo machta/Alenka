@@ -23,7 +23,7 @@ mkdir -p $folder/$name/platforms
 mkdir -p $folder/$name/xcbglintegrations
 mkdir -p $folder/$name/imageformats
 
-cp -v `find .. -type f -name Alenka | grep Alenka | grep Release | grep 5.8` $folder/$name/Alenka.bin && alenka=OK || alenka=fail
+cp -v build-Release/Alenka $folder/$name/Alenka.bin && alenka=OK || alenka=fail
 
 QT_DIR=/opt/Qt/5.8/gcc_64
 
