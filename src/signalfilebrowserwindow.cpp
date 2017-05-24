@@ -823,8 +823,9 @@ void SignalFileBrowserWindow::deleteAutoSave()
 {
 	if (autoSaveName != "")
 	{
-		QFile autoSaveFile(autoSaveName.c_str());
-		autoSaveFile.remove();
+		QFile(QString::fromStdString(autoSaveName)).remove();
+		QFile(QString::fromStdString(autoSaveName) + "0").remove();
+		QFile(QString::fromStdString(autoSaveName) + "1").remove();
 	}
 
 	autoSaveTimer->start();
