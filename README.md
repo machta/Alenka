@@ -25,10 +25,4 @@ use AMD APP SDK for a CPU implementation of OpenCL.
 On Linux install matio package ("libmatio-dev" for Ubuntu). On Windows Matio is downloaded automatically.
 
 ### Build instructions
-1. Clone this repo
-2. Run download-libraries.sh (using git-bash on Windows), and build the subprojects [Alenka-File](https://github.com/machta/Alenka-File) and [Alenka-Signal](https://github.com/machta/Alenka-Signal)
-3. Copy "build.template" file to "build"
-4. Modify build file to suit your system (mainly change paths to libraries)
-5. Open "Alenka.pro" in Qt Creator (an IDE that was installed alongside Qt), and setup the project (I recommend changing the working directory in Projects -> Run.)
-6. Build the project using the hammer button, and run the program via the green play button
 

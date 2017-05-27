@@ -41,24 +41,17 @@ add_subdirectory(Alenka-Signal)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-# Tests.
-if(DEBUG)
-	add_definitions(-DTESTS)
-	include_directories(unit-test/googletest/googletest/include unit-test/googletest/googletest)
-	set(SRC_TESTS unit-test/gtest.cpp unit-test/lrucache_test.cpp)
-endif()
-
 # Alenka executable.
 add_definitions(-DCL_USE_DEPRECATED_OPENCL_1_2_APIS)
 
 include_directories(${Alenka-File_SOURCE_DIR}/include ${Alenka-Signal_SOURCE_DIR}/include
-	${Alenka-File_SOURCE_DIR}/boost ${Alenka-File_SOURCE_DIR}/pugixml/src
-	${Alenka-Signal_SOURCE_DIR}/eigen ${OpenCL_INCLUDE_DIRS})
+	libraries/boost_1_63 libraries/pugixml/src libraries/eigen
+	${OpenCL_INCLUDE_DIRS})
 
-file(GLOB SRC_BOOST_PO Alenka-File/boost/libs/program_options/src/*.cpp)
+file(GLOB SRC_BOOST_PO libraries/boost_1_63/libs/program_options/src/*.cpp)
 
 set(RESOURCES
-	elko/resources/resources.qrc
+	libraries/ElkoAlenka/resources/resources.qrc
 	resources/gpu-code/gpu-code.qrc
 	resources/icons/icons.qrc
 )
@@ -138,9 +131,8 @@ set(SRC
 	src/tracklabelbar.h
 )
 
-add_executable(Alenka ${SRC} ${RESOURCES}
-	${SRC_BOOST_PO} ${SRC_TESTS}
-	Alenka-Signal/spikedet/src/CResultsModel.cpp)
+add_executable(Alenka ${SRC} ${RESOURCES} ${SRC_BOOST_PO}
+	libraries/spikedet/src/CResultsModel.cpp)
 
 target_link_libraries(Alenka alenka-signal alenka-file clFFT GDF pugixml
 	${CMAKE_THREAD_LIBS_INIT} ${OpenCL_LIBRARIES}
@@ -163,23 +155,32 @@ elseif(WIN32)
 	target_link_libraries(Alenka opengl32)
 
 	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-		target_link_libraries(Alenka ${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x64/matio.lib)
+		target_link_libraries(Alenka libraries/matio-msvc2015/x64/matio.lib)
 
 		add_custom_command(TARGET Alenka POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
-			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x64/hdf5.dll"
-			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x64/libmatio.dll"
-			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x64/szip.dll"
-			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x64/zlib.dll"
+			libraries/matio-msvc2015/x64/hdf5.dll
+			libraries/matio-msvc2015/x64/libmatio.dll
+			libraries/matio-msvc2015/x64/szip.dll
+			libraries/matio-msvc2015/x64/zlib.dll
 			$<TARGET_FILE_DIR:Alenka>)
 	else()
-		target_link_libraries(Alenka ${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x86/matio.lib)
+		target_link_libraries(Alenka libraries/matio-msvc2015/x86/matio.lib)
 
 		add_custom_command(TARGET Alenka POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
-			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x86/hdf5.dll"
-			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x86/libmatio.dll"
-			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x86/szip.dll"
-			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x86/zlib.dll"
+			libraries/matio-msvc2015/x86/hdf5.dll
+			libraries/matio-msvc2015/x86/libmatio.dll
+			libraries/matio-msvc2015/x86/szip.dll
+			libraries/matio-msvc2015/x86/zlib.dll
 			$<TARGET_FILE_DIR:Alenka>)
 	endif()
 elseif(APPLE)
+endif()
+
+# Tests.
+option(BUILD_TESTS_ALENKA "Builds unit-tests for Alenka." OFF)
+set(CMAKE_AUTOMOC OFF)
+set(CMAKE_AUTORCC OFF)
+
+if(BUILD_TESTS_ALENKA)
+	add_subdirectory(unit-test)
 endif()

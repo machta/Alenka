@@ -47,9 +47,6 @@ Options::Options(int argc, char** argv)
 #ifndef NDEBUG
 	("printBuffers", "dump OpenCL buffers for debugging")
 #endif
-#ifdef TESTS
-	("test", "run unit tests")
-#endif
 	;
 
 	options_description configuration("Configuration", LINE_WIDTH);

@@ -12,10 +12,6 @@
 #include "options.h"
 #include "spikedetanalysis.h"
 
-#ifdef TESTS
-#include <gtest/gtest.h>
-#endif
-
 #include <stdexcept>
 #include <string>
 
@@ -40,17 +36,7 @@ int main(int argc, char** argv)
 
 	try
 	{
-#ifdef TESTS
-		testing::InitGoogleTest(&argc, argv);
-#endif
 		MyApplication app(argc, argv);
-
-#ifdef TESTS
-		if (PROGRAM_OPTIONS.isSet("test"))
-		{
-			return RUN_ALL_TESTS();
-		}
-#endif
 
 		if (PROGRAM_OPTIONS.isSet("spikedet"))
 		{

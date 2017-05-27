@@ -51,12 +51,3 @@ local-options.ini
 # local excludes file
 .excludes.txt
 
-# local copy of the build script
-build
-
-# external libraries subdirs
-Alenka-File
-Alenka-Signal
-unit-test/googletest
-elko
-

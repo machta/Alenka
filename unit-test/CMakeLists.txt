@@ -1,0 +1,28 @@
+set(TEST_OPENCL_PLATFORM 0 CACHE STRING "OpenCL platform id to use for the test.")
+set(TEST_OPENCL_DEVICE 0 CACHE STRING "OpenCL device id to use for the test.")
+
+add_definitions(
+	-DOPENCL_PLATFORM=${TEST_OPENCL_PLATFORM}
+	-DOPENCL_DEVICE=${TEST_OPENCL_DEVICE}
+	-DTEST_DATA="${CMAKE_CURRENT_SOURCE_DIR}/test-data"
+)
+
+include_directories(../libraries/googletest/googletest/include ../libraries/googletest/googletest)
+
+set(SRC
+	lrucache_test.cpp
+	file/common.h
+	file/data_model_test.cpp
+	file/primary_file_test.cpp
+	file/save_as_test.cpp
+	signal/filter_allpass_test.cpp
+	signal/filter_design_test.cpp
+	signal/filter_test.cpp
+	signal/montage_static_test.cpp
+	signal/simple_montage_test.cpp
+	signal/spikedet_test.cpp
+)
+
+add_executable(unit-test ${SRC} ../libraries/googletest/googletest/src/gtest-all.cc ../libraries/googletest/googletest/src/gtest_main.cc)
+
+target_link_libraries(unit-test ${LIBS_TO_LINK_ALENKA_FILE} ${LIBS_TO_LINK_ALENKA_SIGNAL} ${CMAKE_THREAD_LIBS_INIT})
