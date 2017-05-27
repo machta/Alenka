@@ -3,10 +3,12 @@ A Visualisation System for Biosignals
 
 ### Requirments
 * git
-* Qt 5.8 (gcc/MSVC and QtCharts module)
+* cmake 3.1 (for Ubuntu 14 download the latest version)
 * g++ or Microsoft Visual C++ 2015 compiler
+* Qt 5.8 (gcc/MSVC and QtCharts module)
 * OpenCL 1.1
 * OpenGL 2.0 and some extensions from OpenGL 3.0
+* Matio library
 
 On Debian-like systems you can use: `sudo apt install git cmake-gui build-essential`
 
@@ -19,6 +21,8 @@ Studio, you probably don't need to install this.
 
 If your device doesn't support OpenCL (e.g. when running a Linux guest in VirtualBox),
 use AMD APP SDK for a CPU implementation of OpenCL.
+
+On Linux install matio package ("libmatio-dev" for Ubuntu). On Windows Matio is downloaded automatically.
 
 ### Build instructions
 1. Clone this repo

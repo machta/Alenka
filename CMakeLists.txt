@@ -15,7 +15,6 @@ if(UNIX)
 		add_definitions(-D_GLIBCXX_DEBUG)
 	endif()
 elseif(WIN32)
-	#set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} )
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP") # Parallel compilation mode for cl.exe.
 
 	add_definitions(-DWIN_BUILD -D_USE_MATH_DEFINES -D_CRT_SECURE_NO_WARNINGS
@@ -25,7 +24,7 @@ elseif(APPLE)
 endif()
 
 # Find packages.
-find_package (Threads)
+find_package(Threads)
 find_package(OpenCL)
 
 find_package(Qt5Widgets)
@@ -46,27 +45,108 @@ set(CMAKE_AUTORCC ON)
 if(DEBUG)
 	add_definitions(-DTESTS)
 	include_directories(unit-test/googletest/googletest/include unit-test/googletest/googletest)
-	file(GLOB SRC_TESTS unit-test/*.cpp)
+	set(SRC_TESTS unit-test/gtest.cpp unit-test/lrucache_test.cpp)
 endif()
 
-# Alenka.
+# Alenka executable.
 add_definitions(-DCL_USE_DEPRECATED_OPENCL_1_2_APIS)
 
-include_directories(Alenka-File/include Alenka-Signal/include
+include_directories(${Alenka-File_SOURCE_DIR}/include ${Alenka-Signal_SOURCE_DIR}/include
 	${Alenka-File_SOURCE_DIR}/boost ${Alenka-File_SOURCE_DIR}/pugixml/src
 	${Alenka-Signal_SOURCE_DIR}/eigen ${OpenCL_INCLUDE_DIRS})
 
-file(GLOB_RECURSE SRC src/*.cpp src/*.h) # TODO: Specify each source file explicitly.
 file(GLOB SRC_BOOST_PO Alenka-File/boost/libs/program_options/src/*.cpp)
-set(RESOURCE resources/icons/icons.qrc resources/gpu-code/gpu-code.qrc elko/resources/resources.qrc)
 
-add_executable(Alenka
-	${SRC} ${SRC_BOOST_PO} ${RESOURCE} ${SRC_TESTS}
+set(RESOURCES
+	elko/resources/resources.qrc
+	resources/gpu-code/gpu-code.qrc
+	resources/icons/icons.qrc
+)
+
+set(SRC
+	src/DataModel/infotable.cpp
+	src/DataModel/infotable.h
+	src/DataModel/kernelcache.cpp
+	src/DataModel/kernelcache.h
+	src/DataModel/opendatafile.cpp
+	src/DataModel/opendatafile.h
+	src/DataModel/trackcodevalidator.cpp
+	src/DataModel/trackcodevalidator.h
+	src/DataModel/undocommandfactory.cpp
+	src/DataModel/undocommandfactory.h
+	src/DataModel/vitnessdatamodel.cpp
+	src/DataModel/vitnessdatamodel.h
+	src/Manager/codeeditdialog.cpp
+	src/Manager/codeeditdialog.h
+	src/Manager/eventmanager.cpp
+	src/Manager/eventmanager.h
+	src/Manager/eventtablemodel.cpp
+	src/Manager/eventtablemodel.h
+	src/Manager/eventtypemanager.cpp
+	src/Manager/eventtypemanager.h
+	src/Manager/eventtypetablemodel.cpp
+	src/Manager/eventtypetablemodel.h
+	src/Manager/filtermanager.cpp
+	src/Manager/filtermanager.h
+	src/Manager/filtervisualizer.cpp
+	src/Manager/filtervisualizer.h
+	src/Manager/manager.cpp
+	src/Manager/manager.h
+	src/Manager/montagemanager.cpp
+	src/Manager/montagemanager.h
+	src/Manager/montagetablemodel.cpp
+	src/Manager/montagetablemodel.h
+	src/Manager/sortproxymodel.cpp
+	src/Manager/sortproxymodel.h
+	src/Manager/tablemodel.cpp
+	src/Manager/tablemodel.h
+	src/Manager/trackmanager.cpp
+	src/Manager/trackmanager.h
+	src/Manager/tracktablemodel.cpp
+	src/Manager/tracktablemodel.h
+	src/SignalProcessor/lrucache.h
+	src/SignalProcessor/signalprocessor.cpp
+	src/SignalProcessor/signalprocessor.h
+	src/Sync/syncclient.cpp
+	src/Sync/syncclient.h
+	src/Sync/syncdialog.cpp
+	src/Sync/syncdialog.h
+	src/Sync/syncserver.cpp
+	src/Sync/syncserver.h
+	src/canvas.cpp
+	src/canvas.h
+	src/error.cpp
+	src/error.h
+	src/main.cpp
+	src/myapplication.cpp
+	src/myapplication.h
+	src/openglinterface.cpp
+	src/openglinterface.h
+	src/openglprogram.cpp
+	src/openglprogram.h
+	src/options.cpp
+	src/options.h
+	src/signalfilebrowserwindow.cpp
+	src/signalfilebrowserwindow.h
+	src/signalviewer.cpp
+	src/signalviewer.h
+	src/spikedetanalysis.cpp
+	src/spikedetanalysis.h
+	src/spikedetsettingsdialog.cpp
+	src/spikedetsettingsdialog.h
+	src/tracklabelbar.cpp
+	src/tracklabelbar.h
+)
+
+add_executable(Alenka ${SRC} ${RESOURCES}
+	${SRC_BOOST_PO} ${SRC_TESTS}
 	Alenka-Signal/spikedet/src/CResultsModel.cpp)
 
 target_link_libraries(Alenka alenka-signal alenka-file clFFT GDF pugixml
 	${CMAKE_THREAD_LIBS_INIT} ${OpenCL_LIBRARIES}
 	Qt5::Widgets Qt5::WebSockets Qt5::Charts Qt5::Qml Qt5::Quick Qt5::QuickWidgets)
+
+add_custom_command(TARGET Alenka POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:Alenka>/log)
 
 if(UNIX)
 	target_link_libraries(Alenka dl GL
@@ -95,10 +175,10 @@ elseif(WIN32)
 		target_link_libraries(Alenka ${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x86/matio.lib)
 
 		add_custom_command(TARGET Alenka POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
-			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x64/hdf5.dll"
-			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x64/libmatio.dll"
-			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x64/szip.dll"
-			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x64/zlib.dll"
+			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x86/hdf5.dll"
+			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x86/libmatio.dll"
+			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x86/szip.dll"
+			"${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x86/zlib.dll"
 			$<TARGET_FILE_DIR:Alenka>)
 	endif()
 elseif(APPLE)
