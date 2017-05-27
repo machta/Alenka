@@ -1,5 +1,3 @@
-#ifdef TESTS
-
 #include <gtest/gtest.h>
 
 #include "../src/SignalProcessor/lrucache.h"
@@ -140,5 +138,3 @@ TEST(lrucache_test, random_clear)
 	for (int i = 1; i < 5; ++i)
 		randomTest(13*i*i, 1000*i*i*i, 111*i*i, 1000*i*i);
 }
-
-#endif // TESTS

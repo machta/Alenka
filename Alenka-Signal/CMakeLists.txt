@@ -22,7 +22,7 @@ include_directories(../Alenka-File/include ../libraries/boost_1_63)
 set(BUILD_LOADLIBRARIES off CACHE BOOL "")
 set(BUILD_EXAMPLES off CACHE BOOL "")
 add_subdirectory(../libraries/clFFT/src ${CMAKE_CURRENT_BINARY_DIR}/clFFT)
-include_directories(../libraries/clFFT/src/include ${Alenka-Signal_BINARY_DIR}/clFFT/src/include)
+include_directories(../libraries/clFFT/src/include ${CMAKE_CURRENT_BINARY_DIR}/clFFT/include)
 
 # If you want to use this library, you need to link to these libraries.
 set(LIBS_TO_LINK_ALENKA_SIGNAL alenka-signal clFFT ${OpenCL_LIBRARIES})

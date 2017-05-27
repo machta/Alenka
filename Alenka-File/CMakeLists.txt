@@ -9,8 +9,12 @@ set(BUILD_SHARED_LIBS off CACHE BOOL "")
 include_directories(../libraries/boost_1_63)
 
 if(MSVC)
-	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS
+		# This stops Microsoft's linker from needing the static library.
+		-DBOOST_SYSTEM_NO_LIB -DBOOST_FILESYSTEM_NO_LIB)
+
 	include_directories(../libraries/matio/src ../libraries/matio/visual_studio)
+
 	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 		link_directories(../libraries/matio-msvc2015/x64)
 	else()

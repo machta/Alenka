@@ -19,7 +19,13 @@ elseif(WIN32)
 
 	add_definitions(-DWIN_BUILD -D_USE_MATH_DEFINES -D_CRT_SECURE_NO_WARNINGS
 		# This stops Microsoft's linker from needing the static library.
-		-DBOOST_PROGRAM_OPTIONS_NO_LIB)
+		-DBOOST_PROGRAM_OPTIONS_NO_LIB -DBOOST_SYSTEM_NO_LIB -DBOOST_FILESYSTEM_NO_LIB)
+
+	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+		link_directories(${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x64)
+	else()
+		link_directories(${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x86)
+	endif()
 elseif(APPLE)
 endif()
 
@@ -44,7 +50,7 @@ set(CMAKE_AUTORCC ON)
 # Alenka executable.
 add_definitions(-DCL_USE_DEPRECATED_OPENCL_1_2_APIS)
 
-include_directories(${Alenka-File_SOURCE_DIR}/include ${Alenka-Signal_SOURCE_DIR}/include
+include_directories(Alenka-File/include Alenka-Signal/include
 	libraries/boost_1_63 libraries/pugixml/src libraries/eigen
 	${OpenCL_INCLUDE_DIRS})
 
@@ -134,7 +140,7 @@ set(SRC
 add_executable(Alenka ${SRC} ${RESOURCES} ${SRC_BOOST_PO}
 	libraries/spikedet/src/CResultsModel.cpp)
 
-target_link_libraries(Alenka alenka-signal alenka-file clFFT GDF pugixml
+target_link_libraries(Alenka ${LIBS_TO_LINK_ALENKA_FILE} ${LIBS_TO_LINK_ALENKA_SIGNAL}
 	${CMAKE_THREAD_LIBS_INIT} ${OpenCL_LIBRARIES}
 	Qt5::Widgets Qt5::WebSockets Qt5::Charts Qt5::Qml Qt5::Quick Qt5::QuickWidgets)
 
@@ -151,26 +157,22 @@ if(UNIX)
 		/usr/lib/x86_64-linux-gnu/libaec.a
 		/usr/lib/x86_64-linux-gnu/libz.a)
 elseif(WIN32)
-	include_directories(Alenka-File/matio/src Alenka-File/matio/visual_studio)
+	include_directories(libraries/matio/src libraries/matio/visual_studio)
 	target_link_libraries(Alenka opengl32)
 
 	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-		target_link_libraries(Alenka libraries/matio-msvc2015/x64/matio.lib)
-
 		add_custom_command(TARGET Alenka POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
-			libraries/matio-msvc2015/x64/hdf5.dll
-			libraries/matio-msvc2015/x64/libmatio.dll
-			libraries/matio-msvc2015/x64/szip.dll
-			libraries/matio-msvc2015/x64/zlib.dll
+			${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x64/hdf5.dll
+			${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x64/libmatio.dll
+			${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x64/szip.dll
+			${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x64/zlib.dll
 			$<TARGET_FILE_DIR:Alenka>)
 	else()
-		target_link_libraries(Alenka libraries/matio-msvc2015/x86/matio.lib)
-
 		add_custom_command(TARGET Alenka POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
-			libraries/matio-msvc2015/x86/hdf5.dll
-			libraries/matio-msvc2015/x86/libmatio.dll
-			libraries/matio-msvc2015/x86/szip.dll
-			libraries/matio-msvc2015/x86/zlib.dll
+			${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x86/hdf5.dll
+			${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x86/libmatio.dll
+			${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x86/szip.dll
+			${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x86/zlib.dll
 			$<TARGET_FILE_DIR:Alenka>)
 	endif()
 elseif(APPLE)

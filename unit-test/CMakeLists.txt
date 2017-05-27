@@ -26,3 +26,21 @@ set(SRC
 add_executable(unit-test ${SRC} ../libraries/googletest/googletest/src/gtest-all.cc ../libraries/googletest/googletest/src/gtest_main.cc)
 
 target_link_libraries(unit-test ${LIBS_TO_LINK_ALENKA_FILE} ${LIBS_TO_LINK_ALENKA_SIGNAL} ${CMAKE_THREAD_LIBS_INIT})
+
+if(WIN32)
+	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+		add_custom_command(TARGET unit-test POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x64/hdf5.dll
+			${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x64/libmatio.dll
+			${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x64/szip.dll
+			${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x64/zlib.dll
+			$<TARGET_FILE_DIR:unit-test>)
+	else()
+		add_custom_command(TARGET unit-test POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x86/hdf5.dll
+			${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x86/libmatio.dll
+			${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x86/szip.dll
+			${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x86/zlib.dll
+			$<TARGET_FILE_DIR:unit-test>)
+	endif()
+endif()
