@@ -12,7 +12,7 @@ if(MSVC)
 endif()
 
 find_package(OpenCL)
-include_directories(${OpenCL_INCLUDE_DIRS})
+include_directories(${OpenCL_INCLUDE_DIR})
 
 # Alenka-File
 set(Boost_INCLUDE_DIR "")
@@ -32,7 +32,9 @@ set(LIBS_TO_LINK_ALENKA_SIGNAL ${LIBS_TO_LINK_ALENKA_SIGNAL} PARENT_SCOPE)
 include_directories(include ../libraries/spikedetsrc ../libraries/alglib-3.10.0/src ../libraries/eigen ../libraries/libsamplerate/src ../libraries/SignalResampler/src)
 
 file(GLOB SRC_ALG ../libraries/alglib-3.10.0/src/*.cpp)
-file(GLOB SRC_SR ../libraries/libsamplerate/src/*.c)
+if(NOT APPLE)
+	file(GLOB SRC_SR ../libraries/libsamplerate/src/*.c)
+endif()
 set(SRC_SD ../libraries/spikedet/src/CSpikeDetector.cpp ../libraries/spikedet/src/CDSP.cpp ../libraries/spikedet/src/CException.cpp)
 
 set(SRC

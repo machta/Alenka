@@ -1,6 +1,8 @@
 #include "CDSP.h"
 
+#ifndef __APPLE__
 #include <samplerate.h>
+#endif
 #include <Eigen/Dense>
 #include <fasttransforms.h>
 #include <resample.h>
@@ -78,7 +80,9 @@ CResamplingThread::~CResamplingThread()
 /// This is the entry point of the thread.
 wxThread::ExitCode CResamplingThread::Entry()
 {
+#ifndef __APPLE__
 	if (!m_original)
+#endif
 	{
 		vector<double> m_data_double(m_data->begin(), m_data->end()), output;
 		resample(m_requiredFS, m_actFS, m_data_double, output);
@@ -86,6 +90,7 @@ wxThread::ExitCode CResamplingThread::Entry()
 		return 0;
 	}
 
+#ifndef __APPLE__
 	int err, ret;
 	float * out = new float[m_data->size()];
 
@@ -112,6 +117,9 @@ wxThread::ExitCode CResamplingThread::Entry()
 	delete src_data;
 
 	return (ExitCode)ret;
+#else
+	cerr << "Warning: original resampling is not supported on Mac due to a libsamplerate bug" << endl;
+#endif
 }
 
 

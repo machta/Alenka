@@ -5,6 +5,7 @@
 #include <AlenkaSignal/montageprocessor.h>
 
 #include <functional>
+#include <cmath>
 
 using namespace std;
 using namespace AlenkaSignal;

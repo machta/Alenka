@@ -24,10 +24,12 @@
 #include <set>
 #include <algorithm>
 
+#ifndef __APPLE__
 #if defined WIN_BUILD
 #include <windows.h>
 #elif defined UNIX_BUILD
 #include <GL/glx.h>
+#endif
 #endif
 
 using namespace std;
@@ -1215,20 +1217,25 @@ void Canvas::setUniformColor(GLuint program, const QColor& color, double opacity
 
 void Canvas::checkGLMessages()
 {
-	for (const auto& m : log()->loggedMessages())
+	auto logPtr = log();
+
+	if (logPtr)
 	{
-		string message = m.message().toStdString();
-
-		if (message != lastGLMessage)
+		for (const auto& m : logPtr->loggedMessages())
 		{
-			logLastGLMessage();
-			lastGLMessageCount = 0;
+			string message = m.message().toStdString();
 
-			logToFile("OpenGL message: " << message);
+			if (message != lastGLMessage)
+			{
+				logLastGLMessage();
+				lastGLMessageCount = 0;
+
+				logToFile("OpenGL message: " << message);
+			}
+
+			lastGLMessage = message;
+			++lastGLMessageCount;
 		}
-
-		lastGLMessage = message;
-		++lastGLMessageCount;
 	}
 }
 
@@ -1275,6 +1282,7 @@ void Canvas::createContext()
 
 	if (glSharing)
 	{
+#ifndef __APPLE__
 		properties.push_back(CL_GL_CONTEXT_KHR);
 
 #if defined WIN_BUILD
@@ -1287,6 +1295,7 @@ void Canvas::createContext()
 
 		properties.push_back(CL_GLX_DISPLAY_KHR);
 		properties.push_back(reinterpret_cast<cl_context_properties>(glXGetCurrentDisplay()));
+#endif
 #endif
 	}
 

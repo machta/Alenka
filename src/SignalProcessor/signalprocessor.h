@@ -6,7 +6,11 @@
 #include "../DataModel/kernelcache.h"
 #include "../error.h"
 
+#ifdef __APPLE__
+#include <OpenCL/cl_gl.h>
+#else
 #include <CL/cl_gl.h>
+#endif
 
 #include <QString>
 

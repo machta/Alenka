@@ -1,7 +1,11 @@
 #ifndef ALENKASIGNAL_MONTAGEPROCESSOR_H
 #define ALENKASIGNAL_MONTAGEPROCESSOR_H
 
+#ifdef __APPLE__
+#include <OpenCL/cl_gl.h>
+#else
 #include <CL/cl_gl.h>
+#endif
 
 #include <vector>
 

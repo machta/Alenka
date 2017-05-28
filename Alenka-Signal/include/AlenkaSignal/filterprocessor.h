@@ -1,7 +1,11 @@
 #ifndef ALENKASIGNAL_FILTERPROCESSOR_H
 #define ALENKASIGNAL_FILTERPROCESSOR_H
 
+#ifdef __APPLE__
+#include <OpenCL/cl_gl.h>
+#else
 #include <CL/cl_gl.h>
+#endif
 
 #include <cassert>
 #include <vector>

@@ -1,7 +1,11 @@
 #ifndef ALENKASIGNAL_OPENCLPROGRAM_H
 #define ALENKASIGNAL_OPENCLPROGRAM_H
 
+#ifdef __APPLE__
+#include <OpenCL/cl_gl.h>
+#else
 #include <CL/cl_gl.h>
+#endif
 
 #include <cstdio>
 #include <string>

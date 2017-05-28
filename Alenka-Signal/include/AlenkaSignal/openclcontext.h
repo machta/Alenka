@@ -1,7 +1,11 @@
 #ifndef ALENKASIGNAL_OPENCLCONTEXT_H
 #define ALENKASIGNAL_OPENCLCONTEXT_H
 
+#ifdef __APPLE__
+#include <OpenCL/cl_gl.h>
+#else
 #include <CL/cl_gl.h>
+#endif
 
 #include <string>
 #include <sstream>

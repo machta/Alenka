@@ -27,6 +27,7 @@ elseif(WIN32)
 		link_directories(${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x86)
 	endif()
 elseif(APPLE)
+	add_definitions(-DMAC_BUILD)
 endif()
 
 # Find packages.
@@ -52,7 +53,7 @@ add_definitions(-DCL_USE_DEPRECATED_OPENCL_1_2_APIS)
 
 include_directories(Alenka-File/include Alenka-Signal/include
 	libraries/boost_1_63 libraries/pugixml/src libraries/eigen
-	${OpenCL_INCLUDE_DIRS})
+	${OpenCL_INCLUDE_DIR})
 
 file(GLOB SRC_BOOST_PO libraries/boost_1_63/libs/program_options/src/*.cpp)
 
@@ -146,7 +147,7 @@ target_link_libraries(Alenka ${LIBS_TO_LINK_ALENKA_FILE} ${LIBS_TO_LINK_ALENKA_S
 
 add_custom_command(TARGET Alenka POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:Alenka>/log)
 
-if(UNIX)
+if(UNIX AND NOT APPLE)
 	target_link_libraries(Alenka dl GL
 		# Link these libraries staticaly so that the binary can be used on Ubuntu 14 as well.
 		/usr/lib/gcc/x86_64-linux-gnu/5/libstdc++.a

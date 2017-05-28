@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <iostream>
+#include <cmath>
 
 using namespace std;
 using namespace AlenkaFile;

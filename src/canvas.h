@@ -4,7 +4,11 @@
 #include "openglinterface.h"
 #include "SignalProcessor/lrucache.h"
 
+#ifdef __APPLE__
+#include <OpenCL/cl_gl.h>
+#else
 #include <CL/cl_gl.h>
+#endif
 
 #include <QOpenGLWidget>
 
