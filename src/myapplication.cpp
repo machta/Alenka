@@ -14,8 +14,6 @@
 
 using namespace std;
 
-unique_ptr<AlenkaSignal::OpenCLContext> globalContext(nullptr);
-
 MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv)
 {
 	// Disable the stupid ssl warning.
@@ -167,3 +165,5 @@ char MyApplication::dirSeparator()
 {
 	return QDir::separator().toLatin1();
 }
+
+unique_ptr<AlenkaSignal::OpenCLContext> globalContext(nullptr);

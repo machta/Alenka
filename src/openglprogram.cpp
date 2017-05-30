@@ -9,8 +9,6 @@ using namespace std;
 
 OpenGLProgram::OpenGLProgram(const string& vertSource, const string& fragSource)
 {
-	initializeOpenGLInterface();
-
 	program = gl()->glCreateProgram();
 
 	string shaderHeader;
@@ -47,7 +45,7 @@ OpenGLProgram::~OpenGLProgram()
 {
 	gl()->glDeleteProgram(program);
 
-	checkGLErrors();
+	OPENGL_INTERFACE->checkGLErrors();
 }
 
 void OpenGLProgram::addShader(const string& sourceText, GLenum type)

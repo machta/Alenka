@@ -23,32 +23,7 @@ void OpenGLInterface::initializeOpenGLInterface()
 	checkNotErrorCode(functions20, nullptr, "versionFunctions<QOpenGLFunctions_2_0>() failed.");
 	checkNotErrorCode(functions20->initializeOpenGLFunctions(), false, "initializeOpenGLFunctions() failed.");
 
-	// Initialize log.
-	logger = new QOpenGLDebugLogger();
-
-	bool res = logger->initialize();
-	checkNotErrorCode(res, false, "logger->initialize() failed.");
-
-	logger->logMessage(QOpenGLDebugMessage::createApplicationMessage("OpenGL debug log initialized."));
-
-	// Get extension function addresses.
-	QFunctionPointer ptr;
-
-	if (PROGRAM_OPTIONS["gl20"].as<bool>())
-	{
-		ptr = QOpenGLContext::currentContext()->getProcAddress("glGenVertexArrays");
-		checkNotErrorCode(ptr, nullptr, "getProcAddress(\"glGenVertexArrays\")");
-		genVertexArrays = reinterpret_cast<void (*)(GLsizei, GLuint*)>(ptr);
-
-		ptr = QOpenGLContext::currentContext()->getProcAddress("glDeleteVertexArrays");
-		checkNotErrorCode(ptr, nullptr, "getProcAddress(\"glDeleteVertexArrays\")");
-		deleteVertexArrays = reinterpret_cast<void (*)(GLsizei, const GLuint*)>(ptr);
-
-		ptr = QOpenGLContext::currentContext()->getProcAddress("glBindVertexArray");
-		checkNotErrorCode(ptr, nullptr, "getProcAddress(\"glBindVertexArray\")");
-		bindVertexArray = reinterpret_cast<void (*)(GLuint)>(ptr);
-	}
-	else
+	if (!PROGRAM_OPTIONS["gl20"].as<bool>())
 	{
 		functions30 = c->versionFunctions<QOpenGLFunctions_3_0>();
 		checkNotErrorCode(functions30, nullptr, "versionFunctions<QOpenGLFunctions_3_0>() failed.");
@@ -60,6 +35,21 @@ void OpenGLInterface::initializeOpenGLInterface()
 		functions43 = c->versionFunctions<QOpenGLFunctions_4_3_Core>();
 		checkNotErrorCode(functions43, nullptr, "versionFunctions<QOpenGLFunctions_4_3_Core>() failed.");
 		checkNotErrorCode(functions43->initializeOpenGLFunctions(), false, "initializeOpenGLFunctions() failed.");
+	}
+
+	// Initialize log.
+	logger = new QOpenGLDebugLogger();
+
+	if (logger->initialize())
+	{
+		logger->logMessage(QOpenGLDebugMessage::createApplicationMessage("OpenGL debug log initialized."));
+	}
+	else
+	{
+		cerr << "Warning: initialization of QOpenGLDebugLogger failed" << endl;
+
+		delete logger;
+		logger = nullptr;
 	}
 }
 
@@ -81,7 +71,6 @@ bool OpenGLInterface::checkGLErrors()
 
 			logToFileAndConsole("OpenGL error: " << glErrorCodeToString(err) << " last call from " << lastCallFile << ":" << lastCallLine);
 		}
-
 	}
 
 	if (errorsDetected)
@@ -107,3 +96,5 @@ string OpenGLInterface::glErrorCodeToString(GLenum code)
 
 	return "unknown code " + errorCodeToString(code);
 }
+
+unique_ptr<OpenGLInterface> OPENGL_INTERFACE;

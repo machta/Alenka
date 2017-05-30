@@ -8,7 +8,7 @@
 /**
  * @brief OpenGL program object wrapper.
  */
-class OpenGLProgram : public OpenGLInterface
+class OpenGLProgram
 {
 public:
 	/**

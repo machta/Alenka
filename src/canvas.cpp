@@ -171,9 +171,29 @@ void getEventsForRendering(OpenDataFile* file, int firstSample, int lastSample,
 
 	stable_sort(singleChannelEvents->begin(), singleChannelEvents->end(), [] (tuple<int, int, int, int> a, tuple<int, int, int, int> b) { return get<1>(a) < get<1>(b); });
 	stable_sort(singleChannelEvents->begin(), singleChannelEvents->end(), [] (tuple<int, int, int, int> a, tuple<int, int, int, int> b) { return get<0>(a) < get<0>(b); });
+	// TODO: Use array<> instead of a tupple<>.
 }
 
-class GPUCacheAllocator : public LRUCacheAllocator<GPUCacheItem>, public OpenGLInterface
+void arrayAttrib(GLint size, GLsizei stride)
+{
+	gl()->glVertexAttribPointer(0, size, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<void*>(0));
+	gl()->glEnableVertexAttribArray(0);
+}
+
+void bindArray(GLuint array, GLuint buffer, GLint size, GLsizei stride)
+{
+	if (PROGRAM_OPTIONS["gl20"].as<bool>())
+	{
+		gl()->glBindBuffer(GL_ARRAY_BUFFER, buffer);
+		arrayAttrib(size, stride);
+	}
+	else
+	{
+		gl3()->glBindVertexArray(array);
+	}
+}
+
+class GPUCacheAllocator : public LRUCacheAllocator<GPUCacheItem>
 {
 	size_t size;
 	bool duplicateSignal, glSharing;
@@ -182,10 +202,7 @@ class GPUCacheAllocator : public LRUCacheAllocator<GPUCacheItem>, public OpenGLI
 
 public:
 	GPUCacheAllocator(size_t size, bool duplicateSignal, bool glSharing, int extraSamplesFront, OpenCLContext* context)
-		: size(size), duplicateSignal(duplicateSignal), glSharing(glSharing), extraSamplesFront(extraSamplesFront), context(context)
-	{
-		initializeOpenGLInterface();
-	}
+		: size(size), duplicateSignal(duplicateSignal), glSharing(glSharing), extraSamplesFront(extraSamplesFront), context(context) {}
 
 	virtual bool constructElement(GPUCacheItem** ptr) override
 	{
@@ -203,11 +220,14 @@ public:
 	{
 		if (ptr)
 		{
-			if (ptr->signalArray)
-				glDeleteVertexArrays(1, &ptr->signalArray);
+			if (!PROGRAM_OPTIONS["gl20"].as<bool>())
+			{
+				if (ptr->signalArray)
+					gl3()->glDeleteVertexArrays(1, &ptr->signalArray);
 
-			if (ptr->eventArray)
-				glDeleteVertexArrays(1, &ptr->eventArray);
+				if (ptr->eventArray)
+					gl3()->glDeleteVertexArrays(1, &ptr->eventArray);
+			}
 
 			if (ptr->sharedBuffer)
 			{
@@ -233,44 +253,36 @@ private:
 		if (glSharing)
 			gl()->glBufferData(GL_ARRAY_BUFFER, size, nullptr, /*GL_STATIC_DRAW*/GL_DYNAMIC_DRAW);
 
-		if (checkGLErrors())
-			return false;
+		if (OPENGL_INTERFACE->checkGLErrors())
+			return false; // Out of graphical memory.
 
-		GLuint arrays[2];
-		glGenVertexArrays(2, arrays);
-		item.signalArray = arrays[0];
-		item.eventArray = arrays[1];
+		if (!PROGRAM_OPTIONS["gl20"].as<bool>())
+		{
+			GLuint arrays[2];
+			gl3()->glGenVertexArrays(2, arrays);
+			item.signalArray = arrays[0];
+			item.eventArray = arrays[1];
 
-#define offset (duplicateSignal ? 2 : 1)*extraSamplesFront*sizeof(float)
-		const int inputAttributes = 1; // Set this to 3 if you ever needed the adjecent samples during rendering.
+			gl3()->glBindVertexArray(item.signalArray);
+		}
+		arrayAttrib(1, duplicateSignal ? 2*sizeof(float) : 0);
 
-		glBindVertexArray(item.signalArray);
-		gl()->glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, duplicateSignal ? 2*sizeof(float) : 0, reinterpret_cast<void*>(offset));
-		gl()->glEnableVertexAttribArray(0);
+		if (!PROGRAM_OPTIONS["gl20"].as<bool>())
+			gl3()->glBindVertexArray(item.eventArray);
 
-		glBindVertexArray(item.eventArray);
 		if (duplicateSignal)
 		{
-			for (int i = 0; i < inputAttributes; ++i)
-			{
-				gl()->glVertexAttribPointer(i, 1, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(offset*i));
-				gl()->glEnableVertexAttribArray(i);
-			}
+			arrayAttrib(1, 0);
 		}
 		else
-		{
-			glBindVertexBuffer(0, item.signalBuffer, 0, 0);
-			glVertexBindingDivisor(0, 2);
+		{ // TODO: Add this case to arrayAttrib;
+			gl4()->glBindVertexBuffer(0, item.signalBuffer, 0, 0);
+			gl4()->glVertexBindingDivisor(0, 2);
 
-			for (int i = 0; i < inputAttributes; ++i)
-			{
-				glVertexAttribFormat(i, 1, GL_FLOAT, GL_FALSE, offset*i);
-				glVertexAttribBinding(i, 0);
-				gl()->glEnableVertexAttribArray(i);
-			}
+			gl4()->glVertexAttribFormat(0, 1, GL_FLOAT, GL_FALSE, 0);
+			gl4()->glVertexAttribBinding(0, 0);
+			gl()->glEnableVertexAttribArray(0);
 		}
-
-#undef offset
 
 		gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -324,7 +336,8 @@ Canvas::~Canvas()
 	delete eventProgram;
 	delete rectangleLineProgram;
 
-	glDeleteVertexArrays(1, &rectangleLineArray);
+	if (!PROGRAM_OPTIONS["gl20"].as<bool>())
+		gl3()->glDeleteVertexArrays(1, &rectangleLineArray);
 	gl()->glDeleteBuffers(1, &rectangleLineBuffer);
 
 	delete context;
@@ -345,7 +358,7 @@ Canvas::~Canvas()
 	}
 
 	logLastGLMessage();
-	checkGLErrors();
+	OPENGL_INTERFACE->checkGLErrors();
 	doneCurrent();
 }
 
@@ -479,7 +492,8 @@ void Canvas::initializeGL()
 {
 	logToFile("Initializing OpenGL in Canvas.");
 
-	initializeOpenGLInterface();
+	OPENGL_INTERFACE = unique_ptr<OpenGLInterface>(new OpenGLInterface);
+	OPENGL_INTERFACE->initializeOpenGLInterface();
 
 	QFile signalVertFile(":/signal.vert");
 	signalVertFile.open(QIODevice::ReadOnly);
@@ -506,16 +520,18 @@ void Canvas::initializeGL()
 
 	gl()->glClearColor(1, 1, 1, 0);
 
-	glGenVertexArrays(1, &rectangleLineArray);
 	gl()->glGenBuffers(1, &rectangleLineBuffer);
-
-	glBindVertexArray(rectangleLineArray);
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleLineBuffer);
-	gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<void*>(0));
-	gl()->glEnableVertexAttribArray(0);
+
+	if (!PROGRAM_OPTIONS["gl20"].as<bool>())
+	{
+		gl3()->glGenVertexArrays(1, &rectangleLineArray);
+		gl3()->glBindVertexArray(rectangleLineArray);
+	}
+	arrayAttrib(2, 0);
 
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
+//	gl3()->glBindVertexArray(0);
 
 	// Log OpenGL details.
 	stringstream ss;
@@ -681,7 +697,7 @@ void Canvas::paintGL()
 		drawPositionIndicator();
 		drawCross();
 
-		glBindVertexArray(0);
+//		gl3()->glBindVertexArray(0);
 	}
 
 	gl()->glFinish();
@@ -929,6 +945,7 @@ void Canvas::drawBlock(int index, GPUCacheItem* cacheItem, const vector<tuple<in
 	assert(cacheItem);
 
 	signalArray = cacheItem->signalArray;
+	signalBuffer = cacheItem->signalBuffer;
 	eventArray = cacheItem->eventArray;
 
 	drawSingleChannelEvents(index, singleChannelEvents);
@@ -938,7 +955,7 @@ void Canvas::drawBlock(int index, GPUCacheItem* cacheItem, const vector<tuple<in
 void Canvas::drawAllChannelEvents(const vector<tuple<int, int, int>>& eventVector)
 {
 	gl()->glUseProgram(rectangleLineProgram->getGLProgram());
-	glBindVertexArray(rectangleLineArray);
+	bindArray(rectangleLineArray, rectangleLineBuffer, 2, 0);
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleLineBuffer);
 
 	int event = 0, type = -1;
@@ -1001,7 +1018,7 @@ void Canvas::drawTimeLines()
 	double interval = OpenDataFile::infoTable.getTimeLineInterval();
 
 	gl()->glUseProgram(rectangleLineProgram->getGLProgram());
-	glBindVertexArray(rectangleLineArray);
+	bindArray(rectangleLineArray, rectangleLineBuffer, 2, 0);
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleLineBuffer);
 
 	setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::green), 1);
@@ -1028,7 +1045,7 @@ void Canvas::drawTimeLines()
 void Canvas::drawPositionIndicator()
 {
 	gl()->glUseProgram(rectangleLineProgram->getGLProgram());
-	glBindVertexArray(rectangleLineArray);
+	bindArray(rectangleLineArray, rectangleLineBuffer, 2, 0);
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleLineBuffer);
 
 	setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::blue), 1);
@@ -1049,7 +1066,7 @@ void Canvas::drawCross()
 	}
 
 	gl()->glUseProgram(rectangleLineProgram->getGLProgram());
-	glBindVertexArray(rectangleLineArray);
+	bindArray(rectangleLineArray, rectangleLineBuffer, 2, 0);
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleLineBuffer);
 
 	setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::black), 1);
@@ -1081,7 +1098,7 @@ void Canvas::drawSingleChannelEvents(int index, const vector<tuple<int, int, int
 {
 	gl()->glUseProgram(eventProgram->getGLProgram());
 
-	glBindVertexArray(eventArray);
+	bindArray(eventArray, signalBuffer, 1, 0);
 
 	const AbstractTrackTable* trackTable = getTrackTable(file);
 	int event = 0, type = -1, track = -1, hidden = 0;
@@ -1169,7 +1186,7 @@ void Canvas::drawSignal(int index)
 {
 	gl()->glUseProgram(signalProgram->getGLProgram());
 
-	glBindVertexArray(signalArray);
+	bindArray(signalArray, signalBuffer, 1, duplicateSignal ? 2*sizeof(float) : 0);
 
 	for (int track = 0; track < signalProcessor->getTrackCount(); ++track)
 	{
@@ -1217,7 +1234,7 @@ void Canvas::setUniformColor(GLuint program, const QColor& color, double opacity
 
 void Canvas::checkGLMessages()
 {
-	auto logPtr = log();
+	auto logPtr = OPENGL_INTERFACE->log();
 
 	if (logPtr)
 	{

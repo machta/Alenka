@@ -41,7 +41,7 @@ struct GPUCacheItem
  *
  *
  */
-class Canvas : public QOpenGLWidget, public OpenGLInterface
+class Canvas : public QOpenGLWidget
 {
 	Q_OBJECT
 
@@ -52,9 +52,8 @@ class Canvas : public QOpenGLWidget, public OpenGLInterface
 	OpenGLProgram* rectangleLineProgram = nullptr;
 	double samplesRecorded = 1;
 	double samplingFrequency = 1;
-	GLuint rectangleLineArray;
-	GLuint rectangleLineBuffer;
-	GLuint signalArray;
+	GLuint rectangleLineArray, rectangleLineBuffer;
+	GLuint signalArray, signalBuffer;
 	GLuint eventArray;
 	bool isSelectingTrack = false;
 	bool isDrawingEvent = false;
