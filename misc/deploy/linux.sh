@@ -61,8 +61,9 @@ cp -v "`dirname $0`/options.ini" $folder/$name
 
 cd $folder &&
 zip -r $name.zip $name &&
-mv $name.zip .. &&
-cd - && zip=OK || zip=fail
+cd - &&
+mv $folder/$name.zip . &&
+zip=OK || zip=fail
 
 rm -r $folder
 
