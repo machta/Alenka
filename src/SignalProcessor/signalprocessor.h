@@ -124,7 +124,7 @@ public:
 	 */
 	bool ready() const
 	{
-		return file && trackCount > 0;
+		return file && 0 < trackCount;
 	}
 
 	template<class T>
@@ -138,45 +138,44 @@ public:
 	static std::vector<AlenkaSignal::Montage<T>*> makeMontage(const std::vector<std::string>& montageCode, AlenkaSignal::OpenCLContext* context, KernelCache* kernelCache, const std::string& header)
 	{
 		using namespace std;
-	#ifndef NDEBUG
+#ifndef NDEBUG
+		// TODO: Remove this after the compilation time issue is solved, or perhaps log this info to a file.
 		using namespace chrono;
-		auto start = high_resolution_clock::now(); // TODO: Remove this after the compilation time issue is solved, or perhaps log this info to a file.
+		auto start = high_resolution_clock::now();
 		int needToCompile = 0;
-	#endif
-
+#endif
 		vector<AlenkaSignal::Montage<T>*> montage;
 
 		for (unsigned int i = 0; i < montageCode.size(); i++)
 		{
-			AlenkaSignal::Montage<T>* m;
-			QString code = QString::fromStdString(simplifyMontage<T>(montageCode[i]));
+			unique_ptr<AlenkaSignal::Montage<T>> sourceMontage(new AlenkaSignal::Montage<T>(simplifyMontage<T>(montageCode[i]), context, header));
+			QString code = QString::fromStdString(sourceMontage->getSource());
 
 			auto ptr = kernelCache ? kernelCache->find(code) : nullptr;
 
 			if (ptr)
 			{
 				assert(0 < ptr->size());
-				m = new AlenkaSignal::Montage<T>(ptr, context);
+				montage.push_back(new AlenkaSignal::Montage<T>(ptr, context));
 			}
 			else
 			{
-				m = new AlenkaSignal::Montage<T>(code.toStdString(), context, header);
 #ifndef NDEBUG
-				if (!m->isCopyMontage())
+				if (!sourceMontage->isCopyMontage())
 					++needToCompile;
 #endif
 				if (kernelCache)
 				{
-					auto binary = m->getBinary();
+					auto binary = sourceMontage->getBinary();
 					if (binary && binary->size() > 0)
 						kernelCache->insert(code, binary);
 				}
-			}
 
-			montage.push_back(m);
+				montage.push_back(sourceMontage.release());
+			}			
 		}
 
-	#ifndef NDEBUG
+#ifndef NDEBUG
 		auto end = high_resolution_clock::now();
 		nanoseconds time = end - start;
 		string str = "Need to compile " + to_string(needToCompile) + " montages: " + to_string(static_cast<double>(time.count())/1000/1000) + " ms";
@@ -189,8 +188,7 @@ public:
 			logToFileAndConsole(str);
 			//logToFile(str);
 		}
-	#endif
-
+#endif
 		return montage;
 	}
 

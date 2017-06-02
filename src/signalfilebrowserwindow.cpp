@@ -196,11 +196,9 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	saveFileAction->setEnabled(false);
 	connect(saveFileAction, SIGNAL(triggered()), this, SLOT(saveFile()));
 
-	exportToEdfAction = new QAction("Export to EDF...", this);
-	//exportToEdfAction->setShortcut(QKeySequence::Open);
+	exportToEdfAction = new QAction("Export current file to EDF...", this);
 	exportToEdfAction->setToolTip("Export the opened file to EDF");
 	exportToEdfAction->setStatusTip(exportToEdfAction->toolTip());
-	//exportToEdfAction->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
 	connect(exportToEdfAction, SIGNAL(triggered()), this, SLOT(exportToEdf()));
 
 	QAction* undoAction = undoStack->createUndoAction(this);
@@ -528,6 +526,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget* parent) : QMainWindow(
 	fileMenu->addAction(openFileAction);
 	fileMenu->addAction(closeFileAction);
 	fileMenu->addAction(saveFileAction);
+	fileMenu->addSeparator();
 	fileMenu->addAction(exportToEdfAction);
 	fileMenu->addSeparator();
 	fileMenu->addAction(undoAction);

@@ -74,6 +74,7 @@ bool parseCopyMontage(const string& source, cl_int* index = nullptr)
 		return res;
 	}
 	catch (regex_error) {}
+
 	return false;
 }
 
@@ -84,44 +85,12 @@ namespace AlenkaSignal
 
 template<class T>
 Montage<T>::Montage(const string& source, OpenCLContext* context, const string& headerSource)
+	: context(context)
 {
-	if (parseCopyMontage(source, &index))
-	{
-		if (is_same<T, double>::value)
-		{
-			if (!context->hasCopyOnlyKernelDouble())
-			{
-				string src = buildSource<T>("out = in(_copyIndex_);", "", ", int _copyIndex_");
+	copyMontage = parseCopyMontage(source, &index);
 
-				OpenCLProgram* p = new OpenCLProgram(src, context);
-				if (!p->compilationSuccessful())
-					cerr << "Copy only kernel compilation error: " << endl << p->getCompilationLog();
-
-				context->setCopyOnlyKernelDouble(p);
-			}
-
-			kernel = context->copyOnlyKernelDouble();
-		}
-		else
-		{
-			if (!context->hasCopyOnlyKernelFloat())
-			{
-				string src = buildSource<T>("out = in(_copyIndex_);", "", ", int _copyIndex_");
-
-				OpenCLProgram* p = new OpenCLProgram(src, context);
-				if (!p->compilationSuccessful())
-					cerr << "Copy only kernel compilation error: " << endl << p->getCompilationLog();
-
-				context->setCopyOnlyKernelFloat(p);
-			}
-
-			kernel = context->copyOnlyKernelFloat();
-		}
-	}
-	else
-	{
-		program = new OpenCLProgram(buildSource<T>(source, headerSource), context);
-	}
+	if (!copyMontage)
+		this->source = stripComments(buildSource<T>(source, headerSource));
 }
 
 template<class T>
@@ -182,6 +151,51 @@ string Montage<T>::stripComments(const string& code)
 	}
 	catch (regex_error) {}
 	return code;
+}
+
+template<class T>
+void Montage<T>::buildProgram()
+{
+	if (kernel || program)
+		return; // The program is already built.
+
+	if (copyMontage)
+	{
+		if (is_same<T, double>::value)
+		{
+			if (!context->hasCopyOnlyKernelDouble())
+			{
+				string src = buildSource<T>("out = in(_copyIndex_);", "", ", int _copyIndex_");
+
+				OpenCLProgram* p = new OpenCLProgram(src, context);
+				if (!p->compilationSuccessful())
+					cerr << "Copy only kernel compilation error: " << endl << p->getCompilationLog();
+
+				context->setCopyOnlyKernelDouble(p);
+			}
+
+			kernel = context->copyOnlyKernelDouble();
+		}
+		else
+		{
+			if (!context->hasCopyOnlyKernelFloat())
+			{
+				string src = buildSource<T>("out = in(_copyIndex_);", "", ", int _copyIndex_");
+
+				OpenCLProgram* p = new OpenCLProgram(src, context);
+				if (!p->compilationSuccessful())
+					cerr << "Copy only kernel compilation error: " << endl << p->getCompilationLog();
+
+				context->setCopyOnlyKernelFloat(p);
+			}
+
+			kernel = context->copyOnlyKernelFloat();
+		}
+	}
+	else
+	{
+		program = new OpenCLProgram(source, context);
+	}
 }
 
 template class Montage<float>;

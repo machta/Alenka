@@ -14,8 +14,6 @@
 namespace AlenkaSignal
 {
 
-// TODO: prohibit copying of this object
-
 /**
  * @brief A class for creating kernel program for montage computation.
  *
@@ -26,13 +24,18 @@ namespace AlenkaSignal
  * Then this string is used for creating an OpenCL kernel object that is
  * the final representation of the code. After the kernel object is retrieved
  * this object can be safely destroyed.
+ *
+ * @todo Prohibit copying of this object.
  */
 template<class T>
 class Montage
 {
+	OpenCLContext* context = nullptr;
+	bool copyMontage = false;
+	std::string source;
 	OpenCLProgram* program = nullptr;
 	cl_kernel kernel = nullptr;
-	cl_int index;
+	cl_int index = -1;
 
 public:
 	/**
@@ -48,6 +51,7 @@ public:
 	 */
 	cl_kernel getKernel()
 	{
+		buildProgram();
 		if (kernel == nullptr)
 			kernel = program->createKernel("montage");
 		return kernel;
@@ -55,14 +59,17 @@ public:
 
 	std::vector<unsigned char>* getBinary()
 	{
+		buildProgram();
 		if (program)
 			return program->getBinary();
 		else
 			return nullptr;
 	}
 
-	bool isCopyMontage() const { return program == nullptr; }
+	bool isCopyMontage() const { return copyMontage; }
 	cl_int copyMontageIndex() const { return index; }
+
+	std::string getSource() const { return source; }
 
 	/**
 	 * @brief Tests the source code of the montage.
@@ -76,6 +83,9 @@ public:
 	 * @brief Removes single line and block comments from OpenCL code.
 	 */
 	static std::string stripComments(const std::string& code);
+
+private:
+	void buildProgram();
 };
 
 } // namespace AlenkaSignal
