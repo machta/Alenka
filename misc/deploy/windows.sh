@@ -55,14 +55,17 @@ mkdir -p $folder32/$name-32/QtQuick/Window.2
 mkdir -p $folder32/$name-32/QtQuick/XmlListModel
 mkdir -p $folder32/$name-32/QtQuick.2
 
-cp -v `find .. -name Alenka.exe | grep Alenka | grep 64 | grep Release | grep 5.8` $folder/$name && alenka=OK || alenka=fail
-cp -v `find .. -name Alenka.exe | grep Alenka | grep 32 | grep Release | grep 5.8` $folder32/$name-32 && alenka32=OK || alenka32=fail
+BUILD64=build-Release-64
+BUILD32=build-Release-32
+
+cp -v `find $BUILD64 -name Alenka.exe` $folder/$name && alenka=OK || alenka=fail
+cp -v `find $BUILD32 -name Alenka.exe` $folder32/$name-32 && alenka32=OK || alenka32=fail
 
 QT_DIR=C:/Qt/5.8/msvc2015_64 &&
-cp -v `find .. -name hdf5.dll | grep Alenka | grep 64 | grep Release | grep 5.8 | head -1` $folder/$name &&
-cp -v `find .. -name libmatio.dll | grep Alenka | grep 64 | grep Release | grep 5.8 | head -1` $folder/$name &&
-cp -v `find .. -name szip.dll | grep Alenka | grep 64 | grep Release | grep 5.8 | head -1` $folder/$name &&
-cp -v `find .. -name zlib.dll | grep Alenka | grep 64 | grep Release | grep 5.8 | head -1` $folder/$name &&
+cp -v `find $BUILD64 -name hdf5.dll | head -1` $folder/$name &&
+cp -v `find $BUILD64 -name libmatio.dll | head -1` $folder/$name &&
+cp -v `find $BUILD64 -name szip.dll | head -1` $folder/$name &&
+cp -v `find $BUILD64 -name zlib.dll | head -1` $folder/$name &&
 cp -v $QT_DIR/bin/Qt5Core.dll $folder/$name &&
 cp -v $QT_DIR/bin/Qt5Gui.dll $folder/$name &&
 cp -v $QT_DIR/bin/Qt5Widgets.dll $folder/$name &&
@@ -113,10 +116,10 @@ cp -v $QT_DIR/qml/QtQuick.2/qmldir $folder/$name/QtQuick.2 &&
 libraries=OK || libraries=fail
 
 QT_DIR=C:/Qt/5.8/msvc2015 &&
-cp -v `find .. -name hdf5.dll | grep Alenka | grep 32 | grep Release | grep 5.8 | head -1` $folder32/$name-32 &&
-cp -v `find .. -name libmatio.dll | grep Alenka | grep 32 | grep Release | grep 5.8 | head -1` $folder32/$name-32 &&
-cp -v `find .. -name szip.dll | grep Alenka | grep 32 | grep Release | grep 5.8 | head -1` $folder32/$name-32 &&
-cp -v `find .. -name zlib.dll | grep Alenka | grep 32 | grep Release | grep 5.8 | head -1` $folder32/$name-32 &&
+cp -v `find $BUILD32 -name hdf5.dll | head -1` $folder32/$name-32 &&
+cp -v `find $BUILD32 -name libmatio.dll | head -1` $folder32/$name-32 &&
+cp -v `find $BUILD32 -name szip.dll | head -1` $folder32/$name-32 &&
+cp -v `find $BUILD32 -name zlib.dll | head -1` $folder32/$name-32 &&
 cp -v $QT_DIR/bin/Qt5Core.dll $folder32/$name-32 &&
 cp -v $QT_DIR/bin/Qt5Gui.dll $folder32/$name-32 &&
 cp -v $QT_DIR/bin/Qt5Widgets.dll $folder32/$name-32 &&
