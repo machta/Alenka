@@ -162,7 +162,7 @@ elseif(WIN32)
 	target_link_libraries(Alenka opengl32)
 
 	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-		target_link_libraries(Alenka ${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x64/matio.lib)
+		target_link_libraries(Alenka ${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x64/matio.lib)
 
 		add_custom_command(TARGET Alenka POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
 			${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x64/hdf5.dll
@@ -171,7 +171,7 @@ elseif(WIN32)
 			${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x64/zlib.dll
 			$<TARGET_FILE_DIR:Alenka>)
 	else()
-		target_link_libraries(Alenka ${Alenka-File_SOURCE_DIR}/matio/matio-msvc2015/x86/matio.lib)
+		target_link_libraries(Alenka ${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x86/matio.lib)
 
 		add_custom_command(TARGET Alenka POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
 			${Alenka_SOURCE_DIR}/libraries/matio-msvc2015/x86/hdf5.dll
