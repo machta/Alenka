@@ -18,13 +18,14 @@ class ChangeEventType : public QUndoCommand {
   EventType before, after;
 
 public:
-  ChangeEventType(DataModel *dataModel, int i, const EventType &value,
+  ChangeEventType(DataModel *dataModel, int i, EventType value,
                   const QString &text)
-      : QUndoCommand(text), dataModel(dataModel), i(i), after(value) {
+      : QUndoCommand(text), dataModel(dataModel), i(i),
+        after(std::move(value)) {
     before = dataModel->eventTypeTable()->row(i);
   }
-  virtual void redo() override { dataModel->eventTypeTable()->row(i, after); }
-  virtual void undo() override { dataModel->eventTypeTable()->row(i, before); }
+  void redo() override { dataModel->eventTypeTable()->row(i, after); }
+  void undo() override { dataModel->eventTypeTable()->row(i, before); }
 };
 
 class ChangeMontage : public QUndoCommand {
@@ -33,13 +34,13 @@ class ChangeMontage : public QUndoCommand {
   Montage before, after;
 
 public:
-  ChangeMontage(DataModel *dataModel, int i, const Montage &value,
-                const QString &text)
-      : QUndoCommand(text), dataModel(dataModel), i(i), after(value) {
+  ChangeMontage(DataModel *dataModel, int i, Montage value, const QString &text)
+      : QUndoCommand(text), dataModel(dataModel), i(i),
+        after(std::move(value)) {
     before = dataModel->montageTable()->row(i);
   }
-  virtual void redo() override { dataModel->montageTable()->row(i, after); }
-  virtual void undo() override { dataModel->montageTable()->row(i, before); }
+  void redo() override { dataModel->montageTable()->row(i, after); }
+  void undo() override { dataModel->montageTable()->row(i, before); }
 };
 
 class ChangeEvent : public QUndoCommand {
@@ -48,15 +49,16 @@ class ChangeEvent : public QUndoCommand {
   Event before, after;
 
 public:
-  ChangeEvent(DataModel *dataModel, int i, int j, const Event &value,
+  ChangeEvent(DataModel *dataModel, int i, int j, Event value,
               const QString &text)
-      : QUndoCommand(text), dataModel(dataModel), i(i), j(j), after(value) {
+      : QUndoCommand(text), dataModel(dataModel), i(i), j(j),
+        after(std::move(value)) {
     before = dataModel->montageTable()->eventTable(i)->row(j);
   }
-  virtual void redo() override {
+  void redo() override {
     dataModel->montageTable()->eventTable(i)->row(j, after);
   }
-  virtual void undo() override {
+  void undo() override {
     dataModel->montageTable()->eventTable(i)->row(j, before);
   }
 };
@@ -67,15 +69,16 @@ class ChangeTrack : public QUndoCommand {
   Track before, after;
 
 public:
-  ChangeTrack(DataModel *dataModel, int i, int j, const Track &value,
+  ChangeTrack(DataModel *dataModel, int i, int j, Track value,
               const QString &text)
-      : QUndoCommand(text), dataModel(dataModel), i(i), j(j), after(value) {
+      : QUndoCommand(text), dataModel(dataModel), i(i), j(j),
+        after(std::move(value)) {
     before = dataModel->montageTable()->trackTable(i)->row(j);
   }
-  virtual void redo() override {
+  void redo() override {
     dataModel->montageTable()->trackTable(i)->row(j, after);
   }
-  virtual void undo() override {
+  void undo() override {
     dataModel->montageTable()->trackTable(i)->row(j, before);
   }
 };
@@ -87,12 +90,8 @@ class InsertEventType : public QUndoCommand {
 public:
   InsertEventType(DataModel *dataModel, int i, int c, const QString &text)
       : QUndoCommand(text), dataModel(dataModel), i(i), c(c) {}
-  virtual void redo() override {
-    dataModel->eventTypeTable()->insertRows(i, c);
-  }
-  virtual void undo() override {
-    dataModel->eventTypeTable()->removeRows(i, c);
-  }
+  void redo() override { dataModel->eventTypeTable()->insertRows(i, c); }
+  void undo() override { dataModel->eventTypeTable()->removeRows(i, c); }
 };
 
 class InsertMontage : public QUndoCommand {
@@ -102,8 +101,8 @@ class InsertMontage : public QUndoCommand {
 public:
   InsertMontage(DataModel *dataModel, int i, int c, const QString &text)
       : QUndoCommand(text), dataModel(dataModel), i(i), c(c) {}
-  virtual void redo() override { dataModel->montageTable()->insertRows(i, c); }
-  virtual void undo() override { dataModel->montageTable()->removeRows(i, c); }
+  void redo() override { dataModel->montageTable()->insertRows(i, c); }
+  void undo() override { dataModel->montageTable()->removeRows(i, c); }
 };
 
 class InsertEvent : public QUndoCommand {
@@ -113,10 +112,10 @@ class InsertEvent : public QUndoCommand {
 public:
   InsertEvent(DataModel *dataModel, int i, int j, int c, const QString &text)
       : QUndoCommand(text), dataModel(dataModel), i(i), j(j), c(c) {}
-  virtual void redo() override {
+  void redo() override {
     dataModel->montageTable()->eventTable(i)->insertRows(j, c);
   }
-  virtual void undo() override {
+  void undo() override {
     dataModel->montageTable()->eventTable(i)->removeRows(j, c);
   }
 };
@@ -128,10 +127,10 @@ class InsertTrack : public QUndoCommand {
 public:
   InsertTrack(DataModel *dataModel, int i, int j, int c, const QString &text)
       : QUndoCommand(text), dataModel(dataModel), i(i), j(j), c(c) {}
-  virtual void redo() override {
+  void redo() override {
     dataModel->montageTable()->trackTable(i)->insertRows(j, c);
   }
-  virtual void undo() override {
+  void undo() override {
     dataModel->montageTable()->trackTable(i)->removeRows(j, c);
   }
 };
@@ -147,10 +146,8 @@ public:
     for (int k = 0; k < c; ++k)
       before.push_back(dataModel->eventTypeTable()->row(i + k));
   }
-  virtual void redo() override {
-    dataModel->eventTypeTable()->removeRows(i, c);
-  }
-  virtual void undo() override {
+  void redo() override { dataModel->eventTypeTable()->removeRows(i, c); }
+  void undo() override {
     dataModel->eventTypeTable()->insertRows(i, c);
 
     for (int k = 0; k < c; ++k)
@@ -188,12 +185,12 @@ public:
         tracksBefore[k].push_back(tt->row(l));
     }
   }
-  virtual void redo() override {
+  void redo() override {
     dataModel->montageTable()->removeRows(i, c);
 
     emitChangedMontage();
   }
-  virtual void undo() override {
+  void undo() override {
     AbstractMontageTable *mt = dataModel->montageTable();
     mt->insertRows(i, c);
 
@@ -238,10 +235,10 @@ public:
     for (int k = 0; k < c; ++k)
       before.push_back(dataModel->montageTable()->eventTable(i)->row(j + k));
   }
-  virtual void redo() override {
+  void redo() override {
     dataModel->montageTable()->eventTable(i)->removeRows(j, c);
   }
-  virtual void undo() override {
+  void undo() override {
     dataModel->montageTable()->eventTable(i)->insertRows(j, c);
 
     for (int k = 0; k < c; ++k)
@@ -260,10 +257,10 @@ public:
     for (int k = 0; k < c; ++k)
       before.push_back(dataModel->montageTable()->trackTable(i)->row(j + k));
   }
-  virtual void redo() override {
+  void redo() override {
     dataModel->montageTable()->trackTable(i)->removeRows(j, c);
   }
-  virtual void undo() override {
+  void undo() override {
     dataModel->montageTable()->trackTable(i)->insertRows(j, c);
 
     for (int k = 0; k < c; ++k)

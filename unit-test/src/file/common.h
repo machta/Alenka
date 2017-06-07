@@ -31,11 +31,11 @@ public:
   double sampleRate;
   unsigned int channelCount, samplesRecorded;
 
-  TestFile(const string &path, double sampleRate = 0, int channelCount = 0,
+  TestFile(string path, double sampleRate = 0, int channelCount = 0,
            int samplesRecorded = 0)
-      : path(path), sampleRate(sampleRate), channelCount(channelCount),
-        samplesRecorded(samplesRecorded) {}
-  ~TestFile() {}
+      : path(std::move(path)), sampleRate(sampleRate),
+        channelCount(channelCount), samplesRecorded(samplesRecorded) {}
+  ~TestFile() = default;
 
   DataFile *makeGDF2() { return new GDF2(path + ".gdf"); }
   DataFile *makeEDF() { return new EDF(path + ".edf"); }

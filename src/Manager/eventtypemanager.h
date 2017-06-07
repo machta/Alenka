@@ -13,7 +13,7 @@ public:
   explicit EventTypeManager(QWidget *parent = nullptr) : Manager(parent) {}
 
 protected slots:
-  virtual bool insertRowBack() override;
+  bool insertRowBack() override;
 };
 
 #endif // EVENTTYPEMANAGER_H

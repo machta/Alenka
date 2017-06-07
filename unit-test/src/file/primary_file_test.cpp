@@ -154,7 +154,7 @@ protected:
         mat73(TEST_DATA_PATH + "mat/73", MAT_FS, MAT_CHANNELS, MAT_SAMPLES),
         matDefault(TEST_DATA_PATH + "mat/default", MAT_FS, MAT_CHANNELS,
                    MAT_SAMPLES) {}
-  virtual ~primary_file_test() {}
+  ~primary_file_test() override = default;
 
   TestFile gdf00, gdf01;
   TestFile edf00;

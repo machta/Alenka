@@ -154,7 +154,7 @@ template <class T> void Montage<T>::buildProgram() {
         string src =
             buildSource<T>("out = in(_copyIndex_);", "", ", int _copyIndex_");
 
-        OpenCLProgram *p = new OpenCLProgram(src, context);
+        auto p = new OpenCLProgram(src, context);
         if (!p->compilationSuccessful())
           cerr << "Copy only kernel compilation error: " << endl
                << p->getCompilationLog();
@@ -168,7 +168,7 @@ template <class T> void Montage<T>::buildProgram() {
         string src =
             buildSource<T>("out = in(_copyIndex_);", "", ", int _copyIndex_");
 
-        OpenCLProgram *p = new OpenCLProgram(src, context);
+        auto p = new OpenCLProgram(src, context);
         if (!p->compilationSuccessful())
           cerr << "Copy only kernel compilation error: " << endl
                << p->getCompilationLog();

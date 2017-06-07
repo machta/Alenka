@@ -21,59 +21,51 @@ public:
    * @param filePath The file path of the primary data file.
    */
   GDF2(const std::string &filePath, bool uncalibrated = false);
-  virtual ~GDF2();
+  ~GDF2() override;
 
-  virtual double getSamplingFrequency() const override {
-    return samplingFrequency;
-  }
-  virtual unsigned int getChannelCount() const override {
-    return fh.numberOfChannels;
-  }
-  virtual uint64_t getSamplesRecorded() const override {
-    return samplesRecorded;
-  }
-  virtual double getStartDate() const override {
+  double getSamplingFrequency() const override { return samplingFrequency; }
+  unsigned int getChannelCount() const override { return fh.numberOfChannels; }
+  uint64_t getSamplesRecorded() const override { return samplesRecorded; }
+  double getStartDate() const override {
     double fractionOfDay = ldexp(static_cast<double>(fh.startDate[0]), -32);
     double days = fh.startDate[1];
     return days + fractionOfDay;
   }
-  virtual void save() override;
-  virtual bool load() override;
-  virtual void readChannels(std::vector<float *> dataChannels,
-                            uint64_t firstSample,
-                            uint64_t lastSample) override {
+  void save() override;
+  bool load() override;
+  void readChannels(std::vector<float *> dataChannels, uint64_t firstSample,
+                    uint64_t lastSample) override {
     readChannelsFloatDouble(dataChannels, firstSample, lastSample);
   }
-  virtual void readChannels(std::vector<double *> dataChannels,
-                            uint64_t firstSample,
-                            uint64_t lastSample) override {
+  void readChannels(std::vector<double *> dataChannels, uint64_t firstSample,
+                    uint64_t lastSample) override {
     readChannelsFloatDouble(dataChannels, firstSample, lastSample);
   }
 
-  virtual double getPhysicalMaximum(unsigned int channel) override {
+  double getPhysicalMaximum(unsigned int channel) override {
     if (channel < getChannelCount())
       return vh.physicalMaximum[channel];
     return 0;
   }
-  virtual double getPhysicalMinimum(unsigned int channel) override {
+  double getPhysicalMinimum(unsigned int channel) override {
     if (channel < getChannelCount())
       return vh.physicalMinimum[channel];
     return 0;
   }
-  virtual double getDigitalMaximum(unsigned int channel) override {
+  double getDigitalMaximum(unsigned int channel) override {
     if (channel < getChannelCount())
       return vh.digitalMaximum[channel];
     return 0;
   }
-  virtual double getDigitalMinimum(unsigned int channel) override {
+  double getDigitalMinimum(unsigned int channel) override {
     if (channel < getChannelCount())
       return vh.digitalMinimum[channel];
     return 0;
   }
-  virtual std::string getLabel(unsigned int channel) {
+  std::string getLabel(unsigned int channel) override {
     if (channel < getChannelCount())
       return vh.label[channel];
-    return 0;
+    return nullptr;
   }
 
 private:

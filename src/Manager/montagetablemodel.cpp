@@ -16,7 +16,7 @@ class Name : public TableColumn {
 public:
   Name(OpenDataFile *file) : TableColumn("Name", file) {}
 
-  virtual QVariant data(int row, int role) const override {
+  QVariant data(int row, int role) const override {
     if (role == Qt::DisplayRole || role == Qt::EditRole)
       return QString::fromStdString(
           file->dataModel->montageTable()->row(row).name);
@@ -24,7 +24,7 @@ public:
     return QVariant();
   }
 
-  virtual bool setData(int row, const QVariant &value, int role) override {
+  bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       Montage m = file->dataModel->montageTable()->row(row);
       m.name = value.toString().toStdString();
@@ -40,14 +40,14 @@ class Save : public BoolTableColumn {
 public:
   Save(OpenDataFile *file) : BoolTableColumn("Save", file) {}
 
-  virtual QVariant data(int row, int role) const override {
+  QVariant data(int row, int role) const override {
     if (role == Qt::DisplayRole || role == Qt::EditRole)
       return file->dataModel->montageTable()->row(row).save;
 
     return QVariant();
   }
 
-  virtual bool setData(int row, const QVariant &value, int role) override {
+  bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       Montage m = file->dataModel->montageTable()->row(row);
       m.save = value.toBool();

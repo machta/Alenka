@@ -20,7 +20,7 @@
 SyncDialog::SyncDialog(SyncServer *server, SyncClient *client, QWidget *parent)
     : QDialog(parent), server(server), client(client) {
   setWindowTitle("Synchronization Manager");
-  QVBoxLayout *box = new QVBoxLayout();
+  auto box = new QVBoxLayout();
 
   combo = new QComboBox();
   combo->insertItem(0, "Server");
@@ -44,8 +44,8 @@ void SyncDialog::buildServerControls() {
   QFont font;
   font.setPointSize(18);
 
-  QVBoxLayout *box = new QVBoxLayout();
-  QGridLayout *grid = new QGridLayout();
+  auto box = new QVBoxLayout();
+  auto grid = new QGridLayout();
 
   QLabel *label = new QLabel("Network interface IPs of this device:");
   label->setToolTip("Use this to connect with the client over LAN");
@@ -61,7 +61,7 @@ void SyncDialog::buildServerControls() {
       ipAddresses += address.toString();
     }
   }
-  QLabel *ipLabel = new QLabel(ipAddresses);
+  auto ipLabel = new QLabel(ipAddresses);
   ipLabel->setText(ipAddresses);
   ipLabel->setFont(font);
   grid->addWidget(ipLabel, 1, 0);
@@ -72,7 +72,7 @@ void SyncDialog::buildServerControls() {
   grid->addWidget(serverPortEdit, 1, 1, Qt::AlignTop);
 
   box->addLayout(grid);
-  QDialogButtonBox *buttonBox = new QDialogButtonBox();
+  auto buttonBox = new QDialogButtonBox();
 
   launchButton = new QPushButton("Launch");
   buttonBox->addButton(launchButton, QDialogButtonBox::ActionRole);
@@ -84,7 +84,7 @@ void SyncDialog::buildServerControls() {
 
   box->addWidget(buttonBox);
 
-  QFormLayout *status = new QFormLayout();
+  auto status = new QFormLayout();
   font.setPointSize(15);
   serverStatus = new QLabel("Server Ready");
   serverStatus->setFont(font);
@@ -99,13 +99,13 @@ void SyncDialog::buildClientControls() {
   QFont font;
   font.setPointSize(18);
 
-  QVBoxLayout *box = new QVBoxLayout();
-  QGridLayout *grid = new QGridLayout();
+  auto box = new QVBoxLayout();
+  auto grid = new QGridLayout();
 
   QLabel *label = new QLabel("Server address or IP:");
   label->setToolTip("Examples: www.example.com, 10.0.0.10");
   grid->addWidget(label, 0, 0);
-  QHBoxLayout *hbox = new QHBoxLayout();
+  auto hbox = new QHBoxLayout();
   label = new QLabel("ws://");
   label->setFont(font);
   hbox->addWidget(label);
@@ -120,7 +120,7 @@ void SyncDialog::buildClientControls() {
   grid->addWidget(clientPortEdit, 1, 1);
 
   box->addLayout(grid);
-  QDialogButtonBox *buttonBox = new QDialogButtonBox();
+  auto buttonBox = new QDialogButtonBox();
 
   connectButton = new QPushButton("Connect");
   buttonBox->addButton(connectButton, QDialogButtonBox::ActionRole);
@@ -138,7 +138,7 @@ void SyncDialog::buildClientControls() {
 
   box->addWidget(buttonBox);
 
-  QFormLayout *status = new QFormLayout();
+  auto status = new QFormLayout();
   font.setPointSize(15);
   clientStatus = new QLabel("Client Ready");
   clientStatus->setFont(font);

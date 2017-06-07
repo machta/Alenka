@@ -38,8 +38,8 @@ public:
    * @brief DataFile constructor.
    * @param filePath The file path of the primary file.
    */
-  DataFile(const std::string &filePath) : filePath(filePath) {}
-  virtual ~DataFile() {}
+  DataFile(std::string filePath) : filePath(std::move(filePath)) {}
+  virtual ~DataFile() = default;
 
   std::string getFilePath() const { return filePath; }
 

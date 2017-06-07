@@ -63,11 +63,11 @@ class FloatAllocator : public LRUCacheAllocator<float> {
 public:
   FloatAllocator(int size) : size(size) {}
 
-  virtual bool constructElement(float **ptr) override {
+  bool constructElement(float **ptr) override {
     *ptr = new float[size];
     return true;
   }
-  virtual void destroyElement(float *ptr) override { delete[] ptr; }
+  void destroyElement(float *ptr) override { delete[] ptr; }
 };
 
 } // namespace
@@ -79,8 +79,8 @@ SignalProcessor::SignalProcessor(unsigned int nBlock,
                                  AlenkaSignal::OpenCLContext *context,
                                  int extraSamplesFront, int extraSamplesBack)
     : nBlock(nBlock), parallelQueues(parallelQueues),
-      montageCopyCount(montageCopyCount), glSharing(glSharing), file(file),
-      context(context), extraSamplesFront(extraSamplesFront),
+      montageCopyCount(montageCopyCount), glSharing(std::move(glSharing)),
+      file(file), context(context), extraSamplesFront(extraSamplesFront),
       extraSamplesBack(extraSamplesBack) {
   fileChannels = file->file->getChannelCount();
   cl_int err;

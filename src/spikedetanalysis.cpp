@@ -59,7 +59,7 @@ public:
 
     tmpData.resize(BLOCK_LENGTH * inChannels);
   }
-  virtual ~Loader() override {
+  ~Loader() override {
     delete processor;
 
     cl_int err;
@@ -80,8 +80,7 @@ public:
     }
   }
 
-  virtual void readSignal(T *data, int64_t firstSample,
-                          int64_t lastSample) override {
+  void readSignal(T *data, int64_t firstSample, int64_t lastSample) override {
     cl_int err;
 
     for (int64_t sample = firstSample; sample <= lastSample;
@@ -120,8 +119,8 @@ public:
     // - firstSample + 1)*outChannels);
   }
 
-  virtual int64_t sampleCount() override { return file->getSamplesRecorded(); }
-  virtual int channelCount() override { return outChannels; }
+  int64_t sampleCount() override { return file->getSamplesRecorded(); }
+  int channelCount() override { return outChannels; }
 };
 
 template <class T>

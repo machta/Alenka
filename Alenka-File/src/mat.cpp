@@ -111,14 +111,14 @@ namespace AlenkaFile {
 
 // How to decode data in Matlab: data = double(d)*diag(mults);
 
-MAT::MAT(const string &filePath, const MATvars &vars)
-    : DataFile(filePath), vars(vars) {
+MAT::MAT(const string &filePath, MATvars vars)
+    : DataFile(filePath), vars(std::move(vars)) {
   openMatFile(filePath);
   construct();
 }
 
-MAT::MAT(const std::vector<string> &filePaths, const MATvars &vars)
-    : DataFile(filePaths.at(0)), vars(vars) {
+MAT::MAT(const std::vector<string> &filePaths, MATvars vars)
+    : DataFile(filePaths.at(0)), vars(std::move(vars)) {
   for (auto e : filePaths)
     openMatFile(e);
   construct();
@@ -190,9 +190,7 @@ void MAT::readData() {
   numberOfChannels = MAX_CHANNELS;
   samplesRecorded = 0;
 
-  for (unsigned int j = 0; j < vars.data.size(); ++j) {
-    const string varName = vars.data[j];
-
+  for (auto varName : vars.data) {
     for (unsigned int i = 0; i < files.size(); ++i) {
       matvar_t *toFree;
       matvar_t *dataVar = readVar(files[i], varName, &toFree);
@@ -309,9 +307,9 @@ void MAT::readEvents(vector<int> *eventPositions, vector<int> *eventDurations,
     if (pos) {
       vector<double> doubleArray = readDoubleArray(file, pos);
 
-      for (unsigned int i = 0; i < doubleArray.size(); ++i)
+      for (double i : doubleArray)
         eventPositions->push_back(
-            static_cast<int>(round(doubleArray[i] * samplingFrequency)));
+            static_cast<int>(round(i * samplingFrequency)));
 
       Mat_VarFree(toFree);
     }
@@ -324,9 +322,9 @@ void MAT::readEvents(vector<int> *eventPositions, vector<int> *eventDurations,
     if (dur) {
       vector<double> doubleArray = readDoubleArray(file, dur);
 
-      for (unsigned int i = 0; i < doubleArray.size(); ++i)
+      for (double i : doubleArray)
         eventDurations->push_back(
-            static_cast<int>(round(doubleArray[i] * samplingFrequency)));
+            static_cast<int>(round(i * samplingFrequency)));
 
       Mat_VarFree(toFree);
     }
@@ -339,8 +337,8 @@ void MAT::readEvents(vector<int> *eventPositions, vector<int> *eventDurations,
     if (chan) {
       vector<double> doubleArray = readDoubleArray(file, chan);
 
-      for (unsigned int i = 0; i < doubleArray.size(); ++i)
-        eventChannels->push_back(static_cast<int>(round(doubleArray[i])) - 1);
+      for (double i : doubleArray)
+        eventChannels->push_back(static_cast<int>(round(i)) - 1);
 
       Mat_VarFree(toFree);
     }

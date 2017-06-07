@@ -19,20 +19,19 @@ public:
     m_channels.resize(loader->channelCount());
   }
 
-  virtual void OpenFile(const char *fileName) override { assert(0); }
-  virtual void OpenFile(const wchar_t *fileName) override { assert(0); }
-  virtual void CloseFile() override { assert(0); }
-  virtual bool IsOpen() const override {
+  void OpenFile(const char *fileName) override { assert(0); }
+  void OpenFile(const wchar_t *fileName) override { assert(0); }
+  void CloseFile() override { assert(0); }
+  bool IsOpen() const override {
     assert(0);
     return true;
   }
-  virtual bool IsEnd() const override {
+  bool IsEnd() const override {
     assert(0);
     return false;
   }
 
-  virtual wxVector<SIGNALTYPE> *GetSegment(const int &start,
-                                           const int &end) override {
+  wxVector<SIGNALTYPE> *GetSegment(const int &start, const int &end) override {
     int channelCount = GetCountChannels();
     int size = end - start;
 
@@ -62,7 +61,7 @@ namespace AlenkaSignal {
 Spikedet::Spikedet(int fs, int channelCount, bool original,
                    DETECTOR_SETTINGS settings)
     : fs(fs), channelCount(channelCount), original(original),
-      settings(settings) {
+      settings(std::move(settings)) {
   this->settings.m_original = original;
 }
 

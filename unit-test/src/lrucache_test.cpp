@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "../src/SignalProcessor/lrucache.h"
+#include "../../src/SignalProcessor/lrucache.h"
 
 using namespace std;
 
@@ -14,11 +14,11 @@ public:
   FloatAllocator(int *destroyedCount = nullptr)
       : destroyCounter(destroyedCount) {}
 
-  virtual bool constructElement(float **ptr) override {
+  bool constructElement(float **ptr) override {
     *ptr = new float[1024];
     return true;
   }
-  virtual void destroyElement(float *ptr) override {
+  void destroyElement(float *ptr) override {
     if (destroyCounter && ptr)
       ++(*destroyCounter);
     delete[] ptr;

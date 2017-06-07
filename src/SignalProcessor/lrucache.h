@@ -8,7 +8,7 @@
 
 template <class T> class LRUCacheAllocator {
 public:
-  virtual ~LRUCacheAllocator() {}
+  virtual ~LRUCacheAllocator() = default;
 
   virtual bool constructElement(T **ptr) = 0;
   virtual void destroyElement(T *ptr) = 0;

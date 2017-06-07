@@ -57,7 +57,7 @@ FilterVisualizer::FilterVisualizer(QWidget *parent) : QWidget(parent) {
   });
   chartView->addAction(zoomAction);
 
-  QVBoxLayout *box = new QVBoxLayout();
+  auto box = new QVBoxLayout();
   box->setMargin(0);
   box->addWidget(chartView);
   setLayout(box);

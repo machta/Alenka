@@ -102,8 +102,7 @@ void testDataModel(const DataModel *dataModel) {
 }
 
 DataModel *makeDataModel() {
-  DataModel *dataModel =
-      new DataModel(new EventTypeTable(), new MontageTable());
+  auto dataModel = new DataModel(new EventTypeTable(), new MontageTable());
 
   dataModel->montageTable()->insertRows(0, 2);
 
@@ -318,8 +317,7 @@ DataModel *testPrimary(const string &fp, const string &suffix) {
   }
 
   remove(p.string() + ".mont");
-  DataModel *dataModel =
-      new DataModel(new EventTypeTable(), new MontageTable());
+  auto dataModel = new DataModel(new EventTypeTable(), new MontageTable());
 
   {
     T file(p.string());

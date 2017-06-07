@@ -67,8 +67,7 @@ vector<int> computeAmplitudeArrows(const vector<double> &amps) {
   if (negative)
     mostCommonValue *= -1;
 
-  for (unsigned int i = 0; i < amps.size(); ++i) {
-    double value = amps[i];
+  for (double value : amps) {
     if (negative)
       value *= -1;
     int arrow;

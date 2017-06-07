@@ -16,7 +16,7 @@
 using namespace std;
 
 SignalViewer::SignalViewer(QWidget *parent) : QWidget(parent) {
-  QVBoxLayout *box = new QVBoxLayout;
+  auto box = new QVBoxLayout;
   setLayout(box);
   box->setContentsMargins(0, 0, 0, 0);
   box->setSpacing(0);

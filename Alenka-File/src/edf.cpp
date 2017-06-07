@@ -197,7 +197,7 @@ double EDF::getDigitalMinimum(unsigned int channel) {
 string EDF::getLabel(unsigned int channel) {
   if (channel < getChannelCount())
     return edfhdr->signalparam[channel].label;
-  return 0;
+  return "";
 }
 
 void EDF::saveAs(const string &filePath, DataFile *sourceFile) {

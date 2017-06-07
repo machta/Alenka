@@ -20,7 +20,7 @@ public:
   void setReferences(const Canvas *canvas) { this->canvas = canvas; }
 
 protected slots:
-  virtual bool insertRowBack() override;
+  bool insertRowBack() override;
 
 private:
   const Canvas *canvas = nullptr;

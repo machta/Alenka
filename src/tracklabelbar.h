@@ -40,7 +40,7 @@ public slots:
   }
 
 protected:
-  virtual void paintEvent(QPaintEvent *event) override;
+  void paintEvent(QPaintEvent *event) override;
 
 private slots:
   void updateConnections(int row);

@@ -27,7 +27,7 @@ CodeEditDialog::CodeEditDialog(QWidget *parent) : QDialog(parent) {
   setMinimumWidth(500);
   setMinimumHeight(500);
 
-  QVBoxLayout *box = new QVBoxLayout;
+  auto box = new QVBoxLayout;
 
   const char *help =
       R"(Input and output:
@@ -49,7 +49,7 @@ Definitions included in the source code that you can use:)";
     headerString = headerString.trimmed();
   }
 
-  QTextEdit *header = new QTextEdit(this);
+  auto header = new QTextEdit(this);
   header->setPlainText(headerString);
   header->setReadOnly(true);
   box->addWidget(header);
@@ -59,7 +59,7 @@ Definitions included in the source code that you can use:)";
   editor = new QTextEdit(this);
   box->addWidget(editor);
 
-  QDialogButtonBox *buttonBox = new QDialogButtonBox(
+  auto buttonBox = new QDialogButtonBox(
       QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
   connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
   connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));

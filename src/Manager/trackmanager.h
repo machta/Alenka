@@ -13,7 +13,7 @@ public:
   explicit TrackManager(QWidget *parent = nullptr) : Manager(parent) {}
 
 protected slots:
-  virtual bool insertRowBack() override;
+  bool insertRowBack() override;
 };
 
 #endif // TRACKMANAGER_H

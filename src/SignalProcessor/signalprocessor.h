@@ -36,7 +36,7 @@ class OpenDataFile;
  * one directly accessed from the rest of the code.
  *
  * Before an object of this class is constructed or used an OpenGL context must
-be set current.
+ * be set current.
  * There is example usage outside of a method that guarantees this:
  * @code{.cpp}
 makeCurrent();
@@ -143,12 +143,10 @@ public:
 #endif
     vector<AlenkaSignal::Montage<T> *> montage;
 
-    for (unsigned int i = 0; i < montageCode.size(); i++) {
-      unique_ptr<AlenkaSignal::Montage<T>> sourceMontage(
-          new AlenkaSignal::Montage<T>(simplifyMontage<T>(montageCode[i]),
-                                       context, header));
+    for (const auto &i : montageCode) {
+      auto sourceMontage = make_unique<AlenkaSignal::Montage<T>>(
+          simplifyMontage<T>(i), context, header);
       QString code = QString::fromStdString(sourceMontage->getSource());
-
       auto ptr = kernelCache ? kernelCache->find(code) : nullptr;
 
       if (ptr) {

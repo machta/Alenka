@@ -11,8 +11,8 @@ public:
       : QSortFilterProxyModel(parent) {}
 
 protected:
-  virtual bool lessThan(const QModelIndex &left,
-                        const QModelIndex &right) const override;
+  bool lessThan(const QModelIndex &left,
+                const QModelIndex &right) const override;
 };
 
 #endif // SORTPROXYMODEL_H

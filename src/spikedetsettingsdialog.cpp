@@ -19,12 +19,12 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(DETECTOR_SETTINGS *settings,
                                                QWidget *parent)
     : QDialog(parent), settings(settings), eventDuration(eventDuration),
       originalSpikedet(originalSpikedet) {
-  QVBoxLayout *box = new QVBoxLayout();
+  auto box = new QVBoxLayout();
 
-  QFormLayout *grid = new QFormLayout();
+  auto grid = new QFormLayout();
   box->addLayout(grid);
 
-  QDialogButtonBox *buttonBox =
+  auto buttonBox =
       new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel |
                            QDialogButtonBox::Reset);
   connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);

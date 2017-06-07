@@ -10,7 +10,7 @@ class SyncClient : public QObject {
 
 public:
   explicit SyncClient(QObject *parent = nullptr);
-  ~SyncClient();
+  ~SyncClient() override;
 
   int connectServer(QUrl url, int port);
   bool isValid();

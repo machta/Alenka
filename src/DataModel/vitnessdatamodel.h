@@ -22,10 +22,10 @@ public:
   VitnessEventTypeTable() : AlenkaFile::EventTypeTable() {
     vitnessObject = new DataModelVitness();
   }
-  virtual ~VitnessEventTypeTable() override { delete vitnessObject; }
-  virtual void insertRows(int row, int count = 1) override;
-  virtual void removeRows(int row, int count = 1) override;
-  virtual void row(int i, const AlenkaFile::EventType &value) override;
+  ~VitnessEventTypeTable() override { delete vitnessObject; }
+  void insertRows(int row, int count = 1) override;
+  void removeRows(int row, int count = 1) override;
+  void row(int i, const AlenkaFile::EventType &value) override;
 
   static const DataModelVitness *
   vitness(const AlenkaFile::AbstractEventTypeTable *table) {
@@ -41,10 +41,10 @@ public:
   VitnessEventTable() : AlenkaFile::EventTable() {
     vitnessObject = new DataModelVitness();
   }
-  virtual ~VitnessEventTable() override { delete vitnessObject; }
-  virtual void insertRows(int row, int count = 1) override;
-  virtual void removeRows(int row, int count = 1) override;
-  virtual void row(int i, const AlenkaFile::Event &value) override;
+  ~VitnessEventTable() override { delete vitnessObject; }
+  void insertRows(int row, int count = 1) override;
+  void removeRows(int row, int count = 1) override;
+  void row(int i, const AlenkaFile::Event &value) override;
 
   static const DataModelVitness *
   vitness(const AlenkaFile::AbstractEventTable *table) {
@@ -60,11 +60,11 @@ public:
   VitnessTrackTable() : AlenkaFile::TrackTable() {
     vitnessObject = new DataModelVitness();
   }
-  virtual ~VitnessTrackTable() override { delete vitnessObject; }
-  virtual void insertRows(int row, int count = 1) override;
-  virtual void removeRows(int row, int count = 1) override;
-  virtual void row(int i, const AlenkaFile::Track &value) override;
-  virtual AlenkaFile::Track defaultValue(int row) const override;
+  ~VitnessTrackTable() override { delete vitnessObject; }
+  void insertRows(int row, int count = 1) override;
+  void removeRows(int row, int count = 1) override;
+  void row(int i, const AlenkaFile::Track &value) override;
+  AlenkaFile::Track defaultValue(int row) const override;
 
   static const DataModelVitness *
   vitness(const AlenkaFile::AbstractTrackTable *table) {
@@ -80,10 +80,10 @@ public:
   VitnessMontageTable() : AlenkaFile::MontageTable() {
     vitnessObject = new DataModelVitness();
   }
-  virtual ~VitnessMontageTable() override { delete vitnessObject; }
-  virtual void insertRows(int row, int count = 1) override;
-  virtual void removeRows(int row, int count = 1) override;
-  virtual void row(int i, const AlenkaFile::Montage &value) override;
+  ~VitnessMontageTable() override { delete vitnessObject; }
+  void insertRows(int row, int count = 1) override;
+  void removeRows(int row, int count = 1) override;
+  void row(int i, const AlenkaFile::Montage &value) override;
 
   static const DataModelVitness *
   vitness(const AlenkaFile::AbstractMontageTable *table) {
@@ -91,10 +91,10 @@ public:
   }
 
 protected:
-  virtual AlenkaFile::AbstractEventTable *makeEventTable() override {
+  AlenkaFile::AbstractEventTable *makeEventTable() override {
     return new VitnessEventTable();
   }
-  virtual AlenkaFile::AbstractTrackTable *makeTrackTable() override {
+  AlenkaFile::AbstractTrackTable *makeTrackTable() override {
     return new VitnessTrackTable();
   }
 

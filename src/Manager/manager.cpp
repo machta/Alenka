@@ -113,7 +113,7 @@ Manager::Manager(QWidget *parent) : QWidget(parent, Qt::Window) {
   addButton(addRowButton);
   addButton(removeRowButton);
 
-  QVBoxLayout *box = new QVBoxLayout;
+  auto box = new QVBoxLayout;
   box->addLayout(buttonLayout);
   box->addWidget(tableView);
   setLayout(box);
@@ -156,7 +156,7 @@ map<pair<int, int>, QString> Manager::textOfSelection() {
 }
 
 void Manager::addSeparator() {
-  QAction *separator = new QAction(this);
+  auto separator = new QAction(this);
   separator->setSeparator(true);
   tableView->addAction(separator);
 }

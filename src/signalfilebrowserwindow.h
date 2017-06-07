@@ -102,7 +102,7 @@ class SignalFileBrowserWindow : public QMainWindow {
 
 public:
   explicit SignalFileBrowserWindow(QWidget *parent = nullptr);
-  ~SignalFileBrowserWindow();
+  ~SignalFileBrowserWindow() override;
 
   void openCommandLineFile();
 

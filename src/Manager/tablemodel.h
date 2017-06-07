@@ -17,9 +17,9 @@ class OpenDataFile;
 
 class TableColumn {
 public:
-  TableColumn(const QString &header, OpenDataFile *file)
-      : header(header), file(file) {}
-  virtual ~TableColumn() {}
+  TableColumn(QString header, OpenDataFile *file)
+      : header(std::move(header)), file(file) {}
+  virtual ~TableColumn() = default;
 
   virtual QVariant headerData() const { return header; }
 
@@ -59,9 +59,8 @@ public:
   BoolTableColumn(const QString &header, OpenDataFile *file)
       : TableColumn(header, file) {}
 
-  virtual bool createEditor(QWidget *parent, const QStyleOptionViewItem &option,
-                            const QModelIndex &index,
-                            QWidget **widget) const override;
+  bool createEditor(QWidget *parent, const QStyleOptionViewItem &option,
+                    const QModelIndex &index, QWidget **widget) const override;
 };
 
 class ColorTableColumn : public TableColumn {
@@ -69,9 +68,8 @@ public:
   ColorTableColumn(const QString &header, OpenDataFile *file)
       : TableColumn(header, file) {}
 
-  virtual bool createEditor(QWidget *parent, const QStyleOptionViewItem &option,
-                            const QModelIndex &index,
-                            QWidget **widget) const override;
+  bool createEditor(QWidget *parent, const QStyleOptionViewItem &option,
+                    const QModelIndex &index, QWidget **widget) const override;
 };
 
 class TableModel : public QAbstractTableModel {
@@ -79,47 +77,45 @@ class TableModel : public QAbstractTableModel {
 
 public:
   explicit TableModel(OpenDataFile *file, QObject *parent = nullptr);
-  ~TableModel();
+  ~TableModel() override;
 
-  virtual int
-  rowCount(const QModelIndex &parent = QModelIndex()) const override = 0;
-  virtual int
-  columnCount(const QModelIndex &parent = QModelIndex()) const override {
+  int rowCount(const QModelIndex &parent = QModelIndex()) const override = 0;
+  int columnCount(const QModelIndex &parent = QModelIndex()) const override {
     (void)parent;
     return static_cast<int>(columns.size());
   }
-  virtual QVariant headerData(int section, Qt::Orientation orientation,
-                              int role = Qt::DisplayRole) const override {
+  QVariant headerData(int section, Qt::Orientation orientation,
+                      int role = Qt::DisplayRole) const override {
     if (role == Qt::DisplayRole && orientation == Qt::Horizontal &&
         0 <= section && section < columnCount())
       return columns[section]->headerData();
 
     return QVariant();
   }
-  virtual QVariant data(const QModelIndex &index,
-                        int role = Qt::DisplayRole) const override {
+  QVariant data(const QModelIndex &index,
+                int role = Qt::DisplayRole) const override {
     if (index.isValid() && index.row() < rowCount() &&
         index.column() < columnCount())
       return columns[index.column()]->data(index.row(), role);
 
     return QVariant();
   }
-  virtual bool setData(const QModelIndex &index, const QVariant &value,
-                       int role = Qt::EditRole) override {
+  bool setData(const QModelIndex &index, const QVariant &value,
+               int role = Qt::EditRole) override {
     if (index.isValid() && index.row() < rowCount() &&
         index.column() < columnCount())
       return columns[index.column()]->setData(index.row(), value, role);
 
     return false;
   }
-  virtual Qt::ItemFlags flags(const QModelIndex &index) const override {
+  Qt::ItemFlags flags(const QModelIndex &index) const override {
     if (!index.isValid())
       return Qt::ItemIsEnabled;
 
     return QAbstractTableModel::flags(index) | columns[index.column()]->flags();
   }
-  virtual bool removeRows(int row, int count,
-                          const QModelIndex &parent = QModelIndex()) override;
+  bool removeRows(int row, int count,
+                  const QModelIndex &parent = QModelIndex()) override;
 
   QStyledItemDelegate *getDelegate() { return delegate; }
 

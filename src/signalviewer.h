@@ -27,7 +27,7 @@ class SignalViewer : public QWidget {
 
 public:
   explicit SignalViewer(QWidget *parent = nullptr);
-  ~SignalViewer();
+  ~SignalViewer() override;
 
   Canvas *getCanvas() { return canvas; }
 
@@ -45,10 +45,10 @@ public slots:
   void updateSignalViewer();
 
 protected:
-  virtual void resizeEvent(QResizeEvent *event) override;
-  virtual void wheelEvent(QWheelEvent *event) override;
-  virtual void keyPressEvent(QKeyEvent *event) override;
-  virtual void keyReleaseEvent(QKeyEvent *event) override;
+  void resizeEvent(QResizeEvent *event) override;
+  void wheelEvent(QWheelEvent *event) override;
+  void keyPressEvent(QKeyEvent *event) override;
+  void keyReleaseEvent(QKeyEvent *event) override;
 
 private:
   OpenDataFile *file = nullptr;

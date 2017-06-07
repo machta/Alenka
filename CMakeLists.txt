@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.1)
 project(Alenka)
 
+# Options.
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_EXPORT_COMPILE_COMMANDS on)
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(DEBUG true)
 endif()
-
-# Options.
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
 if(UNIX)
   add_definitions(-DUNIX_BUILD)

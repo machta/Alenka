@@ -26,35 +26,35 @@ class Id : public TableColumn {
 public:
   Id(OpenDataFile *file) : TableColumn("ID", file) {}
 
-  virtual QVariant data(int row, int role) const override {
+  QVariant data(int row, int role) const override {
     if (role == Qt::DisplayRole || role == Qt::EditRole)
       return row;
 
     return QVariant();
   }
 
-  virtual bool setData(int row, const QVariant &value, int role) override {
+  bool setData(int row, const QVariant &value, int role) override {
     (void)row;
     (void)value;
     (void)role;
     return false;
   }
 
-  virtual Qt::ItemFlags flags() const override { return Qt::NoItemFlags; }
+  Qt::ItemFlags flags() const override { return Qt::NoItemFlags; }
 };
 
 class Label : public TableColumn {
 public:
   Label(OpenDataFile *file) : TableColumn("Label", file) {}
 
-  virtual QVariant data(int row, int role) const override {
+  QVariant data(int row, int role) const override {
     if (role == Qt::DisplayRole || role == Qt::EditRole)
       return QString::fromStdString(currentTrackTable(file)->row(row).label);
 
     return QVariant();
   }
 
-  virtual bool setData(int row, const QVariant &value, int role) override {
+  bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       Track t = currentTrackTable(file)->row(row);
       t.label = value.toString().toStdString();
@@ -72,16 +72,16 @@ public:
   Code(OpenDataFile *file) : TableColumn("Code", file) {
     validator = new TrackCodeValidator();
   }
-  virtual ~Code() { delete validator; }
+  ~Code() override { delete validator; }
 
-  virtual QVariant data(int row, int role) const override {
+  QVariant data(int row, int role) const override {
     if (role == Qt::DisplayRole || role == Qt::EditRole)
       return QString::fromStdString(currentTrackTable(file)->row(row).code);
 
     return QVariant();
   }
 
-  virtual bool setData(int row, const QVariant &value, int role) override {
+  bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       Track t = currentTrackTable(file)->row(row);
       QString qc = value.toString();
@@ -99,13 +99,12 @@ public:
     return false;
   }
 
-  virtual bool createEditor(QWidget *parent, const QStyleOptionViewItem &option,
-                            const QModelIndex &index,
-                            QWidget **widget) const override {
+  bool createEditor(QWidget *parent, const QStyleOptionViewItem &option,
+                    const QModelIndex &index, QWidget **widget) const override {
     (void)option;
     (void)index;
 
-    QLineEdit *lineEdit = new QLineEdit(parent);
+    auto lineEdit = new QLineEdit(parent);
     QAction *action = lineEdit->addAction(QIcon(":/icons/edit.png"),
                                           QLineEdit::TrailingPosition);
 
@@ -127,8 +126,8 @@ public:
     return true;
   }
 
-  virtual bool setModelData(QWidget *editor, QAbstractItemModel *model,
-                            const QModelIndex &index) const override {
+  bool setModelData(QWidget *editor, QAbstractItemModel *model,
+                    const QModelIndex &index) const override {
     (void)model;
     (void)index;
 
@@ -151,7 +150,7 @@ class Color : public ColorTableColumn {
 public:
   Color(OpenDataFile *file) : ColorTableColumn("Color", file) {}
 
-  virtual QVariant data(int row, int role) const override {
+  QVariant data(int row, int role) const override {
     if (role == Qt::DisplayRole || role == Qt::EditRole ||
         role == Qt::DecorationRole) {
       auto colorArray = currentTrackTable(file)->row(row).color;
@@ -163,7 +162,7 @@ public:
     return QVariant();
   }
 
-  virtual bool setData(int row, const QVariant &value, int role) override {
+  bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       Track t = currentTrackTable(file)->row(row);
       DataModel::color2array(value.value<QColor>(), t.color);
@@ -180,14 +179,14 @@ class Amplitude : public TableColumn {
 public:
   Amplitude(OpenDataFile *file) : TableColumn("Amplitude", file) {}
 
-  virtual QVariant data(int row, int role) const override {
+  QVariant data(int row, int role) const override {
     if (role == Qt::DisplayRole || role == Qt::EditRole)
       return currentTrackTable(file)->row(row).amplitude;
 
     return QVariant();
   }
 
-  virtual bool setData(int row, const QVariant &value, int role) override {
+  bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       Track t = currentTrackTable(file)->row(row);
 
@@ -214,13 +213,12 @@ public:
     return false;
   }
 
-  virtual bool createEditor(QWidget *parent, const QStyleOptionViewItem &option,
-                            const QModelIndex &index,
-                            QWidget **widget) const override {
+  bool createEditor(QWidget *parent, const QStyleOptionViewItem &option,
+                    const QModelIndex &index, QWidget **widget) const override {
     (void)option;
     (void)index;
 
-    QDoubleSpinBox *spinBox = new QDoubleSpinBox(parent);
+    auto spinBox = new QDoubleSpinBox(parent);
     spinBox->setDecimals(10);
     spinBox->setRange(std::numeric_limits<double>::lowest(),
                       std::numeric_limits<double>::max());
@@ -234,14 +232,14 @@ class Hidden : public BoolTableColumn {
 public:
   Hidden(OpenDataFile *file) : BoolTableColumn("Hidden", file) {}
 
-  virtual QVariant data(int row, int role) const override {
+  QVariant data(int row, int role) const override {
     if (role == Qt::DisplayRole || role == Qt::EditRole)
       return currentTrackTable(file)->row(row).hidden;
 
     return QVariant();
   }
 
-  virtual bool setData(int row, const QVariant &value, int role) override {
+  bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       Track t = currentTrackTable(file)->row(row);
       t.hidden = value.toBool();

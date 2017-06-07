@@ -18,7 +18,7 @@ struct EventType {
 
 class AbstractEventTypeTable {
 public:
-  virtual ~AbstractEventTypeTable() {}
+  virtual ~AbstractEventTypeTable() = default;
   virtual int rowCount() const = 0;
   virtual void insertRows(int row, int count = 1) = 0;
   virtual void removeRows(int row, int count = 1) = 0;
@@ -48,7 +48,7 @@ struct Event {
 
 class AbstractEventTable {
 public:
-  virtual ~AbstractEventTable() {}
+  virtual ~AbstractEventTable() = default;
   virtual int rowCount() const = 0;
   virtual void insertRows(int row, int count = 1) = 0;
   virtual void removeRows(int row, int count = 1) = 0;
@@ -69,7 +69,7 @@ struct Track {
 
 class AbstractTrackTable {
 public:
-  virtual ~AbstractTrackTable() {}
+  virtual ~AbstractTrackTable() = default;
   virtual int rowCount() const = 0;
   virtual void insertRows(int row, int count = 1) = 0;
   virtual void removeRows(int row, int count = 1) = 0;
@@ -87,7 +87,7 @@ struct Montage {
 
 class AbstractMontageTable {
 public:
-  virtual ~AbstractMontageTable() {}
+  virtual ~AbstractMontageTable() = default;
   virtual int rowCount() const = 0;
   virtual void insertRows(int row, int count = 1) = 0;
   virtual void removeRows(int row, int count = 1) = 0;

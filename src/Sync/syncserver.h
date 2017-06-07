@@ -13,7 +13,7 @@ class SyncServer : public QObject {
 
 public:
   explicit SyncServer(QObject *parent = nullptr);
-  ~SyncServer();
+  ~SyncServer() override;
 
   int launch(int port);
   int shutDown();

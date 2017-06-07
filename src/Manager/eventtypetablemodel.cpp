@@ -17,14 +17,14 @@ class Id : public TableColumn {
 public:
   Id(OpenDataFile *file) : TableColumn("ID", file) {}
 
-  virtual QVariant data(int row, int role) const override {
+  QVariant data(int row, int role) const override {
     if (role == Qt::DisplayRole || role == Qt::EditRole)
       return file->dataModel->eventTypeTable()->row(row).id;
 
     return QVariant();
   }
 
-  virtual bool setData(int row, const QVariant &value, int role) override {
+  bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       EventType et = file->dataModel->eventTypeTable()->row(row);
       et.id = value.toInt();
@@ -40,7 +40,7 @@ class Name : public TableColumn {
 public:
   Name(OpenDataFile *file) : TableColumn("Name", file) {}
 
-  virtual QVariant data(int row, int role) const override {
+  QVariant data(int row, int role) const override {
     if (role == Qt::DisplayRole || role == Qt::EditRole)
       return QString::fromStdString(
           file->dataModel->eventTypeTable()->row(row).name);
@@ -48,7 +48,7 @@ public:
     return QVariant();
   }
 
-  virtual bool setData(int row, const QVariant &value, int role) override {
+  bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       EventType et = file->dataModel->eventTypeTable()->row(row);
       et.name = value.toString().toStdString();
@@ -64,7 +64,7 @@ class Opacity : public TableColumn {
 public:
   Opacity(OpenDataFile *file) : TableColumn("Opacity", file) {}
 
-  virtual QVariant data(int row, int role) const override {
+  QVariant data(int row, int role) const override {
     double opacity = file->dataModel->eventTypeTable()->row(row).opacity * 100;
 
     if (role == Qt::DisplayRole) {
@@ -77,7 +77,7 @@ public:
     return QVariant();
   }
 
-  virtual bool setData(int row, const QVariant &value, int role) override {
+  bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       EventType et = file->dataModel->eventTypeTable()->row(row);
 
@@ -106,7 +106,7 @@ class Color : public ColorTableColumn {
 public:
   Color(OpenDataFile *file) : ColorTableColumn("Color", file) {}
 
-  virtual QVariant data(int row, int role) const override {
+  QVariant data(int row, int role) const override {
     if (role == Qt::DisplayRole || role == Qt::EditRole ||
         role == Qt::DecorationRole) {
       auto colorArray = file->dataModel->eventTypeTable()->row(row).color;
@@ -118,7 +118,7 @@ public:
     return QVariant();
   }
 
-  virtual bool setData(int row, const QVariant &value, int role) override {
+  bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       EventType et = file->dataModel->eventTypeTable()->row(row);
       DataModel::color2array(value.value<QColor>(), et.color);
@@ -134,14 +134,14 @@ class Hidden : public BoolTableColumn {
 public:
   Hidden(OpenDataFile *file) : BoolTableColumn("Hidden", file) {}
 
-  virtual QVariant data(int row, int role) const override {
+  QVariant data(int row, int role) const override {
     if (role == Qt::DisplayRole || role == Qt::EditRole)
       return file->dataModel->eventTypeTable()->row(row).hidden;
 
     return QVariant();
   }
 
-  virtual bool setData(int row, const QVariant &value, int role) override {
+  bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       EventType et = file->dataModel->eventTypeTable()->row(row);
       et.hidden = value.toBool();

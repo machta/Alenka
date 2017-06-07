@@ -28,14 +28,14 @@ class Label : public TableColumn {
 public:
   Label(OpenDataFile *file) : TableColumn("Label", file) {}
 
-  virtual QVariant data(int row, int role) const override {
+  QVariant data(int row, int role) const override {
     if (role == Qt::DisplayRole || role == Qt::EditRole)
       return QString::fromStdString(currentEventTable(file)->row(row).label);
 
     return QVariant();
   }
 
-  virtual bool setData(int row, const QVariant &value, int role) override {
+  bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       Event e = currentEventTable(file)->row(row);
       e.label = value.toString().toStdString();
@@ -52,7 +52,7 @@ class Type : public TableColumn {
 public:
   Type(OpenDataFile *file) : TableColumn("Type", file) {}
 
-  virtual QVariant data(int row, int role) const override {
+  QVariant data(int row, int role) const override {
     int type = currentEventTable(file)->row(row).type;
 
     if (role == Qt::DisplayRole)
@@ -68,7 +68,7 @@ public:
     return QVariant();
   }
 
-  virtual bool setData(int row, const QVariant &value, int role) override {
+  bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       Event e = currentEventTable(file)->row(row);
 
@@ -85,13 +85,12 @@ public:
     return false;
   }
 
-  virtual bool createEditor(QWidget *parent, const QStyleOptionViewItem &option,
-                            const QModelIndex &index,
-                            QWidget **widget) const override {
+  bool createEditor(QWidget *parent, const QStyleOptionViewItem &option,
+                    const QModelIndex &index, QWidget **widget) const override {
     (void)option;
     (void)index;
 
-    QComboBox *combo = new QComboBox(parent);
+    auto combo = new QComboBox(parent);
 
     combo->addItem(NO_TYPE_STRING.c_str());
     for (int i = 0; i < file->dataModel->eventTypeTable()->rowCount(); ++i) {
@@ -102,15 +101,14 @@ public:
     *widget = combo;
     return true;
   }
-  virtual bool setEditorData(QWidget *editor,
-                             const QModelIndex &index) const override {
+  bool setEditorData(QWidget *editor, const QModelIndex &index) const override {
     QComboBox *combo = reinterpret_cast<QComboBox *>(editor);
     int i = index.data(Qt::EditRole).toInt();
     combo->setCurrentIndex(i + 1);
     return true;
   }
-  virtual bool setModelData(QWidget *editor, QAbstractItemModel *model,
-                            const QModelIndex &index) const override {
+  bool setModelData(QWidget *editor, QAbstractItemModel *model,
+                    const QModelIndex &index) const override {
     QComboBox *combo = reinterpret_cast<QComboBox *>(editor);
     model->setData(index, combo->currentIndex() - 1);
     return true;
@@ -121,7 +119,7 @@ class Position : public TableColumn {
 public:
   Position(OpenDataFile *file) : TableColumn("Position", file) {}
 
-  virtual QVariant data(int row, int role) const override {
+  QVariant data(int row, int role) const override {
     int position = currentEventTable(file)->row(row).position;
 
     if (role == Qt::DisplayRole)
@@ -133,7 +131,7 @@ public:
     return QVariant();
   }
 
-  virtual bool setData(int row, const QVariant &value, int role) override {
+  bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       Event e = currentEventTable(file)->row(row);
       e.position = value.toDouble();
@@ -151,7 +149,7 @@ class Duration : public TableColumn {
 public:
   Duration(OpenDataFile *file) : TableColumn("Duration", file) {}
 
-  virtual QVariant data(int row, int role) const override {
+  QVariant data(int row, int role) const override {
     int duration = currentEventTable(file)->row(row).duration;
 
     if (role == Qt::DisplayRole)
@@ -163,7 +161,7 @@ public:
     return QVariant();
   }
 
-  virtual bool setData(int row, const QVariant &value, int role) override {
+  bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       Event e = currentEventTable(file)->row(row);
       e.duration = value.toDouble();
@@ -181,7 +179,7 @@ class Channel : public TableColumn {
 public:
   Channel(OpenDataFile *file) : TableColumn("Channel", file) {}
 
-  virtual QVariant data(int row, int role) const override {
+  QVariant data(int row, int role) const override {
     int channel = currentEventTable(file)->row(row).channel;
 
     if (role == Qt::DisplayRole) {
@@ -206,7 +204,7 @@ public:
     return QVariant();
   }
 
-  virtual bool setData(int row, const QVariant &value, int role) override {
+  bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       Event e = currentEventTable(file)->row(row);
 
@@ -224,13 +222,12 @@ public:
     return false;
   }
 
-  virtual bool createEditor(QWidget *parent, const QStyleOptionViewItem &option,
-                            const QModelIndex &index,
-                            QWidget **widget) const override {
+  bool createEditor(QWidget *parent, const QStyleOptionViewItem &option,
+                    const QModelIndex &index, QWidget **widget) const override {
     (void)option;
     (void)index;
 
-    QComboBox *combo = new QComboBox(parent);
+    auto combo = new QComboBox(parent);
 
     combo->addItem(NO_CHANNEL_STRING.c_str());
     combo->addItem(ALL_CHANNEL_STRING.c_str());
@@ -242,15 +239,14 @@ public:
     *widget = combo;
     return true;
   }
-  virtual bool setEditorData(QWidget *editor,
-                             const QModelIndex &index) const override {
+  bool setEditorData(QWidget *editor, const QModelIndex &index) const override {
     QComboBox *combo = reinterpret_cast<QComboBox *>(editor);
     int i = index.data(Qt::EditRole).toInt();
     combo->setCurrentIndex(i + 2);
     return true;
   }
-  virtual bool setModelData(QWidget *editor, QAbstractItemModel *model,
-                            const QModelIndex &index) const override {
+  bool setModelData(QWidget *editor, QAbstractItemModel *model,
+                    const QModelIndex &index) const override {
     QComboBox *combo = reinterpret_cast<QComboBox *>(editor);
     model->setData(index, combo->currentIndex() - 2);
     return true;
@@ -261,7 +257,7 @@ class Description : public TableColumn {
 public:
   Description(OpenDataFile *file) : TableColumn("Description", file) {}
 
-  virtual QVariant data(int row, int role) const override {
+  QVariant data(int row, int role) const override {
     if (role == Qt::DisplayRole || role == Qt::EditRole)
       return QString::fromStdString(
           currentEventTable(file)->row(row).description);
@@ -269,7 +265,7 @@ public:
     return QVariant();
   }
 
-  virtual bool setData(int row, const QVariant &value, int role) override {
+  bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       Event e = currentEventTable(file)->row(row);
       e.description = value.toString().toStdString();

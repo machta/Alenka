@@ -34,7 +34,7 @@ public:
    * Also some of the command line only options are processed here.
    */
   explicit MyApplication(int &argc, char **argv);
-  ~MyApplication();
+  ~MyApplication() override;
 
   /**
    * @brief This method allows for handling exceptions originating from event
@@ -45,7 +45,7 @@ public:
    * If so, abort call should be added here (like it is done in the loader
    * thread).
    */
-  virtual bool notify(QObject *receiver, QEvent *event) override;
+  bool notify(QObject *receiver, QEvent *event) override;
 
   static void mainExit(int status = EXIT_SUCCESS);
 

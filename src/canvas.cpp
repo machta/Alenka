@@ -75,12 +75,12 @@ public:
     string text = "zoom " + t.label;
     setText(QString::fromStdString(text));
   }
-  virtual ~ZoomCommand() override {
+  ~ZoomCommand() override {
     for (QUndoCommand *c : childCommands)
       delete c;
   }
 
-  virtual void redo() override {
+  void redo() override {
     Track t = dataModel->montageTable()->trackTable(i)->row(j);
     t.amplitude = after;
     dataModel->montageTable()->trackTable(i)->row(j, t);
@@ -88,7 +88,7 @@ public:
     for (QUndoCommand *c : childCommands)
       c->redo();
   }
-  virtual void undo() override {
+  void undo() override {
     for (auto i = childCommands.rbegin(); i != childCommands.rend(); ++i)
       (*i)->undo();
 
@@ -97,8 +97,8 @@ public:
     dataModel->montageTable()->trackTable(i)->row(j, t);
   }
 
-  virtual int id() const override { return commandId; }
-  virtual bool mergeWith(const QUndoCommand *other) override {
+  int id() const override { return commandId; }
+  bool mergeWith(const QUndoCommand *other) override {
     assert(other->id() == commandId);
 
     auto o = dynamic_cast<const ZoomCommand *>(other);
@@ -202,7 +202,7 @@ public:
       : size(size), duplicateSignal(duplicateSignal), glSharing(glSharing),
         extraSamplesFront(extraSamplesFront), context(context) {}
 
-  virtual bool constructElement(GPUCacheItem **ptr) override {
+  bool constructElement(GPUCacheItem **ptr) override {
     *ptr = new GPUCacheItem();
     bool ret = initializeElement(**ptr);
 
@@ -213,7 +213,7 @@ public:
 
     return ret;
   }
-  virtual void destroyElement(GPUCacheItem *ptr) override {
+  void destroyElement(GPUCacheItem *ptr) override {
     if (ptr) {
       if (!PROGRAM_OPTIONS["gl20"].as<bool>()) {
         if (ptr->signalArray)
@@ -415,8 +415,8 @@ void Canvas::changeFile(OpenDataFile *file) {
 QColor Canvas::modifySelectionColor(const QColor &color) {
   double colorComponents[3] = {color.redF(), color.greenF(), color.blueF()};
 
-  for (int i = 0; i < 3; ++i)
-    colorComponents[i] += colorComponents[i] > 0.5 ? -0.45 : 0.45;
+  for (double &colorComponent : colorComponents)
+    colorComponent += colorComponent > 0.5 ? -0.45 : 0.45;
 
   QColor newColor(color);
   newColor.setRedF(colorComponents[0]);
@@ -476,7 +476,7 @@ void Canvas::updateCursor() {
 void Canvas::initializeGL() {
   logToFile("Initializing OpenGL in Canvas.");
 
-  OPENGL_INTERFACE = unique_ptr<OpenGLInterface>(new OpenGLInterface);
+  OPENGL_INTERFACE = make_unique<OpenGLInterface>();
   OPENGL_INTERFACE->initializeOpenGLInterface();
 
   QFile signalVertFile(":/signal.vert");

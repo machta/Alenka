@@ -21,7 +21,7 @@ class FilterVisualizer : public QWidget {
 
 public:
   explicit FilterVisualizer(QWidget *parent = nullptr);
-  ~FilterVisualizer() { delete fft; }
+  ~FilterVisualizer() override { delete fft; }
 
   void changeFile(OpenDataFile *file);
 

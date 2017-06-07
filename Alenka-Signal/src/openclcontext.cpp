@@ -35,7 +35,7 @@ OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device,
 
   // Retrieve the platform and device ids.
   cl_uint pCount = platform + 1;
-  cl_platform_id *platforms = new cl_platform_id[pCount];
+  auto platforms = new cl_platform_id[pCount];
 
   err = clGetPlatformIDs(pCount, platforms, &pCount);
   checkClErrorCode(err, "clGetPlatformIDs()");
@@ -46,7 +46,7 @@ OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device,
   platformId = platforms[platform];
 
   cl_uint dCount = device + 1;
-  cl_device_id *devices = new cl_device_id[dCount];
+  auto devices = new cl_device_id[dCount];
 
   err =
       clGetDeviceIDs(platformId, CL_DEVICE_TYPE_ALL, dCount, devices, &dCount);
@@ -89,7 +89,7 @@ string OpenCLContext::getPlatformInfo() const {
   err = clGetPlatformIDs(0, nullptr, &platformCount);
   checkClErrorCode(err, "clGetPlatformIDs()");
 
-  cl_platform_id *platformIDs = new cl_platform_id[platformCount];
+  auto platformIDs = new cl_platform_id[platformCount];
 
   err = clGetPlatformIDs(platformCount, platformIDs, nullptr);
   checkClErrorCode(err, "clGetPlatformIDs()");
@@ -120,7 +120,7 @@ string OpenCLContext::getPlatformInfo() const {
   }
 
   // Build the string.
-  char *tmp = new char[maxSize];
+  auto tmp = new char[maxSize];
   string str;
 
   str += "Available platforms (" + to_string(platformCount) + "):";
@@ -174,7 +174,7 @@ string OpenCLContext::getDeviceInfo() const {
                        &deviceCount);
   checkClErrorCode(err, "clGetDeviceIDs()");
 
-  cl_device_id *deviceIDs = new cl_device_id[deviceCount];
+  auto deviceIDs = new cl_device_id[deviceCount];
 
   err = clGetDeviceIDs(getCLPlatform(), CL_DEVICE_TYPE_ALL, deviceCount,
                        deviceIDs, nullptr);
@@ -395,7 +395,7 @@ void OpenCLContext::printBuffer(FILE *file, cl_mem buffer,
   err = clGetMemObjectInfo(buffer, CL_MEM_SIZE, sizeof(size_t), &size, nullptr);
   checkClErrorCode(err, "clGetMemObjectInfo");
 
-  float *tmp = new float[size / sizeof(float)];
+  auto tmp = new float[size / sizeof(float)];
 
   err = clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, size, tmp, 0, nullptr,
                             nullptr);
@@ -460,7 +460,7 @@ void OpenCLContext::printBufferDouble(FILE *file, cl_mem buffer,
   err = clGetMemObjectInfo(buffer, CL_MEM_SIZE, sizeof(size_t), &size, nullptr);
   checkClErrorCode(err, "clGetMemObjectInfo");
 
-  double *tmp = new double[size / sizeof(double)];
+  auto tmp = new double[size / sizeof(double)];
 
   err = clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, size, tmp, 0, nullptr,
                             nullptr);

@@ -12,7 +12,7 @@ class TrackCodeValidator;
 class CodeEditDialog : public QDialog {
 public:
   CodeEditDialog(QWidget *parent);
-  ~CodeEditDialog();
+  ~CodeEditDialog() override;
 
   QString getText() const;
 
@@ -28,7 +28,7 @@ public slots:
   /**
    * @brief This method gets called when the user closes the dialog.
    */
-  virtual void done(int r) override;
+  void done(int r) override;
 
 private:
   QTextEdit *editor;

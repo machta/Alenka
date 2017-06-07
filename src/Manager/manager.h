@@ -25,7 +25,7 @@ class Manager : public QWidget {
 
 public:
   explicit Manager(QWidget *parent = nullptr);
-  virtual ~Manager() {}
+  ~Manager() override = default;
 
   /**
    * @brief Associates a table class with this manager.

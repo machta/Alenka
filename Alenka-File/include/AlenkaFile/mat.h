@@ -34,31 +34,22 @@ class MAT : public DataFile {
   double days = daysUpTo1970;
 
 public:
-  MAT(const std::string &filePath, const MATvars &vars = MATvars());
-  MAT(const std::vector<std::string> &filePaths,
-      const MATvars &vars = MATvars());
-  virtual ~MAT();
+  MAT(const std::string &filePath, MATvars vars = MATvars());
+  MAT(const std::vector<std::string> &filePaths, MATvars vars = MATvars());
+  ~MAT() override;
 
-  virtual double getSamplingFrequency() const override {
-    return samplingFrequency;
-  }
-  virtual unsigned int getChannelCount() const override {
-    return numberOfChannels;
-  }
-  virtual uint64_t getSamplesRecorded() const override {
-    return samplesRecorded;
-  }
-  virtual double getStartDate() const override { return days; }
-  virtual void save() override;
-  virtual bool load() override;
-  virtual void readChannels(std::vector<float *> dataChannels,
-                            uint64_t firstSample,
-                            uint64_t lastSample) override {
+  double getSamplingFrequency() const override { return samplingFrequency; }
+  unsigned int getChannelCount() const override { return numberOfChannels; }
+  uint64_t getSamplesRecorded() const override { return samplesRecorded; }
+  double getStartDate() const override { return days; }
+  void save() override;
+  bool load() override;
+  void readChannels(std::vector<float *> dataChannels, uint64_t firstSample,
+                    uint64_t lastSample) override {
     readChannelsFloatDouble(dataChannels, firstSample, lastSample);
   }
-  virtual void readChannels(std::vector<double *> dataChannels,
-                            uint64_t firstSample,
-                            uint64_t lastSample) override {
+  void readChannels(std::vector<double *> dataChannels, uint64_t firstSample,
+                    uint64_t lastSample) override {
     readChannelsFloatDouble(dataChannels, firstSample, lastSample);
   }
 

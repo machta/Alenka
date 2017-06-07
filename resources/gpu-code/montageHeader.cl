@@ -1,5 +1,6 @@
 /**
- * @brief In this file the user can define custom functions for use in the montage track code.
+ * @brief In this file the user can define custom functions for use in the
+ * montage track code.
  *
  * The following example shows a custom function that sums the samples from
  * channels designated by the range [from, to].
@@ -19,11 +20,12 @@ float sum(int from, int to, PARA) {
  * some additional parameters must be specified.
  * All the user has to do to ensure that these parameters are correctly passed
  * is specify an additional parameter called PARA.
- * When this function is called PASS must be used in place of the PARA parameter.
+ * When this function is called PASS must be used in place of the PARA
+ * parameter.
  *
- * In order to simplify the code formulas a macro with the same name can be defined
- * to hide the function definition. Then the function can be used as intended
- * (with just two parameters):
+ * In order to simplify the code formulas a macro with the same name can be
+ * defined to hide the function definition. Then the function can be used as
+ * intended (with just two parameters):
  * @code{.cpp}
 out = sum(1, 3);
  * @endcode

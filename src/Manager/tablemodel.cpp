@@ -20,9 +20,8 @@ public:
                     QObject *parent = nullptr)
       : QStyledItemDelegate(parent), columns(columns) {}
 
-  virtual QWidget *createEditor(QWidget *parent,
-                                const QStyleOptionViewItem &option,
-                                const QModelIndex &index) const override {
+  QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option,
+                        const QModelIndex &index) const override {
     QWidget *widget;
     if ((*columns)[index.column()]->createEditor(parent, option, index,
                                                  &widget))
@@ -30,13 +29,12 @@ public:
     else
       return QStyledItemDelegate::createEditor(parent, option, index);
   }
-  virtual void setEditorData(QWidget *editor,
-                             const QModelIndex &index) const override {
+  void setEditorData(QWidget *editor, const QModelIndex &index) const override {
     if (!(*columns)[index.column()]->setEditorData(editor, index))
       QStyledItemDelegate::setEditorData(editor, index);
   }
-  virtual void setModelData(QWidget *editor, QAbstractItemModel *model,
-                            const QModelIndex &index) const override {
+  void setModelData(QWidget *editor, QAbstractItemModel *model,
+                    const QModelIndex &index) const override {
     if (!(*columns)[index.column()]->setModelData(editor, model, index))
       QStyledItemDelegate::setModelData(editor, model, index);
   }
@@ -71,7 +69,7 @@ bool ColorTableColumn::createEditor(QWidget *parent,
   (void)option;
   (void)index;
 
-  QLineEdit *lineEdit = new QLineEdit(parent);
+  auto lineEdit = new QLineEdit(parent);
   QAction *action = lineEdit->addAction(QIcon(":/icons/edit.png"),
                                         QLineEdit::TrailingPosition);
 

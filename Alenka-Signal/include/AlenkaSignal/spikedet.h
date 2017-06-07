@@ -16,7 +16,7 @@ namespace AlenkaSignal {
 
 template <class T> class AbstractSpikedetLoader {
 public:
-  virtual ~AbstractSpikedetLoader() {}
+  virtual ~AbstractSpikedetLoader() = default;
 
   virtual void readSignal(T *data, int64_t firstSample, int64_t lastSample) = 0;
   virtual int64_t sampleCount() = 0;
@@ -30,14 +30,13 @@ template <class T> class FileSpikedetLoader : public AbstractSpikedetLoader<T> {
 public:
   FileSpikedetLoader(AlenkaFile::DataFile *file) : file(file) {}
 
-  virtual void readSignal(T *data, int64_t firstSample,
-                          int64_t lastSample) override {
+  void readSignal(T *data, int64_t firstSample, int64_t lastSample) override {
     file->readSignal(data, firstSample, lastSample);
   }
 
-  virtual int64_t sampleCount() override { return file->getSamplesRecorded(); }
+  int64_t sampleCount() override { return file->getSamplesRecorded(); }
 
-  virtual int channelCount() override { return file->getChannelCount(); }
+  int channelCount() override { return file->getChannelCount(); }
 };
 
 template <class T>
@@ -52,8 +51,7 @@ public:
     assert(signal.size() == channels * length);
   }
 
-  virtual void readSignal(T *data, int64_t firstSample,
-                          int64_t lastSample) override {
+  void readSignal(T *data, int64_t firstSample, int64_t lastSample) override {
     int64_t len = lastSample - firstSample + 1;
 
     for (int j = 0; j < channels; j++) {
@@ -65,9 +63,9 @@ public:
     }
   }
 
-  virtual int64_t sampleCount() override { return length; }
+  int64_t sampleCount() override { return length; }
 
-  virtual int channelCount() override { return channels; }
+  int channelCount() override { return channels; }
 };
 
 class Spikedet {

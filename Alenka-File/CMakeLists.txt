@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.1)
 project(Alenka-File)
 
 # Options.
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 set(BUILD_SHARED_LIBS off CACHE BOOL "")
 
 # First build all the library dependencies.

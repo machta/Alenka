@@ -21,18 +21,18 @@ using namespace std;
 FilterManager::FilterManager(QWidget *parent) : QWidget(parent) {
   filterVisulizer = new FilterVisualizer();
 
-  QVBoxLayout *box = new QVBoxLayout();
-  QSplitter *splitter = new QSplitter(Qt::Vertical);
+  auto box = new QVBoxLayout();
+  auto splitter = new QSplitter(Qt::Vertical);
 
-  QVBoxLayout *box2 = new QVBoxLayout();
+  auto box2 = new QVBoxLayout();
   box2->setMargin(0);
   box2->addWidget(filterVisulizer);
 
   // Visulizer controls.
-  QHBoxLayout *hbox = new QHBoxLayout();
+  auto hbox = new QHBoxLayout();
   hbox->addStretch();
 
-  QPushButton *button = new QPushButton();
+  auto button = new QPushButton();
   button->setIcon(filterVisulizer->getResetAction()->icon());
   button->setToolTip(filterVisulizer->getResetAction()->toolTip());
   connect(button, SIGNAL(clicked(bool)), filterVisulizer->getResetAction(),
@@ -56,7 +56,7 @@ FilterManager::FilterManager(QWidget *parent) : QWidget(parent) {
           SLOT(setChannelToDisplay(int)));
   hbox->addWidget(channelSpinBox);
 
-  QSpinBox *spinBox = new QSpinBox();
+  auto spinBox = new QSpinBox();
   spinBox->setRange(0, 100);
   connect(spinBox, SIGNAL(valueChanged(int)), filterVisulizer,
           SLOT(setSecondsToDisplay(int)));
@@ -75,7 +75,7 @@ FilterManager::FilterManager(QWidget *parent) : QWidget(parent) {
 
   box2->addLayout(hbox);
   box2->addSpacing(5);
-  QWidget *widget = new QWidget();
+  auto widget = new QWidget();
   widget->setLayout(box2);
   splitter->addWidget(widget);
 
@@ -106,7 +106,7 @@ FilterManager::FilterManager(QWidget *parent) : QWidget(parent) {
   label->setToolTip(
       "Window function to be used to modify the FIR filter coeficients");
   hbox->addWidget(label);
-  QComboBox *windowCombo = new QComboBox();
+  auto windowCombo = new QComboBox();
   windowCombo->addItem("None");
   windowCombo->addItem("Hamming");
   windowCombo->addItem("Blackman");

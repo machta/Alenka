@@ -11,11 +11,10 @@ class EventTableModel : public TableModel {
 public:
   explicit EventTableModel(OpenDataFile *file, QObject *parent = nullptr);
 
-  virtual int
-  rowCount(const QModelIndex &parent = QModelIndex()) const override;
+  int rowCount(const QModelIndex &parent = QModelIndex()) const override;
 
 protected:
-  virtual void removeRowsFromDataModel(int row, int count) override;
+  void removeRowsFromDataModel(int row, int count) override;
 
 private slots:
   void setSelectedMontage(int i);
