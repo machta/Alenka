@@ -11,7 +11,7 @@
 name=$1
 if [ "$name" == "" ]
 then
-	name=Alenka-Linux
+  name=Alenka-Linux
 fi
 
 folder=`mktemp -d -p .`
@@ -36,7 +36,10 @@ cp -v $PLUGIN/xcbglintegrations/* $folder/$name/xcbglintegrations &&
 plugin=OK || plugin=fail
 
 export LD_LIBRARY_PATH=$QT_DIR/lib &&
-cp -v $(realpath -s `ldd $folder/$name/Alenka.bin $(find $folder/$name -name '*.so') | grep -i qt | grep -v Gamepad | awk '{print $3}'` | sort | uniq) $folder/$name &&
+FIND=$(find $folder/$name -name '*.so') &&
+LDD=$(ldd $folder/$name/Alenka.bin $FIND | grep -i qt | grep -v Gamepad |
+  awk '{print $3}') &&
+cp -v $(realpath -s $LDD | sort | uniq) $folder/$name &&
 cp -v $QT_DIR/plugins/imageformats/libqjpeg.so $folder/$name/imageformats &&
 chmod a-x $folder/$name/lib*so* &&
 libraries=OK || libraries=fail
@@ -53,7 +56,8 @@ DIR=`dirname $0`
 export LD_LIBRARY_PATH=$DIR:$AMDAPPSDKROOT/lib/x86_64/sdk
 ' > $folder/$name/Alenka-AMD
 
-echo '$DIR/Alenka.bin "$@"' | tee -a $folder/$name/Alenka >> $folder/$name/Alenka-AMD
+echo '$DIR/Alenka.bin "$@"' | tee -a $folder/$name/Alenka >> \
+  $folder/$name/Alenka-AMD
 chmod u+x $folder/$name/Alenka*
 
 cp -v "`dirname $0`/readme-linux.txt" $folder/$name/README

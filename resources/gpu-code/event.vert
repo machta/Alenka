@@ -23,11 +23,11 @@ uniform int bufferOffset;
 uniform float yScale;
 uniform float eventWidth;
 
-void main()
-{
-	float x = float(bufferOffset + gl_VertexID/2);
-	float y = y0 + sampleValue1*yScale + eventWidth*float(1 - 2*(gl_VertexID & 1));
+void main() {
+  float x = float(bufferOffset + gl_VertexID/2);
+  float y = y0 + sampleValue1*yScale +
+      eventWidth*float(1 - 2*(gl_VertexID & 1));
 
-	gl_Position = transformMatrix*vec4(x, y, 0, 1);
+  gl_Position = transformMatrix*vec4(x, y, 0, 1);
 }
 /// @endcond

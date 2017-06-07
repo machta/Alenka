@@ -11,8 +11,7 @@
 
 #include <string>
 
-namespace AlenkaSignal
-{
+namespace AlenkaSignal {
 
 /**
  * @brief A class for creating kernel program for montage computation.
@@ -27,65 +26,65 @@ namespace AlenkaSignal
  *
  * @todo Prohibit copying of this object.
  */
-template<class T>
-class Montage
-{
-	OpenCLContext* context = nullptr;
-	bool copyMontage = false;
-	std::string source;
-	OpenCLProgram* program = nullptr;
-	cl_kernel kernel = nullptr;
-	cl_int index = -1;
+template <class T> class Montage {
+  OpenCLContext *context = nullptr;
+  bool copyMontage = false;
+  std::string source;
+  OpenCLProgram *program = nullptr;
+  cl_kernel kernel = nullptr;
+  cl_int index = -1;
 
 public:
-	/**
-	 * @brief Montage constructor.
-	 * @param sources OpenCL source code of the montage.
-	 */
-	Montage(const std::string& source, OpenCLContext* context, const std::string& headerSource = "");
-	Montage(const std::vector<unsigned char>* binary, OpenCLContext* context);
-	~Montage();
+  /**
+   * @brief Montage constructor.
+   * @param sources OpenCL source code of the montage.
+   */
+  Montage(const std::string &source, OpenCLContext *context,
+          const std::string &headerSource = "");
+  Montage(const std::vector<unsigned char> *binary, OpenCLContext *context);
+  ~Montage();
 
-	/**
-	 * @brief Returns the kernel object needed for execution of the code.
-	 */
-	cl_kernel getKernel()
-	{
-		buildProgram();
-		if (kernel == nullptr)
-			kernel = program->createKernel("montage");
-		return kernel;
-	}
+  /**
+   * @brief Returns the kernel object needed for execution of the code.
+   */
+  cl_kernel getKernel() {
+    buildProgram();
+    if (kernel == nullptr)
+      kernel = program->createKernel("montage");
+    return kernel;
+  }
 
-	std::vector<unsigned char>* getBinary()
-	{
-		buildProgram();
-		if (program)
-			return program->getBinary();
-		else
-			return nullptr;
-	}
+  std::vector<unsigned char> *getBinary() {
+    buildProgram();
+    if (program)
+      return program->getBinary();
+    else
+      return nullptr;
+  }
 
-	bool isCopyMontage() const { return copyMontage; }
-	cl_int copyMontageIndex() const { return index; }
+  bool isCopyMontage() const { return copyMontage; }
+  cl_int copyMontageIndex() const { return index; }
 
-	std::string getSource() const { return source; }
+  std::string getSource() const { return source; }
 
-	/**
-	 * @brief Tests the source code of the montage.
-	 * @param source String formula for one track.
-	 * @param errorMessage [out] If not nullptr and an error is detected, an error message is stored here.
-	 * @return True if the test succeeds.
-	 */
-	static bool test(const std::string& source, OpenCLContext* context, std::string* errorMessage = nullptr, const std::string& headerSource = "");
-	
-	/**
-	 * @brief Removes single line and block comments from OpenCL code.
-	 */
-	static std::string stripComments(const std::string& code);
+  /**
+   * @brief Tests the source code of the montage.
+   * @param source String formula for one track.
+   * @param errorMessage [out] If not nullptr and an error is detected, an error
+   * message is stored here.
+   * @return True if the test succeeds.
+   */
+  static bool test(const std::string &source, OpenCLContext *context,
+                   std::string *errorMessage = nullptr,
+                   const std::string &headerSource = "");
+
+  /**
+   * @brief Removes single line and block comments from OpenCL code.
+   */
+  static std::string stripComments(const std::string &code);
 
 private:
-	void buildProgram();
+  void buildProgram();
 };
 
 } // namespace AlenkaSignal

@@ -5,28 +5,27 @@
 
 #include <vector>
 
-class EventTableModel : public TableModel
-{
-	Q_OBJECT
+class EventTableModel : public TableModel {
+  Q_OBJECT
 
 public:
-	explicit EventTableModel(OpenDataFile* file, QObject* parent = nullptr);
+  explicit EventTableModel(OpenDataFile *file, QObject *parent = nullptr);
 
-	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+  virtual int
+  rowCount(const QModelIndex &parent = QModelIndex()) const override;
 
 protected:
-	virtual void removeRowsFromDataModel(int row, int count) override;
+  virtual void removeRowsFromDataModel(int row, int count) override;
 
 private slots:
-	void setSelectedMontage(int i);
-	void beginEndReset()
-	{
-		beginResetModel();
-		endResetModel();
-	}
+  void setSelectedMontage(int i);
+  void beginEndReset() {
+    beginResetModel();
+    endResetModel();
+  }
 
 private:
-	std::vector<QMetaObject::Connection> montageTableConnections;
+  std::vector<QMetaObject::Connection> montageTableConnections;
 };
 
 #endif // EVENTTABLEMODEL_H

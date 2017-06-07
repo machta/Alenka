@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: ../Alenka/misc/coverage.sh
+# Usage: ../Alenka/misc/scripts/coverage.sh
 #
 # 
 
@@ -10,11 +10,11 @@ rm moc_*.gcda
 rm -r test.info test-html
 
 lcov -t "test" -o test.info -c \
-	-d . \
-	-d ../Alenka/Alenka-Signal/build-Debug-64/CMakeFiles/alenka-signal.dir/src \
-	-d ../Alenka/Alenka-Signal/build-Debug/CMakeFiles/alenka-signal.dir/src \
-	-d ../Alenka/Alenka-File/build-Debug-64/CMakeFiles/alenka-file.dir/src \
-	-d ../Alenka/Alenka-File/build-Debug/CMakeFiles/alenka-file.dir/src
+  -d . \
+  -d ../Alenka/Alenka-Signal/build-Debug-64/CMakeFiles/alenka-signal.dir/src \
+  -d ../Alenka/Alenka-Signal/build-Debug/CMakeFiles/alenka-signal.dir/src \
+  -d ../Alenka/Alenka-File/build-Debug-64/CMakeFiles/alenka-file.dir/src \
+  -d ../Alenka/Alenka-File/build-Debug/CMakeFiles/alenka-file.dir/src
 
 #lcov -r test.info '*moc_*' -o $PWD/test.info
 

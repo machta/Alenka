@@ -3,23 +3,22 @@
 
 #include <QObject>
 
+#include "../../Alenka-File/include/AlenkaFile/datafile.h"
 #include "infotable.h"
-#include <AlenkaFile/datafile.h>
 
 #include <vector>
 
 class UndoCommandFactory;
 class KernelCache;
 
-class OpenDataFile
-{
+class OpenDataFile {
 public:
-	AlenkaFile::DataFile* file = nullptr;
-	const AlenkaFile::DataModel* dataModel = nullptr;
-	UndoCommandFactory* undoFactory = nullptr;
-	KernelCache* kernelCache = nullptr;
+  AlenkaFile::DataFile *file = nullptr;
+  const AlenkaFile::DataModel *dataModel = nullptr;
+  UndoCommandFactory *undoFactory = nullptr;
+  KernelCache *kernelCache = nullptr;
 
-	static InfoTable infoTable;	
+  static InfoTable infoTable;
 };
 
 #endif // OPENDATAFILE_H

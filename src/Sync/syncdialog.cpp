@@ -1,248 +1,229 @@
 #include "syncdialog.h"
 
-#include "syncserver.h"
 #include "syncclient.h"
+#include "syncserver.h"
 
-#include <QVBoxLayout>
-#include <QHBoxLayout>
 #include <QComboBox>
-#include <QPushButton>
-#include <QLineEdit>
-#include <QLabel>
 #include <QDialogButtonBox>
-#include <QMessageBox>
-#include <QUrl>
-#include <QNetworkInterface>
 #include <QFont>
-#include <QGridLayout>
 #include <QFormLayout>
+#include <QGridLayout>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QNetworkInterface>
+#include <QPushButton>
+#include <QUrl>
+#include <QVBoxLayout>
 
-SyncDialog::SyncDialog(SyncServer* server, SyncClient* client, QWidget* parent) : QDialog(parent),
-	server(server), client(client)
-{
-	setWindowTitle("Synchronization Manager");
-	QVBoxLayout* box = new QVBoxLayout();
+SyncDialog::SyncDialog(SyncServer *server, SyncClient *client, QWidget *parent)
+    : QDialog(parent), server(server), client(client) {
+  setWindowTitle("Synchronization Manager");
+  QVBoxLayout *box = new QVBoxLayout();
 
-	combo = new QComboBox();
-	combo->insertItem(0, "Server");
-	combo->insertItem(1, "Client");
-	box->addWidget(combo);
+  combo = new QComboBox();
+  combo->insertItem(0, "Server");
+  combo->insertItem(1, "Client");
+  box->addWidget(combo);
 
-	buildServerControls();
-	buildClientControls();
+  buildServerControls();
+  buildClientControls();
 
-	box->addWidget(serverControls);
-	box->addWidget(clientControls);
-	clientControls->hide();
+  box->addWidget(serverControls);
+  box->addWidget(clientControls);
+  clientControls->hide();
 
-	connect(combo, SIGNAL(activated(QString)), this, SLOT(activateControls(QString)));
+  connect(combo, SIGNAL(activated(QString)), this,
+          SLOT(activateControls(QString)));
 
-	setLayout(box);
+  setLayout(box);
 }
 
-void SyncDialog::buildServerControls()
-{
-	QFont font;
-	font.setPointSize(18);
+void SyncDialog::buildServerControls() {
+  QFont font;
+  font.setPointSize(18);
 
-	QVBoxLayout* box = new QVBoxLayout();
-	QGridLayout* grid = new QGridLayout();
+  QVBoxLayout *box = new QVBoxLayout();
+  QGridLayout *grid = new QGridLayout();
 
-	QLabel* label = new QLabel("Network interface IPs of this device:");
-	label->setToolTip("Use this to connect with the client over LAN");
-	grid->addWidget(label, 0, 0);
+  QLabel *label = new QLabel("Network interface IPs of this device:");
+  label->setToolTip("Use this to connect with the client over LAN");
+  grid->addWidget(label, 0, 0);
 
-	QString ipAddresses;
-	int ipCount = 0;
-	for (const QHostAddress& address : QNetworkInterface::allAddresses())
-	{
-		if (address.protocol() == QAbstractSocket::IPv4Protocol && address != QHostAddress(QHostAddress::LocalHost))
-		{
-			if (ipCount++ > 0)
-				ipAddresses += '\n';
-			 ipAddresses += address.toString();
-		}
-	}
-	QLabel* ipLabel = new QLabel(ipAddresses);
-	ipLabel->setText(ipAddresses);
-	ipLabel->setFont(font);
-	grid->addWidget(ipLabel, 1, 0);
+  QString ipAddresses;
+  int ipCount = 0;
+  for (const QHostAddress &address : QNetworkInterface::allAddresses()) {
+    if (address.protocol() == QAbstractSocket::IPv4Protocol &&
+        address != QHostAddress(QHostAddress::LocalHost)) {
+      if (ipCount++ > 0)
+        ipAddresses += '\n';
+      ipAddresses += address.toString();
+    }
+  }
+  QLabel *ipLabel = new QLabel(ipAddresses);
+  ipLabel->setText(ipAddresses);
+  ipLabel->setFont(font);
+  grid->addWidget(ipLabel, 1, 0);
 
-	grid->addWidget(new QLabel("Port:"), 0, 1);
-	serverPortEdit = new QLineEdit("1234");
-	serverPortEdit->setFont(font);
-	grid->addWidget(serverPortEdit, 1, 1, Qt::AlignTop);
+  grid->addWidget(new QLabel("Port:"), 0, 1);
+  serverPortEdit = new QLineEdit("1234");
+  serverPortEdit->setFont(font);
+  grid->addWidget(serverPortEdit, 1, 1, Qt::AlignTop);
 
-	box->addLayout(grid);
-	QDialogButtonBox* buttonBox = new QDialogButtonBox();
+  box->addLayout(grid);
+  QDialogButtonBox *buttonBox = new QDialogButtonBox();
 
-	launchButton = new QPushButton("Launch");
-	buttonBox->addButton(launchButton, QDialogButtonBox::ActionRole);
-	connect(launchButton, SIGNAL(clicked(bool)), this, SLOT(launchServer()));
+  launchButton = new QPushButton("Launch");
+  buttonBox->addButton(launchButton, QDialogButtonBox::ActionRole);
+  connect(launchButton, SIGNAL(clicked(bool)), this, SLOT(launchServer()));
 
-	QPushButton* button = new QPushButton("Shut down");
-	buttonBox->addButton(button, QDialogButtonBox::ActionRole);
-	connect(button, SIGNAL(clicked(bool)), this, SLOT(shutDownServer()));
+  QPushButton *button = new QPushButton("Shut down");
+  buttonBox->addButton(button, QDialogButtonBox::ActionRole);
+  connect(button, SIGNAL(clicked(bool)), this, SLOT(shutDownServer()));
 
-	box->addWidget(buttonBox);
+  box->addWidget(buttonBox);
 
-	QFormLayout* status = new QFormLayout();
-	font.setPointSize(15);
-	serverStatus = new QLabel("Server Ready");
-	serverStatus->setFont(font);
-	status->addRow("Status: ", serverStatus);
-	box->addLayout(status);
+  QFormLayout *status = new QFormLayout();
+  font.setPointSize(15);
+  serverStatus = new QLabel("Server Ready");
+  serverStatus->setFont(font);
+  status->addRow("Status: ", serverStatus);
+  box->addLayout(status);
 
-	serverControls = new QWidget();
-	serverControls->setLayout(box);
+  serverControls = new QWidget();
+  serverControls->setLayout(box);
 }
 
-void SyncDialog::buildClientControls()
-{
-	QFont font;
-	font.setPointSize(18);
+void SyncDialog::buildClientControls() {
+  QFont font;
+  font.setPointSize(18);
 
-	QVBoxLayout* box = new QVBoxLayout();
-	QGridLayout* grid = new QGridLayout();
+  QVBoxLayout *box = new QVBoxLayout();
+  QGridLayout *grid = new QGridLayout();
 
-	QLabel* label = new QLabel("Server address or IP:");
-	label->setToolTip("Examples: www.example.com, 10.0.0.10");
-	grid->addWidget(label, 0, 0);
-	QHBoxLayout* hbox = new QHBoxLayout();
-	label = new QLabel("ws://");
-	label->setFont(font);
-	hbox->addWidget(label);
-	clientIpEdit = new QLineEdit("localhost");
-	clientIpEdit->setFont(font);
-	hbox->addWidget(clientIpEdit);
-	grid->addLayout(hbox, 1, 0);
+  QLabel *label = new QLabel("Server address or IP:");
+  label->setToolTip("Examples: www.example.com, 10.0.0.10");
+  grid->addWidget(label, 0, 0);
+  QHBoxLayout *hbox = new QHBoxLayout();
+  label = new QLabel("ws://");
+  label->setFont(font);
+  hbox->addWidget(label);
+  clientIpEdit = new QLineEdit("localhost");
+  clientIpEdit->setFont(font);
+  hbox->addWidget(clientIpEdit);
+  grid->addLayout(hbox, 1, 0);
 
-	grid->addWidget(new QLabel("Port:"), 0, 1);
-	clientPortEdit = new QLineEdit("1234");
-	clientPortEdit->setFont(font);
-	grid->addWidget(clientPortEdit, 1, 1);
+  grid->addWidget(new QLabel("Port:"), 0, 1);
+  clientPortEdit = new QLineEdit("1234");
+  clientPortEdit->setFont(font);
+  grid->addWidget(clientPortEdit, 1, 1);
 
-	box->addLayout(grid);
-	QDialogButtonBox* buttonBox = new QDialogButtonBox();
+  box->addLayout(grid);
+  QDialogButtonBox *buttonBox = new QDialogButtonBox();
 
-	connectButton = new QPushButton("Connect");
-	buttonBox->addButton(connectButton, QDialogButtonBox::ActionRole);
-	connect(connectButton, SIGNAL(clicked(bool)), this, SLOT(connectClient()));
+  connectButton = new QPushButton("Connect");
+  buttonBox->addButton(connectButton, QDialogButtonBox::ActionRole);
+  connect(connectButton, SIGNAL(clicked(bool)), this, SLOT(connectClient()));
 
-	QPushButton* button = new QPushButton("Disconnect");
-	buttonBox->addButton(button, QDialogButtonBox::ActionRole);
-	connect(button, SIGNAL(clicked(bool)), this, SLOT(disconnectClient()));
-	connect(client, &SyncClient::serverDisconnected, [this] () {
-		changeEnableControls(true);
+  QPushButton *button = new QPushButton("Disconnect");
+  buttonBox->addButton(button, QDialogButtonBox::ActionRole);
+  connect(button, SIGNAL(clicked(bool)), this, SLOT(disconnectClient()));
+  connect(client, &SyncClient::serverDisconnected, [this]() {
+    changeEnableControls(true);
 
-		clientStatus->setText("Client Disconnected");
-		clientStatus->setStyleSheet("QLabel { color : red; }");
-	});
+    clientStatus->setText("Client Disconnected");
+    clientStatus->setStyleSheet("QLabel { color : red; }");
+  });
 
-	box->addWidget(buttonBox);
+  box->addWidget(buttonBox);
 
-	QFormLayout* status = new QFormLayout();
-	font.setPointSize(15);
-	clientStatus = new QLabel("Client Ready");
-	clientStatus->setFont(font);
-	status->addRow("Status: ", clientStatus);
-	box->addLayout(status);
+  QFormLayout *status = new QFormLayout();
+  font.setPointSize(15);
+  clientStatus = new QLabel("Client Ready");
+  clientStatus->setFont(font);
+  status->addRow("Status: ", clientStatus);
+  box->addLayout(status);
 
-	clientControls = new QWidget();
-	clientControls->setLayout(box);
+  clientControls = new QWidget();
+  clientControls->setLayout(box);
 }
 
-void SyncDialog::activateControls(const QString& text)
-{
-	if (text == "Server")
-	{
-		clientControls->hide();
-		serverControls->show();
-	}
-	else
-	{
-		serverControls->hide();
-		clientControls->show();
-	}
+void SyncDialog::activateControls(const QString &text) {
+  if (text == "Server") {
+    clientControls->hide();
+    serverControls->show();
+  } else {
+    serverControls->hide();
+    clientControls->show();
+  }
 }
 
-//TODO: Make better error messages.
-void SyncDialog::launchServer()
-{
-	bool ok;
-	int port = serverPortEdit->text().toInt(&ok);
+// TODO: Make better error messages.
+void SyncDialog::launchServer() {
+  bool ok;
+  int port = serverPortEdit->text().toInt(&ok);
 
-	if (ok)
-	{
-		if (server->launch(port))
-			ok = false;
-	}
+  if (ok) {
+    if (server->launch(port))
+      ok = false;
+  }
 
-	if (ok)
-	{
-		changeEnableControls(false);
+  if (ok) {
+    changeEnableControls(false);
 
-		serverStatus->setText("Server Running");
-		serverStatus->setStyleSheet("QLabel { color : green; }");
-	}
-	else
-	{
-		QMessageBox::critical(this, "Error", "Server launch failed.");
-	}
+    serverStatus->setText("Server Running");
+    serverStatus->setStyleSheet("QLabel { color : green; }");
+  } else {
+    QMessageBox::critical(this, "Error", "Server launch failed.");
+  }
 }
 
-void SyncDialog::shutDownServer()
-{
-	server->shutDown();
+void SyncDialog::shutDownServer() {
+  server->shutDown();
 
-	changeEnableControls(true);
+  changeEnableControls(true);
 
-	serverStatus->setText("Server Ready");
-	serverStatus->setStyleSheet("QLabel { color : black; }");
+  serverStatus->setText("Server Ready");
+  serverStatus->setStyleSheet("QLabel { color : black; }");
 }
 
-void SyncDialog::connectClient()
-{
-	bool ok;
-	int port = clientPortEdit->text().toInt(&ok);
+void SyncDialog::connectClient() {
+  bool ok;
+  int port = clientPortEdit->text().toInt(&ok);
 
-	QUrl url("ws://" + clientIpEdit->text());
-	int result = 1;
+  QUrl url("ws://" + clientIpEdit->text());
+  int result = 1;
 
-	if (ok && url.isValid())
-		result = client->connectServer(url, port);
+  if (ok && url.isValid())
+    result = client->connectServer(url, port);
 
-	if (result)
-	{
-		QMessageBox::critical(this, "Error", "Connection failed.");
-	}
-	else
-	{
-		changeEnableControls(false);
+  if (result) {
+    QMessageBox::critical(this, "Error", "Connection failed.");
+  } else {
+    changeEnableControls(false);
 
-		clientStatus->setText("Client Connected");
-		clientStatus->setStyleSheet("QLabel { color : green; }");
-	}
+    clientStatus->setText("Client Connected");
+    clientStatus->setStyleSheet("QLabel { color : green; }");
+  }
 }
 
-void SyncDialog::disconnectClient()
-{
-	client->disconnectServer();
+void SyncDialog::disconnectClient() {
+  client->disconnectServer();
 
-	changeEnableControls(true);
+  changeEnableControls(true);
 
-	clientStatus->setText("Client Ready");
-	clientStatus->setStyleSheet("QLabel { color : black; }");
+  clientStatus->setText("Client Ready");
+  clientStatus->setStyleSheet("QLabel { color : black; }");
 }
 
-void SyncDialog::changeEnableControls(bool enable)
-{
-	combo->setEnabled(enable);
+void SyncDialog::changeEnableControls(bool enable) {
+  combo->setEnabled(enable);
 
-	serverPortEdit->setEnabled(enable);
-	launchButton->setEnabled(enable);
+  serverPortEdit->setEnabled(enable);
+  launchButton->setEnabled(enable);
 
-	clientIpEdit->setEnabled(enable);
-	clientPortEdit->setEnabled(enable);
-	connectButton->setEnabled(enable);
+  clientIpEdit->setEnabled(enable);
+  clientPortEdit->setEnabled(enable);
+  connectButton->setEnabled(enable);
 }

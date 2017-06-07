@@ -1,149 +1,130 @@
 #include <gtest/gtest.h>
 
-#include <AlenkaSignal/openclcontext.h>
-#include <AlenkaSignal/montage.h>
-#include <AlenkaSignal/montageprocessor.h>
+#include "../../Alenka-Signal/include/AlenkaSignal/montage.h"
+#include "../../Alenka-Signal/include/AlenkaSignal/montageprocessor.h"
+#include "../../Alenka-Signal/include/AlenkaSignal/openclcontext.h"
 
-#include <functional>
 #include <cmath>
+#include <functional>
 
 using namespace std;
 using namespace AlenkaSignal;
 
-namespace
-{
+namespace {
 
-void compareFloat(float a, float b)
-{
-	EXPECT_FLOAT_EQ(a, b);
+void compareFloat(float a, float b) { EXPECT_FLOAT_EQ(a, b); }
+
+void compareDouble(double a, double b) { EXPECT_DOUBLE_EQ(a, b); }
+
+template <class T> bool testMontage(const string &src, OpenCLContext *context) {
+  string msg;
+  bool res = Montage<T>::test(src, context, &msg);
+
+  if (!res)
+    cerr << msg << endl;
+
+  return res;
 }
 
-void compareDouble(double a, double b)
-{
-	EXPECT_DOUBLE_EQ(a, b);
-}
+template <class T> void test(function<void(T, T)> compare, int outputCopies) {
+  int n = 20;
+  int inChannels = 3;
+  int offset = 5;
+  cl_int err;
 
-template<class T>
-bool testMontage(const string& src, OpenCLContext* context)
-{
-	string msg;
-	bool res = Montage<T>::test(src, context, &msg);
+  OpenCLContext context(OPENCL_PLATFORM, OPENCL_DEVICE);
+  MontageProcessor<T> processor(n, inChannels, outputCopies);
 
-	if (!res)
-		cerr << msg << endl;
+  cl_command_queue queue = clCreateCommandQueue(context.getCLContext(),
+                                                context.getCLDevice(), 0, &err);
+  checkClErrorCode(err, "clCreateCommandQueue");
 
-	return res;
-}
+  string src = "out = in(0);";
+  ASSERT_TRUE(testMontage<T>(src, &context));
+  Montage<T> m1(src, &context);
 
-template<class T>
-void test(function<void(T, T)> compare, int outputCopies)
-{
-	int n = 20;
-	int inChannels = 3;
-	int offset = 5;
-	cl_int err;
+  src = "out = in(1);";
+  ASSERT_TRUE(testMontage<T>(src, &context));
+  Montage<T> m2(src, &context);
 
-	OpenCLContext context(OPENCL_PLATFORM, OPENCL_DEVICE);
-	MontageProcessor<T> processor(n, inChannels, outputCopies);
+  src = "out = in(0) + in(1);";
+  ASSERT_TRUE(testMontage<T>(src, &context));
+  Montage<T> m3(src, &context);
 
-	cl_command_queue queue = clCreateCommandQueue(context.getCLContext(), context.getCLDevice(), 0, &err);
-	checkClErrorCode(err, "clCreateCommandQueue");
+  src = "out = in(2)*3.14;";
+  ASSERT_TRUE(testMontage<T>(src, &context));
+  Montage<T> m4(src, &context);
 
-	string src = "out = in(0);";
-	ASSERT_TRUE(testMontage<T>(src, &context));
-	Montage<T> m1(src, &context);
+  src = "out = -1;";
+  ASSERT_TRUE(testMontage<T>(src, &context));
+  Montage<T> m5(src, &context);
 
-	src = "out = in(1);";
-	ASSERT_TRUE(testMontage<T>(src, &context));
-	Montage<T> m2(src, &context);
+  vector<Montage<T> *> montage = {&m1, &m2, &m3, &m4, &m5};
+  vector<T> signal;
 
-	src = "out = in(0) + in(1);";
-	ASSERT_TRUE(testMontage<T>(src, &context));
-	Montage<T> m3(src, &context);
+  for (int j = 0; j < inChannels; j++)
+    for (int i = 1; i <= n; i++)
+      signal.push_back(10 * pow(10, j) + i);
 
-	src = "out = in(2)*3.14;";
-	ASSERT_TRUE(testMontage<T>(src, &context));
-	Montage<T> m4(src, &context);
+  vector<T> output(outputCopies * (n - offset) * montage.size());
 
-	src = "out = -1;";
-	ASSERT_TRUE(testMontage<T>(src, &context));
-	Montage<T> m5(src, &context);
+  cl_mem_flags flags = CL_MEM_READ_WRITE;
+  size_t outBufferSize =
+      outputCopies * (n - offset) * montage.size() * sizeof(T);
 
-	vector<Montage<T>*> montage = {&m1, &m2, &m3, &m4, &m5};
-	vector<T> signal;
+  cl_mem inBuffer =
+      clCreateBuffer(context.getCLContext(), flags | CL_MEM_COPY_HOST_PTR,
+                     n * inChannels * sizeof(T), signal.data(), &err);
+  checkClErrorCode(err, "clCreateBuffer");
 
-	for (int j = 0; j < inChannels; j++)
-		for (int i = 1; i <= n; i++)
-			signal.push_back(10*pow(10, j) + i);
+  cl_mem outBuffer = clCreateBuffer(context.getCLContext(), flags,
+                                    outBufferSize, nullptr, &err);
+  checkClErrorCode(err, "clCreateBuffer");
 
-	vector<T> output(outputCopies*(n - offset)*montage.size());
+  processor.process(montage, inBuffer, outBuffer, queue, n - offset);
 
-	cl_mem_flags flags = CL_MEM_READ_WRITE;
-	size_t outBufferSize = outputCopies*(n - offset)*montage.size()*sizeof(T);
+  err = clEnqueueReadBuffer(queue, outBuffer, CL_TRUE, 0, outBufferSize,
+                            output.data(), 0, nullptr, nullptr);
+  checkClErrorCode(err, "clEnqueueReadBuffer");
 
-	cl_mem inBuffer = clCreateBuffer(context.getCLContext(), flags | CL_MEM_COPY_HOST_PTR, n*inChannels*sizeof(T), signal.data(), &err);
-	checkClErrorCode(err, "clCreateBuffer");
+  err = clReleaseCommandQueue(queue);
+  checkClErrorCode(err, "clReleaseCommandQueue");
 
-	cl_mem outBuffer = clCreateBuffer(context.getCLContext(), flags, outBufferSize, nullptr, &err);
-	checkClErrorCode(err, "clCreateBuffer");
+  err = clReleaseMemObject(inBuffer);
+  checkClErrorCode(err, "clReleaseMemObject");
 
-	processor.process(montage, inBuffer, outBuffer, queue, n - offset);
+  err = clReleaseMemObject(outBuffer);
+  checkClErrorCode(err, "clReleaseMemObject");
 
-	err = clEnqueueReadBuffer(queue, outBuffer, CL_TRUE, 0, outBufferSize, output.data(), 0, nullptr, nullptr);
-	checkClErrorCode(err, "clEnqueueReadBuffer");
-
-	err = clReleaseCommandQueue(queue);
-	checkClErrorCode(err, "clReleaseCommandQueue");
-
-	err = clReleaseMemObject(inBuffer);
-	checkClErrorCode(err, "clReleaseMemObject");
-
-	err = clReleaseMemObject(outBuffer);
-	checkClErrorCode(err, "clReleaseMemObject");
-
-	for (int i = 0; i < n - offset; ++i)
-	{
-		for (int j = 0; j < outputCopies; ++j)
-		{
-			compare(output[outputCopies*((n - offset)*0 + i) + j], signal[i]);
-			compare(output[outputCopies*((n - offset)*1 + i) + j], signal[n + i]);
-			compare(output[outputCopies*((n - offset)*2 + i) + j], signal[i] + signal[n + i]);
-			compare(output[outputCopies*((n - offset)*3 + i) + j], signal[2*n + i]*3.14);
-			compare(output[outputCopies*((n - offset)*4 + i) + j], -1);
-		}
-	}
+  for (int i = 0; i < n - offset; ++i) {
+    for (int j = 0; j < outputCopies; ++j) {
+      compare(output[outputCopies * ((n - offset) * 0 + i) + j], signal[i]);
+      compare(output[outputCopies * ((n - offset) * 1 + i) + j], signal[n + i]);
+      compare(output[outputCopies * ((n - offset) * 2 + i) + j],
+              signal[i] + signal[n + i]);
+      compare(output[outputCopies * ((n - offset) * 3 + i) + j],
+              signal[2 * n + i] * 3.14);
+      compare(output[outputCopies * ((n - offset) * 4 + i) + j], -1);
+    }
+  }
 }
 
 } // namespace
 
-TEST(simple_montage_test, float_1)
-{
-	test<float>(&compareFloat, 1);
+TEST(simple_montage_test, float_1) { test<float>(&compareFloat, 1); }
+
+TEST(simple_montage_test, double_1) { test<double>(&compareDouble, 1); }
+
+TEST(simple_montage_test, float_2) { test<float>(&compareFloat, 2); }
+
+TEST(simple_montage_test, double_2) { test<double>(&compareDouble, 2); }
+
+TEST(simple_montage_test, float_n) {
+  for (int i = 3; i < 10; ++i)
+    test<float>(&compareFloat, i);
 }
 
-TEST(simple_montage_test, double_1)
-{
-	test<double>(&compareDouble, 1);
-}
-
-TEST(simple_montage_test, float_2)
-{
-	test<float>(&compareFloat, 2);
-}
-
-TEST(simple_montage_test, double_2)
-{
-	test<double>(&compareDouble, 2);
-}
-
-TEST(simple_montage_test, float_n)
-{
-	for (int i = 3; i < 10; ++i)
-		test<float>(&compareFloat, i);
-}
-
-TEST(simple_montage_test, double_n)
-{
-	for (int i = 3; i < 10; ++i)
-		test<double>(&compareDouble, i);
+TEST(simple_montage_test, double_n) {
+  for (int i = 3; i < 10; ++i)
+    test<double>(&compareDouble, i);
 }

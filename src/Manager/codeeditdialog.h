@@ -9,30 +9,30 @@ class TrackCodeValidator;
 /**
  * @brief Implements a dialog for entering more detailed montage track code.
  */
-class CodeEditDialog : public QDialog
-{
+class CodeEditDialog : public QDialog {
 public:
-	CodeEditDialog(QWidget* parent);
-	~CodeEditDialog();
+  CodeEditDialog(QWidget *parent);
+  ~CodeEditDialog();
 
-	QString getText() const;
+  QString getText() const;
 
-	/**
-	 * @brief Shows a message dialog with the error message.
-	 */
-	static void errorMessageDialog(const QString& message, QWidget* parent = nullptr);
+  /**
+   * @brief Shows a message dialog with the error message.
+   */
+  static void errorMessageDialog(const QString &message,
+                                 QWidget *parent = nullptr);
 
 public slots:
-	void setText(const QString& text);
+  void setText(const QString &text);
 
-	/**
-	 * @brief This method gets called when the user closes the dialog.
-	 */
-	virtual void done(int r) override;
+  /**
+   * @brief This method gets called when the user closes the dialog.
+   */
+  virtual void done(int r) override;
 
 private:
-	QTextEdit* editor;
-	TrackCodeValidator* validator;
+  QTextEdit *editor;
+  TrackCodeValidator *validator;
 };
 
 #endif // CODEEDITDIALOG_H

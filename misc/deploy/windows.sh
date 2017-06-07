@@ -15,7 +15,7 @@
 name=$1
 if [ "$name" == "" ]
 then
-    name=Alenka-Windows
+  name=Alenka-Windows
 fi
 
 folder=`mktemp -d -p .`

@@ -10,41 +10,37 @@ class SyncServer;
 class SyncClient;
 class QLabel;
 
-class SyncDialog : public QDialog
-{
-	Q_OBJECT
+class SyncDialog : public QDialog {
+  Q_OBJECT
 
 public:
-	explicit SyncDialog(SyncServer* server, SyncClient* client, QWidget* parent = nullptr);
-
-signals:
-
-public slots:
+  explicit SyncDialog(SyncServer *server, SyncClient *client,
+                      QWidget *parent = nullptr);
 
 private:
-	SyncServer* server;
-	SyncClient* client;
-	QComboBox* combo;
-	QWidget* serverControls;
-	QWidget* clientControls;
-	QLineEdit* serverPortEdit;
-	QLineEdit* clientPortEdit;
-	QLineEdit* clientIpEdit;
-	QPushButton* launchButton;
-	QPushButton* connectButton;
-	QLabel* serverStatus;
-	QLabel* clientStatus;
+  SyncServer *server;
+  SyncClient *client;
+  QComboBox *combo;
+  QWidget *serverControls;
+  QWidget *clientControls;
+  QLineEdit *serverPortEdit;
+  QLineEdit *clientPortEdit;
+  QLineEdit *clientIpEdit;
+  QPushButton *launchButton;
+  QPushButton *connectButton;
+  QLabel *serverStatus;
+  QLabel *clientStatus;
 
-	void buildServerControls();
-	void buildClientControls();
+  void buildServerControls();
+  void buildClientControls();
 
 private slots:
-	void activateControls(const QString &text);
-	void launchServer();
-	void shutDownServer();
-	void connectClient();
-	void disconnectClient();
-	void changeEnableControls(bool enable);
+  void activateControls(const QString &text);
+  void launchServer();
+  void shutDownServer();
+  void connectClient();
+  void disconnectClient();
+  void changeEnableControls(bool enable);
 };
 
 #endif // SYNCDIALOG_H

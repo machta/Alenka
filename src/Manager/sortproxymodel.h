@@ -3,15 +3,16 @@
 
 #include <QSortFilterProxyModel>
 
-class SortProxyModel : public QSortFilterProxyModel
-{
-	Q_OBJECT
+class SortProxyModel : public QSortFilterProxyModel {
+  Q_OBJECT
 
 public:
-	explicit SortProxyModel(QObject* parent = nullptr) : QSortFilterProxyModel(parent) {}
+  explicit SortProxyModel(QObject *parent = nullptr)
+      : QSortFilterProxyModel(parent) {}
 
 protected:
-	virtual bool lessThan(const QModelIndex& left, const QModelIndex& right) const override;
+  virtual bool lessThan(const QModelIndex &left,
+                        const QModelIndex &right) const override;
 };
 
 #endif // SORTPROXYMODEL_H

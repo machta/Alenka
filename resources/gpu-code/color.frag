@@ -12,12 +12,11 @@ uniform vec4 color;
 out vec4 outColor;
 #endif
 
-void main()
-{
+void main() {
 #ifdef GLSL_110
-	gl_FragColor = color;
+  gl_FragColor = color;
 #else
-	outColor = color;
+  outColor = color;
 #endif
 }
 /// @endcond

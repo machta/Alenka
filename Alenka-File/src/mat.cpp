@@ -2,499 +2,463 @@
 
 #include <matio.h>
 
-#include <cstdint>
-#include <stdexcept>
 #include <algorithm>
-#include <iostream>
 #include <cmath>
+#include <cstdint>
+#include <iostream>
+#include <stdexcept>
 
 using namespace std;
 using namespace AlenkaFile;
 
-namespace
-{
+namespace {
 
-template<class A, class B>
-void convertArray(A* a, B* b, int n)
-{
-	for (int i = 0; i < n; ++i)
-		b[i] = static_cast<B>(a[i]);
+template <class A, class B> void convertArray(A *a, B *b, int n) {
+  for (int i = 0; i < n; ++i)
+    b[i] = static_cast<B>(a[i]);
 }
 
-template<class B>
-void decodeArray(void* a, B* b, matio_types type, int n = 1, int offset = 0)
-{
-#define CASE(a_, b_) case a_: convertArray(reinterpret_cast<b_*>(a) + offset, b, n); break;
-	switch (type)
-	{
-		CASE(MAT_T_INT8, int8_t);
-		CASE(MAT_T_UINT8, uint8_t);
-		CASE(MAT_T_INT16, int16_t);
-		CASE(MAT_T_UINT16, uint16_t);
-		CASE(MAT_T_INT32, int32_t);
-		CASE(MAT_T_UINT32, uint32_t);
-		CASE(MAT_T_SINGLE, float);
-		CASE(MAT_T_DOUBLE, double);
-		CASE(MAT_T_INT64, int64_t);
-		CASE(MAT_T_UINT64, uint64_t);
-	default:
-		runtime_error("Unsupported data type in MAT-file");
-		break;
-	}
+template <class B>
+void decodeArray(void *a, B *b, matio_types type, int n = 1, int offset = 0) {
+#define CASE(a_, b_)                                                           \
+  case a_:                                                                     \
+    convertArray(reinterpret_cast<b_ *>(a) + offset, b, n);                    \
+    break;
+
+  switch (type) {
+    CASE(MAT_T_INT8, int8_t);
+    CASE(MAT_T_UINT8, uint8_t);
+    CASE(MAT_T_INT16, int16_t);
+    CASE(MAT_T_UINT16, uint16_t);
+    CASE(MAT_T_INT32, int32_t);
+    CASE(MAT_T_UINT32, uint32_t);
+    CASE(MAT_T_SINGLE, float);
+    CASE(MAT_T_DOUBLE, double);
+    CASE(MAT_T_INT64, int64_t);
+    CASE(MAT_T_UINT64, uint64_t);
+  default:
+    runtime_error("Unsupported data type in MAT-file");
+    break;
+  }
+
 #undef CASE
 }
 
-std::pair<string, string> splitVarName(const string& varName)
-{
-	string firstPart;
-	auto it = varName.begin();
+std::pair<string, string> splitVarName(const string &varName) {
+  string firstPart;
+  auto it = varName.begin();
 
-	while (it != varName.end() && *it != '.')
-		firstPart.push_back(*it++);
+  while (it != varName.end() && *it != '.')
+    firstPart.push_back(*it++);
 
-	string secondPart;
-	if (firstPart.size() < varName.size())
-		secondPart.assign(++it, varName.end());
+  string secondPart;
+  if (firstPart.size() < varName.size())
+    secondPart.assign(++it, varName.end());
 
-	return make_pair(firstPart, secondPart);
+  return make_pair(firstPart, secondPart);
 }
 
-matvar_t* readStruct(mat_t* file, const string& varName)
-{
-	matvar_t* header = Mat_VarReadInfo(file, varName.c_str());
+matvar_t *readStruct(mat_t *file, const string &varName) {
+  matvar_t *header = Mat_VarReadInfo(file, varName.c_str());
 
-	if (header && header->class_type == MAT_C_STRUCT)
-		return header;
+  if (header && header->class_type == MAT_C_STRUCT)
+    return header;
 
-	return nullptr;
+  return nullptr;
 }
 
-matvar_t* readVar(mat_t* file, const std::string& varName, matvar_t** toFree)
-{
-	auto nameParts = splitVarName(varName);
-	matvar_t* var = nullptr;
+matvar_t *readVar(mat_t *file, const std::string &varName, matvar_t **toFree) {
+  auto nameParts = splitVarName(varName);
+  matvar_t *var = nullptr;
 
-	if (nameParts.second.empty())
-	{
-		var = Mat_VarReadInfo(file, nameParts.first.c_str());
+  if (nameParts.second.empty()) {
+    var = Mat_VarReadInfo(file, nameParts.first.c_str());
 
-		*toFree = var;
-	}
-	else
-	{
-		matvar_t* matStruct = readStruct(file, nameParts.first);
+    *toFree = var;
+  } else {
+    matvar_t *matStruct = readStruct(file, nameParts.first);
 
-		if (matStruct)
-			var = Mat_VarGetStructFieldByName(matStruct, nameParts.second.c_str(), 0);
+    if (matStruct)
+      var = Mat_VarGetStructFieldByName(matStruct, nameParts.second.c_str(), 0);
 
-		*toFree = matStruct;
-	}
+    *toFree = matStruct;
+  }
 
-	return var;
+  return var;
 }
 
-void readDataAll(mat_t* file, matvar_t* var)
-{
-	int err = Mat_VarReadDataAll(file, var);
-	assert(err == 0); (void)err;
+void readDataAll(mat_t *file, matvar_t *var) {
+  int err = Mat_VarReadDataAll(file, var);
+  assert(err == 0);
+  (void)err;
 }
 
-vector<double> readDoubleArray(mat_t* file, matvar_t* var)
-{
-	readDataAll(file, var);
+vector<double> readDoubleArray(mat_t *file, matvar_t *var) {
+  readDataAll(file, var);
 
-	int cols = var->rank < 2 ? 1 : static_cast<int>(var->dims[1]);
-	int size = cols*static_cast<int>(var->dims[0]);
+  int cols = var->rank < 2 ? 1 : static_cast<int>(var->dims[1]);
+  int size = cols * static_cast<int>(var->dims[0]);
 
-	vector<double> doubleArray(size);
-	decodeArray(var->data, doubleArray.data(), var->data_type, size);
+  vector<double> doubleArray(size);
+  decodeArray(var->data, doubleArray.data(), var->data_type, size);
 
-	return doubleArray;
+  return doubleArray;
 }
 
 } // namespace
 
-namespace AlenkaFile
-{
+namespace AlenkaFile {
 
 // How to decode data in Matlab: data = double(d)*diag(mults);
 
-MAT::MAT(const string& filePath, const MATvars& vars) : DataFile(filePath), vars(vars)
-{
-	openMatFile(filePath);
-	construct();
+MAT::MAT(const string &filePath, const MATvars &vars)
+    : DataFile(filePath), vars(vars) {
+  openMatFile(filePath);
+  construct();
 }
 
-MAT::MAT(const std::vector<string>& filePaths, const MATvars& vars) : DataFile(filePaths.at(0)), vars(vars)
-{
-	for (auto e : filePaths)
-		openMatFile(e);
-	construct();
+MAT::MAT(const std::vector<string> &filePaths, const MATvars &vars)
+    : DataFile(filePaths.at(0)), vars(vars) {
+  for (auto e : filePaths)
+    openMatFile(e);
+  construct();
 }
 
-MAT::~MAT()
-{
-	for (auto e : dataToFree)
-		Mat_VarFree(e);
+MAT::~MAT() {
+  for (auto e : dataToFree)
+    Mat_VarFree(e);
 
-	for (auto e : files)
-		Mat_Close(e);
+  for (auto e : files)
+    Mat_Close(e);
 }
 
-void MAT::save()
-{
-	DataFile::save();
+void MAT::save() { DataFile::save(); }
+
+bool MAT::load() {
+  if (DataFile::loadSecondaryFile() == false) {
+    fillDefaultMontage();
+    loadEvents();
+    return false;
+  }
+
+  return true;
 }
 
-bool MAT::load()
-{
-	if (DataFile::loadSecondaryFile() == false)
-	{
-		fillDefaultMontage();
-		loadEvents();
-		return false;
-	}
+void MAT::openMatFile(const string &filePath) {
+  mat_t *file = Mat_Open(filePath.c_str(), MAT_ACC_RDONLY);
 
-	return true;
+  if (!file)
+    throw runtime_error("Error while opening " + filePath);
+
+  files.push_back(file);
 }
 
-void MAT::openMatFile(const string& filePath)
-{
-	mat_t* file = Mat_Open(filePath.c_str(), MAT_ACC_RDONLY);
-
-	if (!file)
-		throw runtime_error("Error while opening " + filePath);
-
-	files.push_back(file);
+void MAT::construct() {
+  readSamplingRate();
+  readData();
+  readMults();
+  readDate();
 }
 
-void MAT::construct()
-{
-	readSamplingRate();
-	readData();
-	readMults();
-	readDate();
+void MAT::readSamplingRate() {
+  for (mat_t *file : files) {
+    matvar_t *toFree;
+    matvar_t *fs = readVar(file, vars.frequency, &toFree);
+
+    if (fs) {
+      if (fs->dims[0] <= 0)
+        throw runtime_error("Bad MAT file format");
+
+      readDataAll(file, fs);
+      decodeArray(fs->data, &samplingFrequency, fs->data_type);
+    }
+
+    Mat_VarFree(toFree);
+
+    if (fs)
+      return;
+  }
+
+  samplingFrequency = 1000;
+
+  cerr << "Warning: var " << vars.frequency
+       << " missing in MAT files; using default value=" << samplingFrequency
+       << endl;
 }
 
-void MAT::readSamplingRate()
-{
-	for (mat_t* file : files)
-	{
-		matvar_t* toFree;
-		matvar_t* fs = readVar(file, vars.frequency, &toFree);
+void MAT::readData() {
+  numberOfChannels = MAX_CHANNELS;
+  samplesRecorded = 0;
 
-		if (fs)
-		{
-			if (fs->dims[0] <= 0)
-				throw runtime_error("Bad MAT file format");
+  for (unsigned int j = 0; j < vars.data.size(); ++j) {
+    const string varName = vars.data[j];
 
-			readDataAll(file, fs);
-			decodeArray(fs->data, &samplingFrequency, fs->data_type);
-		}
+    for (unsigned int i = 0; i < files.size(); ++i) {
+      matvar_t *toFree;
+      matvar_t *dataVar = readVar(files[i], varName, &toFree);
 
-		Mat_VarFree(toFree);
+      if (dataVar) {
+        if (dataVar->rank != 2)
+          throw runtime_error("Data var in MAT files must have rank 2");
 
-		if (fs)
-			return;
-	}
+        sizes.push_back(static_cast<int>(dataVar->dims[0]));
+        samplesRecorded += dataVar->dims[0];
 
-	samplingFrequency = 1000;
+        if (numberOfChannels == MAX_CHANNELS) {
+          numberOfChannels = static_cast<int>(dataVar->dims[1]);
 
-	cerr << "Warning: var " << vars.frequency << " missing in MAT files; using default value=" << samplingFrequency << endl;
+          if (MAX_CHANNELS <= numberOfChannels)
+            throw runtime_error("Too many channes in '" + varName +
+                                "'. You probably saved the data with channels "
+                                "in rows by mistake.");
+        }
+
+        if (numberOfChannels != static_cast<int>(dataVar->dims[1]))
+          throw runtime_error(
+              "All data variables must have the same number of channels");
+
+        data.push_back(dataVar);
+        dataToFree.push_back(toFree);
+        dataFileIndex.push_back(i);
+      }
+    }
+  }
+
+  if (data.empty())
+    throw runtime_error("No data variables in MAT-files found");
 }
 
-void MAT::readData()
-{
-	numberOfChannels = MAX_CHANNELS;
-	samplesRecorded = 0;
+void MAT::readMults() {
+  for (mat_t *file : files) {
+    matvar_t *toFree;
+    matvar_t *mults = readVar(file, vars.multipliers, &toFree);
 
-	for (unsigned int j = 0; j < vars.data.size(); ++j)
-	{
-		const string varName = vars.data[j];
+    if (mults) {
+      multipliers = readDoubleArray(file, mults);
 
-		for (unsigned int i = 0; i < files.size(); ++i)
-		{
-			matvar_t* toFree;
-			matvar_t* dataVar = readVar(files[i], varName, &toFree);
+      if (static_cast<int>(multipliers.size()) < numberOfChannels)
+        throw runtime_error("Bad MAT file format");
 
-			if (dataVar)
-			{
-				if (dataVar->rank != 2)
-					throw runtime_error("Data var in MAT files must have rank 2");
+      multipliers.resize(numberOfChannels);
+    }
 
-				sizes.push_back(static_cast<int>(dataVar->dims[0]));
-				samplesRecorded += dataVar->dims[0];
+    Mat_VarFree(toFree);
 
-				if (numberOfChannels == MAX_CHANNELS)
-				{
-					numberOfChannels = static_cast<int>(dataVar->dims[1]);
-
-					if (MAX_CHANNELS <= numberOfChannels)
-						throw runtime_error("Too many channes in '" + varName + "'. You probably saved the data with channels in rows by mistake.");
-				}
-
-				if (numberOfChannels != static_cast<int>(dataVar->dims[1]))
-					throw runtime_error("All data variables must have the same number of channels");
-
-				data.push_back(dataVar);
-				dataToFree.push_back(toFree);
-				dataFileIndex.push_back(i);
-			}
-		}
-	}
-
-	if (data.empty())
-		throw runtime_error("No data variables in MAT-files found");
+    if (mults)
+      return;
+  }
 }
 
-void MAT::readMults()
-{
-	for (mat_t* file : files)
-	{
-		matvar_t* toFree;
-		matvar_t* mults = readVar(file, vars.multipliers, &toFree);
+void MAT::readDate() {
+  for (mat_t *file : files) {
+    matvar_t *toFree;
+    matvar_t *date = readVar(file, vars.date, &toFree);
 
-		if (mults)
-		{
-			multipliers = readDoubleArray(file, mults);
+    if (date) {
+      readDataAll(file, date);
+      decodeArray(date->data, &days, date->data_type);
+    }
 
-			if (static_cast<int>(multipliers.size()) < numberOfChannels)
-				throw runtime_error("Bad MAT file format");
+    Mat_VarFree(toFree);
 
-			multipliers.resize(numberOfChannels);
-		}
-
-		Mat_VarFree(toFree);
-
-		if (mults)
-			return;
-	}
+    if (date)
+      return;
+  }
 }
 
-void MAT::readDate()
-{
-	for (mat_t* file : files)
-	{
-		matvar_t* toFree;
-		matvar_t* date = readVar(file, vars.date, &toFree);
+vector<string> MAT::readLabels() {
+  vector<string> labels;
+  labels.resize(numberOfChannels, "");
 
-		if (date)
-		{
-			readDataAll(file, date);
-			decodeArray(date->data, &days, date->data_type);
-		}
+  for (mat_t *file : files) {
+    matvar_t *toFree;
+    matvar_t *label = readVar(file, vars.label, &toFree);
 
-		Mat_VarFree(toFree);
+    if (label && label->class_type == MAT_C_CELL) {
+      for (int i = 0; i < numberOfChannels; ++i) {
+        matvar_t *cell = Mat_VarGetCell(label, i);
 
-		if (date)
-			return;
-	}
+        if (cell && cell->class_type == MAT_C_CHAR && cell->rank == 2 &&
+            cell->dims[0] == 1) {
+          readDataAll(file, cell);
+
+          int dim1 = static_cast<int>(cell->dims[1]);
+          char *dataPtr = reinterpret_cast<char *>(cell->data);
+
+          for (int j = 0; j < dim1; ++j)
+            labels[i].push_back(dataPtr[j]);
+        }
+      }
+    }
+
+    Mat_VarFree(toFree);
+
+    if (label)
+      break;
+  }
+
+  return labels;
 }
 
-vector<string> MAT::readLabels()
-{
-	vector<string> labels;
-	labels.resize(numberOfChannels, "");
+void MAT::readEvents(vector<int> *eventPositions, vector<int> *eventDurations,
+                     vector<int> *eventChannels) {
+  for (mat_t *file : files) {
+    matvar_t *toFree;
+    matvar_t *pos = readVar(file, vars.eventPosition, &toFree);
 
-	for (mat_t* file : files)
-	{
-		matvar_t* toFree;
-		matvar_t* label = readVar(file, vars.label, &toFree);
+    if (pos) {
+      vector<double> doubleArray = readDoubleArray(file, pos);
 
-		if (label && label->class_type == MAT_C_CELL)
-		{
-			for (int i = 0; i < numberOfChannels; ++i)
-			{
-				matvar_t* cell = Mat_VarGetCell(label, i);
+      for (unsigned int i = 0; i < doubleArray.size(); ++i)
+        eventPositions->push_back(
+            static_cast<int>(round(doubleArray[i] * samplingFrequency)));
 
-				if (cell && cell->class_type == MAT_C_CHAR && cell->rank == 2 && cell->dims[0] == 1)
-				{
-					readDataAll(file, cell);
+      Mat_VarFree(toFree);
+    }
+  }
 
-					int dim1 = static_cast<int>(cell->dims[1]);
-					char* dataPtr = reinterpret_cast<char*>(cell->data);
+  for (mat_t *file : files) {
+    matvar_t *toFree;
+    matvar_t *dur = readVar(file, vars.eventDuration, &toFree);
 
-					for (int j = 0; j < dim1; ++j)
-						labels[i].push_back(dataPtr[j]);
-				}
-			}
-		}
+    if (dur) {
+      vector<double> doubleArray = readDoubleArray(file, dur);
 
-		Mat_VarFree(toFree);
+      for (unsigned int i = 0; i < doubleArray.size(); ++i)
+        eventDurations->push_back(
+            static_cast<int>(round(doubleArray[i] * samplingFrequency)));
 
-		if (label)
-			break;
-	}
+      Mat_VarFree(toFree);
+    }
+  }
 
-	return labels;
+  for (mat_t *file : files) {
+    matvar_t *toFree;
+    matvar_t *chan = readVar(file, vars.eventChannel, &toFree);
+
+    if (chan) {
+      vector<double> doubleArray = readDoubleArray(file, chan);
+
+      for (unsigned int i = 0; i < doubleArray.size(); ++i)
+        eventChannels->push_back(static_cast<int>(round(doubleArray[i])) - 1);
+
+      Mat_VarFree(toFree);
+    }
+  }
+
+  size_t size = eventPositions->size();
+  eventDurations->resize(size, 0);
+  eventChannels->resize(size, -2);
 }
 
-void MAT::readEvents(vector<int>* eventPositions, vector<int>* eventDurations, vector<int>* eventChannels)
-{
-	for (mat_t* file : files)
-	{
-		matvar_t* toFree;
-		matvar_t* pos = readVar(file, vars.eventPosition, &toFree);
+template <typename T>
+void MAT::readChannelsFloatDouble(vector<T *> dataChannels,
+                                  uint64_t firstSample, uint64_t lastSample) {
+  assert(firstSample <= lastSample && "Bad parameter order.");
 
-		if (pos)
-		{
-			vector<double> doubleArray = readDoubleArray(file, pos);
+  if (getSamplesRecorded() <= lastSample)
+    invalid_argument("MAT: reading out of bounds");
 
-			for (unsigned int i = 0; i < doubleArray.size(); ++i)
-				eventPositions->push_back(static_cast<int>(round(doubleArray[i]*samplingFrequency)));
+  if (dataChannels.size() < getChannelCount())
+    invalid_argument("MAT: too few dataChannels");
 
-			Mat_VarFree(toFree);
-		}
-	}
+  int i = 0;
+  uint64_t lastInChunk = 0;
 
-	for (mat_t* file : files)
-	{
-		matvar_t* toFree;
-		matvar_t* dur = readVar(file, vars.eventDuration, &toFree);
+  while (lastInChunk += sizes[i], lastInChunk < firstSample)
+    ++i;
 
-		if (dur)
-		{
-			vector<double> doubleArray = readDoubleArray(file, dur);
+  uint64_t firstInChunk = lastInChunk - sizes[i];
+  --lastInChunk;
 
-			for (unsigned int i = 0; i < doubleArray.size(); ++i)
-				eventDurations->push_back(static_cast<int>(round(doubleArray[i]*samplingFrequency)));
+  for (uint64_t j = firstSample; j < lastSample;) {
+    uint64_t last = min(lastSample, lastInChunk);
+    int length = static_cast<int>(last - j + 1);
+    tmpBuffer.resize(numberOfChannels * length * 8);
 
-			Mat_VarFree(toFree);
-		}
-	}
+    int start[2] = {static_cast<int>(j - firstInChunk), 0};
+    int stride[2] = {1, 1};
+    int edge[2] = {length, numberOfChannels};
 
-	for (mat_t* file : files)
-	{
-		matvar_t* toFree;
-		matvar_t* chan = readVar(file, vars.eventChannel, &toFree);
+    int err = Mat_VarReadData(files[dataFileIndex[i]], data[i],
+                              tmpBuffer.data(), start, stride, edge);
+    assert(err == 0);
+    (void)err;
 
-		if (chan)
-		{
-			vector<double> doubleArray = readDoubleArray(file, chan);
+    for (int k = 0; k < numberOfChannels; ++k) {
+      decodeArray(tmpBuffer.data(), dataChannels[k], data[i]->data_type, length,
+                  k * length);
 
-			for (unsigned int i = 0; i < doubleArray.size(); ++i)
-				eventChannels->push_back(static_cast<int>(round(doubleArray[i])) - 1);
+      if (!multipliers.empty()) {
+        T multi = static_cast<T>(multipliers[k]);
 
-			Mat_VarFree(toFree);
-		}
-	}
+        for (int l = 0; l < length; ++l)
+          dataChannels[k][l] *= multi;
+      }
+    }
 
-	size_t size = eventPositions->size();
-	eventDurations->resize(size, 0);
-	eventChannels->resize(size, -2);
+    for (auto &e : dataChannels)
+      e += length;
+    firstInChunk += sizes[i];
+    lastInChunk += sizes[i];
+    j += length;
+    ++i;
+  }
 }
 
-template<typename T>
-void MAT::readChannelsFloatDouble(vector<T*> dataChannels, uint64_t firstSample, uint64_t lastSample)
-{
-	assert(firstSample <= lastSample && "Bad parameter order.");
+void MAT::fillDefaultMontage() {
+  getDataModel()->montageTable()->insertRows(0);
+  assert(getChannelCount() > 0);
 
-	if (getSamplesRecorded() <= lastSample)
-		invalid_argument("MAT: reading out of bounds");
+  AbstractTrackTable *defaultTracks =
+      getDataModel()->montageTable()->trackTable(0);
+  defaultTracks->insertRows(0, getChannelCount());
 
-	if (dataChannels.size() < getChannelCount())
-		invalid_argument("MAT: too few dataChannels");
+  vector<string> labels = readLabels();
 
-	int i = 0;
-	uint64_t lastInChunk = 0;
-
-	while (lastInChunk += sizes[i], lastInChunk < firstSample)
-		++i;
-
-	uint64_t firstInChunk = lastInChunk - sizes[i];
-	--lastInChunk;
-
-	for (uint64_t j = firstSample; j < lastSample;)
-	{
-		uint64_t last = min(lastSample, lastInChunk);
-		int length = static_cast<int>(last - j + 1);
-		tmpBuffer.resize(numberOfChannels*length*8);
-
-		int start[2] = {static_cast<int>(j - firstInChunk), 0};
-		int stride[2] = {1, 1};
-		int edge[2] = {length, numberOfChannels};
-
-		int err = Mat_VarReadData(files[dataFileIndex[i]], data[i], tmpBuffer.data(), start, stride, edge);
-		assert(err == 0); (void)err;
-
-		for (int k = 0; k < numberOfChannels; ++k)
-		{
-			decodeArray(tmpBuffer.data(), dataChannels[k], data[i]->data_type, length, k*length);
-
-			if (!multipliers.empty())
-			{
-				T multi = static_cast<T>(multipliers[k]);
-
-				for (int l = 0; l < length; ++l)
-					dataChannels[k][l] *= multi;
-			}
-		}
-
-		for (auto& e : dataChannels)
-			e += length;
-		firstInChunk += sizes[i];
-		lastInChunk += sizes[i];
-		j += length;
-		++i;
-	}
+  for (unsigned int i = 0; i < getChannelCount(); ++i) {
+    if (!labels[i].empty()) {
+      auto r = defaultTracks->row(i);
+      r.label = labels[i];
+      defaultTracks->row(i, r);
+    }
+  }
 }
 
-void MAT::fillDefaultMontage()
-{
-	getDataModel()->montageTable()->insertRows(0);
-	assert(getChannelCount() > 0);
+void MAT::loadEvents() {
+  vector<int> eventPositions;
+  vector<int> eventDurations;
+  vector<int> eventChannels;
+  readEvents(&eventPositions, &eventDurations, &eventChannels);
 
-	AbstractTrackTable* defaultTracks = getDataModel()->montageTable()->trackTable(0);
-	defaultTracks->insertRows(0, getChannelCount());
+  AbstractEventTable *eventTable =
+      getDataModel()->montageTable()->eventTable(0);
 
-	vector<string> labels = readLabels();
+  assert(eventPositions.size() == eventDurations.size() &&
+         eventPositions.size() == eventChannels.size());
+  int count = static_cast<int>(eventPositions.size());
 
-	for (unsigned int i = 0; i < getChannelCount(); ++i)
-	{
-		if (!labels[i].empty())
-		{
-			auto r = defaultTracks->row(i);
-			r.label = labels[i];
-			defaultTracks->row(i, r);
-		}
-	}
-}
+  if (count > 0) {
+    AbstractEventTypeTable *ett = getDataModel()->eventTypeTable();
+    ett->insertRows(0);
 
-void MAT::loadEvents()
-{
-	vector<int> eventPositions;
-	vector<int> eventDurations;
-	vector<int> eventChannels;
-	readEvents(&eventPositions, &eventDurations, &eventChannels);
+    EventType et = ett->row(0);
+    et.name = "MAT events";
+    ett->row(0, et);
 
-	AbstractEventTable* eventTable = getDataModel()->montageTable()->eventTable(0);
+    eventTable->insertRows(0, count);
 
-	assert(eventPositions.size() == eventDurations.size() && eventPositions.size() == eventChannels.size());
-	int count = static_cast<int>(eventPositions.size());
+    for (int i = 0; i < count; ++i) {
+      Event e = eventTable->row(i);
 
-	if (count > 0)
-	{
-		AbstractEventTypeTable* ett = getDataModel()->eventTypeTable();
-		ett->insertRows(0);
+      e.type = 0;
+      e.position = eventPositions[i];
+      e.duration = eventDurations[i];
+      e.channel = eventChannels[i];
 
-		EventType et = ett->row(0);
-		et.name = "MAT events";
-		ett->row(0, et);
-
-		eventTable->insertRows(0, count);
-
-		for (int i = 0; i < count; ++i)
-		{
-			Event e = eventTable->row(i);
-
-			e.type = 0;
-			e.position = eventPositions[i];
-			e.duration = eventDurations[i];
-			e.channel = eventChannels[i];
-
-			eventTable->row(i, e);
-		}
-	}
+      eventTable->row(i, e);
+    }
+  }
 }
 
 } // namespace AlenkaFile

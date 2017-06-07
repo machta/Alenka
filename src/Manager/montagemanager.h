@@ -6,15 +6,14 @@
 /**
  * @brief Montage manager widget implementation.
  */
-class MontageManager : public Manager
-{
-	Q_OBJECT
+class MontageManager : public Manager {
+  Q_OBJECT
 
 public:
-	explicit MontageManager(QWidget* parent = nullptr) : Manager(parent) {}
+  explicit MontageManager(QWidget *parent = nullptr) : Manager(parent) {}
 
 protected slots:
-	virtual bool insertRowBack() override;
+  virtual bool insertRowBack() override;
 };
 
 #endif // MONTAGEMANAGER_H

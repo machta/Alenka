@@ -3,8 +3,8 @@
 
 #include <edflib.h>
 
-void edf_set_gender_char(int handle, const char* gender);
-void edf_set_birthdate_char(int handle, const char* birthdate);
+void edf_set_gender_char(int handle, const char *gender);
+void edf_set_birthdate_char(int handle, const char *birthdate);
 
 // This was my attempt at solving a problem with the library's interface.
 // Unfortunately edf_set_birthdate_char causes, for some reason, the resulting

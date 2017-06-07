@@ -18,8 +18,7 @@ uniform float y0;
 uniform int bufferOffset;
 uniform float yScale;
 
-void main()
-{
+void main() {
 	float x = float(bufferOffset + gl_VertexID);
 	float y = y0 + sampleValue1*yScale;
 

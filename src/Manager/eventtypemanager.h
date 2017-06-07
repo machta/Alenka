@@ -6,15 +6,14 @@
 /**
  * @brief Event type manager widget implementation.
  */
-class EventTypeManager : public Manager
-{
-	Q_OBJECT
+class EventTypeManager : public Manager {
+  Q_OBJECT
 
 public:
-	explicit EventTypeManager(QWidget* parent = nullptr) : Manager(parent) {}
+  explicit EventTypeManager(QWidget *parent = nullptr) : Manager(parent) {}
 
 protected slots:
-	virtual bool insertRowBack() override;
+  virtual bool insertRowBack() override;
 };
 
 #endif // EVENTTYPEMANAGER_H

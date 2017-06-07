@@ -5,27 +5,26 @@
 
 class QWebSocket;
 
-class SyncClient : public QObject
-{
-	Q_OBJECT
+class SyncClient : public QObject {
+  Q_OBJECT
 
 public:
-	explicit SyncClient(QObject* parent = nullptr);
-	~SyncClient();
+  explicit SyncClient(QObject *parent = nullptr);
+  ~SyncClient();
 
-	int connectServer(QUrl url, int port);
-	bool isValid();
+  int connectServer(QUrl url, int port);
+  bool isValid();
 
 signals:
-	void messageReceived(const QByteArray& message);
-	void serverDisconnected();
+  void messageReceived(const QByteArray &message);
+  void serverDisconnected();
 
 public slots:
-	int sendMessage(const QByteArray& message);
-	void disconnectServer();
+  int sendMessage(const QByteArray &message);
+  void disconnectServer();
 
 private:
-	QWebSocket* socket;
+  QWebSocket *socket;
 };
 
 #endif // SYNCCLIENT_H

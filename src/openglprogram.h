@@ -8,30 +8,26 @@
 /**
  * @brief OpenGL program object wrapper.
  */
-class OpenGLProgram
-{
+class OpenGLProgram {
 public:
-	/**
-	 * @brief Constructor taking strings as shader sources.
-	 */
-	OpenGLProgram(const std::string& vertSource, const std::string& fragSource);
-	~OpenGLProgram();
+  /**
+   * @brief Constructor taking strings as shader sources.
+   */
+  OpenGLProgram(const std::string &vertSource, const std::string &fragSource);
+  ~OpenGLProgram();
 
-	/**
-	 * @brief Used to retrieve the underlying program object.
-	 */
-	GLuint getGLProgram() const
-	{
-		return program;
-	}
+  /**
+   * @brief Used to retrieve the underlying program object.
+   */
+  GLuint getGLProgram() const { return program; }
 
 private:
-	GLuint program;
+  GLuint program;
 
-	/**
-	 * @brief Compile a shader and attach it to the program.
-	 */
-	void addShader(const std::string& sourceText, GLenum type);
+  /**
+   * @brief Compile a shader and attach it to the program.
+   */
+  void addShader(const std::string &sourceText, GLenum type);
 };
 
 #endif // OPENGLPROGRAM_H

@@ -5,23 +5,23 @@
 
 #include <vector>
 
-class TrackTableModel : public TableModel
-{
-	Q_OBJECT
+class TrackTableModel : public TableModel {
+  Q_OBJECT
 
 public:
-	explicit TrackTableModel(OpenDataFile* file, QObject* parent = nullptr);
+  explicit TrackTableModel(OpenDataFile *file, QObject *parent = nullptr);
 
-	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+  virtual int
+  rowCount(const QModelIndex &parent = QModelIndex()) const override;
 
 protected:
-	virtual void removeRowsFromDataModel(int row, int count) override;
+  virtual void removeRowsFromDataModel(int row, int count) override;
 
 private slots:
-	void setSelectedMontage(int i);
+  void setSelectedMontage(int i);
 
 private:
-	std::vector<QMetaObject::Connection> trackTableConnections;
+  std::vector<QMetaObject::Connection> trackTableConnections;
 };
 
 #endif // TRACKTABLEMODEL_H

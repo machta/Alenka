@@ -5,24 +5,21 @@
 
 #include <vector>
 
-class KernelCache
-{
-	QCache<QString, std::vector<unsigned char>> cache;
+class KernelCache {
+  QCache<QString, std::vector<unsigned char>> cache;
 
 public:
-	KernelCache();
-	~KernelCache();
+  KernelCache();
+  ~KernelCache();
 
-	void insert(const QString& code, std::vector<unsigned char>* binary)
-	{
-		cache.insert(code, binary);
-	}
-	const std::vector<unsigned char>* find(const QString& code) const
-	{
-		return cache[code];
-	}
+  void insert(const QString &code, std::vector<unsigned char> *binary) {
+    cache.insert(code, binary);
+  }
+  const std::vector<unsigned char> *find(const QString &code) const {
+    return cache[code];
+  }
 
-	static void deleteCacheFile();
+  static void deleteCacheFile();
 };
 
 #endif // KERNELCACHE_H
