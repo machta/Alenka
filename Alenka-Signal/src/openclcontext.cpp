@@ -89,9 +89,8 @@ string OpenCLContext::getPlatformInfo() const {
   err = clGetPlatformIDs(0, nullptr, &platformCount);
   checkClErrorCode(err, "clGetPlatformIDs()");
 
-  auto platformIDs = new cl_platform_id[platformCount];
-
-  err = clGetPlatformIDs(platformCount, platformIDs, nullptr);
+  vector<cl_platform_id> platformIDs(platformCount);
+  err = clGetPlatformIDs(platformCount, platformIDs.data(), nullptr);
   checkClErrorCode(err, "clGetPlatformIDs()");
 
   // Find the maximum size needed for the values.
@@ -174,10 +173,9 @@ string OpenCLContext::getDeviceInfo() const {
                        &deviceCount);
   checkClErrorCode(err, "clGetDeviceIDs()");
 
-  auto deviceIDs = new cl_device_id[deviceCount];
-
+  vector<cl_device_id> deviceIDs(deviceCount);
   err = clGetDeviceIDs(getCLPlatform(), CL_DEVICE_TYPE_ALL, deviceCount,
-                       deviceIDs, nullptr);
+                       deviceIDs.data(), nullptr);
   checkClErrorCode(err, "clGetDeviceIDs()");
 
   // Find the maximum size needed for the value.
