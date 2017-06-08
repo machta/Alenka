@@ -19,8 +19,14 @@ public:
     m_channels.resize(loader->channelCount());
   }
 
-  void OpenFile(const char *fileName) override { assert(0); }
-  void OpenFile(const wchar_t *fileName) override { assert(0); }
+  void OpenFile(const char *fileName) override {
+    (void)fileName;
+    assert(0);
+  }
+  void OpenFile(const wchar_t *fileName) override {
+    (void)fileName;
+    assert(0);
+  }
   void CloseFile() override { assert(0); }
   bool IsOpen() const override {
     assert(0);
@@ -58,10 +64,8 @@ public:
 
 namespace AlenkaSignal {
 
-Spikedet::Spikedet(int fs, int channelCount, bool original,
-                   DETECTOR_SETTINGS settings)
-    : fs(fs), channelCount(channelCount), original(original),
-      settings(std::move(settings)) {
+Spikedet::Spikedet(int fs, bool original, DETECTOR_SETTINGS settings)
+    : fs(fs), settings(std::move(settings)) {
   this->settings.m_original = original;
 }
 

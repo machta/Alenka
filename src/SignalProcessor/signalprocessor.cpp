@@ -58,7 +58,6 @@ void multiplySamples(vector<float> *samples) {
 
 class FloatAllocator : public LRUCacheAllocator<float> {
   const int size;
-  int *destroyCounter;
 
 public:
   FloatAllocator(int size) : size(size) {}

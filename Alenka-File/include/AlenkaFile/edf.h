@@ -3,7 +3,7 @@
 
 #include "datafile.h"
 
-class edf_hdr_struct;
+struct edf_hdr_struct;
 
 namespace AlenkaFile {
 

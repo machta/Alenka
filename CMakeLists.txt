@@ -13,7 +13,7 @@ if(UNIX)
   add_definitions(-DUNIX_BUILD)
 
   if(DEBUG)
-    add_definitions(-D_GLIBCXX_DEBUG)
+    #add_definitions(-D_GLIBCXX_DEBUG)
   endif()
 elseif(WIN32)
   # Parallel compilation mode for cl.exe.
@@ -32,6 +32,14 @@ elseif(WIN32)
   endif()
 elseif(APPLE)
   add_definitions(-DMAC_BUILD)
+endif()
+
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  set(WARNINGS "-Wall -pedantic -Wextra")# -Wconversion")
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  set(WARNINGS "-Wall -pedantic -Wextra")# -Wconversion")
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+  set(WARNINGS "-W4")
 endif()
 
 # Find packages.
@@ -138,6 +146,7 @@ set(SRC
   src/spikedetsettingsdialog.h
   src/tracklabelbar.cpp
   src/tracklabelbar.h)
+set_source_files_properties(${SRC} PROPERTIES COMPILE_FLAGS ${WARNINGS})
 
 add_executable(Alenka ${SRC} ${RESOURCES} ${SRC_BOOST_PO}
   libraries/spikedet/src/CResultsModel.cpp)

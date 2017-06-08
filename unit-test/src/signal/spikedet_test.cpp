@@ -21,7 +21,7 @@ int test(AbstractSpikedetLoader<SIGNALTYPE> *loader, double fs, bool original,
   unique_ptr<CDetectorOutput> out(new CDetectorOutput);
   unique_ptr<CDischarges> dis(new CDischarges(loader->channelCount()));
 
-  Spikedet det(fs, loader->channelCount(), original, settings);
+  Spikedet det(fs, original, settings);
   det.runAnalysis(loader, out.get(), dis.get());
 
   int spikes = static_cast<int>(out->m_pos.size());

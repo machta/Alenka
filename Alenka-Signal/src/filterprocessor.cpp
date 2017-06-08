@@ -4,7 +4,11 @@
 #include "../include/AlenkaSignal/openclprogram.h"
 
 #include <clFFT.h>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #include <fasttransforms.h>
+#pragma GCC diagnostic pop
 
 #include <cmath>
 #include <complex>

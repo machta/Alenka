@@ -70,14 +70,12 @@ public:
 
 class Spikedet {
   const int fs;
-  int channelCount;
-  bool original;
   DETECTOR_SETTINGS settings;
   std::atomic<int> progressCurrent;
   CSpikeDetector *detector = nullptr;
 
 public:
-  Spikedet(int fs, int channelCount, bool original, DETECTOR_SETTINGS settings);
+  Spikedet(int fs, bool original, DETECTOR_SETTINGS settings);
   ~Spikedet();
 
   void runAnalysis(AbstractSpikedetLoader<SIGNALTYPE> *loader,

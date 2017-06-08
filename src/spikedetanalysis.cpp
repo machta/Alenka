@@ -159,7 +159,7 @@ void processOutput(OpenDataFile *file, SpikedetAnalysis *spikedetAnalysis,
     EventType et = eventTypeTable->row(index + i);
 
     et.name = "Spikedet K" + to_string(i + 1);
-    DataModel::color2array(colors[i], et.color);
+    et.color = DataModel::color2colorArray(colors[i]);
 
     file->undoFactory->changeEventType(index + i, et);
   }
@@ -215,8 +215,7 @@ void SpikedetAnalysis::runAnalysis(OpenDataFile *file,
       makeMontage<SIGNALTYPE>(file, context);
 
   int Fs = static_cast<int>(round(file->file->getSamplingFrequency()));
-  Spikedet spikedet(Fs, static_cast<int>(montage.size()), originalSpikedet,
-                    settings);
+  Spikedet spikedet(Fs, originalSpikedet, settings);
   Loader<SIGNALTYPE> loader(file->file, montage, context);
 
   delete output;
@@ -272,8 +271,7 @@ void SpikedetAnalysis::analyseCommandLineFile() {
   auto settings = AlenkaSignal::Spikedet::defaultSettings();
   SpikedetSettingsDialog::resetSettings(&settings, nullptr, &originalSpikedet);
 
-  Spikedet spikedet(Fs, static_cast<int>(file->getChannelCount()),
-                    originalSpikedet, settings);
+  Spikedet spikedet(Fs, originalSpikedet, settings);
   FileSpikedetLoader<SIGNALTYPE> loader(file.get());
 
   unique_ptr<CDetectorOutput> output(new CDetectorOutput);

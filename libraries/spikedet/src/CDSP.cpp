@@ -116,7 +116,7 @@ wxThread::ExitCode CResamplingThread::Entry()
 	delete [] out;
 	delete src_data;
 
-	return (ExitCode)ret;
+	return nullptr;
 #else
 	cerr << "Warning: original resampling is not supported on Mac due to a libsamplerate bug" << endl;
 #endif

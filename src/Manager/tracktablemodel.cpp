@@ -165,7 +165,7 @@ public:
   bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       Track t = currentTrackTable(file)->row(row);
-      DataModel::color2array(value.value<QColor>(), t.color);
+      t.color = DataModel::color2colorArray(value.value<QColor>());
       file->undoFactory->changeTrack(
           OpenDataFile::infoTable.getSelectedMontage(), row, t, "change Color");
       return true;

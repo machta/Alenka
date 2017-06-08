@@ -52,6 +52,7 @@ set(SRC
   src/edflib_extended.h
   src/gdf2.cpp
   src/mat.cpp)
+set_source_files_properties(${SRC} PROPERTIES COMPILE_FLAGS ${WARNINGS})
 
 add_library(alenka-file STATIC ${SRC} ${SRC_BOOST_S} ${SRC_BOOST_FS})
 

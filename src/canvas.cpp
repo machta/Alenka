@@ -193,14 +193,13 @@ void bindArray(GLuint array, GLuint buffer, GLint size, GLsizei stride) {
 class GPUCacheAllocator : public LRUCacheAllocator<GPUCacheItem> {
   size_t size;
   bool duplicateSignal, glSharing;
-  int extraSamplesFront;
   OpenCLContext *context;
 
 public:
   GPUCacheAllocator(size_t size, bool duplicateSignal, bool glSharing,
-                    int extraSamplesFront, OpenCLContext *context)
+                    OpenCLContext *context)
       : size(size), duplicateSignal(duplicateSignal), glSharing(glSharing),
-        extraSamplesFront(extraSamplesFront), context(context) {}
+        context(context) {}
 
   bool constructElement(GPUCacheItem **ptr) override {
     *ptr = new GPUCacheItem();
@@ -889,8 +888,8 @@ void Canvas::updateProcessor() {
   logToFile("Creating GPU cache with "
             << cacheCapacity << " capacity and blocks of size " << size << ".");
   cache = new LRUCache<int, GPUCacheItem>(
-      cacheCapacity, new GPUCacheAllocator(size, duplicateSignal, glSharing,
-                                           extraSamplesFront, context));
+      cacheCapacity,
+      new GPUCacheAllocator(size, duplicateSignal, glSharing, context));
 
   if (!glSharing) {
     processorSyncBuffer = new float[size / sizeof(float)];

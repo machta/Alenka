@@ -121,7 +121,7 @@ public:
   bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       EventType et = file->dataModel->eventTypeTable()->row(row);
-      DataModel::color2array(value.value<QColor>(), et.color);
+      et.color = DataModel::color2colorArray(value.value<QColor>());
       file->undoFactory->changeEventType(row, et, "change Color");
       return true;
     }

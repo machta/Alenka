@@ -1,6 +1,7 @@
 #ifndef ALENKAFILE_ABSTRACTDATAMODEL_H
 #define ALENKAFILE_ABSTRACTDATAMODEL_H
 
+#include <array>
 #include <cstdio>
 #include <string>
 
@@ -10,7 +11,7 @@ struct EventType {
   int id;
   std::string name;
   double opacity;
-  unsigned char color[3];
+  std::array<int, 3> color;
   bool hidden;
 
   enum class Index { id, name, opacity, color, hidden, size };
@@ -60,7 +61,7 @@ public:
 struct Track {
   std::string label;
   std::string code;
-  unsigned char color[3];
+  std::array<int, 3> color;
   double amplitude;
   bool hidden;
 
@@ -122,7 +123,7 @@ public:
   AbstractMontageTable *montageTable() { return mt; }
   const AbstractMontageTable *montageTable() const { return mt; }
 
-  static std::string color2str(const unsigned char color[3]) {
+  static std::string colorArray2str(std::array<int, 3> color) {
     std::string str = "#";
     for (int i = 0; i < 3; i++) {
       char tmp[3];
@@ -131,24 +132,21 @@ public:
     }
     return str;
   }
-  static void str2color(const char *str, unsigned char *color) {
+  static auto str2colorArray(const char *str) {
     unsigned int r, g, b;
     sscanf(str, "#%02x%02x%02x", &r, &g, &b);
-    color[0] = static_cast<unsigned char>(r);
-    color[1] = static_cast<unsigned char>(g);
-    color[2] = static_cast<unsigned char>(b);
+    return std::array<int, 3>{
+        {static_cast<int>(r), static_cast<int>(g), static_cast<int>(b)}};
   }
-  template <class T> static T array2color(unsigned char *c) {
+  template <class T> static T array2color(std::array<int, 3> c) {
     T color;
     color.setRed(c[0]);
     color.setGreen(c[1]);
     color.setBlue(c[2]);
     return color;
   }
-  template <class T> static void color2array(const T &color, unsigned char *c) {
-    c[0] = color.red();
-    c[1] = color.green();
-    c[2] = color.blue();
+  template <class T> static auto color2colorArray(const T &color) {
+    return std::array<int, 3>{{color.red(), color.green(), color.blue()}};
   }
 };
 

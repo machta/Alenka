@@ -63,6 +63,7 @@ set(SRC
   src/openclcontext.cpp
   src/openclprogram.cpp
   src/spikedet.cpp)
+set_source_files_properties(${SRC} PROPERTIES COMPILE_FLAGS ${WARNINGS})
 
 add_library(alenka-signal STATIC ${SRC} ${SRC_ALG} ${SRC_SR} ${SRC_SD}
   ../libraries/SignalResampler/src/resample.cpp)
