@@ -88,6 +88,7 @@ set(SRC
   src/DataModel/vitnessdatamodel.h
   src/Manager/codeeditdialog.cpp
   src/Manager/codeeditdialog.h
+  src/Manager/dummywidget.h
   src/Manager/eventmanager.cpp
   src/Manager/eventmanager.h
   src/Manager/eventtablemodel.cpp

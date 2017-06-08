@@ -2,6 +2,7 @@
 
 #include "../DataModel/infotable.h"
 #include "../DataModel/opendatafile.h"
+#include "dummywidget.h"
 
 #include <QAction>
 #include <QCollator>
@@ -15,6 +16,8 @@ using namespace std;
 namespace {
 
 class Delegate : public QStyledItemDelegate {
+  std::vector<TableColumn *> *columns;
+
 public:
   explicit Delegate(std::vector<TableColumn *> *columns,
                     QObject *parent = nullptr)
@@ -23,46 +26,57 @@ public:
   QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option,
                         const QModelIndex &index) const override {
     QWidget *widget;
-    if ((*columns)[index.column()]->createEditor(parent, option, index,
+    if ((*columns)[index.column()]->createEditor(this, parent, option, index,
                                                  &widget))
       return widget;
     else
       return QStyledItemDelegate::createEditor(parent, option, index);
   }
   void setEditorData(QWidget *editor, const QModelIndex &index) const override {
-    if (!(*columns)[index.column()]->setEditorData(editor, index))
+    if (!(*columns)[index.column()]->setEditorData(this, editor, index))
       QStyledItemDelegate::setEditorData(editor, index);
   }
   void setModelData(QWidget *editor, QAbstractItemModel *model,
                     const QModelIndex &index) const override {
-    if (!(*columns)[index.column()]->setModelData(editor, model, index))
+    if (!(*columns)[index.column()]->setModelData(this, editor, model, index))
       QStyledItemDelegate::setModelData(editor, model, index);
   }
-
-private:
-  std::vector<TableColumn *> *columns;
 };
 
 } // namespace
 
-bool BoolTableColumn::createEditor(QWidget *parent,
+bool BoolTableColumn::createEditor(const QStyledItemDelegate *delegate,
+                                   QWidget *parent,
                                    const QStyleOptionViewItem &option,
                                    const QModelIndex &index,
                                    QWidget **widget) const {
   (void)parent;
   (void)option;
+  (void)index;
 
-  const_cast<QAbstractItemModel *>(index.model())
-      ->setData(index, !index.data(Qt::EditRole).toBool());
+  std::function<void(void)> fun = [widget, delegate]() {
+    emit const_cast<QStyledItemDelegate *>(delegate)->commitData(*widget);
+    emit const_cast<QStyledItemDelegate *>(delegate)->closeEditor(*widget);
+  };
 
-  // TODO: Decide whether to turn this back on, or leave it out.
-  // emit const_cast<TrackManagerDelegate*>(this)->closeEditor(nullptr);
-
-  *widget = nullptr;
+  *widget = new DummyWidget(fun, parent);
   return true;
 }
 
-bool ColorTableColumn::createEditor(QWidget *parent,
+bool BoolTableColumn::setModelData(const QStyledItemDelegate *delegate,
+                                   QWidget *editor, QAbstractItemModel *model,
+                                   const QModelIndex &index) const {
+  (void)delegate;
+  (void)editor;
+
+  // Just flip the value;
+  model->setData(index, !index.data(Qt::EditRole).toBool());
+
+  return true;
+}
+
+bool ColorTableColumn::createEditor(const QStyledItemDelegate *delegate,
+                                    QWidget *parent,
                                     const QStyleOptionViewItem &option,
                                     const QModelIndex &index,
                                     QWidget **widget) const {
@@ -73,7 +87,7 @@ bool ColorTableColumn::createEditor(QWidget *parent,
   QAction *action = lineEdit->addAction(QIcon(":/icons/edit.png"),
                                         QLineEdit::TrailingPosition);
 
-  lineEdit->connect(action, &QAction::triggered, [lineEdit]() {
+  lineEdit->connect(action, &QAction::triggered, [lineEdit, delegate]() {
     QColor color;
     color.setNamedColor(lineEdit->text());
 
@@ -82,9 +96,8 @@ bool ColorTableColumn::createEditor(QWidget *parent,
     if (color.isValid()) {
       lineEdit->setText(color.name());
 
-      // TODO: Decide whether to turn this back on, or leave it out.
-      // emit const_cast<TrackManagerDelegate*>(this)->commitData(lineEdit);
-      // emit const_cast<TrackManagerDelegate*>(this)->closeEditor(lineEdit);
+      emit const_cast<QStyledItemDelegate *>(delegate)->commitData(lineEdit);
+      emit const_cast<QStyledItemDelegate *>(delegate)->closeEditor(lineEdit);
     }
   });
 

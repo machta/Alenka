@@ -28,21 +28,27 @@ public:
                        int role = Qt::EditRole) = 0;
   virtual Qt::ItemFlags flags() const { return Qt::ItemIsEditable; }
 
-  virtual bool createEditor(QWidget *parent, const QStyleOptionViewItem &option,
+  virtual bool createEditor(const QStyledItemDelegate *delegate,
+                            QWidget *parent, const QStyleOptionViewItem &option,
                             const QModelIndex &index, QWidget **widget) const {
+    (void)delegate;
     (void)parent;
     (void)option;
     (void)index;
     (void)widget;
     return false;
   }
-  virtual bool setEditorData(QWidget *editor, const QModelIndex &index) const {
+  virtual bool setEditorData(const QStyledItemDelegate *delegate,
+                             QWidget *editor, const QModelIndex &index) const {
+    (void)delegate;
     (void)editor;
     (void)index;
     return false;
   }
-  virtual bool setModelData(QWidget *editor, QAbstractItemModel *model,
+  virtual bool setModelData(const QStyledItemDelegate *delegate,
+                            QWidget *editor, QAbstractItemModel *model,
                             const QModelIndex &index) const {
+    (void)delegate;
     (void)editor;
     (void)model;
     (void)index;
@@ -59,8 +65,12 @@ public:
   BoolTableColumn(const QString &header, OpenDataFile *file)
       : TableColumn(header, file) {}
 
-  bool createEditor(QWidget *parent, const QStyleOptionViewItem &option,
+  bool createEditor(const QStyledItemDelegate *delegate, QWidget *parent,
+                    const QStyleOptionViewItem &option,
                     const QModelIndex &index, QWidget **widget) const override;
+  bool setModelData(const QStyledItemDelegate *delegate, QWidget *editor,
+                    QAbstractItemModel *model,
+                    const QModelIndex &index) const override;
 };
 
 class ColorTableColumn : public TableColumn {
@@ -68,7 +78,8 @@ public:
   ColorTableColumn(const QString &header, OpenDataFile *file)
       : TableColumn(header, file) {}
 
-  bool createEditor(QWidget *parent, const QStyleOptionViewItem &option,
+  bool createEditor(const QStyledItemDelegate *delegate, QWidget *parent,
+                    const QStyleOptionViewItem &option,
                     const QModelIndex &index, QWidget **widget) const override;
 };
 

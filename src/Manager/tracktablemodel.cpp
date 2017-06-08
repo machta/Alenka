@@ -99,7 +99,8 @@ public:
     return false;
   }
 
-  bool createEditor(QWidget *parent, const QStyleOptionViewItem &option,
+  bool createEditor(const QStyledItemDelegate *delegate, QWidget *parent,
+                    const QStyleOptionViewItem &option,
                     const QModelIndex &index, QWidget **widget) const override {
     (void)option;
     (void)index;
@@ -108,7 +109,7 @@ public:
     QAction *action = lineEdit->addAction(QIcon(":/icons/edit.png"),
                                           QLineEdit::TrailingPosition);
 
-    lineEdit->connect(action, &QAction::triggered, [lineEdit]() {
+    lineEdit->connect(action, &QAction::triggered, [lineEdit, delegate]() {
       CodeEditDialog dialog(lineEdit);
       dialog.setText(lineEdit->text());
       int result = dialog.exec();
@@ -116,9 +117,8 @@ public:
       if (result == QDialog::Accepted) {
         lineEdit->setText(dialog.getText());
 
-        // TODO: Decide whether to turn this back on, or leave it out.
-        // emit const_cast<TrackManagerDelegate*>(this)->commitData(lineEdit);
-        // emit const_cast<TrackManagerDelegate*>(this)->closeEditor(lineEdit);
+        emit const_cast<QStyledItemDelegate *>(delegate)->commitData(lineEdit);
+        emit const_cast<QStyledItemDelegate *>(delegate)->closeEditor(lineEdit);
       }
     });
 
@@ -126,8 +126,10 @@ public:
     return true;
   }
 
-  bool setModelData(QWidget *editor, QAbstractItemModel *model,
+  bool setModelData(const QStyledItemDelegate *delegate, QWidget *editor,
+                    QAbstractItemModel *model,
                     const QModelIndex &index) const override {
+    (void)delegate;
     (void)model;
     (void)index;
 
@@ -213,8 +215,10 @@ public:
     return false;
   }
 
-  bool createEditor(QWidget *parent, const QStyleOptionViewItem &option,
+  bool createEditor(const QStyledItemDelegate *delegate, QWidget *parent,
+                    const QStyleOptionViewItem &option,
                     const QModelIndex &index, QWidget **widget) const override {
+    (void)delegate;
     (void)option;
     (void)index;
 

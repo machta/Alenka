@@ -85,8 +85,10 @@ public:
     return false;
   }
 
-  bool createEditor(QWidget *parent, const QStyleOptionViewItem &option,
+  bool createEditor(const QStyledItemDelegate *delegate, QWidget *parent,
+                    const QStyleOptionViewItem &option,
                     const QModelIndex &index, QWidget **widget) const override {
+    (void)delegate;
     (void)option;
     (void)index;
 
@@ -101,14 +103,18 @@ public:
     *widget = combo;
     return true;
   }
-  bool setEditorData(QWidget *editor, const QModelIndex &index) const override {
+  bool setEditorData(const QStyledItemDelegate *delegate, QWidget *editor,
+                     const QModelIndex &index) const override {
+    (void)delegate;
     QComboBox *combo = reinterpret_cast<QComboBox *>(editor);
     int i = index.data(Qt::EditRole).toInt();
     combo->setCurrentIndex(i + 1);
     return true;
   }
-  bool setModelData(QWidget *editor, QAbstractItemModel *model,
+  bool setModelData(const QStyledItemDelegate *delegate, QWidget *editor,
+                    QAbstractItemModel *model,
                     const QModelIndex &index) const override {
+    (void)delegate;
     QComboBox *combo = reinterpret_cast<QComboBox *>(editor);
     model->setData(index, combo->currentIndex() - 1);
     return true;
@@ -222,8 +228,10 @@ public:
     return false;
   }
 
-  bool createEditor(QWidget *parent, const QStyleOptionViewItem &option,
+  bool createEditor(const QStyledItemDelegate *delegate, QWidget *parent,
+                    const QStyleOptionViewItem &option,
                     const QModelIndex &index, QWidget **widget) const override {
+    (void)delegate;
     (void)option;
     (void)index;
 
@@ -239,14 +247,18 @@ public:
     *widget = combo;
     return true;
   }
-  bool setEditorData(QWidget *editor, const QModelIndex &index) const override {
+  bool setEditorData(const QStyledItemDelegate *delegate, QWidget *editor,
+                     const QModelIndex &index) const override {
+    (void)delegate;
     QComboBox *combo = reinterpret_cast<QComboBox *>(editor);
     int i = index.data(Qt::EditRole).toInt();
     combo->setCurrentIndex(i + 2);
     return true;
   }
-  bool setModelData(QWidget *editor, QAbstractItemModel *model,
+  bool setModelData(const QStyledItemDelegate *delegate, QWidget *editor,
+                    QAbstractItemModel *model,
                     const QModelIndex &index) const override {
+    (void)delegate;
     QComboBox *combo = reinterpret_cast<QComboBox *>(editor);
     model->setData(index, combo->currentIndex() - 2);
     return true;
