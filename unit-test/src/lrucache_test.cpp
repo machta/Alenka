@@ -43,7 +43,7 @@ void randomTest(int cap, int iters, int range, int clearInterval) {
   for (int i = 0; i < iters; ++i) {
     int r = rand() % range;
 
-    int key;
+    int key = -1;
     float *ptr = cache.getAny(set<int>{r}, &key);
 
     if (ptr) {
@@ -67,7 +67,7 @@ TEST(lrucache_test, adhoc) {
     LRUCache<int, float> cache(10, new FloatAllocator(&destroyCounter));
     EXPECT_EQ(cache.getCapacity(), static_cast<unsigned int>(10));
 
-    int key0, key1;
+    int key0 = -1, key1 = -1;
     EXPECT_FALSE(cache.getAny(set<int>{1}, &key0));
 
     float *ptr0 = cache.setOldest(0);
