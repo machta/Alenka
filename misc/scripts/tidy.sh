@@ -8,5 +8,5 @@
 
 F='Alenka/src|Alenka/unit-test/src|include/AlenkaFile|include/AlenkaSignal'
 
-../misc/scripts/all-sources.sh | xargs -n1 -P8 clang-tidy -header-filter=$F $@
+../misc/scripts/all-sources.sh | xargs -n1 -P4 clang-tidy -header-filter=$F $@
 
