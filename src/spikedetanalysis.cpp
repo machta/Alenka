@@ -248,7 +248,8 @@ void SpikedetAnalysis::analyseCommandLineFile() {
   unique_ptr<AlenkaFile::DataFile> file;
 
   try {
-    vector<string> fn = PROGRAM_OPTIONS["filename"].as<vector<string>>();
+    vector<string> fn;
+    programOption("filename", fn);
 
     if (fn.size() != 1)
       runtime_error("You must specify at least 1 input file");
@@ -263,7 +264,8 @@ void SpikedetAnalysis::analyseCommandLineFile() {
   }
 
   int Fs = static_cast<int>(round(file->getSamplingFrequency()));
-  bool originalSpikedet = PROGRAM_OPTIONS["osd"].as<bool>();
+  bool originalSpikedet;
+  programOption("osd", originalSpikedet);
 
   auto settings = AlenkaSignal::Spikedet::defaultSettings();
   SpikedetSettingsDialog::resetSettings(&settings, nullptr, &originalSpikedet);
@@ -295,6 +297,9 @@ void SpikedetAnalysis::analyseCommandLineFile() {
 
   t.join();
 
-  const char *fileName = PROGRAM_OPTIONS["spikedet"].as<string>().c_str();
-  CResultsModel::SaveResultsMAT(fileName, output.get(), discharges.get());
+  string fileName;
+  programOption("spikedet", fileName);
+
+  CResultsModel::SaveResultsMAT(fileName.c_str(), output.get(),
+                                discharges.get());
 }

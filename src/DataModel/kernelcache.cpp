@@ -14,12 +14,13 @@ using namespace std;
 namespace {
 
 string cacheFilePath() {
-  int platform = PROGRAM_OPTIONS["clPlatform"].as<int>();
-  int device = PROGRAM_OPTIONS["clDevice"].as<int>();
+  int platform, device;
+  programOption("clPlatform", platform);
+  programOption("clDevice", device);
 
   string str;
-  if (PROGRAM_OPTIONS.isSet("kernelCacheDir"))
-    str = PROGRAM_OPTIONS["kernelCacheDir"].as<string>();
+  if (isProgramOptionSet("kernelCacheDir"))
+    programOption("kernelCacheDir", str);
   else
     str = MyApplication::applicationDirPath().toStdString();
 
@@ -32,7 +33,7 @@ string cacheFilePath() {
 // TODO: Reject caches from old Alenka versions and from changed devices.
 KernelCache::KernelCache() {
   // TODO: Perhaps switch to byte-size based capacity system.
-  cache.setMaxCost(PROGRAM_OPTIONS["kernelCacheSize"].as<int>());
+  cache.setMaxCost(programOption<int>("kernelCacheSize"));
 
   // Load.
   string filePath = cacheFilePath();

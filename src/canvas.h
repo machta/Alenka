@@ -69,7 +69,7 @@ class Canvas : public QOpenGLWidget {
   int nBlock, nSamples;
   int extraSamplesFront, extraSamplesBack;
   bool duplicateSignal, glSharing;
-  unsigned int parallelQueues;
+  int parallelQueues;
   cl_command_queue commandQueue = nullptr;
   std::vector<float> processorSyncBuffer;
   std::vector<cl_mem> processorOutputBuffers;

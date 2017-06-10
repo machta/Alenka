@@ -101,7 +101,7 @@ SignalProcessor::SignalProcessor(unsigned int nBlock,
     checkClErrorCode(err, "clCreateBuffer()");
 
 #ifdef NDEBUG
-    if (!PROGRAM_OPTIONS["cl11"].as<bool>())
+    if (!programOption<bool>("cl11"))
       flags |= CL_MEM_HOST_NO_ACCESS;
 #endif
     filterBuffers.push_back(
@@ -114,7 +114,7 @@ SignalProcessor::SignalProcessor(unsigned int nBlock,
   }
 
   int blockFloats = nBlock * fileChannels;
-  int64_t fileCacheMemory = PROGRAM_OPTIONS["fileCacheSize"].as<int>();
+  int64_t fileCacheMemory = programOption<int>("fileCacheSize");
   fileCacheMemory *= 1000 * 1000 / sizeof(float);
   int capacity = max(1, static_cast<int>(fileCacheMemory / blockFloats));
 
@@ -166,7 +166,7 @@ void SignalProcessor::updateFilter() {
   filter->setHighpass(OpenDataFile::infoTable.getHighpassFrequency());
 
   filter->setNotchOn(OpenDataFile::infoTable.getNotchOn());
-  filter->setNotch(PROGRAM_OPTIONS["notchFrequency"].as<double>());
+  filter->setNotch(programOption<double>("notchFrequency"));
 
   auto samples = filter->computeSamples();
   if (OpenDataFile::infoTable.getFrequencyMultipliersOn())

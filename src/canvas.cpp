@@ -178,7 +178,7 @@ void arrayAttrib(GLint size, GLsizei stride) {
 }
 
 void bindArray(GLuint array, GLuint buffer, GLint size, GLsizei stride) {
-  if (PROGRAM_OPTIONS["gl20"].as<bool>()) {
+  if (programOption<bool>("gl20")) {
     gl()->glBindBuffer(GL_ARRAY_BUFFER, buffer);
     arrayAttrib(size, stride);
   } else {
@@ -210,7 +210,7 @@ public:
   }
   void destroyElement(GPUCacheItem *ptr) override {
     if (ptr) {
-      if (!PROGRAM_OPTIONS["gl20"].as<bool>()) {
+      if (!programOption<bool>("gl20")) {
         if (ptr->signalArray)
           gl3()->glDeleteVertexArrays(1, &ptr->signalArray);
 
@@ -244,7 +244,7 @@ private:
     if (OPENGL_INTERFACE->checkGLErrors())
       return false; // Out of graphical memory.
 
-    if (!PROGRAM_OPTIONS["gl20"].as<bool>()) {
+    if (!programOption<bool>("gl20")) {
       GLuint arrays[2];
       gl3()->glGenVertexArrays(2, arrays);
       item.signalArray = arrays[0];
@@ -254,7 +254,7 @@ private:
     }
     arrayAttrib(1, duplicateSignal ? 2 * sizeof(float) : 0);
 
-    if (!PROGRAM_OPTIONS["gl20"].as<bool>())
+    if (!programOption<bool>("gl20"))
       gl3()->glBindVertexArray(item.eventArray);
 
     if (duplicateSignal) {
@@ -298,11 +298,12 @@ Canvas::Canvas(QWidget *parent) : QOpenGLWidget(parent) {
   setFocusPolicy(Qt::ClickFocus);
   setMouseTracking(true);
 
-  parallelQueues = PROGRAM_OPTIONS["parProc"].as<int>();
-  nBlock = PROGRAM_OPTIONS["blockSize"].as<int>();
-  duplicateSignal = !PROGRAM_OPTIONS["gl43"]
-                         .as<bool>(); // TODO: Fix the OpenGL 4.3 optimization.
-  glSharing = PROGRAM_OPTIONS["glSharing"].as<bool>();
+  // TODO: Fix the OpenGL 4.3 optimization.
+  programOption("parProc", parallelQueues);
+  programOption("blockSize", nBlock);
+  duplicateSignal = !programOption<bool>("gl43");
+  programOption("glSharing", glSharing);
+
   extraSamplesFront = extraSamplesBack = 0; // TODO: Test this with other values
                                             // if it is ever needed for for the
                                             // "pretty" event rendering;
@@ -311,7 +312,7 @@ Canvas::Canvas(QWidget *parent) : QOpenGLWidget(parent) {
 Canvas::~Canvas() {
   makeCurrent();
 
-  if (!PROGRAM_OPTIONS["gl20"].as<bool>())
+  if (!programOption<bool>("gl20"))
     gl3()->glDeleteVertexArrays(1, &rectangleLineArray);
   gl()->glDeleteBuffers(1, &rectangleLineBuffer);
 
@@ -491,7 +492,7 @@ void Canvas::initializeGL() {
   gl()->glGenBuffers(1, &rectangleLineBuffer);
   gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleLineBuffer);
 
-  if (!PROGRAM_OPTIONS["gl20"].as<bool>()) {
+  if (!programOption<bool>("gl20")) {
     gl3()->glGenVertexArrays(1, &rectangleLineArray);
     gl3()->glBindVertexArray(rectangleLineArray);
   }
@@ -518,7 +519,7 @@ void Canvas::initializeGL() {
 
   logToFile(ss.str());
 
-  if (PROGRAM_OPTIONS.isSet("glInfo")) {
+  if (isProgramOptionSet("glInfo")) {
     cout << ss.str();
     MyApplication::mainExit();
   }
@@ -625,8 +626,7 @@ void Canvas::paintGL() {
       vector<cl_mem> bufferVector;
       vector<GPUCacheItem *> items;
 
-      for (unsigned int j = 0; j < parallelQueues && j + i < indexSet.size();
-           ++j) {
+      for (int j = 0; j < parallelQueues && j + i < indexSet.size(); ++j) {
         int index = *(it++);
         cacheItem = cache->setOldest(index);
         logToFile("Loading block " << index << " to GPU cache.");
@@ -839,7 +839,7 @@ void Canvas::updateProcessor() {
   if (duplicateSignal)
     size *= 2;
 
-  cl_ulong gpuMemorySize = PROGRAM_OPTIONS["gpuMemorySize"].as<int>();
+  cl_ulong gpuMemorySize = programOption<int>("gpuMemorySize");
   gpuMemorySize *= 1000 * 1000;
 
   if (gpuMemorySize <= 0) {
@@ -876,7 +876,7 @@ void Canvas::updateProcessor() {
   if (!glSharing) {
     processorSyncBuffer.resize(size / sizeof(float));
 
-    for (unsigned int i = 0; i < parallelQueues; ++i) {
+    for (int i = 0; i < parallelQueues; ++i) {
       cl_mem_flags flags = CL_MEM_READ_WRITE;
 
       processorOutputBuffers.push_back(
@@ -1261,8 +1261,8 @@ void Canvas::createContext() {
   }
 
   context = make_unique<AlenkaSignal::OpenCLContext>(
-      PROGRAM_OPTIONS["clPlatform"].as<int>(),
-      PROGRAM_OPTIONS["clDevice"].as<int>(), properties);
+      programOption<int>("clPlatform"), programOption<int>("clDevice"),
+      properties);
 }
 
 void Canvas::setUniformTransformMatrix(OpenGLProgram *program, float *data) {

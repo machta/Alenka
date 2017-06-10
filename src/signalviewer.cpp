@@ -33,18 +33,19 @@ SignalViewer::SignalViewer(QWidget *parent) : QWidget(parent) {
   splitter->setStretchFactor(1, 1);
 
   scrollBar = new QScrollBar(Qt::Horizontal, this);
-  if (PROGRAM_OPTIONS["mode"].as<string>() == "tablet" ||
-      PROGRAM_OPTIONS["mode"].as<string>() == "tablet-full")
+  string mode;
+  programOption("mode", mode);
+  if (mode == "tablet" || mode == "tablet-full")
     scrollBar->setMinimumHeight(50);
   box->addWidget(scrollBar);
 
   splitter->restoreState(
-      PROGRAM_OPTIONS.settings("SignalViewer splitter state").toByteArray());
+      PROGRAM_OPTIONS->settings("SignalViewer splitter state").toByteArray());
 }
 
 SignalViewer::~SignalViewer() {
-  SET_PROGRAM_OPTIONS.settings("SignalViewer splitter state",
-                               splitter->saveState());
+  PROGRAM_OPTIONS->settings("SignalViewer splitter state",
+                            splitter->saveState());
 }
 
 void SignalViewer::changeFile(OpenDataFile *file) {

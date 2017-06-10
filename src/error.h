@@ -94,7 +94,7 @@ void CNEC(T val, std::string message, const char *file, int line) {
 
 #ifndef NDEBUG
 template <class... T> inline void printBuffer(T... p) {
-  if (PROGRAM_OPTIONS.isSet("printBuffers"))
+  if (isProgramOptionSet("printBuffers"))
     AlenkaSignal::OpenCLContext::printBuffer(p...);
 }
 #else

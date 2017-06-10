@@ -21,7 +21,7 @@ void OpenGLInterface::initializeOpenGLInterface() {
   checkNotErrorCode(functions20->initializeOpenGLFunctions(), false,
                     "initializeOpenGLFunctions() failed.");
 
-  if (!PROGRAM_OPTIONS["gl20"].as<bool>()) {
+  if (!programOption<bool>("gl20")) {
     functions30 = c->versionFunctions<QOpenGLFunctions_3_0>();
     checkNotErrorCode(functions30, nullptr,
                       "versionFunctions<QOpenGLFunctions_3_0>() failed.");
@@ -29,7 +29,7 @@ void OpenGLInterface::initializeOpenGLInterface() {
                       "initializeOpenGLFunctions() failed.");
   }
 
-  if (PROGRAM_OPTIONS["gl43"].as<bool>()) {
+  if (programOption<bool>("gl43")) {
     functions43 = c->versionFunctions<QOpenGLFunctions_4_3_Core>();
     checkNotErrorCode(functions43, nullptr,
                       "versionFunctions<QOpenGLFunctions_4_3_Core>() failed.");

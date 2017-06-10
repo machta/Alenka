@@ -12,7 +12,7 @@ OpenGLProgram::OpenGLProgram(const string &vertSource,
   program = gl()->glCreateProgram();
 
   string shaderHeader;
-  if (PROGRAM_OPTIONS["gl20"].as<bool>())
+  if (programOption<bool>("gl20"))
     shaderHeader = "#version 110\n#define GLSL_110\n";
   else
     shaderHeader = "#version 130\n";

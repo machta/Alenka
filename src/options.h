@@ -112,17 +112,24 @@ private:
       const boost::program_options::options_description &configuration);
 };
 
-extern const Options *PROGRAM_OPTIONS_POINTER;
-extern Options *SET_PROGRAM_OPTIONS_POINTER;
+extern std::unique_ptr<Options> PROGRAM_OPTIONS;
+
+inline bool isProgramOptionSet(const std::string &name) {
+  return PROGRAM_OPTIONS->isSet(name);
+}
 
 /**
  * @brief Use this to read global program options.
  */
-#define PROGRAM_OPTIONS (*PROGRAM_OPTIONS_POINTER)
+template <class T> T programOption(const std::string &name) {
+  return (*PROGRAM_OPTIONS)[name].as<T>();
+}
 
 /**
- * @brief Use this to read and modify global program options.
+ * @brief Use this to assign global program options to variables.
  */
-#define SET_PROGRAM_OPTIONS (*SET_PROGRAM_OPTIONS_POINTER)
+template <class T> void programOption(const std::string &name, T &var) {
+  var = (*PROGRAM_OPTIONS)[name].as<T>();
+}
 
 #endif // OPTIONS_H

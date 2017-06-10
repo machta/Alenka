@@ -36,20 +36,21 @@ int main(int argc, char **argv) {
   try {
     MyApplication app(argc, argv);
 
-    if (PROGRAM_OPTIONS.isSet("spikedet")) {
-      if (PROGRAM_OPTIONS.isSet("filename")) {
+    if (isProgramOptionSet("spikedet")) {
+      if (isProgramOptionSet("filename")) {
         SpikedetAnalysis::analyseCommandLineFile();
-        MyApplication::mainExit();
+        return MyApplication::logExitStatus(EXIT_SUCCESS);
       } else {
         cerr << "Error: no input file specified" << endl;
-        MyApplication::mainExit(EXIT_FAILURE);
+        return MyApplication::logExitStatus(EXIT_FAILURE);
       }
     }
 
     SignalFileBrowserWindow window;
 
-    if (PROGRAM_OPTIONS["mode"].as<string>() == "tablet" ||
-        PROGRAM_OPTIONS["mode"].as<string>() == "tablet-full")
+    string mode;
+    programOption("mode", mode);
+    if (mode == "tablet" || mode == "tablet-full")
       window.showMaximized();
     else
       window.show();
@@ -62,5 +63,5 @@ int main(int argc, char **argv) {
     logToFileAndConsole("Unknown exception caught.");
   }
 
-  MyApplication::mainExit(ret);
+  return MyApplication::logExitStatus(ret);
 }

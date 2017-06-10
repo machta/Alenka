@@ -181,24 +181,24 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(DETECTOR_SETTINGS *settings,
 void SpikedetSettingsDialog::resetSettings(DETECTOR_SETTINGS *settings,
                                            double *eventDuration,
                                            bool *originalSpikedet) {
-  settings->m_band_low = PROGRAM_OPTIONS["fl"].as<int>();
-  settings->m_band_high = PROGRAM_OPTIONS["fh"].as<int>();
-  settings->m_k1 = PROGRAM_OPTIONS["k1"].as<double>();
-  settings->m_k2 = PROGRAM_OPTIONS["k2"].as<double>();
-  settings->m_k3 = PROGRAM_OPTIONS["k3"].as<double>();
-  settings->m_winsize = PROGRAM_OPTIONS["w"].as<int>();
-  settings->m_noverlap = PROGRAM_OPTIONS["n"].as<double>();
-  settings->m_buffering = PROGRAM_OPTIONS["buf"].as<int>();
-  settings->m_main_hum_freq = PROGRAM_OPTIONS["h"].as<int>();
-  settings->m_discharge_tol = PROGRAM_OPTIONS["dt"].as<double>();
-  settings->m_polyspike_union_time = PROGRAM_OPTIONS["pt"].as<double>();
-  settings->m_decimation = PROGRAM_OPTIONS["dec"].as<int>();
+  programOption("fl", settings->m_band_low);
+  programOption("fh", settings->m_band_high);
+  programOption("k1", settings->m_k1);
+  programOption("k2", settings->m_k2);
+  programOption("k3", settings->m_k3);
+  programOption("w", settings->m_winsize);
+  programOption("n", settings->m_noverlap);
+  programOption("buf", settings->m_buffering);
+  programOption("h", settings->m_main_hum_freq);
+  programOption("dt", settings->m_discharge_tol);
+  programOption("pt", settings->m_polyspike_union_time);
+  programOption("dec", settings->m_decimation);
 
   if (eventDuration)
-    *eventDuration = PROGRAM_OPTIONS["sed"].as<double>();
+    programOption("sed", *eventDuration);
 
   if (originalSpikedet)
-    *originalSpikedet = PROGRAM_OPTIONS["osd"].as<bool>();
+    programOption("osd", *originalSpikedet);
 }
 
 void SpikedetSettingsDialog::setValues() {

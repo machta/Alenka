@@ -18,8 +18,6 @@ class OpenCLContext;
 class MyApplication : public QApplication {
   Q_OBJECT
 
-  std::unique_ptr<Options> options;
-
 public:
   /**
    * @brief MyApplication constructor.
@@ -48,6 +46,7 @@ public:
   bool notify(QObject *receiver, QEvent *event) override;
 
   static void mainExit(int status = EXIT_SUCCESS);
+  static int logExitStatus(int status);
 
   static auto version() { return std::array<int, 3>{{0, 9, 2}}; }
   static std::string versionString(const std::array<int, 3> &v) {

@@ -197,5 +197,4 @@ void Options::parseConfigFile(const options_description &configuration) {
   }
 }
 
-const Options *PROGRAM_OPTIONS_POINTER = nullptr;
-Options *SET_PROGRAM_OPTIONS_POINTER = nullptr;
+unique_ptr<Options> PROGRAM_OPTIONS;

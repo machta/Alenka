@@ -21,8 +21,7 @@ MyApplication::MyApplication(int &argc, char **argv)
 
   try {
     // Set up the global options object.
-    options = make_unique<Options>(argc, argv);
-    PROGRAM_OPTIONS_POINTER = SET_PROGRAM_OPTIONS_POINTER = options.get();
+    PROGRAM_OPTIONS = make_unique<Options>(argc, argv);
 
     // Set up the log.
     const int maxLogFileNameLength = 1000;
@@ -76,12 +75,11 @@ MyApplication::MyApplication(int &argc, char **argv)
     logToFile(ss.str());
   }
 
-  PROGRAM_OPTIONS.logConfigFile();
+  PROGRAM_OPTIONS->logConfigFile();
 
   // Initialize the global OpenCL context.
   globalContext = make_unique<AlenkaSignal::OpenCLContext>(
-      PROGRAM_OPTIONS["clPlatform"].as<int>(),
-      PROGRAM_OPTIONS["clDevice"].as<int>());
+      programOption<int>("clPlatform"), programOption<int>("clDevice"));
 
   // Set up the clFFT library.
   AlenkaSignal::OpenCLContext::clfftInit();
@@ -106,25 +104,25 @@ MyApplication::MyApplication(int &argc, char **argv)
 
   logToFile(ss.str());
 
-  if (PROGRAM_OPTIONS.isSet("help")) {
+  if (isProgramOptionSet("help")) {
     cout << R"(Usage:"
   Alenka [OPTION]... [FILE]...";
   Alenka --spikedet OUTPUT_FILE [SPIKEDET_SETTINGS]... FILE [FILE]..."
   Alenka --help|--clInfo|--version
 )";
 
-    cout << PROGRAM_OPTIONS.getDescription() << endl;
+    cout << PROGRAM_OPTIONS->getDescription() << endl;
     mainExit();
-  } else if (PROGRAM_OPTIONS.isSet("clInfo")) {
+  } else if (isProgramOptionSet("clInfo")) {
     cout << ss.str();
     mainExit();
-  } else if (PROGRAM_OPTIONS.isSet("version")) {
+  } else if (isProgramOptionSet("version")) {
     cout << "Alenka " << versionString() << endl;
     mainExit();
   }
 
   // Set locale.
-  QLocale locale(PROGRAM_OPTIONS["locale"].as<string>().c_str());
+  QLocale locale(programOption<string>("locale").c_str());
   QLocale::setDefault(locale);
 }
 
@@ -144,8 +142,14 @@ bool MyApplication::notify(QObject *receiver, QEvent *event) {
 }
 
 void MyApplication::mainExit(int status) {
-  logToFile("Exiting with status " << status << ".");
+  logExitStatus(status);
   std::exit(status);
+}
+
+int MyApplication::logExitStatus(int status)
+{
+  logToFile("Exiting with status " << status << ".");
+  return status;
 }
 
 char MyApplication::dirSeparator() { return QDir::separator().toLatin1(); }

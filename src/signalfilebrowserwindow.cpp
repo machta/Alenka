@@ -101,7 +101,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
     : QMainWindow(parent), fileResources(new OpenFileResources) {
   setWindowTitle(TITLE);
 
-  if (0 < PROGRAM_OPTIONS["kernelCacheSize"].as<int>())
+  if (0 < programOption<int>("kernelCacheSize"))
     kernelCache = make_unique<KernelCache>();
   else
     KernelCache::deleteCacheFile();
@@ -464,8 +464,9 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   QToolBar *zoomToolBar = addToolBar("Zoom Tool Bar");
   zoomToolBar->setObjectName("Zoom QToolBar");
   int spacingMulti = 1;
-  bool tabletMode = PROGRAM_OPTIONS["mode"].as<string>() == "tablet" ||
-                    PROGRAM_OPTIONS["mode"].as<string>() == "tablet-full";
+  string mode;
+  programOption("mode", mode);
+  bool tabletMode = mode == "tablet" || mode == "tablet-full";
   if (tabletMode) {
     zoomToolBar->setMinimumHeight(40);
     zoomToolBar->setIconSize(QSize(40, 40));
@@ -508,7 +509,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   switchButton->setEnabled(false);
   switchToolBar->addWidget(switchButton);
 
-  connect(switchButton, &QPushButton::pressed, [this]() {
+  connect(switchButton, &QPushButton::pressed, [this, mode]() {
     if (stackedWidget->currentIndex() == 1) {
       logToFile("Switching to Elko.");
       signalViewer->getCanvas()->setPaintingDisabled(false);
@@ -531,7 +532,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
       menuBar()->hide();
       statusBar()->hide();
 
-      if (PROGRAM_OPTIONS["mode"].as<string>() == "tablet-full")
+      if (mode == "tablet-full")
         showFullScreen();
     }
   });
@@ -660,10 +661,10 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   statusBar()->addPermanentWidget(cursorStatusLabel);
 
   // Restore settings.
-  restoreGeometry(PROGRAM_OPTIONS.settings("SignalFileBrowserWindow geometry")
+  restoreGeometry(PROGRAM_OPTIONS->settings("SignalFileBrowserWindow geometry")
                       .toByteArray());
   restoreState(
-      PROGRAM_OPTIONS.settings("SignalFileBrowserWindow state").toByteArray());
+      PROGRAM_OPTIONS->settings("SignalFileBrowserWindow state").toByteArray());
 
   // Set up Spikedet.
   spikedetAnalysis = make_unique<SpikedetAnalysis>(globalContext.get());
@@ -731,24 +732,24 @@ unique_ptr<DataFile> SignalFileBrowserWindow::dataFileBySuffix(
   QString suffix = fileInfo.suffix().toLower();
 
   if (suffix == "gdf") {
-    bool uncalibrated = PROGRAM_OPTIONS["uncalibratedGDF"].as<bool>();
-    return make_unique<GDF2>(stdFileName, uncalibrated);
+    return make_unique<GDF2>(stdFileName,
+                             programOption<bool>("uncalibratedGDF"));
   } else if (suffix == "edf") {
     return make_unique<EDF>(stdFileName);
     // TODO: Add BDF support through Edflib.
   } else if (suffix == "mat") {
     MATvars vars;
 
-    if (PROGRAM_OPTIONS.isSet("matData"))
-      vars.data = PROGRAM_OPTIONS["matData"].as<vector<string>>();
+    if (isProgramOptionSet("matData"))
+      programOption("matData", vars.data);
 
-    vars.frequency = PROGRAM_OPTIONS["matFs"].as<string>();
-    vars.multipliers = PROGRAM_OPTIONS["matMults"].as<string>();
-    vars.date = PROGRAM_OPTIONS["matDate"].as<string>();
-    vars.label = PROGRAM_OPTIONS["matLabel"].as<string>();
-    vars.eventPosition = PROGRAM_OPTIONS["matEvtPos"].as<string>();
-    vars.eventDuration = PROGRAM_OPTIONS["matEvtDur"].as<string>();
-    vars.eventChannel = PROGRAM_OPTIONS["matEvtChan"].as<string>();
+    programOption("matFs", vars.frequency);
+    programOption("matMults", vars.multipliers);
+    programOption("matDate", vars.date);
+    programOption("matLabel", vars.label);
+    programOption("matEvtPos", vars.eventPosition);
+    programOption("matEvtDur", vars.eventDuration);
+    programOption("matEvtChan", vars.eventChannel);
 
     vector<string> files{stdFileName};
     files.insert(files.end(), additionalFiles.begin(), additionalFiles.end());
@@ -760,8 +761,9 @@ unique_ptr<DataFile> SignalFileBrowserWindow::dataFileBySuffix(
 }
 
 void SignalFileBrowserWindow::openCommandLineFile() {
-  if (PROGRAM_OPTIONS.isSet("filename")) {
-    vector<string> fn = PROGRAM_OPTIONS["filename"].as<vector<string>>();
+  if (isProgramOptionSet("filename")) {
+    vector<string> fn;
+    programOption("filename", fn);
     vector<string> rest(fn.begin() + 1, fn.end());
 
     openFile(QString::fromStdString(fn[0]), rest);
@@ -776,9 +778,9 @@ void SignalFileBrowserWindow::closeEvent(QCloseEvent *event) {
     if (windowGeometry.isEmpty())
       windowGeometry = saveGeometry();
 
-    SET_PROGRAM_OPTIONS.settings("SignalFileBrowserWindow state", windowState);
-    SET_PROGRAM_OPTIONS.settings("SignalFileBrowserWindow geometry",
-                                 windowGeometry);
+    PROGRAM_OPTIONS->settings("SignalFileBrowserWindow state", windowState);
+    PROGRAM_OPTIONS->settings("SignalFileBrowserWindow geometry",
+                              windowGeometry);
 
     event->accept();
   } else {
@@ -1121,7 +1123,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   openFileConnections.push_back(c);
 
   vector<float> resolutionNumbers;
-  stringstream ss(PROGRAM_OPTIONS["resOptions"].as<string>());
+  stringstream ss(programOption<string>("resOptions"));
   while (ss) {
     float tmp;
     if (ss >> tmp)
@@ -1271,7 +1273,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   OpenDataFile::infoTable.emitAllSignals();
 
   // Set up autosave.
-  int ms = 1000 * PROGRAM_OPTIONS["autosave"].as<int>();
+  int ms = 1000 * programOption<int>("autosave");
 
   if (ms > 0) {
     c = connect(autoSaveTimer, &QTimer::timeout, [this]() {
@@ -1716,8 +1718,10 @@ void SignalFileBrowserWindow::switchToAlenka() {
   menuBar()->show();
   statusBar()->show();
 
-  if (PROGRAM_OPTIONS["mode"].as<string>() == "tablet" ||
-      PROGRAM_OPTIONS["mode"].as<string>() == "tablet-full")
+  string mode;
+  programOption("mode", mode);
+
+  if (mode == "tablet" || mode == "tablet-full")
     showMaximized();
 }
 
@@ -1754,9 +1758,8 @@ void SignalFileBrowserWindow::verticalZoomOut() {
 void SignalFileBrowserWindow::exportDialog() {
   QString picutres;
 
-  if (PROGRAM_OPTIONS.isSet("screenPath")) {
-    picutres =
-        QString::fromStdString(PROGRAM_OPTIONS["screenPath"].as<string>());
+  if (isProgramOptionSet("screenPath")) {
+    picutres = QString::fromStdString(programOption<string>("screenPath"));
   } else {
     auto pathList =
         QStandardPaths::standardLocations(QStandardPaths::PicturesLocation);
@@ -1767,8 +1770,7 @@ void SignalFileBrowserWindow::exportDialog() {
       runtime_error("Cannot find pictures dir.");
   }
 
-  QString type =
-      QString::fromStdString(PROGRAM_OPTIONS["screenType"].as<string>());
+  QString type = QString::fromStdString(programOption<string>("screenType"));
   QString baseName =
       QFileInfo(QString::fromStdString(fileResources->file->getFilePath()))
           .baseName();
