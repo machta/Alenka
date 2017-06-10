@@ -94,19 +94,11 @@ Montage<T>::Montage(const string &source, OpenCLContext *context,
     this->source = stripComments(buildSource<T>(source, headerSource));
 }
 
-template <class T>
-Montage<T>::Montage(const std::vector<unsigned char> *binary,
-                    OpenCLContext *context) {
-  program = new OpenCLProgram(binary, context);
-}
-
 template <class T> Montage<T>::~Montage() {
   if (kernel) {
     cl_int err = clReleaseKernel(kernel);
     checkClErrorCode(err, "clReleaseKernel()");
   }
-
-  delete program;
 }
 
 template <class T>
@@ -154,12 +146,12 @@ template <class T> void Montage<T>::buildProgram() {
         string src =
             buildSource<T>("out = in(_copyIndex_);", "", ", int _copyIndex_");
 
-        auto p = new OpenCLProgram(src, context);
+        auto p = make_unique<OpenCLProgram>(src, context);
         if (!p->compilationSuccessful())
           cerr << "Copy only kernel compilation error: " << endl
                << p->getCompilationLog();
 
-        context->setCopyOnlyKernelDouble(p);
+        context->setCopyOnlyKernelDouble(move(p));
       }
 
       kernel = context->copyOnlyKernelDouble();
@@ -168,18 +160,18 @@ template <class T> void Montage<T>::buildProgram() {
         string src =
             buildSource<T>("out = in(_copyIndex_);", "", ", int _copyIndex_");
 
-        auto p = new OpenCLProgram(src, context);
+        auto p = make_unique<OpenCLProgram>(src, context);
         if (!p->compilationSuccessful())
           cerr << "Copy only kernel compilation error: " << endl
                << p->getCompilationLog();
 
-        context->setCopyOnlyKernelFloat(p);
+        context->setCopyOnlyKernelFloat(move(p));
       }
 
       kernel = context->copyOnlyKernelFloat();
     }
   } else {
-    program = new OpenCLProgram(source, context);
+    program = make_unique<OpenCLProgram>(source, context);
   }
 }
 

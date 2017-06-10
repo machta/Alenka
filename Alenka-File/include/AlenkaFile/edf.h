@@ -3,6 +3,9 @@
 
 #include "datafile.h"
 
+#include <memory>
+#include <vector>
+
 struct edf_hdr_struct;
 
 namespace AlenkaFile {
@@ -17,9 +20,9 @@ class EDF : public DataFile {
   double samplingFrequency;
   int numberOfChannels;
   uint64_t samplesRecorded;
-  edf_hdr_struct *edfhdr;
+  std::unique_ptr<edf_hdr_struct> edfhdr;
   int readChunk;
-  double *readChunkBuffer;
+  std::vector<double> readChunkBuffer;
 
 public:
   /**

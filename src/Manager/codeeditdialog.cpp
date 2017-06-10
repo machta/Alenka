@@ -20,17 +20,15 @@ QString headerString;
 
 } // namespace
 
-CodeEditDialog::CodeEditDialog(QWidget *parent) : QDialog(parent) {
-  validator = new TrackCodeValidator();
-
+CodeEditDialog::CodeEditDialog(QWidget *parent)
+    : QDialog(parent), validator(new TrackCodeValidator()) {
   setWindowFlags(Qt::Window);
   setMinimumWidth(500);
   setMinimumHeight(500);
 
   auto box = new QVBoxLayout;
 
-  const char *help =
-      R"(Input and output:
+  const char *help = R"(Input and output:
 	float out = 0;
 	float in(int channelIndex);
 
@@ -67,8 +65,6 @@ Definitions included in the source code that you can use:)";
 
   setLayout(box);
 }
-
-CodeEditDialog::~CodeEditDialog() { delete validator; }
 
 QString CodeEditDialog::getText() const { return editor->toPlainText(); }
 

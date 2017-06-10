@@ -79,34 +79,18 @@ Track TrackTable::defaultValue(int row) const {
   return t;
 }
 
-MontageTable::~MontageTable() {
-  assert(eTable.size() == tTable.size());
-
-  for (unsigned int i = 0; i < eTable.size(); i++) {
-    delete eTable[i];
-    delete tTable[i];
-  }
-}
-
 void MontageTable::insertRows(int row, int count) {
   for (int i = 0; i < count; ++i)
     table.insert(table.begin() + row + i, defaultValue(row + i));
 
-  eTable.insert(eTable.begin() + row, count, nullptr);
-  tTable.insert(tTable.begin() + row, count, nullptr);
   for (int i = 0; i < count; i++) {
-    eTable[row + i] = makeEventTable();
-    tTable[row + i] = makeTrackTable();
+    eTable.insert(eTable.begin() + row + i, makeEventTable());
+    tTable.insert(tTable.begin() + row + i, makeTrackTable());
   }
 }
 
 void MontageTable::removeRows(int row, int count) {
   eraseVector(table, row, count);
-
-  for (int i = 0; i < count; i++) {
-    delete eTable[row + i];
-    delete tTable[row + i];
-  }
   eraseVector(eTable, row, count);
   eraseVector(tTable, row, count);
 }

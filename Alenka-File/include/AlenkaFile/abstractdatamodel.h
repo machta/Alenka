@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cstdio>
+#include <memory>
 #include <string>
 
 namespace AlenkaFile {
@@ -101,27 +102,23 @@ public:
   virtual const AbstractTrackTable *trackTable(int i) const = 0;
 
 protected:
-  virtual AbstractEventTable *makeEventTable() = 0;
-  virtual AbstractTrackTable *makeTrackTable() = 0;
+  virtual std::unique_ptr<AbstractEventTable> makeEventTable() const = 0;
+  virtual std::unique_ptr<AbstractTrackTable> makeTrackTable() const = 0;
 };
 
 class DataModel {
-  AbstractEventTypeTable *ett;
-  AbstractMontageTable *mt;
+  std::unique_ptr<AbstractEventTypeTable> ett;
+  std::unique_ptr<AbstractMontageTable> mt;
 
 public:
-  DataModel(AbstractEventTypeTable *eventTypeTable,
-            AbstractMontageTable *montageTable)
-      : ett(eventTypeTable), mt(montageTable) {}
-  ~DataModel() {
-    delete ett;
-    delete mt;
-  }
+  DataModel(std::unique_ptr<AbstractEventTypeTable> eventTypeTable,
+            std::unique_ptr<AbstractMontageTable> montageTable)
+      : ett(std::move(eventTypeTable)), mt(std::move(montageTable)) {}
 
-  AbstractEventTypeTable *eventTypeTable() { return ett; }
-  const AbstractEventTypeTable *eventTypeTable() const { return ett; }
-  AbstractMontageTable *montageTable() { return mt; }
-  const AbstractMontageTable *montageTable() const { return mt; }
+  AbstractEventTypeTable *eventTypeTable() { return ett.get(); }
+  const AbstractEventTypeTable *eventTypeTable() const { return ett.get(); }
+  AbstractMontageTable *montageTable() { return mt.get(); }
+  const AbstractMontageTable *montageTable() const { return mt.get(); }
 
   static std::string colorArray2str(std::array<int, 3> color) {
     std::string str = "#";

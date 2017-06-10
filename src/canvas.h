@@ -13,6 +13,7 @@
 #include <QOpenGLWidget>
 
 #include <cassert>
+#include <memory>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -44,10 +45,10 @@ class Canvas : public QOpenGLWidget {
   Q_OBJECT
 
   OpenDataFile *file = nullptr;
-  SignalProcessor *signalProcessor = nullptr;
-  OpenGLProgram *signalProgram = nullptr;
-  OpenGLProgram *eventProgram = nullptr;
-  OpenGLProgram *rectangleLineProgram = nullptr;
+  std::unique_ptr<SignalProcessor> signalProcessor;
+  std::unique_ptr<OpenGLProgram> signalProgram;
+  std::unique_ptr<OpenGLProgram> eventProgram;
+  std::unique_ptr<OpenGLProgram> rectangleLineProgram;
   double samplesRecorded = 1;
   double samplingFrequency = 1;
   GLuint rectangleLineArray, rectangleLineBuffer;
@@ -63,14 +64,14 @@ class Canvas : public QOpenGLWidget {
   int cursorTrack = 0;
   std::vector<QMetaObject::Connection> openFileConnections;
   std::vector<QMetaObject::Connection> montageConnections;
-  LRUCache<int, GPUCacheItem> *cache = nullptr;
-  AlenkaSignal::OpenCLContext *context = nullptr;
+  std::unique_ptr<LRUCache<int, GPUCacheItem>> cache;
+  std::unique_ptr<AlenkaSignal::OpenCLContext> context;
   int nBlock, nSamples;
   int extraSamplesFront, extraSamplesBack;
   bool duplicateSignal, glSharing;
   unsigned int parallelQueues;
   cl_command_queue commandQueue = nullptr;
-  float *processorSyncBuffer = nullptr;
+  std::vector<float> processorSyncBuffer;
   std::vector<cl_mem> processorOutputBuffers;
   float sampleScale;
   bool isShiftChecked = false;

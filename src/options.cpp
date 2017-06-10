@@ -30,9 +30,8 @@ const int LINE_WIDTH = max(60, getTerminalWidth());
 
 } // namespace
 
-Options::Options(int argc, char **argv) {
-  programSettings = new QSettings("Martin Barta", "Alenka");
-
+Options::Options(int argc, char **argv)
+    : programSettings(new QSettings("Martin Barta", "Alenka")) {
   // clang-format off
   options_description commandLineOnly("Command line options", LINE_WIDTH);
   commandLineOnly.add_options()
@@ -122,7 +121,7 @@ Options::Options(int argc, char **argv) {
   validateValues();
 }
 
-Options::~Options() { delete programSettings; }
+Options::~Options() {}
 
 QVariant Options::settings(const QString &key) const {
   return programSettings->value(key);

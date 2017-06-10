@@ -7,14 +7,10 @@
 
 using namespace std;
 
-SyncClient::SyncClient(QObject *parent) : QObject(parent) {
-  socket = new QWebSocket();
-}
+SyncClient::SyncClient(QObject *parent)
+    : QObject(parent), socket(new QWebSocket()) {}
 
-SyncClient::~SyncClient() {
-  disconnectServer();
-  delete socket;
-}
+SyncClient::~SyncClient() { disconnectServer(); }
 
 int SyncClient::connectServer(QUrl url, int port) {
   assert(url.isValid());
@@ -23,12 +19,13 @@ int SyncClient::connectServer(QUrl url, int port) {
   cerr << "Error " << socket->error() << " "
        << socket->errorString().toStdString() << endl;
 
-  connect(socket, SIGNAL(binaryMessageReceived(QByteArray)), this,
+  connect(socket.get(), SIGNAL(binaryMessageReceived(QByteArray)), this,
           SIGNAL(messageReceived(QByteArray)));
-  connect(socket, SIGNAL(disconnected()), this, SIGNAL(serverDisconnected()));
-  connect(socket, SIGNAL(disconnected()), this, SLOT(disconnectServer()));
+  connect(socket.get(), SIGNAL(disconnected()), this,
+          SIGNAL(serverDisconnected()));
+  connect(socket.get(), SIGNAL(disconnected()), this, SLOT(disconnectServer()));
 
-  connect(socket, &QWebSocket::connected,
+  connect(socket.get(), &QWebSocket::connected,
           []() { cerr << "Client connected" << endl; });
 
   url.setPort(port);

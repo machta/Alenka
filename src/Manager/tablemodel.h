@@ -6,6 +6,7 @@
 #include <QStyledItemDelegate>
 
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -86,9 +87,15 @@ public:
 class TableModel : public QAbstractTableModel {
   Q_OBJECT
 
+protected:
+  OpenDataFile *file;
+  std::vector<std::unique_ptr<TableColumn>> columns;
+
+private:
+  QStyledItemDelegate *delegate;
+
 public:
   explicit TableModel(OpenDataFile *file, QObject *parent = nullptr);
-  ~TableModel() override;
 
   int rowCount(const QModelIndex &parent = QModelIndex()) const override = 0;
   int columnCount(const QModelIndex &parent = QModelIndex()) const override {
@@ -137,9 +144,6 @@ public slots:
   }
 
 protected:
-  OpenDataFile *file;
-  std::vector<TableColumn *> columns;
-
   virtual void removeRowsFromDataModel(int row, int count) = 0;
 
 protected slots:
@@ -150,9 +154,6 @@ protected slots:
 
   void insertDataModelRows(int row, int count);
   void removeDataModelRows(int row, int count);
-
-private:
-  QStyledItemDelegate *delegate;
 };
 
 #endif // TABLEMODEL_H

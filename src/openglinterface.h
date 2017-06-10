@@ -39,7 +39,7 @@ class OpenGLInterface {
   QOpenGLFunctions_2_0 *functions20 = nullptr;
   QOpenGLFunctions_3_0 *functions30 = nullptr;
   QOpenGLFunctions_4_3_Core *functions43 = nullptr;
-  QOpenGLDebugLogger *logger = nullptr;
+  std::unique_ptr<QOpenGLDebugLogger> logger;
   const char *lastCallFile = "";
   int lastCallLine = -1;
 
@@ -100,7 +100,7 @@ public:
    */
   QOpenGLDebugLogger *log() {
     checkGLErrors();
-    return logger;
+    return logger.get();
   }
 
   /**

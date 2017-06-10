@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <map>
+#include <memory>
 #include <set>
 #include <vector>
 
@@ -16,15 +17,16 @@ public:
 
 template <class K, class T> class LRUCache {
   unsigned int capacity;
-  LRUCacheAllocator<T> *allocator;
+  std::unique_ptr<LRUCacheAllocator<T>> allocator;
   std::vector<T *> elements;
   std::vector<unsigned int> lastUsed;
   std::map<K, unsigned int> keyMap;
   std::map<unsigned int, K> reverseKeyMap;
 
 public:
-  LRUCache(unsigned int capacity, LRUCacheAllocator<T> *allocator)
-      : capacity(capacity), allocator(allocator) {
+  LRUCache(unsigned int capacity,
+           std::unique_ptr<LRUCacheAllocator<T>> allocator)
+      : capacity(capacity), allocator(std::move(allocator)) {
     elements.resize(capacity, nullptr);
     lastUsed.resize(capacity);
 
@@ -34,8 +36,6 @@ public:
   ~LRUCache() {
     for (auto e : elements)
       allocator->destroyElement(e);
-
-    delete allocator;
   }
 
   T *getAny(const std::set<K> &keys, K *key) {

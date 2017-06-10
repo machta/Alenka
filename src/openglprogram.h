@@ -28,6 +28,8 @@ private:
    * @brief Compile a shader and attach it to the program.
    */
   void addShader(const std::string &sourceText, GLenum type);
+  void logCompilationInfo(GLuint shader, GLenum type,
+                          const std::string &sourceText);
 };
 
 #endif // OPENGLPROGRAM_H

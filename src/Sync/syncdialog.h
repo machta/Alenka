@@ -13,11 +13,6 @@ class QLabel;
 class SyncDialog : public QDialog {
   Q_OBJECT
 
-public:
-  explicit SyncDialog(SyncServer *server, SyncClient *client,
-                      QWidget *parent = nullptr);
-
-private:
   SyncServer *server;
   SyncClient *client;
   QComboBox *combo;
@@ -31,6 +26,11 @@ private:
   QLabel *serverStatus;
   QLabel *clientStatus;
 
+public:
+  explicit SyncDialog(SyncServer *server, SyncClient *client,
+                      QWidget *parent = nullptr);
+
+private:
   void buildServerControls();
   void buildClientControls();
 

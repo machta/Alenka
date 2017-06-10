@@ -18,6 +18,7 @@
 #include <chrono>
 #include <cinttypes>
 #include <functional>
+#include <memory>
 #include <set>
 #include <vector>
 
@@ -55,17 +56,18 @@ class SignalProcessor {
   std::vector<cl_command_queue> commandQueues;
   std::vector<cl_mem> rawBuffers;
   std::vector<cl_mem> filterBuffers;
-  LRUCache<int, float> *cache;
+  std::unique_ptr<LRUCache<int, float>> cache;
 
   std::function<void()> glSharing;
   OpenDataFile *file;
   AlenkaSignal::OpenCLContext *context;
-  std::vector<AlenkaSignal::FilterProcessor<float> *> filterProcessors;
-  AlenkaSignal::MontageProcessor<float> *montageProcessor = nullptr;
-  std::vector<AlenkaSignal::Montage<float> *> montage;
+  std::vector<std::unique_ptr<AlenkaSignal::FilterProcessor<float>>>
+      filterProcessors;
+  std::unique_ptr<AlenkaSignal::MontageProcessor<float>> montageProcessor;
+  std::vector<std::unique_ptr<AlenkaSignal::Montage<float>>> montage;
   std::string header;
   int extraSamplesFront, extraSamplesBack;
-  AlenkaSignal::Filter<float> *filter = nullptr;
+  std::unique_ptr<AlenkaSignal::Filter<float>> filter;
 
 public:
   SignalProcessor(unsigned int nBlock, unsigned int parallelQueues,
@@ -129,10 +131,9 @@ public:
   }
 
   template <class T>
-  static std::vector<AlenkaSignal::Montage<T> *>
-  makeMontage(const std::vector<std::string> &montageCode,
-              AlenkaSignal::OpenCLContext *context, KernelCache *kernelCache,
-              const std::string &header) {
+  static auto makeMontage(const std::vector<std::string> &montageCode,
+                          AlenkaSignal::OpenCLContext *context,
+                          KernelCache *kernelCache, const std::string &header) {
     using namespace std;
 #ifndef NDEBUG
     // TODO: Remove this after the compilation time issue is solved, or perhaps
@@ -141,17 +142,17 @@ public:
     auto start = high_resolution_clock::now();
     int needToCompile = 0;
 #endif
-    vector<AlenkaSignal::Montage<T> *> montage;
+    std::vector<std::unique_ptr<AlenkaSignal::Montage<T>>> montage;
 
-    for (const auto &i : montageCode) {
+    for (const auto &c : montageCode) {
       auto sourceMontage = make_unique<AlenkaSignal::Montage<T>>(
-          simplifyMontage<T>(i), context, header);
+          simplifyMontage<T>(c), context, header);
       QString code = QString::fromStdString(sourceMontage->getSource());
       auto ptr = kernelCache ? kernelCache->find(code) : nullptr;
 
       if (ptr) {
         assert(0 < ptr->size());
-        montage.push_back(new AlenkaSignal::Montage<T>(ptr, context));
+        montage.push_back(make_unique<AlenkaSignal::Montage<T>>(ptr, context));
       } else {
 #ifndef NDEBUG
         if (!sourceMontage->isCopyMontage())
@@ -163,7 +164,7 @@ public:
             kernelCache->insert(code, binary);
         }
 
-        montage.push_back(sourceMontage.release());
+        montage.push_back(std::move(sourceMontage));
       }
     }
 
@@ -199,7 +200,7 @@ private:
    * MontageProcessor object.
    */
   void updateMontage();
-  void deleteMontage();
+  void clearMontage() { montage.clear(); }
   bool allpass();
 };
 

@@ -61,19 +61,19 @@ Manager::Manager(QWidget *parent) : QWidget(parent, Qt::Window) {
   tableView->setContextMenuPolicy(Qt::ActionsContextMenu);
 
   // Add some actions to the tableView.
-  QAction *addRowAction = new QAction("Add Row", this);
+  auto addRowAction = new QAction("Add Row", this);
   addRowAction->setStatusTip("Add rows at the end");
   connect(addRowAction, SIGNAL(triggered()), this, SLOT(insertRowBack()));
   tableView->addAction(addRowAction);
 
-  QAction *removeRowsAction = new QAction("Remove Rows", this);
+  auto removeRowsAction = new QAction("Remove Rows", this);
   removeRowsAction->setStatusTip("Remove selected rows");
   removeRowsAction->setShortcut(QKeySequence::Delete);
   removeRowsAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
   connect(removeRowsAction, SIGNAL(triggered()), this, SLOT(removeRows()));
   tableView->addAction(removeRowsAction);
 
-  QAction *setColumnAction = new QAction("Set Column", this);
+  auto setColumnAction = new QAction("Set Column", this);
   setColumnAction->setStatusTip(
       "Set all cells in a column to the selected value");
   connect(setColumnAction, SIGNAL(triggered()), this, SLOT(setColumn()));
@@ -81,19 +81,19 @@ Manager::Manager(QWidget *parent) : QWidget(parent, Qt::Window) {
 
   addSeparator();
 
-  QAction *copyAction = new QAction("Copy", this);
+  auto copyAction = new QAction("Copy", this);
   copyAction->setStatusTip("Copy as tab separated table");
   copyAction->setShortcut(QKeySequence::Copy);
   copyAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
   connect(copyAction, SIGNAL(triggered()), this, SLOT(copy()));
   tableView->addAction(copyAction);
 
-  QAction *copyHtmlAction = new QAction("Copy HTML", this);
+  auto copyHtmlAction = new QAction("Copy HTML", this);
   copyHtmlAction->setStatusTip("Copy as a HTML table");
   connect(copyHtmlAction, SIGNAL(triggered()), this, SLOT(copyHtml()));
   tableView->addAction(copyHtmlAction);
 
-  QAction *pasteAction = new QAction("Paste", this);
+  auto pasteAction = new QAction("Paste", this);
   pasteAction->setShortcut(QKeySequence::Paste);
   pasteAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
   connect(pasteAction, SIGNAL(triggered()), this, SLOT(paste()));
@@ -102,10 +102,10 @@ Manager::Manager(QWidget *parent) : QWidget(parent, Qt::Window) {
   addSeparator();
 
   // Construct buttons.
-  QPushButton *addRowButton = new QPushButton("Add Row", this);
+  auto addRowButton = new QPushButton("Add Row", this);
   connect(addRowButton, SIGNAL(clicked()), this, SLOT(insertRowBack()));
 
-  QPushButton *removeRowButton = new QPushButton("Remove Rows", this);
+  auto removeRowButton = new QPushButton("Remove Rows", this);
   connect(removeRowButton, SIGNAL(clicked()), this, SLOT(removeRows()));
 
   // Add the widgets to the layout.

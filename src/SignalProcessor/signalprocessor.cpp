@@ -56,6 +56,11 @@ void multiplySamples(vector<float> *samples) {
     (*samples)[i] *= multipliers[i];
 }
 
+// TODO: Fix this this *allocator* hack. Change the cache so that it default
+// constructs the elements as needed; then return pointers to these elements.
+// Then there would be no need for an allocator -- the specialized allocation
+// could be done by a simple object that owns the resources (a vector that holds
+// an array, or a wrapper around an OpenGL buffer).
 class FloatAllocator : public LRUCacheAllocator<float> {
   const int size;
 
@@ -103,8 +108,9 @@ SignalProcessor::SignalProcessor(unsigned int nBlock,
         clCreateBuffer(context->getCLContext(), flags, size, nullptr, &err));
     checkClErrorCode(err, "clCreateBuffer()");
 
-    filterProcessors.push_back(new AlenkaSignal::FilterProcessor<float>(
-        nBlock, fileChannels, context));
+    filterProcessors.push_back(
+        make_unique<AlenkaSignal::FilterProcessor<float>>(nBlock, fileChannels,
+                                                          context));
   }
 
   int blockFloats = nBlock * fileChannels;
@@ -115,7 +121,8 @@ SignalProcessor::SignalProcessor(unsigned int nBlock,
   logToFile("Creating File cache with " << capacity
                                         << " capacity and blocks of size "
                                         << blockFloats * sizeof(float) << ".");
-  cache = new LRUCache<int, float>(capacity, new FloatAllocator(blockFloats));
+  cache = make_unique<LRUCache<int, float>>(
+      capacity, make_unique<FloatAllocator>(blockFloats));
 
   QFile headerFile(":/montageHeader.cl"); // TODO: Consolidate the 4 copies of
                                           // this into one instance.
@@ -127,11 +134,9 @@ SignalProcessor::SignalProcessor(unsigned int nBlock,
 }
 
 SignalProcessor::~SignalProcessor() {
-  cl_int err;
-
-  deleteMontage();
-
   for (unsigned int i = 0; i < parallelQueues; ++i) {
+    cl_int err;
+
     err = clReleaseCommandQueue(commandQueues[i]);
     checkClErrorCode(err, "clReleaseCommandQueue()");
 
@@ -140,13 +145,7 @@ SignalProcessor::~SignalProcessor() {
 
     err = clReleaseMemObject(filterBuffers[i]);
     checkClErrorCode(err, "clReleaseMemObject()");
-
-    delete filterProcessors[i];
   }
-
-  delete cache;
-  delete montageProcessor;
-  delete filter;
 }
 
 void SignalProcessor::updateFilter() {
@@ -157,9 +156,8 @@ void SignalProcessor::updateFilter() {
 
   M = file->file->getSamplingFrequency() + 1;
 
-  delete filter;
-  filter =
-      new AlenkaSignal::Filter<float>(M, file->file->getSamplingFrequency());
+  filter = make_unique<AlenkaSignal::Filter<float>>(
+      M, file->file->getSamplingFrequency());
 
   filter->setLowpassOn(OpenDataFile::infoTable.getLowpassOn());
   filter->setLowpass(OpenDataFile::infoTable.getLowpassFrequency());
@@ -290,8 +288,9 @@ void SignalProcessor::process(const vector<int> &indexVector,
       offset -= nDelay;
     }
 
-    montageProcessor->process(montage, buffer, outBuffers[i], commandQueues[i],
-                              nMontage, offset);
+    montageProcessor->process(montage.begin(), montage.end(), buffer,
+                              outBuffers[i], commandQueues[i], nMontage,
+                              offset);
     printBuffer("after_montage.txt", outBuffers[i], commandQueues[i]);
   }
 
@@ -311,11 +310,10 @@ void SignalProcessor::process(const vector<int> &indexVector,
 void SignalProcessor::updateMontage() {
   assert(ready());
 
-  delete montageProcessor;
-  montageProcessor = new AlenkaSignal::MontageProcessor<float>(
+  montageProcessor = make_unique<AlenkaSignal::MontageProcessor<float>>(
       nBlock + 2, fileChannels, montageCopyCount);
 
-  deleteMontage();
+  clearMontage();
   vector<string> montageCode;
 
   for (int i = 0; i < getTrackTable(file)->rowCount(); i++) {
@@ -325,12 +323,6 @@ void SignalProcessor::updateMontage() {
   }
 
   montage = makeMontage<float>(montageCode, context, file->kernelCache, header);
-}
-
-void SignalProcessor::deleteMontage() {
-  for (auto e : montage)
-    delete e;
-  montage.clear();
 }
 
 bool SignalProcessor::allpass() {

@@ -37,9 +37,8 @@ vector<float> computeFilterResponse(const vector<float> &bb,
 
 } // namespace
 
-FilterVisualizer::FilterVisualizer(QWidget *parent) : QWidget(parent) {
-  fft = new Eigen::FFT<float>();
-
+FilterVisualizer::FilterVisualizer(QWidget *parent)
+    : QWidget(parent), fft(new Eigen::FFT<float>()) {
   chartView = new QChartView(this);
   chartView->setRenderHint(QPainter::Antialiasing);
   chartView->setDragMode(QGraphicsView::NoDrag);
@@ -200,7 +199,8 @@ void FilterVisualizer::updateResponse() {
 
   vector<float> response = computeFilterResponse(
       OpenDataFile::infoTable.getFilterCoefficients(),
-      qNextPowerOfTwo(static_cast<int>(fs) * 2 * POINTS_PER_FREQUENCY), fft);
+      qNextPowerOfTwo(static_cast<int>(fs) * 2 * POINTS_PER_FREQUENCY),
+      fft.get());
 
   float minVal = 1000 * 1000 * 1000;
   float maxVal = 0;

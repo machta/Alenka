@@ -202,64 +202,43 @@ GDF2::GDF2(const string &filePath, bool uncalibrated) : DataFile(filePath) {
   readFile(file, &fh.numberOfChannels);
 
   // Load variable header.
+  resizeVariableHeaderFields();
+
   seekFile(file, 2);
   assert(tellFile(file) == streampos(256) &&
          "Make sure we read all of the fixed header.");
 
-  vh.label = new char[getChannelCount()][16 + 1];
   for (unsigned int i = 0; i < getChannelCount(); ++i) {
-    readFile(file, vh.label[i], 16);
-    vh.label[i][16] = 0;
+    readFile(file, vh.label[i].data(), vh.label[i].size() - 1);
+    vh.label[i].back() = 0;
   }
 
-  vh.typeOfSensor = new char[getChannelCount()][80 + 1];
   for (unsigned int i = 0; i < getChannelCount(); ++i) {
-    readFile(file, vh.typeOfSensor[i], 80);
-    vh.typeOfSensor[i][80] = 0;
+    readFile(file, vh.typeOfSensor[i].data(), vh.typeOfSensor[i].size() - 1);
+    vh.typeOfSensor[i].back() = 0;
   }
 
   seekFile(file, 6 * getChannelCount());
 
-  vh.physicalDimensionCode = new uint16_t[getChannelCount()];
-  readFile(file, vh.physicalDimensionCode, getChannelCount());
-
-  vh.physicalMinimum = new double[getChannelCount()];
-  readFile(file, vh.physicalMinimum, getChannelCount());
-
-  vh.physicalMaximum = new double[getChannelCount()];
-  readFile(file, vh.physicalMaximum, getChannelCount());
-
-  vh.digitalMinimum = new double[getChannelCount()];
-  readFile(file, vh.digitalMinimum, getChannelCount());
-
-  vh.digitalMaximum = new double[getChannelCount()];
-  readFile(file, vh.digitalMaximum, getChannelCount());
+  readFile(file, vh.physicalDimensionCode.data(), getChannelCount());
+  readFile(file, vh.physicalMinimum.data(), getChannelCount());
+  readFile(file, vh.physicalMaximum.data(), getChannelCount());
+  readFile(file, vh.digitalMinimum.data(), getChannelCount());
+  readFile(file, vh.digitalMaximum.data(), getChannelCount());
 
   seekFile(file, 64 * getChannelCount());
 
-  vh.timeOffset = new float[getChannelCount()];
-  readFile(file, vh.timeOffset, getChannelCount());
+  readFile(file, vh.timeOffset.data(), getChannelCount());
+  readFile(file, vh.lowpass.data(), getChannelCount());
+  readFile(file, vh.highpass.data(), getChannelCount());
+  readFile(file, vh.notch.data(), getChannelCount());
+  readFile(file, vh.samplesPerRecord.data(), getChannelCount());
+  readFile(file, vh.typeOfData.data(), getChannelCount());
 
-  vh.lowpass = new float[getChannelCount()];
-  readFile(file, vh.lowpass, getChannelCount());
-
-  vh.highpass = new float[getChannelCount()];
-  readFile(file, vh.highpass, getChannelCount());
-
-  vh.notch = new float[getChannelCount()];
-  readFile(file, vh.notch, getChannelCount());
-
-  vh.samplesPerRecord = new uint32_t[getChannelCount()];
-  readFile(file, vh.samplesPerRecord, getChannelCount());
-
-  vh.typeOfData = new uint32_t[getChannelCount()];
-  readFile(file, vh.typeOfData, getChannelCount());
-
-  vh.sensorPosition = new float[getChannelCount()][3];
-  readFile(file, *vh.sensorPosition, 3 * getChannelCount());
-
-  vh.sensorInfo = new char[getChannelCount()][20];
-  readFile(file, *vh.sensorInfo, 20 * getChannelCount());
+  for (unsigned int i = 0; i < getChannelCount(); ++i)
+    readFile(file, vh.sensorPosition[i].data(), vh.sensorPosition[i].size());
+  for (unsigned int i = 0; i < getChannelCount(); ++i)
+    readFile(file, vh.sensorInfo[i].data(), vh.sensorInfo[i].size());
 
   assert((tellFile(file) == streampos(-1) ||
           tellFile(file) == streampos(256 + 256 * getChannelCount())) &&
@@ -293,13 +272,12 @@ GDF2::GDF2(const string &filePath, bool uncalibrated) : DataFile(filePath) {
 #undef CASE
 
   if (uncalibrated == false) {
-    scale = new double[getChannelCount()];
+    scale.resize(getChannelCount());
+
     for (unsigned int i = 0; i < getChannelCount(); ++i) {
       scale[i] = (vh.digitalMaximum[i] - vh.digitalMinimum[i]) /
                  (vh.physicalMaximum[i] - vh.physicalMinimum[i]);
     }
-  } else {
-    scale = nullptr;
   }
 
   samplingFrequency = vh.samplesPerRecord[0] / duration;
@@ -308,31 +286,8 @@ GDF2::GDF2(const string &filePath, bool uncalibrated) : DataFile(filePath) {
       vh.samplesPerRecord[0] * getChannelCount() * dataTypeSize;
   startOfEventTable = startOfData + dataRecordBytes * fh.numberOfDataRecords;
 
-  recordRawBuffer = new char[vh.samplesPerRecord[0] * dataTypeSize];
-  recordDoubleBuffer = new double[vh.samplesPerRecord[0]];
-}
-
-GDF2::~GDF2() {
-  delete[] recordRawBuffer;
-  delete[] recordDoubleBuffer;
-  delete[] scale;
-
-  // Delete variable header.
-  delete[] vh.label;
-  delete[] vh.typeOfSensor;
-  delete[] vh.physicalDimensionCode;
-  delete[] vh.physicalMinimum;
-  delete[] vh.physicalMaximum;
-  delete[] vh.digitalMinimum;
-  delete[] vh.digitalMaximum;
-  delete[] vh.timeOffset;
-  delete[] vh.lowpass;
-  delete[] vh.highpass;
-  delete[] vh.notch;
-  delete[] vh.samplesPerRecord;
-  delete[] vh.typeOfData;
-  delete[] vh.sensorPosition;
-  delete[] vh.sensorInfo;
+  recordRawBuffer.resize(vh.samplesPerRecord[0] * dataTypeSize);
+  recordDoubleBuffer.resize(vh.samplesPerRecord[0]);
 }
 
 void GDF2::save() {
@@ -354,8 +309,7 @@ void GDF2::save() {
         Event e = eventTable->row(j);
 
         // Skip events belonging to tracks greater thatn the number of channels
-        // in the file.
-        // TODO: Perhaps make a warning about this?
+        // in the file. TODO: Perhaps make a warning about this?
         if (-1 <= e.channel &&
             e.channel < static_cast<int>(getChannelCount()) && e.type >= 0) {
           positions.push_back(e.position + 1);
@@ -418,6 +372,28 @@ bool GDF2::load() {
   return true;
 }
 
+void GDF2::resizeVariableHeaderFields() {
+  auto count = getChannelCount();
+
+  vh.label.resize(count);
+  vh.typeOfSensor.resize(count);
+
+  vh.physicalDimensionCode.resize(count);
+  vh.physicalMinimum.resize(count);
+  vh.physicalMaximum.resize(count);
+  vh.digitalMinimum.resize(count);
+  vh.digitalMaximum.resize(count);
+
+  vh.timeOffset.resize(count);
+  vh.lowpass.resize(count);
+  vh.highpass.resize(count);
+  vh.notch.resize(count);
+  vh.samplesPerRecord.resize(count);
+  vh.typeOfData.resize(count);
+  vh.sensorPosition.resize(count);
+  vh.sensorInfo.resize(count);
+}
+
 template <typename T>
 void GDF2::readChannelsFloatDouble(vector<T *> dataChannels,
                                    const uint64_t firstSample,
@@ -452,11 +428,11 @@ void GDF2::readChannelsFloatDouble(vector<T *> dataChannels,
            "Make sure we don't acceed tmp buffer size.");
 
     for (unsigned int channelI = 0; channelI < getChannelCount(); ++channelI) {
-      readRecord(file, recordRawBuffer, recordDoubleBuffer, samplesPerRecord,
-                 dataTypeSize, dataType, isLittleEndian);
+      readRecord(file, recordRawBuffer.data(), recordDoubleBuffer.data(),
+                 samplesPerRecord, dataTypeSize, dataType, isLittleEndian);
 
-      if (scale != nullptr)
-        calibrateSamples(recordDoubleBuffer, samplesPerRecord,
+      if (!scale.empty())
+        calibrateSamples(recordDoubleBuffer.data(), samplesPerRecord,
                          vh.digitalMinimum[channelI], scale[channelI],
                          vh.physicalMinimum[channelI]);
 
@@ -573,7 +549,7 @@ void GDF2::fillDefaultMontage() {
 
   for (int i = 0; i < defaultTracks->rowCount(); ++i) {
     Track t = defaultTracks->row(i);
-    t.label = vh.label[i];
+    t.label = vh.label[i].data();
     defaultTracks->row(i, t);
   }
 }

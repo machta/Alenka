@@ -16,10 +16,10 @@ using namespace std;
 namespace {
 
 class Delegate : public QStyledItemDelegate {
-  std::vector<TableColumn *> *columns;
+  vector<unique_ptr<TableColumn>> *columns;
 
 public:
-  explicit Delegate(std::vector<TableColumn *> *columns,
+  explicit Delegate(vector<unique_ptr<TableColumn>> *columns,
                     QObject *parent = nullptr)
       : QStyledItemDelegate(parent), columns(columns) {}
 
@@ -54,7 +54,7 @@ bool BoolTableColumn::createEditor(const QStyledItemDelegate *delegate,
   (void)option;
   (void)index;
 
-  std::function<void(void)> fun = [widget, delegate]() {
+  function<void(void)> fun = [widget, delegate]() {
     emit const_cast<QStyledItemDelegate *>(delegate)->commitData(*widget);
     emit const_cast<QStyledItemDelegate *>(delegate)->closeEditor(*widget);
   };
@@ -106,16 +106,8 @@ bool ColorTableColumn::createEditor(const QStyledItemDelegate *delegate,
 }
 
 TableModel::TableModel(OpenDataFile *file, QObject *parent)
-    : QAbstractTableModel(parent), file(file) {
-  delegate = new Delegate(&columns);
-}
-
-TableModel::~TableModel() {
-  delete delegate;
-
-  for (auto e : columns)
-    delete e;
-}
+    : QAbstractTableModel(parent), file(file),
+      delegate(new Delegate(&columns)) {}
 
 bool TableModel::removeRows(int row, int count, const QModelIndex &parent) {
   (void)parent;

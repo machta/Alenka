@@ -47,7 +47,7 @@ void SyncDialog::buildServerControls() {
   auto box = new QVBoxLayout();
   auto grid = new QGridLayout();
 
-  QLabel *label = new QLabel("Network interface IPs of this device:");
+  auto label = new QLabel("Network interface IPs of this device:");
   label->setToolTip("Use this to connect with the client over LAN");
   grid->addWidget(label, 0, 0);
 
@@ -78,7 +78,7 @@ void SyncDialog::buildServerControls() {
   buttonBox->addButton(launchButton, QDialogButtonBox::ActionRole);
   connect(launchButton, SIGNAL(clicked(bool)), this, SLOT(launchServer()));
 
-  QPushButton *button = new QPushButton("Shut down");
+  auto button = new QPushButton("Shut down");
   buttonBox->addButton(button, QDialogButtonBox::ActionRole);
   connect(button, SIGNAL(clicked(bool)), this, SLOT(shutDownServer()));
 
@@ -126,7 +126,7 @@ void SyncDialog::buildClientControls() {
   buttonBox->addButton(connectButton, QDialogButtonBox::ActionRole);
   connect(connectButton, SIGNAL(clicked(bool)), this, SLOT(connectClient()));
 
-  QPushButton *button = new QPushButton("Disconnect");
+  auto button = new QPushButton("Disconnect");
   buttonBox->addButton(button, QDialogButtonBox::ActionRole);
   connect(button, SIGNAL(clicked(bool)), this, SLOT(disconnectClient()));
   connect(client, &SyncClient::serverDisconnected, [this]() {

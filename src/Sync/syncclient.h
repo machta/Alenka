@@ -2,11 +2,14 @@
 #define SYNCCLIENT_H
 
 #include <QObject>
+#include <memory>
 
 class QWebSocket;
 
 class SyncClient : public QObject {
   Q_OBJECT
+
+  std::unique_ptr<QWebSocket> socket;
 
 public:
   explicit SyncClient(QObject *parent = nullptr);
@@ -22,9 +25,6 @@ signals:
 public slots:
   int sendMessage(const QByteArray &message);
   void disconnectServer();
-
-private:
-  QWebSocket *socket;
 };
 
 #endif // SYNCCLIENT_H

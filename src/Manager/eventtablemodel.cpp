@@ -295,12 +295,12 @@ public:
 
 EventTableModel::EventTableModel(OpenDataFile *file, QObject *parent)
     : TableModel(file, parent) {
-  columns.push_back(new Label(file));
-  columns.push_back(new Type(file));
-  columns.push_back(new Position(file));
-  columns.push_back(new Duration(file));
-  columns.push_back(new Channel(file));
-  columns.push_back(new Description(file));
+  columns.push_back(make_unique<Label>(file));
+  columns.push_back(make_unique<Type>(file));
+  columns.push_back(make_unique<Position>(file));
+  columns.push_back(make_unique<Duration>(file));
+  columns.push_back(make_unique<Channel>(file));
+  columns.push_back(make_unique<Description>(file));
 
   connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this,
           SLOT(setSelectedMontage(int)));

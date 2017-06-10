@@ -12,6 +12,8 @@
 #include <QLineEdit>
 #include <QLocale>
 
+#include <memory>
+
 using namespace std;
 using namespace AlenkaFile;
 
@@ -68,11 +70,11 @@ public:
 };
 
 class Code : public TableColumn {
+  unique_ptr<TrackCodeValidator> validator;
+
 public:
-  Code(OpenDataFile *file) : TableColumn("Code", file) {
-    validator = new TrackCodeValidator();
-  }
-  ~Code() override { delete validator; }
+  Code(OpenDataFile *file)
+      : TableColumn("Code", file), validator(new TrackCodeValidator()) {}
 
   QVariant data(int row, int role) const override {
     if (role == Qt::DisplayRole || role == Qt::EditRole)
@@ -143,9 +145,6 @@ public:
 
     return false;
   }
-
-private:
-  TrackCodeValidator *validator;
 };
 
 class Color : public ColorTableColumn {
@@ -191,10 +190,10 @@ public:
   bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       Track t = currentTrackTable(file)->row(row);
-
       QLocale locale;
       bool ok;
       double tmp = value.toDouble(&ok);
+
       if (ok) {
         if (t.amplitude == tmp)
           return false;
@@ -261,12 +260,12 @@ public:
 
 TrackTableModel::TrackTableModel(OpenDataFile *file, QObject *parent)
     : TableModel(file, parent) {
-  columns.push_back(new Id(file));
-  columns.push_back(new Label(file));
-  columns.push_back(new Code(file));
-  columns.push_back(new Color(file));
-  columns.push_back(new Amplitude(file));
-  columns.push_back(new Hidden(file));
+  columns.push_back(make_unique<Id>(file));
+  columns.push_back(make_unique<Label>(file));
+  columns.push_back(make_unique<Code>(file));
+  columns.push_back(make_unique<Color>(file));
+  columns.push_back(make_unique<Amplitude>(file));
+  columns.push_back(make_unique<Hidden>(file));
 
   connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this,
           SLOT(setSelectedMontage(int)));

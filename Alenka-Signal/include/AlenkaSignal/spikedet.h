@@ -8,6 +8,7 @@
 #include "../../spikedet/src/spikedetoutput.h"
 
 #include <atomic>
+#include <memory>
 #include <vector>
 
 class CSpikeDetector;
@@ -72,11 +73,10 @@ class Spikedet {
   const int fs;
   DETECTOR_SETTINGS settings;
   std::atomic<int> progressCurrent;
-  CSpikeDetector *detector = nullptr;
+  std::unique_ptr<CSpikeDetector> detector;
 
 public:
   Spikedet(int fs, bool original, DETECTOR_SETTINGS settings);
-  ~Spikedet();
 
   void runAnalysis(AbstractSpikedetLoader<SIGNALTYPE> *loader,
                    CDetectorOutput *out, CDischarges *discharges);

@@ -5,6 +5,7 @@
 
 #include <unsupported/Eigen/FFT>
 
+#include <memory>
 #include <vector>
 
 class OpenDataFile;
@@ -19,9 +20,25 @@ class QValueAxis;
 class FilterVisualizer : public QWidget {
   Q_OBJECT
 
+  OpenDataFile *file = nullptr;
+  QtCharts::QChartView *chartView;
+  std::vector<QMetaObject::Connection> connections;
+  std::unique_ptr<Eigen::FFT<float>> fft;
+  std::vector<float> buffer;
+  int channelToDisplay = 0;
+  int secondToDisplay = 2;
+  bool freezeSpectrum = true;
+  QtCharts::QChart *chart;
+  QtCharts::QLineSeries *spectrumSeries;
+  QtCharts::QLineSeries *responseSeries;
+  QtCharts::QValueAxis *axisX;
+  QtCharts::QValueAxis *axisSpectrum;
+  QtCharts::QValueAxis *axisResponse;
+  QAction *resetAction;
+  QAction *zoomAction;
+
 public:
   explicit FilterVisualizer(QWidget *parent = nullptr);
-  ~FilterVisualizer() override { delete fft; }
 
   void changeFile(OpenDataFile *file);
 
@@ -48,23 +65,6 @@ public slots:
   const QAction *getZoomAction() const { return zoomAction; }
 
 private:
-  OpenDataFile *file = nullptr;
-  QtCharts::QChartView *chartView;
-  std::vector<QMetaObject::Connection> connections;
-  Eigen::FFT<float> *fft;
-  std::vector<float> buffer;
-  int channelToDisplay = 0;
-  int secondToDisplay = 2;
-  bool freezeSpectrum = true;
-  QtCharts::QChart *chart;
-  QtCharts::QLineSeries *spectrumSeries;
-  QtCharts::QLineSeries *responseSeries;
-  QtCharts::QValueAxis *axisX;
-  QtCharts::QValueAxis *axisSpectrum;
-  QtCharts::QValueAxis *axisResponse;
-  QAction *resetAction;
-  QAction *zoomAction;
-
   void forceUpdateSpectrum() {
     bool tmp = freezeSpectrum;
     freezeSpectrum = false;

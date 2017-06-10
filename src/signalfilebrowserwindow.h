@@ -6,6 +6,7 @@
 #include <QMainWindow>
 
 #include <functional>
+#include <memory>
 #include <vector>
 
 namespace AlenkaFile {
@@ -45,9 +46,7 @@ class QFileInfo;
 class SignalFileBrowserWindow : public QMainWindow {
   Q_OBJECT
 
-  AlenkaFile::DataFile *file = nullptr;
-  OpenDataFile *openDataFile;
-  AlenkaFile::DataModel *dataModel = nullptr;
+  std::unique_ptr<OpenDataFile> openDataFile;
   SignalViewer *signalViewer;
   QQuickWidget *view;
   TrackManager *trackManager;
@@ -69,26 +68,21 @@ class SignalFileBrowserWindow : public QMainWindow {
   QLabel *timeStatusLabel;
   QLabel *positionStatusLabel;
   QLabel *cursorStatusLabel;
-  SpikedetAnalysis *spikedetAnalysis;
+  std::unique_ptr<SpikedetAnalysis> spikedetAnalysis;
   double spikeDuration;
   bool originalSpikedet;
-  SyncServer *syncServer;
-  SyncClient *syncClient;
+  std::unique_ptr<SyncServer> syncServer;
+  std::unique_ptr<SyncClient> syncClient;
   SyncDialog *syncDialog;
-  const int lastPositionReceivedDefault = -1000 * 1000 * 1000;
+  const int lastPositionReceivedDefault = -1000'000'000;
   int lastPositionReceived = lastPositionReceivedDefault;
   QAction *synchronize;
-  TableModel *eventTypeTable = nullptr;
-  TableModel *montageTable = nullptr;
-  TableModel *eventTable = nullptr;
-  TableModel *trackTable = nullptr;
   std::vector<QMetaObject::Connection> openFileConnections;
   std::vector<QMetaObject::Connection> managersConnections;
   QTimer *autoSaveTimer;
   std::string autoSaveName;
   QUndoStack *undoStack;
-  UndoCommandFactory *undoFactory = nullptr;
-  KernelCache *kernelCache = nullptr;
+  std::unique_ptr<KernelCache> kernelCache;
   QAction *saveFileAction;
   QAction *closeFileAction;
   QAction *exportToEdfAction;
@@ -99,6 +93,18 @@ class SignalFileBrowserWindow : public QMainWindow {
   QStackedWidget *stackedWidget;
   const int COMBO_PRECISION = 2;
   int nameIndex = 0;
+
+  struct OpenFileResources {
+    std::unique_ptr<AlenkaFile::DataFile> file;
+    std::unique_ptr<AlenkaFile::DataModel> dataModel;
+    std::unique_ptr<UndoCommandFactory> undoFactory;
+
+    std::unique_ptr<TableModel> eventTypeTable;
+    std::unique_ptr<TableModel> montageTable;
+    std::unique_ptr<TableModel> eventTable;
+    std::unique_ptr<TableModel> trackTable;
+  };
+  std::unique_ptr<OpenFileResources> fileResources;
 
 public:
   explicit SignalFileBrowserWindow(QWidget *parent = nullptr);
@@ -111,7 +117,7 @@ public:
   static QString
   sampleToDateTimeString(AlenkaFile::DataFile *file, int sample,
                          InfoTable::TimeMode mode = InfoTable::TimeMode::size);
-  static AlenkaFile::DataFile *
+  static std::unique_ptr<AlenkaFile::DataFile>
   dataFileBySuffix(const QFileInfo &fileInfo,
                    const std::vector<std::string> &additionalFiles);
 
@@ -155,7 +161,7 @@ private slots:
   void receiveSyncMessage(const QByteArray &message);
   void sendSyncMessage();
   void cleanChanged(bool clean);
-  void closeFileDestroy();
+  void closeFilePropagate();
   void setEnableFileActions(bool enable);
   void setFilePathInQML();
   void switchToAlenka();

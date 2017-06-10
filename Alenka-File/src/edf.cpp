@@ -94,18 +94,14 @@ int convertEventPositionBack(long long onset, double samplingFrequency) {
 
 namespace AlenkaFile {
 
-EDF::EDF(const string &filePath) : DataFile(filePath) {
-  edfhdr = new edf_hdr_struct;
-
+EDF::EDF(const string &filePath)
+    : DataFile(filePath), edfhdr(new edf_hdr_struct) {
   openFile();
 }
 
 EDF::~EDF() {
-  delete[] readChunkBuffer;
-
+  // TODO: Perhaps move this to the unique_ptr deleter.
   int err = edfclose_file(edfhdr->handle);
-  delete edfhdr;
-
   if (err < 0)
     cerr << "Error closing EDF file" << endl;
 }
@@ -143,7 +139,7 @@ void EDF::save() {
   // Make the new file under a temporary name.
   filesystem::path tmpPath =
       filesystem::unique_path(getFilePath() + ".%%%%.tmp");
-  saveAsWithType(tmpPath.string(), this, edfhdr);
+  saveAsWithType(tmpPath.string(), this, edfhdr.get());
 
   // Save a backup of the original file.
   int res = edfclose_file(edfhdr->handle);
@@ -205,7 +201,7 @@ void EDF::saveAs(const string &filePath, DataFile *sourceFile) {
 }
 
 void EDF::openFile() {
-  int err = edfopen_file_readonly(getFilePath().c_str(), edfhdr,
+  int err = edfopen_file_readonly(getFilePath().c_str(), edfhdr.get(),
                                   EDFLIB_READ_ALL_ANNOTATIONS);
 
   if (err < 0) {
@@ -229,7 +225,7 @@ void EDF::openFile() {
     readChunk = OPT_READ_CHUNK;
   else if (readChunk < OPT_READ_CHUNK)
     readChunk = OPT_READ_CHUNK - OPT_READ_CHUNK % readChunk;
-  readChunkBuffer = new double[readChunk];
+  readChunkBuffer.resize(readChunk);
 }
 
 template <typename T>
@@ -263,7 +259,7 @@ void EDF::readChannelsFloatDouble(vector<T *> dataChannels,
     int n = static_cast<int>(last - firstSample);
 
     for (unsigned int i = 0; i < getChannelCount(); i++) {
-      err = edfread_physical_samples(handle, i, n, readChunkBuffer);
+      err = edfread_physical_samples(handle, i, n, readChunkBuffer.data());
 
       if (err != n)
         throw runtime_error("edfread_physical_samples failed");

@@ -26,20 +26,19 @@ template <class T> class Loader : public AbstractSpikedetLoader<T> {
   const int BLOCK_LENGTH = 8 * 1024;
 
   AlenkaFile::DataFile *file;
-  const vector<Montage<T> *> &montage;
-  MontageProcessor<T> *processor;
+  const vector<unique_ptr<Montage<T>>> &montage;
   vector<T> tmpData;
   int inChannels, outChannels;
+  unique_ptr<MontageProcessor<T>> processor;
   cl_command_queue queue = nullptr;
   cl_mem inBuffer = nullptr, outBuffer = nullptr;
 
 public:
-  Loader(AlenkaFile::DataFile *file, const vector<Montage<T> *> &montage,
-         OpenCLContext *context)
+  Loader(AlenkaFile::DataFile *file,
+         const vector<unique_ptr<Montage<T>>> &montage, OpenCLContext *context)
       : file(file), montage(montage), inChannels(file->getChannelCount()),
-        outChannels(static_cast<int>(montage.size())) {
-    processor = new MontageProcessor<T>(BLOCK_LENGTH, inChannels);
-
+        outChannels(static_cast<int>(montage.size())),
+        processor(new MontageProcessor<T>(BLOCK_LENGTH, inChannels)) {
     cl_int err;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
 
@@ -59,9 +58,8 @@ public:
 
     tmpData.resize(BLOCK_LENGTH * inChannels);
   }
-  ~Loader() override {
-    delete processor;
 
+  ~Loader() override {
     cl_int err;
 
     if (queue) {
@@ -101,7 +99,8 @@ public:
                                      0, tmpData.data(), 0, nullptr, nullptr);
       checkClErrorCode(err, "clEnqueueWriteBufferRect()");
 
-      processor->process(montage, inBuffer, outBuffer, queue, BLOCK_LENGTH);
+      processor->process(montage.begin(), montage.end(), inBuffer, outBuffer,
+                         queue, BLOCK_LENGTH);
       // OpenCLContext::printBuffer("after_process.txt", outBuffer, queue);
 
       size_t outRegion[] = {rowLen, static_cast<size_t>(outChannels), 1};
@@ -124,7 +123,7 @@ public:
 };
 
 template <class T>
-vector<Montage<T> *> makeMontage(OpenDataFile *file, OpenCLContext *context) {
+auto makeMontage(OpenDataFile *file, OpenCLContext *context) {
   QFile headerFile(":/montageHeader.cl");
   headerFile.open(QIODevice::ReadOnly);
   string header = headerFile.readAll().toStdString();
@@ -211,20 +210,18 @@ void SpikedetAnalysis::runAnalysis(OpenDataFile *file,
                                    bool originalSpikedet) {
   assert(file);
 
-  vector<Montage<SIGNALTYPE> *> montage =
+  vector<unique_ptr<Montage<SIGNALTYPE>>> montage =
       makeMontage<SIGNALTYPE>(file, context);
 
   int Fs = static_cast<int>(round(file->file->getSamplingFrequency()));
   Spikedet spikedet(Fs, originalSpikedet, settings);
   Loader<SIGNALTYPE> loader(file->file, montage, context);
 
-  delete output;
-  output = new CDetectorOutput;
+  output = make_unique<CDetectorOutput>();
+  discharges = make_unique<CDischarges>(loader.channelCount());
 
-  delete discharges;
-  discharges = new CDischarges(loader.channelCount());
-
-  thread t([&]() { spikedet.runAnalysis(&loader, output, discharges); });
+  thread t(
+      [&]() { spikedet.runAnalysis(&loader, output.get(), discharges.get()); });
 
   while (1) {
     int percentage = spikedet.progressPercentage();
@@ -259,7 +256,7 @@ void SpikedetAnalysis::analyseCommandLineFile() {
     QFileInfo fileInfo(QString::fromStdString(fn[0]));
     vector<string> rest(fn.begin() + 1, fn.end());
 
-    file.reset(SignalFileBrowserWindow::dataFileBySuffix(fileInfo, rest));
+    file = SignalFileBrowserWindow::dataFileBySuffix(fileInfo, rest);
   } catch (runtime_error e) {
     cerr << "Error while opening file: " << e.what() << endl;
     MyApplication::mainExit(EXIT_FAILURE);
@@ -274,8 +271,8 @@ void SpikedetAnalysis::analyseCommandLineFile() {
   Spikedet spikedet(Fs, originalSpikedet, settings);
   FileSpikedetLoader<SIGNALTYPE> loader(file.get());
 
-  unique_ptr<CDetectorOutput> output(new CDetectorOutput);
-  unique_ptr<CDischarges> discharges(new CDischarges(loader.channelCount()));
+  auto output = make_unique<CDetectorOutput>();
+  auto discharges = make_unique<CDischarges>(loader.channelCount());
 
   thread t(
       [&]() { spikedet.runAnalysis(&loader, output.get(), discharges.get()); });

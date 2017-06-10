@@ -8,11 +8,9 @@ using namespace std;
 namespace AlenkaSignal {
 
 template <class T>
-void MontageProcessor<T>::process(const vector<Montage<T> *> &montage,
-                                  cl_mem inBuffer, cl_mem outBuffer,
-                                  cl_command_queue queue,
-                                  cl_int outputRowLength,
-                                  cl_int inputRowOffset) {
+void MontageProcessor<T>::checkBufferSizes(cl_mem inBuffer, cl_mem outBuffer,
+                                           cl_int outputRowLength,
+                                           size_t montageSize) {
   cl_int err;
   size_t inSize, outSize;
 
@@ -27,50 +25,53 @@ void MontageProcessor<T>::process(const vector<Montage<T> *> &montage,
                            nullptr);
   checkClErrorCode(err, "clGetMemObjectInfo");
 
-  if (outSize < outputRowLength * montage.size() * outputCopyCount * sizeof(T))
+  if (outSize < outputRowLength * montageSize * outputCopyCount * sizeof(T))
     throw runtime_error("MontageProcessor: the outBuffer is too small.");
+}
 
-  for (unsigned int i = 0; i < montage.size(); i++) {
-    cl_kernel montageKernel = montage[i]->getKernel();
-    int pi = 0;
+template <class T>
+void MontageProcessor<T>::processOneMontage(cl_mem inBuffer, cl_mem outBuffer,
+                                            cl_command_queue queue,
+                                            cl_int outputRowLength,
+                                            cl_int inputRowOffset, cl_int index,
+                                            cl_kernel kernel, int copyIndex) {
+  cl_int err;
+  int pi = 0;
 
-    err = clSetKernelArg(montageKernel, pi++, sizeof(cl_mem), &inBuffer);
+  err = clSetKernelArg(kernel, pi++, sizeof(cl_mem), &inBuffer);
+  checkClErrorCode(err, "clSetKernelArg()");
+
+  err = clSetKernelArg(kernel, pi++, sizeof(cl_mem), &outBuffer);
+  checkClErrorCode(err, "clSetKernelArg()");
+
+  err = clSetKernelArg(kernel, pi++, sizeof(cl_int), &inputRowLength);
+  checkClErrorCode(err, "clSetKernelArg()");
+
+  err = clSetKernelArg(kernel, pi++, sizeof(cl_int), &inputRowOffset);
+  checkClErrorCode(err, "clSetKernelArg()");
+
+  err = clSetKernelArg(kernel, pi++, sizeof(cl_int), &inputRowCount);
+  checkClErrorCode(err, "clSetKernelArg()");
+
+  err = clSetKernelArg(kernel, pi++, sizeof(cl_int), &outputRowLength);
+  checkClErrorCode(err, "clSetKernelArg()");
+
+  err = clSetKernelArg(kernel, pi++, sizeof(cl_int), &index);
+  checkClErrorCode(err, "clSetKernelArg()");
+
+  err = clSetKernelArg(kernel, pi++, sizeof(cl_int), &outputCopyCount);
+  checkClErrorCode(err, "clSetKernelArg()");
+
+  if (0 <= copyIndex) {
+    err = clSetKernelArg(kernel, pi++, sizeof(cl_int), &copyIndex);
     checkClErrorCode(err, "clSetKernelArg()");
-
-    err = clSetKernelArg(montageKernel, pi++, sizeof(cl_mem), &outBuffer);
-    checkClErrorCode(err, "clSetKernelArg()");
-
-    err = clSetKernelArg(montageKernel, pi++, sizeof(cl_int), &inputRowLength);
-    checkClErrorCode(err, "clSetKernelArg()");
-
-    err = clSetKernelArg(montageKernel, pi++, sizeof(cl_int), &inputRowOffset);
-    checkClErrorCode(err, "clSetKernelArg()");
-
-    err = clSetKernelArg(montageKernel, pi++, sizeof(cl_int), &inputRowCount);
-    checkClErrorCode(err, "clSetKernelArg()");
-
-    err = clSetKernelArg(montageKernel, pi++, sizeof(cl_int), &outputRowLength);
-    checkClErrorCode(err, "clSetKernelArg()");
-
-    cl_int index = i;
-    err = clSetKernelArg(montageKernel, pi++, sizeof(cl_int), &index);
-    checkClErrorCode(err, "clSetKernelArg()");
-
-    err = clSetKernelArg(montageKernel, pi++, sizeof(cl_int), &outputCopyCount);
-    checkClErrorCode(err, "clSetKernelArg()");
-
-    if (montage[i]->isCopyMontage()) {
-      cl_int copyIndex = montage[i]->copyMontageIndex();
-      err = clSetKernelArg(montageKernel, pi++, sizeof(cl_int), &copyIndex);
-      checkClErrorCode(err, "clSetKernelArg()");
-    }
-
-    size_t globalWorkSize = outputRowLength;
-
-    err = clEnqueueNDRangeKernel(queue, montageKernel, 1, nullptr,
-                                 &globalWorkSize, nullptr, 0, nullptr, nullptr);
-    checkClErrorCode(err, "clEnqueueNDRangeKernel()");
   }
+
+  size_t globalWorkSize = outputRowLength;
+
+  err = clEnqueueNDRangeKernel(queue, kernel, 1, nullptr, &globalWorkSize,
+                               nullptr, 0, nullptr, nullptr);
+  checkClErrorCode(err, "clEnqueueNDRangeKernel()");
 }
 
 template class MontageProcessor<float>;

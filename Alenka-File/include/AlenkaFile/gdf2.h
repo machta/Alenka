@@ -3,8 +3,10 @@
 
 #include "datafile.h"
 
+#include <array>
 #include <cmath>
 #include <fstream>
+#include <vector>
 
 namespace AlenkaFile {
 
@@ -21,7 +23,6 @@ public:
    * @param filePath The file path of the primary data file.
    */
   GDF2(const std::string &filePath, bool uncalibrated = false);
-  ~GDF2() override;
 
   double getSamplingFrequency() const override { return samplingFrequency; }
   unsigned int getChannelCount() const override { return fh.numberOfChannels; }
@@ -64,7 +65,7 @@ public:
   }
   std::string getLabel(unsigned int channel) override {
     if (channel < getChannelCount())
-      return vh.label[channel];
+      return vh.label[channel].data();
     return nullptr;
   }
 
@@ -74,11 +75,11 @@ private:
   uint64_t samplesRecorded;
   int64_t startOfData;
   int64_t startOfEventTable;
-  double *scale;
+  std::vector<double> scale;
   int dataTypeSize;
   int version;
-  char *recordRawBuffer;
-  double *recordDoubleBuffer;
+  std::vector<char> recordRawBuffer;
+  std::vector<double> recordDoubleBuffer;
   int dataType;
 
   /**
@@ -115,24 +116,26 @@ private:
    * as C++ types at one place.
    */
   struct {
-    char (*label)[16 + 1];
-    char (*typeOfSensor)[80 + 1];
+    std::vector<std::array<char, 16 + 1>> label;
+    std::vector<std::array<char, 80 + 1>> typeOfSensor;
     // physicalDimension obsolete
-    uint16_t *physicalDimensionCode;
-    double *physicalMinimum;
-    double *physicalMaximum;
-    double *digitalMinimum;
-    double *digitalMaximum;
+    std::vector<uint16_t> physicalDimensionCode;
+    std::vector<double> physicalMinimum;
+    std::vector<double> physicalMaximum;
+    std::vector<double> digitalMinimum;
+    std::vector<double> digitalMaximum;
     // prefiltering obsolete
-    float *timeOffset;
-    float *lowpass;
-    float *highpass;
-    float *notch;
-    uint32_t *samplesPerRecord;
-    uint32_t *typeOfData;
-    float (*sensorPosition)[3];
-    char (*sensorInfo)[20];
+    std::vector<float> timeOffset;
+    std::vector<float> lowpass;
+    std::vector<float> highpass;
+    std::vector<float> notch;
+    std::vector<uint32_t> samplesPerRecord;
+    std::vector<uint32_t> typeOfData;
+    std::vector<std::array<float, 3>> sensorPosition;
+    std::vector<std::array<char, 20>> sensorInfo;
   } vh;
+
+  void resizeVariableHeaderFields();
 
   template <typename T>
   void readChannelsFloatDouble(std::vector<T *> dataChannels,

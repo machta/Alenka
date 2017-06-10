@@ -2,6 +2,8 @@
 
 #include "../../src/SignalProcessor/lrucache.h"
 
+#include <memory>
+
 using namespace std;
 
 namespace {
@@ -38,7 +40,7 @@ void testKey(int key, float *ptr0, float *ptr1) {
 }
 
 void randomTest(int cap, int iters, int range, int clearInterval) {
-  LRUCache<int, float> cache(cap, new FloatAllocator(nullptr));
+  LRUCache<int, float> cache(cap, make_unique<FloatAllocator>(nullptr));
 
   for (int i = 0; i < iters; ++i) {
     int r = rand() % range;
@@ -64,7 +66,8 @@ void randomTest(int cap, int iters, int range, int clearInterval) {
 TEST(lrucache_test, adhoc) {
   int destroyCounter = 0;
   {
-    LRUCache<int, float> cache(10, new FloatAllocator(&destroyCounter));
+    LRUCache<int, float> cache(10,
+                               make_unique<FloatAllocator>(&destroyCounter));
     EXPECT_EQ(cache.getCapacity(), static_cast<unsigned int>(10));
 
     int key0 = -1, key1 = -1;

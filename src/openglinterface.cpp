@@ -7,7 +7,7 @@
 
 using namespace std;
 
-OpenGLInterface::~OpenGLInterface() { delete logger; }
+OpenGLInterface::~OpenGLInterface() {}
 
 void OpenGLInterface::initializeOpenGLInterface() {
   logToFile("Initializing OpenGLInterface.");
@@ -38,16 +38,13 @@ void OpenGLInterface::initializeOpenGLInterface() {
   }
 
   // Initialize log.
-  logger = new QOpenGLDebugLogger();
+  logger = make_unique<QOpenGLDebugLogger>();
 
   if (logger->initialize()) {
     logger->logMessage(QOpenGLDebugMessage::createApplicationMessage(
         "OpenGL debug log initialized."));
   } else {
     cerr << "Warning: initialization of QOpenGLDebugLogger failed" << endl;
-
-    delete logger;
-    logger = nullptr;
   }
 }
 

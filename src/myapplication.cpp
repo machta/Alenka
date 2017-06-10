@@ -21,8 +21,8 @@ MyApplication::MyApplication(int &argc, char **argv)
 
   try {
     // Set up the global options object.
-    options = new Options(argc, argv);
-    PROGRAM_OPTIONS_POINTER = SET_PROGRAM_OPTIONS_POINTER = options;
+    options = make_unique<Options>(argc, argv);
+    PROGRAM_OPTIONS_POINTER = SET_PROGRAM_OPTIONS_POINTER = options.get();
 
     // Set up the log.
     const int maxLogFileNameLength = 1000;
@@ -79,9 +79,9 @@ MyApplication::MyApplication(int &argc, char **argv)
   PROGRAM_OPTIONS.logConfigFile();
 
   // Initialize the global OpenCL context.
-  globalContext.reset(
-      new AlenkaSignal::OpenCLContext(PROGRAM_OPTIONS["clPlatform"].as<int>(),
-                                      PROGRAM_OPTIONS["clDevice"].as<int>()));
+  globalContext = make_unique<AlenkaSignal::OpenCLContext>(
+      PROGRAM_OPTIONS["clPlatform"].as<int>(),
+      PROGRAM_OPTIONS["clDevice"].as<int>());
 
   // Set up the clFFT library.
   AlenkaSignal::OpenCLContext::clfftInit();
@@ -128,11 +128,7 @@ MyApplication::MyApplication(int &argc, char **argv)
   QLocale::setDefault(locale);
 }
 
-MyApplication::~MyApplication() {
-  AlenkaSignal::OpenCLContext::clfftDeinit();
-
-  delete options;
-}
+MyApplication::~MyApplication() { AlenkaSignal::OpenCLContext::clfftDeinit(); }
 
 bool MyApplication::notify(QObject *receiver, QEvent *event) {
   try {

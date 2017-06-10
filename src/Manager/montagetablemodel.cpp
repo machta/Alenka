@@ -63,8 +63,8 @@ public:
 
 MontageTableModel::MontageTableModel(OpenDataFile *file, QObject *parent)
     : TableModel(file, parent) {
-  columns.push_back(new Name(file));
-  columns.push_back(new Save(file));
+  columns.push_back(make_unique<Name>(file));
+  columns.push_back(make_unique<Save>(file));
 
   auto vitness = VitnessMontageTable::vitness(file->dataModel->montageTable());
   connect(vitness, SIGNAL(valueChanged(int, int)), this,

@@ -80,9 +80,9 @@ public:
   bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       EventType et = file->dataModel->eventTypeTable()->row(row);
-
       bool ok;
       double tmp = value.toDouble(&ok) / 100;
+
       if (ok) {
         if (et.opacity == tmp)
           return false;
@@ -157,11 +157,11 @@ public:
 
 EventTypeTableModel::EventTypeTableModel(OpenDataFile *file, QObject *parent)
     : TableModel(file, parent) {
-  columns.push_back(new Id(file));
-  columns.push_back(new Name(file));
-  columns.push_back(new Opacity(file));
-  columns.push_back(new Color(file));
-  columns.push_back(new Hidden(file));
+  columns.push_back(make_unique<Id>(file));
+  columns.push_back(make_unique<Name>(file));
+  columns.push_back(make_unique<Opacity>(file));
+  columns.push_back(make_unique<Color>(file));
+  columns.push_back(make_unique<Hidden>(file));
 
   auto vitness =
       VitnessEventTypeTable::vitness(file->dataModel->eventTypeTable());

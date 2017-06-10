@@ -1,7 +1,6 @@
 #include "../include/AlenkaSignal/openclcontext.h"
 
 #include "../include/AlenkaSignal/montage.h"
-#include "../include/AlenkaSignal/openclprogram.h"
 
 #include <clFFT.h>
 
@@ -15,6 +14,7 @@
 using namespace std;
 
 namespace {
+
 template <typename T> string errorCodeToString(T val) {
   using namespace std;
 
@@ -23,6 +23,44 @@ template <typename T> string errorCodeToString(T val) {
   ss << dec << val << "(0x" << hex << val << dec << ")";
 
   return ss.str();
+}
+
+size_t platformInfoSize(cl_platform_id id, cl_platform_info name) {
+  size_t size;
+
+  cl_int err = clGetPlatformInfo(id, name, 0, nullptr, &size);
+  checkClErrorCode(err, "clGetPlatformInfo()");
+
+  return size;
+}
+
+string platformInfo(cl_platform_id id, cl_platform_info name) {
+  size_t size = platformInfoSize(id, name);
+  vector<char> tmp(size);
+
+  cl_int err = clGetPlatformInfo(id, name, size, tmp.data(), nullptr);
+  checkClErrorCode(err, "clGetPlatformInfo()");
+
+  return string(tmp.begin(), tmp.end());
+}
+
+size_t deviceInfoSize(cl_device_id id, cl_device_info name) {
+  size_t size;
+
+  cl_int err = clGetDeviceInfo(id, name, 0, nullptr, &size);
+  checkClErrorCode(err, "clGetDeviceInfo()");
+
+  return size;
+}
+
+string deviceInfo(cl_device_id id, cl_device_info name) {
+  size_t size = deviceInfoSize(id, name);
+  vector<char> tmp(size);
+
+  cl_int err = clGetDeviceInfo(id, name, size, tmp.data(), nullptr);
+  checkClErrorCode(err, "clGetDeviceInfo()");
+
+  return string(tmp.begin(), tmp.end());
 }
 
 } // namespace
@@ -35,9 +73,9 @@ OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device,
 
   // Retrieve the platform and device ids.
   cl_uint pCount = platform + 1;
-  auto platforms = new cl_platform_id[pCount];
+  vector<cl_platform_id> platforms(pCount);
 
-  err = clGetPlatformIDs(pCount, platforms, &pCount);
+  err = clGetPlatformIDs(pCount, platforms.data(), &pCount);
   checkClErrorCode(err, "clGetPlatformIDs()");
 
   if (platform >= pCount)
@@ -46,10 +84,10 @@ OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device,
   platformId = platforms[platform];
 
   cl_uint dCount = device + 1;
-  auto devices = new cl_device_id[dCount];
+  vector<cl_device_id> devices(dCount);
 
-  err =
-      clGetDeviceIDs(platformId, CL_DEVICE_TYPE_ALL, dCount, devices, &dCount);
+  err = clGetDeviceIDs(platformId, CL_DEVICE_TYPE_ALL, dCount, devices.data(),
+                       &dCount);
   checkClErrorCode(err, "clGetDeviceIDs()");
 
   if (device >= dCount)
@@ -66,16 +104,10 @@ OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device,
       clCreateContext(properties.data(), 1, &deviceId, nullptr, nullptr, &err);
   checkClErrorCode(err, "clCreateContext()");
 
-  delete[] platforms;
-  delete[] devices;
-
   // logToFile("OpenCLContext " << this << " created.");
 }
 
 OpenCLContext::~OpenCLContext() {
-  delete copyOnlyProgramFloat;
-  delete copyOnlyProgramDouble;
-
   cl_int err = clReleaseContext(context);
   checkClErrorCode(err, "clReleaseContext()");
 
@@ -93,73 +125,26 @@ string OpenCLContext::getPlatformInfo() const {
   err = clGetPlatformIDs(platformCount, platformIDs.data(), nullptr);
   checkClErrorCode(err, "clGetPlatformIDs()");
 
-  // Find the maximum size needed for the values.
-  size_t size, maxSize = 0;
-
-  for (cl_uint i = 0; i < platformCount; ++i) {
-    err = clGetPlatformInfo(platformIDs[i], CL_PLATFORM_VERSION, 0, nullptr,
-                            &size);
-    checkClErrorCode(err, "clGetPlatformInfo()");
-    maxSize = max(maxSize, size);
-
-    err =
-        clGetPlatformInfo(platformIDs[i], CL_PLATFORM_NAME, 0, nullptr, &size);
-    checkClErrorCode(err, "clGetPlatformInfo()");
-    maxSize = max(maxSize, size);
-
-    err = clGetPlatformInfo(platformIDs[i], CL_PLATFORM_VENDOR, 0, nullptr,
-                            &size);
-    checkClErrorCode(err, "clGetPlatformInfo()");
-    maxSize = max(maxSize, size);
-
-    err = clGetPlatformInfo(platformIDs[i], CL_PLATFORM_EXTENSIONS, 0, nullptr,
-                            &size);
-    checkClErrorCode(err, "clGetPlatformInfo()");
-    maxSize = max(maxSize, size);
-  }
-
   // Build the string.
-  auto tmp = new char[maxSize];
   string str;
 
   str += "Available platforms (" + to_string(platformCount) + "):";
   for (cl_uint i = 0; i < platformCount; ++i) {
-    if (platformIDs[i] == getCLPlatform())
-      str += "\n * ";
-    else
-      str += "\n   ";
-
-    err = clGetPlatformInfo(platformIDs[i], CL_PLATFORM_NAME, maxSize, tmp,
-                            nullptr);
-    checkClErrorCode(err, "clGetPlatformInfo()");
-    str += tmp;
+    str += platformIDs[i] == getCLPlatform() ? "\n * " : "\n   ";
+    str += platformInfo(platformIDs[i], CL_PLATFORM_NAME);
   }
 
   str += "\n\nSelected platform: ";
-  err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_NAME, maxSize, tmp,
-                          nullptr);
-  checkClErrorCode(err, "clGetPlatformInfo()");
-  str += tmp;
+  str += platformInfo(getCLPlatform(), CL_PLATFORM_NAME);
 
   str += "\nVersion: ";
-  err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_VERSION, maxSize, tmp,
-                          nullptr);
-  checkClErrorCode(err, "clGetPlatformInfo()");
-  str += tmp;
+  str += platformInfo(getCLPlatform(), CL_PLATFORM_VERSION);
 
   str += "\nVendor: ";
-  err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_VENDOR, maxSize, tmp,
-                          nullptr);
-  checkClErrorCode(err, "clGetPlatformInfo()");
-  str += tmp;
+  str += platformInfo(getCLPlatform(), CL_PLATFORM_VENDOR);
 
   str += "\nExtensions: ";
-  err = clGetPlatformInfo(getCLPlatform(), CL_PLATFORM_EXTENSIONS, maxSize, tmp,
-                          nullptr);
-  checkClErrorCode(err, "clGetPlatformInfo()");
-  str += tmp;
-
-  delete[] tmp;
+  str += platformInfo(getCLPlatform(), CL_PLATFORM_EXTENSIONS);
 
   return str;
 }
@@ -178,68 +163,27 @@ string OpenCLContext::getDeviceInfo() const {
                        deviceIDs.data(), nullptr);
   checkClErrorCode(err, "clGetDeviceIDs()");
 
-  // Find the maximum size needed for the value.
-  size_t size, maxSize = 0;
-
-  for (cl_uint i = 0; i < deviceCount; ++i) {
-    err = clGetDeviceInfo(deviceIDs[i], CL_DEVICE_VERSION, 0, nullptr, &size);
-    checkClErrorCode(err, "clGetDeviceInfo()");
-    maxSize = max(maxSize, size);
-
-    err = clGetDeviceInfo(deviceIDs[i], CL_DEVICE_NAME, 0, nullptr, &size);
-    checkClErrorCode(err, "clGetDeviceInfo()");
-    maxSize = max(maxSize, size);
-
-    err = clGetDeviceInfo(deviceIDs[i], CL_DEVICE_VENDOR, 0, nullptr, &size);
-    checkClErrorCode(err, "clGetDeviceInfo()");
-    maxSize = max(maxSize, size);
-
-    err =
-        clGetDeviceInfo(deviceIDs[i], CL_DEVICE_EXTENSIONS, 0, nullptr, &size);
-    checkClErrorCode(err, "clGetDeviceInfo()");
-    maxSize = max(maxSize, size);
-  }
-
   // Build the string.
   string str;
-  unique_ptr<char[]> tmp(new char[maxSize]);
 
   str += "Available devices (" + to_string(deviceCount) + "):";
   for (cl_uint i = 0; i < deviceCount; ++i) {
-    if (deviceIDs[i] == getCLDevice())
-      str += "\n * ";
-    else
-      str += "\n   ";
-
-    err = clGetDeviceInfo(deviceIDs[i], CL_DEVICE_NAME, maxSize, tmp.get(),
-                          nullptr);
-    checkClErrorCode(err, "clGetDeviceInfo()");
-    str += tmp.get();
+    str += deviceIDs[i] == getCLDevice() ? "\n * " : "\n   ";
+    str += deviceInfo(deviceIDs[i], CL_DEVICE_NAME);
   }
 
   str += "\n\nSelected device: ";
-  err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_NAME, maxSize, tmp.get(),
-                        nullptr);
-  checkClErrorCode(err, "clGetDeviceInfo()");
-  str += tmp.get();
+  str += deviceInfo(getCLDevice(), CL_DEVICE_NAME);
 
   str += "\nVersion: ";
-  err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_VERSION, maxSize, tmp.get(),
-                        nullptr);
-  checkClErrorCode(err, "clGetDeviceInfo()");
-  str += tmp.get();
+  str += deviceInfo(getCLDevice(), CL_DEVICE_VERSION);
 
   str += "\nVendor: ";
-  err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_VENDOR, maxSize, tmp.get(),
-                        nullptr);
-  checkClErrorCode(err, "clGetDeviceInfo()");
-  str += tmp.get();
+  str += deviceInfo(getCLDevice(), CL_DEVICE_VENDOR);
 
   str += "\nExtensions: ";
-  err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_EXTENSIONS, maxSize, tmp.get(),
-                        nullptr);
   checkClErrorCode(err, "clGetDeviceInfo()");
-  str += tmp.get();
+  str += deviceInfo(getCLDevice(), CL_DEVICE_EXTENSIONS);
 
   str += "\nDevice global memory size: ";
   cl_ulong memSize;
@@ -248,9 +192,9 @@ string OpenCLContext::getDeviceInfo() const {
   checkClErrorCode(err, "clGetDeviceInfo()");
   stringstream ss;
   double memGigs = memSize / (1000. * 1000 * 1000);
-  ss << memGigs << " GB (this equals the GPU memory size iff the sected CL "
-                   "device is the GPU)";
+  ss << memGigs;
   str += ss.str();
+  str += " GB (this is the GPU memory size iff the sected device is a GPU)";
 
   return str;
 }
@@ -357,6 +301,7 @@ void OpenCLContext::clfftInit() {
 
   errFFT = clfftInitSetupData(&setupData);
   assert(errFFT == CLFFT_SUCCESS);
+  (void)errFFT;
 
   errFFT = clfftSetup(&setupData);
   assert(errFFT == CLFFT_SUCCESS);
@@ -393,15 +338,13 @@ void OpenCLContext::printBuffer(FILE *file, cl_mem buffer,
   err = clGetMemObjectInfo(buffer, CL_MEM_SIZE, sizeof(size_t), &size, nullptr);
   checkClErrorCode(err, "clGetMemObjectInfo");
 
-  auto tmp = new float[size / sizeof(float)];
+  vector<float> tmp(size / sizeof(float));
 
-  err = clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, size, tmp, 0, nullptr,
-                            nullptr);
+  err = clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, size, tmp.data(), 0,
+                            nullptr, nullptr);
   checkClErrorCode(err, "clEnqueueReadBuffer");
 
-  printBuffer(file, tmp, size / sizeof(float));
-
-  delete[] tmp;
+  printBuffer(file, tmp.data(), size / sizeof(float));
 #else
   (void)file;
   (void)buffer;
@@ -458,15 +401,13 @@ void OpenCLContext::printBufferDouble(FILE *file, cl_mem buffer,
   err = clGetMemObjectInfo(buffer, CL_MEM_SIZE, sizeof(size_t), &size, nullptr);
   checkClErrorCode(err, "clGetMemObjectInfo");
 
-  auto tmp = new double[size / sizeof(double)];
+  vector<double> tmp(size / sizeof(double));
 
-  err = clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, size, tmp, 0, nullptr,
-                            nullptr);
+  err = clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, size, tmp.data(), 0,
+                            nullptr, nullptr);
   checkClErrorCode(err, "clEnqueueReadBuffer");
 
-  printBufferDouble(file, tmp, size / sizeof(double));
-
-  delete[] tmp;
+  printBufferDouble(file, tmp.data(), size / sizeof(double));
 #else
   (void)file;
   (void)buffer;

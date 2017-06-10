@@ -3,6 +3,9 @@
 
 #include <boost/filesystem.hpp>
 
+#include <memory>
+
+using namespace std;
 using namespace boost::filesystem;
 
 namespace {
@@ -101,8 +104,9 @@ void testDataModel(const DataModel *dataModel) {
   EXPECT_EQ(et2.hidden, false);
 }
 
-DataModel *makeDataModel() {
-  auto dataModel = new DataModel(new EventTypeTable(), new MontageTable());
+unique_ptr<DataModel> makeDataModel() {
+  auto dataModel = make_unique<DataModel>(make_unique<EventTypeTable>(),
+                                          make_unique<MontageTable>());
 
   dataModel->montageTable()->insertRows(0, 2);
 
@@ -186,7 +190,7 @@ DataModel *makeDataModel() {
   et2.hidden = false;
   dataModel->eventTypeTable()->row(1, et2);
 
-  testDataModel(dataModel);
+  testDataModel(dataModel.get());
   return dataModel;
 }
 
@@ -277,19 +281,17 @@ template <class T> void testMontFile(const string &fp, const string &suffix) {
   {
     T file(p.string());
 
-    DataModel *dataModel = makeDataModel();
-    file.setDataModel(dataModel);
+    unique_ptr<DataModel> dataModel = makeDataModel();
+    file.setDataModel(dataModel.get());
 
     file.save();
-
-    delete dataModel;
   }
 
   {
-    T file(p.string());
+    DataModel dataModel(make_unique<EventTypeTable>(),
+                        make_unique<MontageTable>());
 
-    DataModel dataModel(new EventTypeTable(), new MontageTable());
-    ;
+    T file(p.string());
     file.setDataModel(&dataModel);
 
     file.load();
@@ -302,27 +304,24 @@ template <class T> void testMontFile(const string &fp, const string &suffix) {
 }
 
 template <class T>
-DataModel *testPrimary(const string &fp, const string &suffix) {
+unique_ptr<DataModel> testPrimary(const string &fp, const string &suffix) {
   path p = copyToTmp(fp, suffix);
 
   {
     T file(p.string());
 
-    DataModel *dataModel = makeDataModel();
-    file.setDataModel(dataModel);
+    unique_ptr<DataModel> dataModel = makeDataModel();
+    file.setDataModel(dataModel.get());
 
     file.save();
-
-    delete dataModel;
   }
 
   remove(p.string() + ".mont");
-  auto dataModel = new DataModel(new EventTypeTable(), new MontageTable());
-
+  auto dataModel = make_unique<DataModel>(make_unique<EventTypeTable>(),
+                                          make_unique<MontageTable>());
   {
     T file(p.string());
-
-    file.setDataModel(dataModel);
+    file.setDataModel(dataModel.get());
 
     file.load();
   }
@@ -344,31 +343,25 @@ TEST(data_model_test, test_mont_EDF) {
 }
 
 TEST(data_model_test, test_primary_GDF200) {
-  DataModel *dataModel =
+  unique_ptr<DataModel> dataModel =
       testPrimary<GDF2>(TEST_DATA_PATH + "gdf/gdf00.gdf", "gdf");
 
-  testMontages(dataModel);
-  testEvents(dataModel, false);
-  testTypes(dataModel);
-
-  delete dataModel;
+  testMontages(dataModel.get());
+  testEvents(dataModel.get(), false);
+  testTypes(dataModel.get());
 }
 
 TEST(data_model_test, test_primary_GDF201) {
-  DataModel *dataModel =
+  unique_ptr<DataModel> dataModel =
       testPrimary<GDF2>(TEST_DATA_PATH + "gdf/gdf01.gdf", "gdf");
 
-  testEvents(dataModel, false);
-  testTypes(dataModel);
-
-  delete dataModel;
+  testEvents(dataModel.get(), false);
+  testTypes(dataModel.get());
 }
 
 TEST(data_model_test, test_primary_EDF) {
-  DataModel *dataModel =
+  unique_ptr<DataModel> dataModel =
       testPrimary<EDF>(TEST_DATA_PATH + "edf/edf00.edf", "edf");
 
-  testEvents(dataModel, true);
-
-  delete dataModel;
+  testEvents(dataModel.get(), true);
 }

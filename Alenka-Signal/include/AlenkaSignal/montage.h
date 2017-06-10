@@ -9,6 +9,7 @@
 #include <CL/cl_gl.h>
 #endif
 
+#include <memory>
 #include <string>
 
 namespace AlenkaSignal {
@@ -30,7 +31,7 @@ template <class T> class Montage {
   OpenCLContext *context = nullptr;
   bool copyMontage = false;
   std::string source;
-  OpenCLProgram *program = nullptr;
+  std::unique_ptr<OpenCLProgram> program;
   cl_kernel kernel = nullptr;
   cl_int index = -1;
 
@@ -41,7 +42,8 @@ public:
    */
   Montage(const std::string &source, OpenCLContext *context,
           const std::string &headerSource = "");
-  Montage(const std::vector<unsigned char> *binary, OpenCLContext *context);
+  Montage(const std::vector<unsigned char> *binary, OpenCLContext *context)
+      : program(new OpenCLProgram(binary, context)) {}
   ~Montage();
 
   /**

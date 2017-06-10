@@ -18,7 +18,7 @@ class OpenCLContext;
 class MyApplication : public QApplication {
   Q_OBJECT
 
-  Options *options = nullptr;
+  std::unique_ptr<Options> options;
 
 public:
   /**

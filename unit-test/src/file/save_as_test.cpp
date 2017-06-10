@@ -9,8 +9,9 @@ TEST(save_as_test, save_GDF_as_EDF) {
   TestFile gdf00(TEST_DATA_PATH + "gdf/gdf00", 200, 19, 364000);
   unique_ptr<DataFile> gdf_file(gdf00.makeGDF2());
 
-  DataModel dataModel(new EventTypeTable(), new MontageTable());
-  ;
+  DataModel dataModel(make_unique<EventTypeTable>(),
+                      make_unique<MontageTable>());
+
   gdf_file->setDataModel(&dataModel);
   gdf_file->load();
 

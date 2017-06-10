@@ -21,6 +21,7 @@ int memoryAvailable = PROGRAM_OPTIONS["fileCacheSize"].as<int>();
 #include <QString>
 #include <QVariant>
 
+#include <memory>
 #include <stdexcept>
 #include <string>
 
@@ -43,7 +44,7 @@ class QSettings;
 class Options {
   boost::program_options::variables_map vm;
   std::string desc, configPath;
-  QSettings *programSettings;
+  std::unique_ptr<QSettings> programSettings;
 
 public:
   /**

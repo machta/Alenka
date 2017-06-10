@@ -30,7 +30,7 @@ OpenGLProgram::OpenGLProgram(const string &vertSource,
   gl()->glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
 
   if (logLength > 1) {
-    unique_ptr<char[]> log(new char[logLength]);
+    auto log = make_unique<char[]>(logLength);
     gl()->glGetProgramInfoLog(program, logLength, &logLength, log.get());
 
     logToFileAndConsole("OpenGLProgram link log:" << endl << log.get());
@@ -58,11 +58,24 @@ void OpenGLProgram::addShader(const string &sourceText, GLenum type) {
   gl()->glGetShaderiv(shader, GL_COMPILE_STATUS, &compileStatus);
 
 #ifndef NDEBUG
+  logCompilationInfo(shader, type, sourceText);
+#endif
+
+  checkNotErrorCode(compileStatus, GL_FALSE,
+                    "Shader " << type << " compilation failed.");
+
+  gl()->glAttachShader(program, shader);
+
+  gl()->glDeleteShader(shader);
+}
+
+void OpenGLProgram::logCompilationInfo(GLuint shader, GLenum type,
+                                       const string &sourceText) {
   GLint logLength;
   gl()->glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLength);
 
   if (logLength > 1) {
-    unique_ptr<char[]> log(new char[logLength]);
+    auto log = make_unique<char[]>(logLength);
     gl()->glGetShaderInfoLog(shader, logLength, &logLength, log.get());
 
     stringstream ss;
@@ -85,12 +98,4 @@ void OpenGLProgram::addShader(const string &sourceText, GLenum type) {
                                   << "Compilation log:" << endl
                                   << log.get());
   }
-#endif
-
-  checkNotErrorCode(compileStatus, GL_FALSE,
-                    "Shader " << type << " compilation failed.");
-
-  gl()->glAttachShader(program, shader);
-
-  gl()->glDeleteShader(shader);
 }

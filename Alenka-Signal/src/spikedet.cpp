@@ -69,11 +69,6 @@ Spikedet::Spikedet(int fs, bool original, DETECTOR_SETTINGS settings)
   this->settings.m_original = original;
 }
 
-Spikedet::~Spikedet() {
-  delete detector;
-  detector = nullptr;
-}
-
 void Spikedet::runAnalysis(AbstractSpikedetLoader<SIGNALTYPE> *loader,
                            CDetectorOutput *out, CDischarges *discharges) {
   unique_ptr<wxEvtHandler> eventHandler(new wxEvtHandler);
@@ -82,10 +77,8 @@ void Spikedet::runAnalysis(AbstractSpikedetLoader<SIGNALTYPE> *loader,
 
   unique_ptr<CInputModel> model(new InputModel(fs, loader));
 
-  delete detector;
-  detector = new CSpikeDetector(eventHandler.get(), model.get(), &settings, out,
-                                discharges);
-
+  detector = make_unique<CSpikeDetector>(eventHandler.get(), model.get(),
+                                         &settings, out, discharges);
   detector->Run();
 }
 

@@ -49,17 +49,17 @@ KernelCache::KernelCache() {
       file >> codeSize;
       file.ignore(2, '\n');
 
-      unique_ptr<char[]> code(new char[codeSize + 1]());
+      auto code = make_unique<char[]>(codeSize + 1);
       file.read(code.get(), codeSize);
 
       size_t binarySize;
       file >> binarySize;
       file.ignore(2, '\n');
 
-      auto binary = new vector<unsigned char>(binarySize);
+      auto binary = make_unique<vector<unsigned char>>(binarySize);
       file.read(reinterpret_cast<char *>(binary->data()), binarySize);
 
-      cache.insert(QString(code.get()), binary);
+      cache.insert(QString(code.get()), binary.release());
     }
   } else {
     logToFileAndConsole("Failed to open kernel cache at " << filePath << ".");

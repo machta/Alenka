@@ -81,7 +81,8 @@ template <class T> void test(function<void(T, T)> compare, int outputCopies) {
                                     outBufferSize, nullptr, &err);
   checkClErrorCode(err, "clCreateBuffer");
 
-  processor.process(montage, inBuffer, outBuffer, queue, n - offset);
+  processor.process(montage.begin(), montage.end(), inBuffer, outBuffer, queue,
+                    n - offset);
 
   err = clEnqueueReadBuffer(queue, outBuffer, CL_TRUE, 0, outBufferSize,
                             output.data(), 0, nullptr, nullptr);

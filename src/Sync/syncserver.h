@@ -3,6 +3,7 @@
 
 #include <QObject>
 
+#include <memory>
 #include <vector>
 
 class QWebSocketServer;
@@ -10,6 +11,9 @@ class QWebSocket;
 
 class SyncServer : public QObject {
   Q_OBJECT
+
+  std::unique_ptr<QWebSocketServer> server;
+  std::vector<std::unique_ptr<QWebSocket>> sockets;
 
 public:
   explicit SyncServer(QObject *parent = nullptr);
@@ -24,14 +28,6 @@ signals:
 
 public slots:
   int sendMessage(const QByteArray &message);
-
-private:
-  QWebSocketServer *server;
-  std::vector<QWebSocket *> sockets;
-
-  std::vector<QWebSocket *>
-  deleteClosedSockets(const std::vector<QWebSocket *> &sockets);
-  void closeSocket(QWebSocket *socket);
 
 private slots:
   void broadcastMessage(const QByteArray &message);

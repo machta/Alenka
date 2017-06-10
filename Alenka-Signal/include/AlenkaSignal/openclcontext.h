@@ -1,12 +1,15 @@
 #ifndef ALENKASIGNAL_OPENCLCONTEXT_H
 #define ALENKASIGNAL_OPENCLCONTEXT_H
 
+#include "openclprogram.h"
+
 #ifdef __APPLE__
 #include <OpenCL/cl_gl.h>
 #else
 #include <CL/cl_gl.h>
 #endif
 
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -24,8 +27,6 @@
 
 namespace AlenkaSignal {
 
-class OpenCLProgram;
-
 /**
  * @brief A wrapper for cl_context.
  *
@@ -36,8 +37,8 @@ class OpenCLContext {
   cl_context context;
   cl_platform_id platformId;
   cl_device_id deviceId;
-  OpenCLProgram *copyOnlyProgramFloat = nullptr;
-  OpenCLProgram *copyOnlyProgramDouble = nullptr;
+  std::unique_ptr<OpenCLProgram> copyOnlyProgramFloat;
+  std::unique_ptr<OpenCLProgram> copyOnlyProgramDouble;
 
 public:
   /**
@@ -89,18 +90,18 @@ public:
   std::string getDeviceInfo() const;
 
   bool hasCopyOnlyKernelFloat() const {
-    return copyOnlyProgramFloat != nullptr;
+    return copyOnlyProgramFloat.get() != nullptr;
   }
-  void setCopyOnlyKernelFloat(OpenCLProgram *val) {
-    copyOnlyProgramFloat = val;
+  void setCopyOnlyKernelFloat(std::unique_ptr<OpenCLProgram> val) {
+    copyOnlyProgramFloat = std::move(val);
   }
   cl_kernel copyOnlyKernelFloat() const;
 
   bool hasCopyOnlyKernelDouble() const {
-    return copyOnlyProgramDouble != nullptr;
+    return copyOnlyProgramDouble.get() != nullptr;
   }
-  void setCopyOnlyKernelDouble(OpenCLProgram *val) {
-    copyOnlyProgramDouble = val;
+  void setCopyOnlyKernelDouble(std::unique_ptr<OpenCLProgram> val) {
+    copyOnlyProgramDouble = std::move(val);
   }
   cl_kernel copyOnlyKernelDouble() const;
 

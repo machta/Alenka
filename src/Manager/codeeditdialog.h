@@ -3,6 +3,8 @@
 
 #include <QDialog>
 
+#include <memory>
+
 class QTextEdit;
 class TrackCodeValidator;
 
@@ -12,7 +14,6 @@ class TrackCodeValidator;
 class CodeEditDialog : public QDialog {
 public:
   CodeEditDialog(QWidget *parent);
-  ~CodeEditDialog() override;
 
   QString getText() const;
 
@@ -32,7 +33,7 @@ public slots:
 
 private:
   QTextEdit *editor;
-  TrackCodeValidator *validator;
+  std::unique_ptr<TrackCodeValidator> validator;
 };
 
 #endif // CODEEDITDIALOG_H
