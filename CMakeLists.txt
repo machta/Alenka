@@ -5,6 +5,11 @@ project(Alenka)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
+option(ALENKA_STATIC_LINK
+"Link some libraries statically to make a portable binary.
+Use this to make a package that works for both Ubuntu 14 and 15." OFF)
+option(ALENKA_BUILD_TESTS "Whether to build unit-tests for Alenka." OFF)
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(DEBUG true)
 endif()
@@ -153,7 +158,10 @@ add_executable(Alenka ${SRC} ${RESOURCES} ${SRC_BOOST_PO}
   libraries/spikedet/src/CResultsModel.cpp)
 
 target_link_libraries(Alenka
-  ${LIBS_TO_LINK_ALENKA_FILE} ${LIBS_TO_LINK_ALENKA_SIGNAL}
+  alenka-signal clFFT
+  alenka-file pugixml
+  # matio is excluded here on purpose, because I want to link it differently on
+  # different platforms.
   ${CMAKE_THREAD_LIBS_INIT} ${OpenCL_LIBRARIES}
   Qt5::Widgets
   Qt5::WebSockets
@@ -162,20 +170,21 @@ target_link_libraries(Alenka
   Qt5::Quick
   Qt5::QuickWidgets)
 
-add_custom_command(TARGET Alenka POST_BUILD COMMAND ${CMAKE_COMMAND}
-  -E make_directory $<TARGET_FILE_DIR:Alenka>/log)
-
 if(UNIX AND NOT APPLE)
-  target_link_libraries(Alenka dl GL
-    # Link these libraries staticaly so that the binary can be used on Ubuntu 14
-    # as well.
-    /usr/lib/gcc/x86_64-linux-gnu/5/libstdc++.a
-    /usr/lib/gcc/x86_64-linux-gnu/5/libgomp.a
-    /usr/lib/x86_64-linux-gnu/libmatio.a
-    /usr/lib/x86_64-linux-gnu/libhdf5_serial.a
-    /usr/lib/x86_64-linux-gnu/libsz.a
-    /usr/lib/x86_64-linux-gnu/libaec.a
-    /usr/lib/x86_64-linux-gnu/libz.a)
+  target_link_libraries(Alenka dl GL)
+
+  if(ALENKA_STATIC_LINK)
+    target_link_libraries(Alenka
+      /usr/lib/gcc/x86_64-linux-gnu/5/libstdc++.a
+      /usr/lib/gcc/x86_64-linux-gnu/5/libgomp.a
+      /usr/lib/x86_64-linux-gnu/libmatio.a
+      /usr/lib/x86_64-linux-gnu/libhdf5_serial.a
+      /usr/lib/x86_64-linux-gnu/libsz.a
+      /usr/lib/x86_64-linux-gnu/libaec.a
+      /usr/lib/x86_64-linux-gnu/libz.a)
+  else()
+    target_link_libraries(Alenka matio)
+  endif()
 elseif(WIN32)
   include_directories(libraries/matio/src libraries/matio/visual_studio)
   target_link_libraries(Alenka opengl32)
@@ -204,13 +213,16 @@ elseif(WIN32)
       $<TARGET_FILE_DIR:Alenka>)
   endif()
 elseif(APPLE)
+  target_link_libraries(Alenka matio)
 endif()
 
+add_custom_command(TARGET Alenka POST_BUILD COMMAND ${CMAKE_COMMAND}
+  -E make_directory $<TARGET_FILE_DIR:Alenka>/log)
+
 # Tests.
-option(BUILD_TESTS_ALENKA "Builds unit-tests for Alenka." OFF)
 set(CMAKE_AUTOMOC OFF)
 set(CMAKE_AUTORCC OFF)
 
-if(BUILD_TESTS_ALENKA)
+if(ALENKA_BUILD_TESTS)
   add_subdirectory(unit-test)
 endif()

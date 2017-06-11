@@ -130,6 +130,7 @@ public:
     return qstr.simplified().toStdString();
   }
 
+  // TODO: Make sure you don't cache copy-montages.
   template <class T>
   static auto makeMontage(const std::vector<std::string> &montageCode,
                           AlenkaSignal::OpenCLContext *context,
