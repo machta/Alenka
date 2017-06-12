@@ -10,54 +10,61 @@ using namespace std;
 
 namespace {
 
+string indentLines(const string &text, int indentLevel) {
+  string line, output, indent(2 * indentLevel, ' ');
+  stringstream ss(text);
+
+  while (getline(ss, line), ss)
+    output += indent + line + "\n";
+
+  return output;
+}
+
 template <class T>
 string buildSource(const string &source, const string &headerSource = "",
                    const string &additionalParameters = "") {
   // The NAN value makes the signal line disappear, which makes it apparent that
-  // the user made a mistake.
-  // But itt caused problems during compilation on some platforms, so I replaced
-  // it with 0.
+  // the user made a mistake. But it caused problems during compilation on some
+  // platforms, so I replaced it with 0.
   string src;
 
   if (is_same<T, double>::value)
     src += "#define float double\n\n";
 
-  // TODO: Format this so that it fits to 80 cols.
-  src +=
-      R"(#define PARA __global float* _input_, int _inputRowLength_, int _inputRowOffset_, int _inputRowCount_
+  src += R"(
+#define PARA                                                                   \
+  __global float *_input_, int _inputRowLength_, int _inputRowOffset_,         \
+     int _inputRowCount_
 #define PASS _input_, _inputRowLength_, _inputRowOffset_, _inputRowCount_
 
-float in(int i, PARA)
-{
-	return 0 <= i && i < _inputRowCount_ ? _input_[_inputRowLength_*i + _inputRowOffset_ + get_global_id(0)] : /*NAN*/0;
+float in(int i, PARA) {
+  if (0 <= i && i < _inputRowCount_)
+    return _input_[_inputRowLength_ * i + _inputRowOffset_ + get_global_id(0)];
+  else
+    return /*NAN*/ 0;
 }
 #define in(a_) in(a_, PASS)
 )";
-
   src += headerSource;
-
   src += R"(
 
-__kernel void montage(__global float* _input_, __global float* _output_, int _inputRowLength_, int _inputRowOffset_, int _inputRowCount_, int _outputRowLength_, int _outputRowIndex_, int _outputCopyCount_)" +
-         additionalParameters + R"()
-{
-	float out = 0;
+__kernel void montage(__global float* _input_, __global float* _output_,
+                      int _inputRowLength_, int _inputRowOffset_,
+                      int _inputRowCount_, int _outputRowLength_,
+                      int _outputRowIndex_, int _outputCopyCount_)";
+  src += additionalParameters + R"() {
+  float out = 0;
 
-	{
+  {
 )";
+  src += indentLines(source, 2);
+  src += R"(  }
 
-  stringstream ss(source);
-  string line;
-  while (getline(ss, line), ss)
-    src += "\t\t" + line + "\n";
-
-  src += R"(	}
-
-	int outputIndex = _outputCopyCount_*(_outputRowLength_*_outputRowIndex_ + get_global_id(0));
-	for (int i = 0; i < _outputCopyCount_; ++i)
-	{
-		_output_[outputIndex + i] = out;
-	}
+  int outputIndex = _outputCopyCount_ *
+                    (_outputRowLength_ * _outputRowIndex_ + get_global_id(0));
+  for (int i = 0; i < _outputCopyCount_; ++i) {
+    _output_[outputIndex + i] = out;
+  }
 })";
 
   return src;

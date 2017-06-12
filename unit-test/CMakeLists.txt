@@ -51,3 +51,6 @@ if(WIN32)
       $<TARGET_FILE_DIR:unit-test>)
   endif()
 endif()
+
+# TODO: Split this file into subprojects the same way Alenka is, so that some of
+# the tests can be built and run independently.
