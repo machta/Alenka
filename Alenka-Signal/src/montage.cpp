@@ -2,6 +2,8 @@
 
 #include "../include/AlenkaSignal/openclcontext.h"
 
+#include <algorithm>
+#include <cassert>
 #include <iostream>
 #include <regex>
 #include <sstream>
@@ -87,18 +89,96 @@ bool parseCopyMontage(const string &source, cl_int *index = nullptr) {
   return false;
 }
 
+// Taken from here: https://stackoverflow.com/a/37516316/287933
+template <class BidirIt, class Traits, class CharT, class UnaryFunction>
+std::basic_string<CharT>
+regex_replace_transform(BidirIt first, BidirIt last,
+                        const std::basic_regex<CharT, Traits> &re,
+                        UnaryFunction f) {
+  std::basic_string<CharT> s;
+
+  typename std::match_results<BidirIt>::difference_type positionOfLastMatch = 0;
+  auto endOfLastMatch = first;
+
+  auto callback = [&](const std::match_results<BidirIt> &match) {
+    auto positionOfThisMatch = match.position(0);
+    auto diff = positionOfThisMatch - positionOfLastMatch;
+
+    auto startOfThisMatch = endOfLastMatch;
+    std::advance(startOfThisMatch, diff);
+
+    s.append(endOfLastMatch, startOfThisMatch);
+    s.append(f(match));
+
+    auto lengthOfMatch = match.length(0);
+
+    positionOfLastMatch = positionOfThisMatch + lengthOfMatch;
+
+    endOfLastMatch = startOfThisMatch;
+    std::advance(endOfLastMatch, lengthOfMatch);
+  };
+
+  std::sregex_iterator begin(first, last, re), end;
+  std::for_each(begin, end, callback);
+
+  s.append(endOfLastMatch, last);
+
+  return s;
+}
+
+auto inLabelRegex() {
+  const static regex re(R"(in\s*\(\s*(\"([^\\\"]|\\.)*\")\s*\))");
+  // Tests of this regex: https://regex101.com/r/CNngSC/3
+  return re;
+}
+
+string injectIndex(const smatch &m, const vector<string> &labels) {
+  string mStr = m.str(0);
+  smatch matches;
+  bool res = regex_match(mStr, matches, inLabelRegex());
+  assert(res);
+  (void)res;
+
+  string label = matches[1];
+  label = label.substr(1, label.size() - 2);
+  auto it = find(labels.begin(), labels.end(), label);
+
+  int index;
+  if (it == labels.end())
+    index = -1;
+  else
+    index = distance(labels.begin(), it);
+
+  return "in(" + to_string(index) + ")";
+}
+
+string replaceLabels(const string &source, const vector<string> &labels) {
+  try {
+    return regex_replace_transform(
+        source.cbegin(), source.cend(), inLabelRegex(),
+        [&labels](const smatch &m) { return injectIndex(m, labels); });
+  } catch (regex_error) {
+  }
+
+  cerr << "Montage compilation error: this build dowsn't support std::regex"
+       << endl;
+  return "";
+}
+
 } // namespace
 
 namespace AlenkaSignal {
 
 template <class T>
 Montage<T>::Montage(const string &source, OpenCLContext *context,
-                    const string &headerSource)
+                    const string &headerSource,
+                    const std::vector<string> &labels)
     : context(context) {
-  copyMontage = parseCopyMontage(source, &index);
+  string src = preprocessSource(source, labels);
+  copyMontage = parseCopyMontage(src, &index);
 
   if (!copyMontage)
-    this->source = stripComments(buildSource<T>(source, headerSource));
+    this->source = stripComments(buildSource<T>(src, headerSource));
 }
 
 template <class T> Montage<T>::~Montage() {
@@ -126,12 +206,13 @@ bool Montage<T>::test(const string &source, OpenCLContext *context,
     checkClErrorCode(err, "clReleaseKernel()");
 
     return true;
-  } else {
-    if (errorMessage != nullptr) {
-      *errorMessage = "Compilation failed:\n" + program.getCompilationLog();
-    }
-    return false;
   }
+
+  if (errorMessage != nullptr) {
+    *errorMessage = "Compilation failed:\n" + program.getCompilationLog();
+  }
+
+  return false;
 }
 
 template <class T> string Montage<T>::stripComments(const string &code) {
@@ -140,7 +221,14 @@ template <class T> string Montage<T>::stripComments(const string &code) {
     return regex_replace(code, commentre, string(""));
   } catch (regex_error) {
   }
+
   return code;
+}
+
+template <class T>
+string Montage<T>::preprocessSource(const string &source,
+                                    const vector<string> &labels) {
+  return replaceLabels(stripComments(source), labels);
 }
 
 template <class T> void Montage<T>::buildProgram() {

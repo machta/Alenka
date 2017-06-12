@@ -25,6 +25,9 @@ bool TrackCodeValidator::validate(const QString &input, QString *errorMessage) {
   if (errorMessage) {
     string message;
 
+    // I don't pass the labels here, because a montage formula with a bad label
+    // doesn't violate the syntax. Instead a fall back to zero is used. This is
+    // consistent with how an invalid index is handled.
     bool result = Montage<float>::test(code, context, &message, header);
 
     *errorMessage = QString::fromStdString(message);

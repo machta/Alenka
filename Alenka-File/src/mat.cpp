@@ -136,7 +136,10 @@ void MAT::save() { DataFile::save(); }
 
 bool MAT::load() {
   if (DataFile::loadSecondaryFile() == false) {
-    fillDefaultMontage();
+    if (getDataModel()->montageTable()->rowCount() == 0)
+      getDataModel()->montageTable()->insertRows(0);
+    fillDefaultMontage(0);
+
     loadEvents();
     return false;
   }
@@ -158,6 +161,7 @@ void MAT::construct() {
   readData();
   readMults();
   readDate();
+  readLabels();
 }
 
 void MAT::readSamplingRate() {
@@ -264,8 +268,7 @@ void MAT::readDate() {
   }
 }
 
-vector<string> MAT::readLabels() {
-  vector<string> labels;
+void MAT::readLabels() {
   labels.resize(numberOfChannels, "");
 
   for (mat_t *file : files) {
@@ -294,8 +297,6 @@ vector<string> MAT::readLabels() {
     if (label)
       break;
   }
-
-  return labels;
 }
 
 void MAT::readEvents(vector<int> *eventPositions, vector<int> *eventDurations,
@@ -401,25 +402,6 @@ void MAT::readChannelsFloatDouble(vector<T *> dataChannels,
     lastInChunk += sizes[i];
     j += length;
     ++i;
-  }
-}
-
-void MAT::fillDefaultMontage() {
-  getDataModel()->montageTable()->insertRows(0);
-  assert(getChannelCount() > 0);
-
-  AbstractTrackTable *defaultTracks =
-      getDataModel()->montageTable()->trackTable(0);
-  defaultTracks->insertRows(0, getChannelCount());
-
-  vector<string> labels = readLabels();
-
-  for (unsigned int i = 0; i < getChannelCount(); ++i) {
-    if (!labels[i].empty()) {
-      auto r = defaultTracks->row(i);
-      r.label = labels[i];
-      defaultTracks->row(i, r);
-    }
   }
 }
 

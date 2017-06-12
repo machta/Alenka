@@ -19,6 +19,7 @@ set(SRC
   src/signal/filter_allpass_test.cpp
   src/signal/filter_design_test.cpp
   src/signal/filter_test.cpp
+  src/signal/montage_label_test.cpp
   src/signal/montage_static_test.cpp
   src/signal/simple_montage_test.cpp
   src/signal/spikedet_test.cpp

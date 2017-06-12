@@ -151,7 +151,18 @@ public:
     return -32768;
     (void)channel;
   }
-  virtual std::string getLabel(unsigned int channel);
+  virtual std::string getLabel(unsigned int channel) = 0;
+
+  /**
+   * @brief Get labels for all channels at once.
+   * @return A vector of labels that are whitespace-trimmed.
+   */
+  std::vector<std::string> getLabels();
+
+  /**
+   * @brief Initialize the montage at index with the default values.
+   */
+  virtual void fillDefaultMontage(int index);
 
   static const int daysUpTo1970 = 719529; // datenum('01-Jan-1970')
 

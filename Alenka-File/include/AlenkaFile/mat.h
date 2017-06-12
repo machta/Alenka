@@ -3,6 +3,7 @@
 
 #include "datafile.h"
 
+#include <string>
 #include <vector>
 
 typedef struct _mat_t mat_t;
@@ -32,6 +33,7 @@ class MAT : public DataFile {
   std::vector<int> sizes;
   std::vector<double> multipliers;
   double days = daysUpTo1970;
+  std::vector<std::string> labels;
 
 public:
   MAT(const std::string &filePath, MATvars vars = MATvars());
@@ -52,6 +54,9 @@ public:
                     uint64_t lastSample) override {
     readChannelsFloatDouble(dataChannels, firstSample, lastSample);
   }
+  std::string getLabel(unsigned int channel) override {
+    return labels[channel];
+  }
 
 private:
   void openMatFile(const std::string &filePath);
@@ -60,7 +65,7 @@ private:
   void readData();
   void readMults();
   void readDate();
-  std::vector<std::string> readLabels();
+  void readLabels();
   void readEvents(std::vector<int> *eventPositions,
                   std::vector<int> *eventDurations,
                   std::vector<int> *eventChannels);
@@ -69,7 +74,6 @@ private:
   void readChannelsFloatDouble(std::vector<T *> dataChannels,
                                uint64_t firstSample, uint64_t lastSample);
 
-  void fillDefaultMontage();
   void loadEvents();
 };
 

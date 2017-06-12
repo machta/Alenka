@@ -60,7 +60,6 @@ private:
   void readChannelsFloatDouble(std::vector<T *> dataChannels,
                                uint64_t firstSample, uint64_t lastSample);
   void openFile();
-  void fillDefaultMontage();
   void loadEvents();
   void addUsedEventTypes();
   static void saveAsWithType(const std::string &filePath, DataFile *sourceFile,

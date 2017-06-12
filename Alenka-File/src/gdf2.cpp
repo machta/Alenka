@@ -364,7 +364,10 @@ void GDF2::save() {
 
 bool GDF2::load() {
   if (DataFile::loadSecondaryFile() == false) {
-    fillDefaultMontage();
+    if (getDataModel()->montageTable()->rowCount() == 0)
+      getDataModel()->montageTable()->insertRows(0);
+    fillDefaultMontage(0);
+
     readGdfEventTable();
     return false;
   }
@@ -535,22 +538,6 @@ void GDF2::readGdfEventTable() {
     et.id = e;
     et.name = "Type " + to_string(e);
     ett->row(row, et);
-  }
-}
-
-void GDF2::fillDefaultMontage() {
-  getDataModel()->montageTable()->insertRows(0);
-
-  assert(0 < getChannelCount());
-
-  AbstractTrackTable *defaultTracks =
-      getDataModel()->montageTable()->trackTable(0);
-  defaultTracks->insertRows(0, getChannelCount());
-
-  for (int i = 0; i < defaultTracks->rowCount(); ++i) {
-    Track t = defaultTracks->row(i);
-    t.label = vh.label[i].data();
-    defaultTracks->row(i, t);
   }
 }
 

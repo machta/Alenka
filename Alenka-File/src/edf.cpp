@@ -24,6 +24,7 @@ const int MAX_READ_CHUNK = 2 * 1000 * 1000;
 void writeSignalInfo(int file, DataFile *dataFile,
                      const edf_hdr_struct *edfhdr) {
   int res = 0;
+  auto labels = dataFile->getLabels();
 
   for (unsigned int i = 0; i < dataFile->getChannelCount(); ++i) {
     res |= edf_set_samplefrequency(
@@ -36,7 +37,7 @@ void writeSignalInfo(int file, DataFile *dataFile,
     res |= edf_set_digital_minimum(
         file, i,
         static_cast<int>(max<double>(dataFile->getDigitalMinimum(i), -32768)));
-    res |= edf_set_label(file, i, dataFile->getLabel(i).c_str());
+    res |= edf_set_label(file, i, labels[i].c_str());
 
     if (edfhdr) {
       res |= edf_set_prefilter(file, i, edfhdr->signalparam[i].prefilter);
@@ -158,7 +159,10 @@ void EDF::save() {
 
 bool EDF::load() {
   if (DataFile::loadSecondaryFile() == false) {
-    fillDefaultMontage();
+    if (getDataModel()->montageTable()->rowCount() == 0)
+      getDataModel()->montageTable()->insertRows(0);
+    fillDefaultMontage(0);
+
     loadEvents();
     return false;
   }
@@ -272,22 +276,6 @@ void EDF::readChannelsFloatDouble(vector<T *> dataChannels,
 
     firstSample += n;
     nextBoundary += readChunk;
-  }
-}
-
-void EDF::fillDefaultMontage() {
-  getDataModel()->montageTable()->insertRows(0);
-
-  assert(0 < getChannelCount());
-
-  AbstractTrackTable *defaultTracks =
-      getDataModel()->montageTable()->trackTable(0);
-  defaultTracks->insertRows(0, getChannelCount());
-
-  for (int i = 0; i < defaultTracks->rowCount(); ++i) {
-    Track t = defaultTracks->row(i);
-    t.label = edfhdr->signalparam[i].label;
-    defaultTracks->row(i, t);
   }
 }
 

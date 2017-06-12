@@ -134,7 +134,8 @@ public:
   template <class T>
   static auto makeMontage(const std::vector<std::string> &montageCode,
                           AlenkaSignal::OpenCLContext *context,
-                          KernelCache *kernelCache, const std::string &header) {
+                          KernelCache *kernelCache, const std::string &header,
+                          const std::vector<std::string> &labels) {
     using namespace std;
 #ifndef NDEBUG
     // TODO: Remove this after the compilation time issue is solved, or perhaps
@@ -147,7 +148,7 @@ public:
 
     for (const auto &c : montageCode) {
       auto sourceMontage = make_unique<AlenkaSignal::Montage<T>>(
-          simplifyMontage<T>(c), context, header);
+          simplifyMontage<T>(c), context, header, labels);
       QString code = QString::fromStdString(sourceMontage->getSource());
       auto ptr = kernelCache ? kernelCache->find(code) : nullptr;
 

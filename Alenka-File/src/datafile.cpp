@@ -1,5 +1,6 @@
 #include "../include/AlenkaFile/datafile.h"
 
+#include <boost/algorithm/string.hpp>
 #include <pugixml.hpp>
 
 #include <algorithm>
@@ -286,16 +287,32 @@ void DataFile::readSignal(double *data, int64_t firstSample,
   readSignalFloatDouble(this, data, firstSample, lastSample);
 }
 
-string DataFile::getLabel(unsigned int channel) {
-  DataModel *model = getDataModel();
+vector<string> DataFile::getLabels() {
+  std::vector<std::string> labels;
+  labels.reserve(getChannelCount());
 
-  if (model) {
-    AbstractMontageTable *mt = model->montageTable();
-    if (mt)
-      return mt->trackTable(0)->row(channel).label;
+  for (unsigned int i = 0; i < getChannelCount(); ++i) {
+    string l = getLabel(i);
+    boost::trim(l);
+    labels.push_back(l);
   }
 
-  return "";
+  return labels;
+}
+
+void DataFile::fillDefaultMontage(int index) {
+  AbstractTrackTable *tt = getDataModel()->montageTable()->trackTable(index);
+  tt->insertRows(index, getChannelCount());
+  assert(0 < getChannelCount());
+
+  auto labels = getLabels();
+  assert(labels.size() == getChannelCount());
+
+  for (unsigned int i = 0; i < getChannelCount(); ++i) {
+    Track t = tt->row(i);
+    t.label = labels[i];
+    tt->row(i, t);
+  }
 }
 
 } // namespace AlenkaFile

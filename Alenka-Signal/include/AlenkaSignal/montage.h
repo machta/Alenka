@@ -41,7 +41,8 @@ public:
    * @param sources OpenCL source code of the montage.
    */
   Montage(const std::string &source, OpenCLContext *context,
-          const std::string &headerSource = "");
+          const std::string &headerSource = "",
+          const std::vector<std::string> &labels = std::vector<std::string>());
   Montage(const std::vector<unsigned char> *binary, OpenCLContext *context)
       : program(new OpenCLProgram(binary, context)) {}
   ~Montage();
@@ -51,7 +52,7 @@ public:
    */
   cl_kernel getKernel() {
     buildProgram();
-    if (kernel == nullptr)
+    if (!kernel)
       kernel = program->createKernel("montage");
     return kernel;
   }
@@ -86,6 +87,8 @@ public:
   static std::string stripComments(const std::string &code);
 
 private:
+  std::string preprocessSource(const std::string &source,
+                               const std::vector<std::string> &labels);
   void buildProgram();
 };
 

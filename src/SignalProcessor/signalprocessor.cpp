@@ -322,7 +322,8 @@ void SignalProcessor::updateMontage() {
       montageCode.push_back(t.code);
   }
 
-  montage = makeMontage<float>(montageCode, context, file->kernelCache, header);
+  montage = makeMontage<float>(montageCode, context, file->kernelCache, header,
+                               file->file->getLabels());
 }
 
 bool SignalProcessor::allpass() {

@@ -142,7 +142,6 @@ private:
                                const uint64_t firstSample,
                                const uint64_t lastSample);
   void readGdfEventTable();
-  void fillDefaultMontage();
 };
 
 } // namespace AlenkaFile

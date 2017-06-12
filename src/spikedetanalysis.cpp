@@ -136,8 +136,8 @@ auto makeMontage(OpenDataFile *file, OpenCLContext *context) {
   for (int i = 0; i < trackTable->rowCount(); ++i)
     montageCode.push_back(trackTable->row(i).code);
 
-  return SignalProcessor::makeMontage<T>(montageCode, context,
-                                         file->kernelCache, header);
+  return SignalProcessor::makeMontage<T>(
+      montageCode, context, file->kernelCache, header, file->file->getLabels());
 }
 
 void processOutput(OpenDataFile *file, SpikedetAnalysis *spikedetAnalysis,
