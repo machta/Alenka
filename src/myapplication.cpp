@@ -146,8 +146,7 @@ void MyApplication::mainExit(int status) {
   std::exit(status);
 }
 
-int MyApplication::logExitStatus(int status)
-{
+int MyApplication::logExitStatus(int status) {
   logToFile("Exiting with status " << status << ".");
   return status;
 }

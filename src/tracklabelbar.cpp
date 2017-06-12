@@ -181,6 +181,9 @@ void TrackLabelBar::updateLabels() {
       file->dataModel->montageTable()->trackTable(
           OpenDataFile::infoTable.getSelectedMontage());
 
+  if (trackTable->rowCount() <= 0)
+    return;
+
   int hidden = 0;
   int track = 0;
   vector<double> amps;
