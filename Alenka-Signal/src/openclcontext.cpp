@@ -41,7 +41,7 @@ string platformInfo(cl_platform_id id, cl_platform_info name) {
   cl_int err = clGetPlatformInfo(id, name, size, tmp.data(), nullptr);
   checkClErrorCode(err, "clGetPlatformInfo()");
 
-  return string(tmp.begin(), tmp.end());
+  return string(tmp.begin(), --tmp.end());
 }
 
 size_t deviceInfoSize(cl_device_id id, cl_device_info name) {
@@ -60,7 +60,7 @@ string deviceInfo(cl_device_id id, cl_device_info name) {
   cl_int err = clGetDeviceInfo(id, name, size, tmp.data(), nullptr);
   checkClErrorCode(err, "clGetDeviceInfo()");
 
-  return string(tmp.begin(), tmp.end());
+  return string(tmp.begin(), --tmp.end());
 }
 
 } // namespace
