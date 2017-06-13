@@ -1483,6 +1483,7 @@ void SignalFileBrowserWindow::updateManagers(int value) {
   managersConnections.clear();
 
   const auto &mt = fileResources->dataModel->montageTable();
+  // TODO: Try to eliminate calls to updateSignalViewer() from this class.
 
   if (0 < mt->rowCount()) {
     auto cc = connectVitness(VitnessTrackTable::vitness(mt->trackTable(value)),

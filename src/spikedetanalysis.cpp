@@ -31,7 +31,7 @@ template <class T> class Loader : public AbstractSpikedetLoader<T> {
   int inChannels, outChannels;
   unique_ptr<MontageProcessor<T>> processor;
   cl_command_queue queue = nullptr;
-  cl_mem inBuffer = nullptr, outBuffer = nullptr;
+  cl_mem inBuffer = nullptr, outBuffer = nullptr, xyzBuffer = nullptr;
 
 public:
   Loader(AlenkaFile::DataFile *file,
@@ -56,6 +56,16 @@ public:
                        BLOCK_LENGTH * outChannels * sizeof(T), nullptr, &err);
     checkClErrorCode(err, "clCreateBuffer");
 
+    xyzBuffer = clCreateBuffer(context->getCLContext(), flags,
+                               inChannels * 3 * sizeof(T), nullptr, &err);
+    checkClErrorCode(err, "clCreateBuffer");
+
+    auto montageTable = file->getDataModel()->montageTable();
+    assert(0 < montageTable->rowCount());
+    auto defaultTrackTable = montageTable->trackTable(0);
+
+    SignalProcessor::updateXyzBuffer(queue, xyzBuffer, defaultTrackTable);
+
     tmpData.resize(BLOCK_LENGTH * inChannels);
   }
 
@@ -74,6 +84,11 @@ public:
 
     if (outBuffer) {
       err = clReleaseMemObject(outBuffer);
+      checkClErrorCode(err, "clReleaseMemObject()");
+    }
+
+    if (xyzBuffer) {
+      err = clReleaseMemObject(xyzBuffer);
       checkClErrorCode(err, "clReleaseMemObject()");
     }
   }
@@ -100,7 +115,7 @@ public:
       checkClErrorCode(err, "clEnqueueWriteBufferRect()");
 
       processor->process(montage.begin(), montage.end(), inBuffer, outBuffer,
-                         queue, BLOCK_LENGTH);
+                         xyzBuffer, queue, BLOCK_LENGTH);
       // OpenCLContext::printBuffer("after_process.txt", outBuffer, queue);
 
       size_t outRegion[] = {rowLen, static_cast<size_t>(outChannels), 1};
@@ -136,8 +151,10 @@ auto makeMontage(OpenDataFile *file, OpenCLContext *context) {
   for (int i = 0; i < trackTable->rowCount(); ++i)
     montageCode.push_back(trackTable->row(i).code);
 
-  return SignalProcessor::makeMontage<T>(
-      montageCode, context, file->kernelCache, header, file->file->getLabels());
+  auto labels = SignalProcessor::collectLabels(
+      file->file->getDataModel()->montageTable()->trackTable(0));
+  return SignalProcessor::makeMontage<T>(montageCode, context,
+                                         file->kernelCache, header, labels);
 }
 
 void processOutput(OpenDataFile *file, SpikedetAnalysis *spikedetAnalysis,

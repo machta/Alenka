@@ -61,6 +61,27 @@ protected:
   OpenDataFile *file;
 };
 
+class ConstId : public TableColumn {
+public:
+  ConstId(OpenDataFile *file) : TableColumn("ID", file) {}
+
+  QVariant data(int row, int role) const override {
+    if (role == Qt::DisplayRole || role == Qt::EditRole)
+      return row;
+
+    return QVariant();
+  }
+
+  bool setData(int row, const QVariant &value, int role) override {
+    (void)row;
+    (void)value;
+    (void)role;
+    return false;
+  }
+
+  Qt::ItemFlags flags() const override { return Qt::NoItemFlags; }
+};
+
 class BoolTableColumn : public TableColumn {
 public:
   BoolTableColumn(const QString &header, OpenDataFile *file)

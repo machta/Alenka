@@ -39,30 +39,30 @@ public:
    */
   template <class Iter>
   void process(Iter montageBegin, Iter montageEnd, cl_mem inBuffer,
-               cl_mem outBuffer, cl_command_queue queue, cl_int outputRowLength,
-               cl_int inputRowOffset = 0) {
+               cl_mem outBuffer, cl_mem xyzBuffer, cl_command_queue queue,
+               cl_int outputRowLength, cl_int inputRowOffset = 0) {
     static_assert(
         std::is_same<
             typename std::remove_reference<decltype(**montageBegin)>::type,
             Montage<T>>::value,
         "An iterator/pointer to 'Montage<T> *' is expected");
 
-    checkBufferSizes(inBuffer, outBuffer, outputRowLength,
+    checkBufferSizes(inBuffer, outBuffer, xyzBuffer, outputRowLength,
                      std::distance(montageBegin, montageEnd));
 
     int i = 0;
     for (Iter it = montageBegin; it != montageEnd; ++it) {
       auto &mont = *it;
       int copyIndex = mont->isCopyMontage() ? mont->copyMontageIndex() : -1;
-      processOneMontage(inBuffer, outBuffer, queue, outputRowLength,
+      processOneMontage(inBuffer, outBuffer, xyzBuffer, queue, outputRowLength,
                         inputRowOffset, i++, mont->getKernel(), copyIndex);
     }
   }
 
 private:
-  void checkBufferSizes(cl_mem inBuffer, cl_mem outBuffer,
+  void checkBufferSizes(cl_mem inBuffer, cl_mem outBuffer, cl_mem xyzBuffer,
                         cl_int outputRowLength, size_t montageSize);
-  void processOneMontage(cl_mem inBuffer, cl_mem outBuffer,
+  void processOneMontage(cl_mem inBuffer, cl_mem outBuffer, cl_mem xyzBuffer,
                          cl_command_queue queue, cl_int outputRowLength,
                          cl_int inputRowOffset, cl_int index, cl_kernel kernel,
                          int copyIndex);

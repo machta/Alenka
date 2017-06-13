@@ -22,6 +22,9 @@
 #include <set>
 #include <vector>
 
+namespace AlenkaFile {
+class AbstractTrackTable;
+}
 namespace AlenkaSignal {
 class OpenCLContext;
 template <class T> class FilterProcessor;
@@ -56,6 +59,8 @@ class SignalProcessor {
   std::vector<cl_command_queue> commandQueues;
   std::vector<cl_mem> rawBuffers;
   std::vector<cl_mem> filterBuffers;
+  cl_mem xyzBuffer = nullptr;
+  QMetaObject::Connection xyzBufferConnection;
   std::unique_ptr<LRUCache<int, float>> cache;
 
   std::function<void()> glSharing;
@@ -196,6 +201,12 @@ public:
     return make_pair(from, to);
   }
 
+  static void updateXyzBuffer(cl_command_queue queue, cl_mem xyzBuffer,
+                              const AlenkaFile::AbstractTrackTable *trackTable);
+
+  static std::vector<std::string>
+  collectLabels(AlenkaFile::AbstractTrackTable *trackTable);
+
 private:
   /**
    * @brief This method actually (unlike setUpdateMontageFlag()) updates the
@@ -204,6 +215,7 @@ private:
   void updateMontage();
   void clearMontage() { montage.clear(); }
   bool allpass();
+  void createXyzBuffer();
 };
 
 #endif // SIGNALPROCESSOR_H

@@ -24,27 +24,6 @@ const AbstractTrackTable *currentTrackTable(OpenDataFile *file) {
       OpenDataFile::infoTable.getSelectedMontage());
 }
 
-class Id : public TableColumn {
-public:
-  Id(OpenDataFile *file) : TableColumn("ID", file) {}
-
-  QVariant data(int row, int role) const override {
-    if (role == Qt::DisplayRole || role == Qt::EditRole)
-      return row;
-
-    return QVariant();
-  }
-
-  bool setData(int row, const QVariant &value, int role) override {
-    (void)row;
-    (void)value;
-    (void)role;
-    return false;
-  }
-
-  Qt::ItemFlags flags() const override { return Qt::NoItemFlags; }
-};
-
 class Label : public TableColumn {
 public:
   Label(OpenDataFile *file) : TableColumn("Label", file) {}
@@ -190,7 +169,6 @@ public:
   bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       Track t = currentTrackTable(file)->row(row);
-      QLocale locale;
       bool ok;
       double tmp = value.toDouble(&ok);
 
@@ -199,6 +177,7 @@ public:
           return false;
         t.amplitude = tmp;
       } else {
+        QLocale locale;
         tmp = locale.toDouble(value.toString());
         if (t.amplitude == tmp)
           return false;
@@ -256,16 +235,133 @@ public:
   }
 };
 
+class X : public TableColumn {
+public:
+  X(OpenDataFile *file) : TableColumn("X", file) {}
+
+  QVariant data(int row, int role) const override {
+    if (role == Qt::DisplayRole || role == Qt::EditRole)
+      return currentTrackTable(file)->row(row).x;
+
+    return QVariant();
+  }
+
+  bool setData(int row, const QVariant &value, int role) override {
+    if (role == Qt::EditRole) {
+      Track t = currentTrackTable(file)->row(row);
+      bool ok;
+      float tmp = value.toFloat(&ok);
+
+      if (ok) {
+        if (t.x == tmp)
+          return false;
+        t.x = tmp;
+      } else {
+        QLocale locale;
+        tmp = locale.toFloat(value.toString());
+        if (t.x == tmp)
+          return false;
+        t.x = tmp;
+      }
+
+      file->undoFactory->changeTrack(
+          OpenDataFile::infoTable.getSelectedMontage(), row, t, "change X");
+      return true;
+    }
+
+    return false;
+  }
+};
+
+class Y : public TableColumn {
+public:
+  Y(OpenDataFile *file) : TableColumn("Y", file) {}
+
+  QVariant data(int row, int role) const override {
+    if (role == Qt::DisplayRole || role == Qt::EditRole)
+      return currentTrackTable(file)->row(row).y;
+
+    return QVariant();
+  }
+
+  bool setData(int row, const QVariant &value, int role) override {
+    if (role == Qt::EditRole) {
+      Track t = currentTrackTable(file)->row(row);
+      bool ok;
+      float tmp = value.toFloat(&ok);
+
+      if (ok) {
+        if (t.y == tmp)
+          return false;
+        t.y = tmp;
+      } else {
+        QLocale locale;
+        tmp = locale.toFloat(value.toString());
+        if (t.y == tmp)
+          return false;
+        t.y = tmp;
+      }
+
+      file->undoFactory->changeTrack(
+          OpenDataFile::infoTable.getSelectedMontage(), row, t, "change Y");
+      return true;
+    }
+
+    return false;
+  }
+};
+
+class Z : public TableColumn {
+public:
+  Z(OpenDataFile *file) : TableColumn("Z", file) {}
+
+  QVariant data(int row, int role) const override {
+    if (role == Qt::DisplayRole || role == Qt::EditRole)
+      return currentTrackTable(file)->row(row).z;
+
+    return QVariant();
+  }
+
+  bool setData(int row, const QVariant &value, int role) override {
+    if (role == Qt::EditRole) {
+      Track t = currentTrackTable(file)->row(row);
+      bool ok;
+      float tmp = value.toFloat(&ok);
+
+      if (ok) {
+        if (t.z == tmp)
+          return false;
+        t.z = tmp;
+      } else {
+        QLocale locale;
+        tmp = locale.toFloat(value.toString());
+        if (t.z == tmp)
+          return false;
+        t.z = tmp;
+      }
+
+      file->undoFactory->changeTrack(
+          OpenDataFile::infoTable.getSelectedMontage(), row, t, "change Z");
+      return true;
+    }
+
+    return false;
+  }
+};
+
 } // namespace
 
 TrackTableModel::TrackTableModel(OpenDataFile *file, QObject *parent)
     : TableModel(file, parent) {
-  columns.push_back(make_unique<Id>(file));
+  columns.push_back(make_unique<ConstId>(file));
   columns.push_back(make_unique<Label>(file));
   columns.push_back(make_unique<Code>(file));
   columns.push_back(make_unique<Color>(file));
   columns.push_back(make_unique<Amplitude>(file));
   columns.push_back(make_unique<Hidden>(file));
+  columns.push_back(make_unique<X>(file));
+  columns.push_back(make_unique<Y>(file));
+  columns.push_back(make_unique<Z>(file));
 
   connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this,
           SLOT(setSelectedMontage(int)));

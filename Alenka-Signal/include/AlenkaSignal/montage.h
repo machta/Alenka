@@ -90,6 +90,7 @@ private:
   std::string preprocessSource(const std::string &source,
                                const std::vector<std::string> &labels);
   void buildProgram();
+  void buildCopyProgram();
 };
 
 } // namespace AlenkaSignal

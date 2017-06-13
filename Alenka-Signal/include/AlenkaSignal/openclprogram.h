@@ -37,6 +37,7 @@ public:
   /**
    * @brief Returns a kernel object.
    * @param kernelName The name of the kernel function.
+   * @return Returns nullptr if the compilation failed.
    *
    * The returned kernel object is independent of this class and the caller
    * takes its ownership.
@@ -47,12 +48,12 @@ public:
    * @brief Returns cl_program compilation status.
    * @return True if there was no error during compilation.
    */
-  bool compilationSuccessful() const { return !invalid; }
+  bool compileSuccess() const { return !invalid; }
 
   /**
    * @brief Returns a string with the compilation output (errors and warnings).
    */
-  std::string getCompilationLog() const;
+  std::string getCompileLog() const;
 
   std::vector<unsigned char> *getBinary();
 

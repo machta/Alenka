@@ -6,6 +6,7 @@
 #include "../../Alenka-Signal/include/AlenkaSignal/montageprocessor.h"
 #include "../../Alenka-Signal/include/AlenkaSignal/openclcontext.h"
 #include "../DataModel/opendatafile.h"
+#include "../DataModel/vitnessdatamodel.h"
 #include "../myapplication.h"
 #include "../options.h"
 
@@ -131,12 +132,14 @@ SignalProcessor::SignalProcessor(unsigned int nBlock,
 
   updateFilter();
   setUpdateMontageFlag();
+
+  createXyzBuffer();
 }
 
 SignalProcessor::~SignalProcessor() {
-  for (unsigned int i = 0; i < parallelQueues; ++i) {
-    cl_int err;
+  cl_int err;
 
+  for (unsigned int i = 0; i < parallelQueues; ++i) {
     err = clReleaseCommandQueue(commandQueues[i]);
     checkClErrorCode(err, "clReleaseCommandQueue()");
 
@@ -146,6 +149,13 @@ SignalProcessor::~SignalProcessor() {
     err = clReleaseMemObject(filterBuffers[i]);
     checkClErrorCode(err, "clReleaseMemObject()");
   }
+
+  if (xyzBuffer) {
+    err = clReleaseMemObject(xyzBuffer);
+    checkClErrorCode(err, "clReleaseMemObject()");
+  }
+
+  QObject::disconnect(xyzBufferConnection);
 }
 
 void SignalProcessor::updateFilter() {
@@ -289,8 +299,8 @@ void SignalProcessor::process(const vector<int> &indexVector,
     }
 
     montageProcessor->process(montage.begin(), montage.end(), buffer,
-                              outBuffers[i], commandQueues[i], nMontage,
-                              offset);
+                              outBuffers[i], xyzBuffer, commandQueues[i],
+                              nMontage, offset);
     printBuffer("after_montage.txt", outBuffers[i], commandQueues[i]);
   }
 
@@ -305,6 +315,40 @@ void SignalProcessor::process(const vector<int> &indexVector,
     err = clFinish(commandQueues[i]);
     checkClErrorCode(err, "clFinish()");
   }
+}
+
+void SignalProcessor::updateXyzBuffer(cl_command_queue queue, cl_mem xyzBuffer,
+                                      const AbstractTrackTable *trackTable) {
+  const int tracks = trackTable->rowCount();
+  vector<float> xyz(3 * tracks);
+
+  for (int i = 0; i < tracks; ++i) {
+    Track t = trackTable->row(i);
+
+    xyz[3 * i] = t.x;
+    xyz[3 * i + 1] = t.y;
+    xyz[3 * i + 2] = t.z;
+  }
+
+  cl_int err;
+  size_t size = 3 * tracks * sizeof(float);
+  err = clEnqueueWriteBuffer(queue, xyzBuffer, CL_FALSE, 0, size, xyz.data(), 0,
+                             nullptr, nullptr);
+  checkClErrorCode(err, "clEnqueueWriteBuffer()");
+
+  err = clFinish(queue);
+  checkClErrorCode(err, "clFinish()");
+}
+
+vector<string> SignalProcessor::collectLabels(AbstractTrackTable *trackTable) {
+  vector<string> labels;
+  labels.reserve(trackTable->rowCount());
+
+  for (int i = 0; i < trackTable->rowCount(); ++i) {
+    labels.push_back(trackTable->row(i).label);
+  }
+
+  return labels;
 }
 
 void SignalProcessor::updateMontage() {
@@ -322,11 +366,33 @@ void SignalProcessor::updateMontage() {
       montageCode.push_back(t.code);
   }
 
+  auto montageTable = file->file->getDataModel()->montageTable();
+  assert(0 < montageTable->rowCount());
+  auto defaultTrackTable = montageTable->trackTable(0);
+
+  updateXyzBuffer(commandQueues[0], xyzBuffer, defaultTrackTable);
+
   montage = makeMontage<float>(montageCode, context, file->kernelCache, header,
-                               file->file->getLabels());
+                               collectLabels(defaultTrackTable));
 }
 
 bool SignalProcessor::allpass() {
   return OpenDataFile::infoTable.getFrequencyMultipliersOn() == false &&
          filter->isAllpass();
+}
+
+void SignalProcessor::createXyzBuffer() {
+  cl_int err;
+
+  if (xyzBuffer) {
+    err = clReleaseMemObject(xyzBuffer);
+    checkClErrorCode(err, "clReleaseMemObject()");
+  }
+
+  cl_mem_flags flags = CL_MEM_READ_WRITE;
+  size_t size = 3 * fileChannels * sizeof(float);
+
+  xyzBuffer =
+      clCreateBuffer(context->getCLContext(), flags, size, nullptr, &err);
+  checkClErrorCode(err, "clCreateBuffer");
 }

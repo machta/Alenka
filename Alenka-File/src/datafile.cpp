@@ -64,13 +64,16 @@ void appendTrack(xml_node node, const Track &t) {
   xml_node track = node.append_child("track");
 
   track.append_attribute("label").set_value(t.label.c_str());
+  track.append_child("code")
+      .append_child(node_pcdata)
+      .set_value(t.code.c_str());
   track.append_attribute("color").set_value(
       DataModel::colorArray2str(t.color).c_str());
   track.append_attribute("amplitude").set_value(t.amplitude);
   track.append_attribute("hidden").set_value(t.hidden);
-  track.append_child("code")
-      .append_child(node_pcdata)
-      .set_value(t.code.c_str());
+  track.append_attribute("x").set_value(t.x);
+  track.append_attribute("y").set_value(t.y);
+  track.append_attribute("z").set_value(t.z);
 }
 
 void appendTrackTable(xml_node node, AbstractTrackTable *tt) {
@@ -139,10 +142,13 @@ void loadTrack(xml_node node, AbstractTrackTable *tt) {
     Track t = tt->row(last);
 
     t.label = node.attribute("label").as_string();
+    t.code = node.child("code").text().as_string();
     t.color = DataModel::str2colorArray(node.attribute("color").as_string());
     t.amplitude = node.attribute("amplitude").as_double();
     t.hidden = node.attribute("hidden").as_bool();
-    t.code = node.child("code").text().as_string();
+    t.x = node.attribute("x").as_float();
+    t.y = node.attribute("y").as_float();
+    t.z = node.attribute("z").as_float();
 
     tt->row(last, t);
   }
@@ -222,7 +228,7 @@ void loadEventType(xml_node node, AbstractEventTypeTable *ett) {
 
     et.id = node.attribute("id").as_int();
     et.name = node.attribute("name").as_string();
-    et.opacity = node.attribute("opacity").as_double();
+    et.opacity = node.attribute("opacity").as_float();
     et.color = DataModel::str2colorArray(node.attribute("color").as_string());
     et.hidden = node.attribute("hidden").as_bool();
 

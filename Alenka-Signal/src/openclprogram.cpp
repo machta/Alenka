@@ -45,19 +45,18 @@ OpenCLProgram::~OpenCLProgram() {
 }
 
 cl_kernel OpenCLProgram::createKernel(const string &kernelName) const {
-  if (compilationSuccessful() == false)
-    throw runtime_error("Cannot create kernel object from an OpenCLProgram "
-                        "that failed to compile.");
+  if (compileSuccess()) {
+    cl_int err;
+    cl_kernel kernel = clCreateKernel(program, kernelName.c_str(), &err);
+    checkClErrorCode(err, "clCreateKernel()");
 
-  cl_int err;
-
-  cl_kernel kernel = clCreateKernel(program, kernelName.c_str(), &err);
-  checkClErrorCode(err, "clCreateKernel()");
-
-  return kernel;
+    return kernel;
+  } else {
+    return nullptr;
+  }
 }
 
-string OpenCLProgram::getCompilationLog() const {
+string OpenCLProgram::getCompileLog() const {
   size_t logLength;
 
   cl_int err =
@@ -99,10 +98,9 @@ vector<unsigned char> *OpenCLProgram::getBinary() {
 
 void OpenCLProgram::build() {
   cl_int err = clBuildProgram(program, 0, nullptr, nullptr, nullptr, nullptr);
+  invalid = err != CL_SUCCESS;
 
-  if (err == CL_SUCCESS) {
-    invalid = false;
-  } else {
+  if (err != CL_SUCCESS) {
     cl_build_status status;
 
     cl_int err2 = clGetProgramBuildInfo(
@@ -111,15 +109,6 @@ void OpenCLProgram::build() {
     checkClErrorCode(err2, "clGetProgramBuildInfo()");
 
     assert(status != CL_BUILD_IN_PROGRESS);
-
-    invalid = status == CL_BUILD_ERROR;
-
-    if (invalid) {
-      string log = getCompilationLog();
-      // logToFileAndConsole(log);
-    } else {
-      checkClErrorCode(err, "clBuildProgram()");
-    }
   }
 }
 

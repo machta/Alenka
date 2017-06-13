@@ -11,7 +11,7 @@ namespace AlenkaFile {
 struct EventType {
   int id;
   std::string name;
-  double opacity;
+  float opacity;
   std::array<int, 3> color;
   bool hidden;
 
@@ -31,10 +31,7 @@ public:
 
 struct Event {
   std::string label;
-  int type;
-  int position;
-  int duration;
-  int channel;
+  int type, position, duration, channel;
   std::string description;
 
   enum class Index {
@@ -60,13 +57,13 @@ public:
 };
 
 struct Track {
-  std::string label;
-  std::string code;
+  std::string label, code;
   std::array<int, 3> color;
   double amplitude;
   bool hidden;
+  float x, y, z;
 
-  enum class Index { label, code, color, amplitude, hidden, size };
+  enum class Index { label, code, color, amplitude, hidden, x, y, z, size };
 };
 
 class AbstractTrackTable {

@@ -9,10 +9,11 @@ namespace AlenkaSignal {
 
 template <class T>
 void MontageProcessor<T>::checkBufferSizes(cl_mem inBuffer, cl_mem outBuffer,
+                                           cl_mem xyzBuffer,
                                            cl_int outputRowLength,
                                            size_t montageSize) {
   cl_int err;
-  size_t inSize, outSize;
+  size_t inSize, outSize, xyzSize;
 
   err = clGetMemObjectInfo(inBuffer, CL_MEM_SIZE, sizeof(size_t), &inSize,
                            nullptr);
@@ -27,10 +28,18 @@ void MontageProcessor<T>::checkBufferSizes(cl_mem inBuffer, cl_mem outBuffer,
 
   if (outSize < outputRowLength * montageSize * outputCopyCount * sizeof(T))
     throw runtime_error("MontageProcessor: the outBuffer is too small.");
+
+  err = clGetMemObjectInfo(xyzBuffer, CL_MEM_SIZE, sizeof(size_t), &xyzSize,
+                           nullptr);
+  checkClErrorCode(err, "clGetMemObjectInfo");
+
+  if (xyzSize < inputRowCount * 3 * sizeof(T))
+    throw runtime_error("MontageProcessor: the xyzBuffer is too small.");
 }
 
 template <class T>
 void MontageProcessor<T>::processOneMontage(cl_mem inBuffer, cl_mem outBuffer,
+                                            cl_mem xyzBuffer,
                                             cl_command_queue queue,
                                             cl_int outputRowLength,
                                             cl_int inputRowOffset, cl_int index,
@@ -39,32 +48,35 @@ void MontageProcessor<T>::processOneMontage(cl_mem inBuffer, cl_mem outBuffer,
   int pi = 0;
 
   err = clSetKernelArg(kernel, pi++, sizeof(cl_mem), &inBuffer);
-  checkClErrorCode(err, "clSetKernelArg()");
+  checkClErrorCode(err, "clSetKernelArg(" << pi << ")");
 
   err = clSetKernelArg(kernel, pi++, sizeof(cl_mem), &outBuffer);
-  checkClErrorCode(err, "clSetKernelArg()");
+  checkClErrorCode(err, "clSetKernelArg(" << pi << ")");
 
   err = clSetKernelArg(kernel, pi++, sizeof(cl_int), &inputRowLength);
-  checkClErrorCode(err, "clSetKernelArg()");
+  checkClErrorCode(err, "clSetKernelArg(" << pi << ")");
 
   err = clSetKernelArg(kernel, pi++, sizeof(cl_int), &inputRowOffset);
-  checkClErrorCode(err, "clSetKernelArg()");
+  checkClErrorCode(err, "clSetKernelArg(" << pi << ")");
 
   err = clSetKernelArg(kernel, pi++, sizeof(cl_int), &inputRowCount);
-  checkClErrorCode(err, "clSetKernelArg()");
+  checkClErrorCode(err, "clSetKernelArg(" << pi << ")");
 
   err = clSetKernelArg(kernel, pi++, sizeof(cl_int), &outputRowLength);
-  checkClErrorCode(err, "clSetKernelArg()");
+  checkClErrorCode(err, "clSetKernelArg(" << pi << ")");
 
   err = clSetKernelArg(kernel, pi++, sizeof(cl_int), &index);
-  checkClErrorCode(err, "clSetKernelArg()");
+  checkClErrorCode(err, "clSetKernelArg(" << pi << ")");
 
   err = clSetKernelArg(kernel, pi++, sizeof(cl_int), &outputCopyCount);
-  checkClErrorCode(err, "clSetKernelArg()");
+  checkClErrorCode(err, "clSetKernelArg(" << pi << ")");
+
+  err = clSetKernelArg(kernel, pi++, sizeof(cl_mem), &xyzBuffer);
+  checkClErrorCode(err, "clSetKernelArg(" << pi << ")");
 
   if (0 <= copyIndex) {
     err = clSetKernelArg(kernel, pi++, sizeof(cl_int), &copyIndex);
-    checkClErrorCode(err, "clSetKernelArg()");
+    checkClErrorCode(err, "clSetKernelArg(" << pi << ")");
   }
 
   size_t globalWorkSize = outputRowLength;

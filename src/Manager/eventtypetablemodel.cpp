@@ -81,14 +81,14 @@ public:
     if (role == Qt::EditRole) {
       EventType et = file->dataModel->eventTypeTable()->row(row);
       bool ok;
-      double tmp = value.toDouble(&ok) / 100;
+      double tmp = value.toFloat(&ok) / 100;
 
       if (ok) {
         if (et.opacity == tmp)
           return false;
       } else {
         QLocale locale;
-        tmp = locale.toDouble(value.toString()) / 100;
+        tmp = locale.toFloat(value.toString()) / 100;
         if (et.opacity == tmp)
           return false;
       }

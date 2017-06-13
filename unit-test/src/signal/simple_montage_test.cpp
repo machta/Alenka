@@ -81,8 +81,14 @@ template <class T> void test(function<void(T, T)> compare, int outputCopies) {
                                     outBufferSize, nullptr, &err);
   checkClErrorCode(err, "clCreateBuffer");
 
-  processor.process(montage.begin(), montage.end(), inBuffer, outBuffer, queue,
-                    n - offset);
+  vector<T> xyz(montage.size() * 3);
+  cl_mem xyzBuffer =
+      clCreateBuffer(context.getCLContext(), flags | CL_MEM_COPY_HOST_PTR,
+                     xyz.size() * sizeof(T), xyz.data(), &err);
+  checkClErrorCode(err, "clCreateBuffer");
+
+  processor.process(montage.begin(), montage.end(), inBuffer, outBuffer,
+                    xyzBuffer, queue, n - offset);
 
   err = clEnqueueReadBuffer(queue, outBuffer, CL_TRUE, 0, outBufferSize,
                             output.data(), 0, nullptr, nullptr);
@@ -92,6 +98,9 @@ template <class T> void test(function<void(T, T)> compare, int outputCopies) {
   checkClErrorCode(err, "clReleaseCommandQueue");
 
   err = clReleaseMemObject(inBuffer);
+  checkClErrorCode(err, "clReleaseMemObject");
+
+  err = clReleaseMemObject(xyzBuffer);
   checkClErrorCode(err, "clReleaseMemObject");
 
   err = clReleaseMemObject(outBuffer);

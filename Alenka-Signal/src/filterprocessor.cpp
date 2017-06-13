@@ -12,6 +12,7 @@
 
 #include <cmath>
 #include <complex>
+#include <iostream>
 #include <type_traits>
 
 using namespace std;
@@ -101,6 +102,11 @@ FilterProcessor<T>::FilterProcessor(unsigned int blockLength,
 
   kernelsSource += KERNELS_SOURCE;
   OpenCLProgram program(kernelsSource, context);
+
+  if (!program.compileSuccess()) {
+    cerr << "Compilation failed:\n" << program.getCompileLog() << endl;
+    throw runtime_error("FilterProcessor: compilation failed");
+  }
 
   filterKernel = program.createKernel("filter");
   zeroKernel = program.createKernel("zero");

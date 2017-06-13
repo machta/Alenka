@@ -884,6 +884,8 @@ void Canvas::updateProcessor() {
       checkClErrorCode(err, "clCreateBuffer()");
     }
   }
+
+  update();
 }
 
 void Canvas::drawBlock(
@@ -1302,18 +1304,34 @@ void Canvas::selectMontage() {
     disconnect(e);
   montageConnections.clear();
 
-  if (file && 0 < file->dataModel->montageTable()->rowCount()) {
-    auto vitness = VitnessTrackTable::vitness(getTrackTable(file));
+  if (file) {
+    assert(0 < file->dataModel->montageTable()->rowCount());
+
+    auto trackTable = getTrackTable(file);
+    auto vitness = VitnessTrackTable::vitness(trackTable);
 
     auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this,
                      SLOT(updateMontage(int, int)));
     montageConnections.push_back(c);
+
     c = connect(vitness, SIGNAL(rowsInserted(int, int)), this,
                 SLOT(updateMontage()));
     montageConnections.push_back(c);
+
     c = connect(vitness, SIGNAL(rowsRemoved(int, int)), this,
                 SLOT(updateMontage()));
     montageConnections.push_back(c);
+
+    // Also connect the default montage, so that the view gets updated when
+    // using undo/redo and a non-default montage, that depends on the default
+    // one via labels or coordinates, is selected.
+    auto defaultTrackTable = file->dataModel->montageTable()->trackTable(0);
+    if (trackTable != defaultTrackTable) {
+      auto defaultVitness = VitnessTrackTable::vitness(defaultTrackTable);
+      c = connect(defaultVitness, SIGNAL(valueChanged(int, int)), this,
+                  SLOT(updateMontage()));
+      montageConnections.push_back(c);
+    }
   }
 
   updateMontage();

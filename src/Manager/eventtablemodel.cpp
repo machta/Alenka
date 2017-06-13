@@ -140,7 +140,7 @@ public:
   bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       Event e = currentEventTable(file)->row(row);
-      e.position = value.toDouble();
+      e.position = value.toInt();
       file->undoFactory->changeEvent(
           OpenDataFile::infoTable.getSelectedMontage(), row, e,
           "change Position");
@@ -170,7 +170,7 @@ public:
   bool setData(int row, const QVariant &value, int role) override {
     if (role == Qt::EditRole) {
       Event e = currentEventTable(file)->row(row);
-      e.duration = value.toDouble();
+      e.duration = value.toInt();
       file->undoFactory->changeEvent(
           OpenDataFile::infoTable.getSelectedMontage(), row, e,
           "change Duration");
