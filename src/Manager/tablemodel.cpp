@@ -47,13 +47,9 @@ public:
 
 bool BoolTableColumn::createEditor(const QStyledItemDelegate *delegate,
                                    QWidget *parent,
-                                   const QStyleOptionViewItem &option,
-                                   const QModelIndex &index,
+                                   const QStyleOptionViewItem & /*option*/,
+                                   const QModelIndex & /*index*/,
                                    QWidget **widget) const {
-  (void)parent;
-  (void)option;
-  (void)index;
-
   function<void(void)> fun = [widget, delegate]() {
     emit const_cast<QStyledItemDelegate *>(delegate)->commitData(*widget);
     emit const_cast<QStyledItemDelegate *>(delegate)->closeEditor(*widget);
@@ -63,12 +59,10 @@ bool BoolTableColumn::createEditor(const QStyledItemDelegate *delegate,
   return true;
 }
 
-bool BoolTableColumn::setModelData(const QStyledItemDelegate *delegate,
-                                   QWidget *editor, QAbstractItemModel *model,
+bool BoolTableColumn::setModelData(const QStyledItemDelegate * /*delegate*/,
+                                   QWidget * /*editor*/,
+                                   QAbstractItemModel *model,
                                    const QModelIndex &index) const {
-  (void)delegate;
-  (void)editor;
-
   // Just flip the value;
   model->setData(index, !index.data(Qt::EditRole).toBool());
 
@@ -77,12 +71,9 @@ bool BoolTableColumn::setModelData(const QStyledItemDelegate *delegate,
 
 bool ColorTableColumn::createEditor(const QStyledItemDelegate *delegate,
                                     QWidget *parent,
-                                    const QStyleOptionViewItem &option,
-                                    const QModelIndex &index,
+                                    const QStyleOptionViewItem & /*option*/,
+                                    const QModelIndex & /*index*/,
                                     QWidget **widget) const {
-  (void)option;
-  (void)index;
-
   auto lineEdit = new QLineEdit(parent);
   QAction *action = lineEdit->addAction(QIcon(":/icons/edit.png"),
                                         QLineEdit::TrailingPosition);
@@ -109,10 +100,9 @@ TableModel::TableModel(OpenDataFile *file, QObject *parent)
     : QAbstractTableModel(parent), file(file),
       delegate(new Delegate(&columns)) {}
 
-bool TableModel::removeRows(int row, int count, const QModelIndex &parent) {
-  (void)parent;
-
-  if (count > 0) {
+bool TableModel::removeRows(int row, int count,
+                            const QModelIndex & /*parent*/) {
+  if (count > 0 && areAllRowsDeletable(row, count)) {
     int rowLast = row + count - 1;
     assert(rowLast < rowCount());
 

@@ -1228,6 +1228,7 @@ void Canvas::addEvent(int channel) {
 int Canvas::countHiddenTracks(int track) {
   int hidden = 0;
   int i = 0;
+  assert(track < getTrackTable(file)->rowCount());
 
   while (i - hidden <= track) {
     if (getTrackTable(file)->row(i++).hidden)
@@ -1337,8 +1338,7 @@ void Canvas::selectMontage() {
   updateMontage();
 }
 
-void Canvas::updateMontage(int row, int col) {
-  (void)row;
+void Canvas::updateMontage(int /*row*/, int col) {
   Track::Index column = static_cast<Track::Index>(col);
   if (column == Track::Index::code || column == Track::Index::hidden)
     updateMontage();

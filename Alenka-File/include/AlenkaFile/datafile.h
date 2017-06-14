@@ -135,22 +135,10 @@ public:
   }
   void setDataModel(DataModel *dataModel) { this->dataModel = dataModel; }
 
-  virtual double getPhysicalMaximum(unsigned int channel) {
-    return 32767;
-    (void)channel;
-  }
-  virtual double getPhysicalMinimum(unsigned int channel) {
-    return -32768;
-    (void)channel;
-  }
-  virtual double getDigitalMaximum(unsigned int channel) {
-    return 32767;
-    (void)channel;
-  }
-  virtual double getDigitalMinimum(unsigned int channel) {
-    return -32768;
-    (void)channel;
-  }
+  virtual double getPhysicalMaximum(unsigned int /*channel*/) { return 32767; }
+  virtual double getPhysicalMinimum(unsigned int /*channel*/) { return -32768; }
+  virtual double getDigitalMaximum(unsigned int /*channel*/) { return 32767; }
+  virtual double getDigitalMinimum(unsigned int /*channel*/) { return -32768; }
   virtual std::string getLabel(unsigned int channel) = 0;
 
   /**

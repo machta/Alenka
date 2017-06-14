@@ -27,32 +27,24 @@ public:
   virtual QVariant data(int row, int role = Qt::DisplayRole) const = 0;
   virtual bool setData(int row, const QVariant &value,
                        int role = Qt::EditRole) = 0;
-  virtual Qt::ItemFlags flags() const { return Qt::ItemIsEditable; }
+  virtual Qt::ItemFlags flags(int /*row*/) const { return Qt::ItemIsEditable; }
 
-  virtual bool createEditor(const QStyledItemDelegate *delegate,
-                            QWidget *parent, const QStyleOptionViewItem &option,
-                            const QModelIndex &index, QWidget **widget) const {
-    (void)delegate;
-    (void)parent;
-    (void)option;
-    (void)index;
-    (void)widget;
+  virtual bool createEditor(const QStyledItemDelegate * /*delegate*/,
+                            QWidget * /*parent*/,
+                            const QStyleOptionViewItem & /*option*/,
+                            const QModelIndex & /*index*/,
+                            QWidget ** /*widget*/) const {
     return false;
   }
-  virtual bool setEditorData(const QStyledItemDelegate *delegate,
-                             QWidget *editor, const QModelIndex &index) const {
-    (void)delegate;
-    (void)editor;
-    (void)index;
+  virtual bool setEditorData(const QStyledItemDelegate * /*delegate*/,
+                             QWidget * /*editor*/,
+                             const QModelIndex & /*index*/) const {
     return false;
   }
-  virtual bool setModelData(const QStyledItemDelegate *delegate,
-                            QWidget *editor, QAbstractItemModel *model,
-                            const QModelIndex &index) const {
-    (void)delegate;
-    (void)editor;
-    (void)model;
-    (void)index;
+  virtual bool setModelData(const QStyledItemDelegate * /*delegate*/,
+                            QWidget * /*editor*/,
+                            QAbstractItemModel * /*model*/,
+                            const QModelIndex & /*index*/) const {
     return false;
   }
 
@@ -72,14 +64,11 @@ public:
     return QVariant();
   }
 
-  bool setData(int row, const QVariant &value, int role) override {
-    (void)row;
-    (void)value;
-    (void)role;
+  bool setData(int /*row*/, const QVariant & /*value*/, int /*role*/) override {
     return false;
   }
 
-  Qt::ItemFlags flags() const override { return Qt::NoItemFlags; }
+  Qt::ItemFlags flags(int /*row*/) const override { return Qt::NoItemFlags; }
 };
 
 class BoolTableColumn : public TableColumn {
@@ -119,8 +108,8 @@ public:
   explicit TableModel(OpenDataFile *file, QObject *parent = nullptr);
 
   int rowCount(const QModelIndex &parent = QModelIndex()) const override = 0;
-  int columnCount(const QModelIndex &parent = QModelIndex()) const override {
-    (void)parent;
+  int columnCount(
+      const QModelIndex & /*parent*/ = QModelIndex()) const override {
     return static_cast<int>(columns.size());
   }
   QVariant headerData(int section, Qt::Orientation orientation,
@@ -151,7 +140,8 @@ public:
     if (!index.isValid())
       return Qt::ItemIsEnabled;
 
-    return QAbstractTableModel::flags(index) | columns[index.column()]->flags();
+    return QAbstractTableModel::flags(index) |
+           columns[index.column()]->flags(index.row());
   }
   bool removeRows(int row, int count,
                   const QModelIndex &parent = QModelIndex()) override;
@@ -166,6 +156,7 @@ public slots:
 
 protected:
   virtual void removeRowsFromDataModel(int row, int count) = 0;
+  virtual bool areAllRowsDeletable(int /*row*/, int /*count*/) { return true; }
 
 protected slots:
   void emitDataChanged(int row, int col) {

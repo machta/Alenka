@@ -13,6 +13,7 @@ public:
 
 protected:
   void removeRowsFromDataModel(int row, int count) override;
+  bool areAllRowsDeletable(int row, int /*count*/) override { return 0 < row; }
 };
 
 #endif // MONTAGETABLEMODEL_H

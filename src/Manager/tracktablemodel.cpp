@@ -80,12 +80,17 @@ public:
     return false;
   }
 
-  bool createEditor(const QStyledItemDelegate *delegate, QWidget *parent,
-                    const QStyleOptionViewItem &option,
-                    const QModelIndex &index, QWidget **widget) const override {
-    (void)option;
-    (void)index;
+  Qt::ItemFlags flags(int row) const override {
+    if (file->infoTable.getSelectedMontage() == 0)
+      return Qt::NoItemFlags;
 
+    return TableColumn::flags(row);
+  }
+
+  bool createEditor(const QStyledItemDelegate *delegate, QWidget *parent,
+                    const QStyleOptionViewItem & /*option*/,
+                    const QModelIndex & /*index*/,
+                    QWidget **widget) const override {
     auto lineEdit = new QLineEdit(parent);
     QAction *action = lineEdit->addAction(QIcon(":/icons/edit.png"),
                                           QLineEdit::TrailingPosition);
@@ -107,13 +112,9 @@ public:
     return true;
   }
 
-  bool setModelData(const QStyledItemDelegate *delegate, QWidget *editor,
-                    QAbstractItemModel *model,
-                    const QModelIndex &index) const override {
-    (void)delegate;
-    (void)model;
-    (void)index;
-
+  bool setModelData(const QStyledItemDelegate * /*delegate*/, QWidget *editor,
+                    QAbstractItemModel * /*model*/,
+                    const QModelIndex & /*index*/) const override {
     QLineEdit *lineEdit = reinterpret_cast<QLineEdit *>(editor);
     QString message;
 
@@ -193,13 +194,10 @@ public:
     return false;
   }
 
-  bool createEditor(const QStyledItemDelegate *delegate, QWidget *parent,
-                    const QStyleOptionViewItem &option,
-                    const QModelIndex &index, QWidget **widget) const override {
-    (void)delegate;
-    (void)option;
-    (void)index;
-
+  bool createEditor(const QStyledItemDelegate * /*delegate*/, QWidget *parent,
+                    const QStyleOptionViewItem & /*option*/,
+                    const QModelIndex & /*index*/,
+                    QWidget **widget) const override {
     auto spinBox = new QDoubleSpinBox(parent);
     spinBox->setDecimals(10);
     spinBox->setRange(std::numeric_limits<double>::lowest(),
@@ -368,9 +366,7 @@ TrackTableModel::TrackTableModel(OpenDataFile *file, QObject *parent)
   setSelectedMontage(OpenDataFile::infoTable.getSelectedMontage());
 }
 
-int TrackTableModel::rowCount(const QModelIndex &parent) const {
-  (void)parent;
-
+int TrackTableModel::rowCount(const QModelIndex & /*parent*/) const {
   if (0 < file->dataModel->montageTable()->rowCount())
     return currentTrackTable(file)->rowCount();
   return 0;
@@ -399,6 +395,10 @@ void TrackTableModel::removeRowsFromDataModel(int row, int count) {
   file->undoFactory->removeTrack(OpenDataFile::infoTable.getSelectedMontage(),
                                  row, count);
   file->undoFactory->endMacro();
+}
+
+bool TrackTableModel::areAllRowsDeletable(int /*row*/, int /*count*/) {
+  return file->infoTable.getSelectedMontage() != 0;
 }
 
 void TrackTableModel::setSelectedMontage(int i) {

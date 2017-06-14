@@ -307,9 +307,15 @@ vector<string> DataFile::getLabels() {
 }
 
 void DataFile::fillDefaultMontage(int index) {
-  AbstractTrackTable *tt = getDataModel()->montageTable()->trackTable(index);
-  tt->insertRows(index, getChannelCount());
   assert(0 < getChannelCount());
+
+  AbstractMontageTable * mt = getDataModel()->montageTable();
+  Montage montage = mt->row(0);
+  montage.name = "Default Montage";
+  mt->row(0, montage);
+
+  AbstractTrackTable *tt = mt->trackTable(index);
+  tt->insertRows(index, getChannelCount());
 
   auto labels = getLabels();
   assert(labels.size() == getChannelCount());

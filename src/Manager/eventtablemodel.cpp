@@ -85,13 +85,10 @@ public:
     return false;
   }
 
-  bool createEditor(const QStyledItemDelegate *delegate, QWidget *parent,
-                    const QStyleOptionViewItem &option,
-                    const QModelIndex &index, QWidget **widget) const override {
-    (void)delegate;
-    (void)option;
-    (void)index;
-
+  bool createEditor(const QStyledItemDelegate * /*delegate*/, QWidget *parent,
+                    const QStyleOptionViewItem & /*option*/,
+                    const QModelIndex & /*index*/,
+                    QWidget **widget) const override {
     auto combo = new QComboBox(parent);
 
     combo->addItem(NO_TYPE_STRING.c_str());
@@ -103,18 +100,16 @@ public:
     *widget = combo;
     return true;
   }
-  bool setEditorData(const QStyledItemDelegate *delegate, QWidget *editor,
+  bool setEditorData(const QStyledItemDelegate * /*delegate*/, QWidget *editor,
                      const QModelIndex &index) const override {
-    (void)delegate;
     QComboBox *combo = reinterpret_cast<QComboBox *>(editor);
     int i = index.data(Qt::EditRole).toInt();
     combo->setCurrentIndex(i + 1);
     return true;
   }
-  bool setModelData(const QStyledItemDelegate *delegate, QWidget *editor,
+  bool setModelData(const QStyledItemDelegate * /*delegate*/, QWidget *editor,
                     QAbstractItemModel *model,
                     const QModelIndex &index) const override {
-    (void)delegate;
     QComboBox *combo = reinterpret_cast<QComboBox *>(editor);
     model->setData(index, combo->currentIndex() - 1);
     return true;
@@ -228,13 +223,10 @@ public:
     return false;
   }
 
-  bool createEditor(const QStyledItemDelegate *delegate, QWidget *parent,
-                    const QStyleOptionViewItem &option,
-                    const QModelIndex &index, QWidget **widget) const override {
-    (void)delegate;
-    (void)option;
-    (void)index;
-
+  bool createEditor(const QStyledItemDelegate * /*delegate*/, QWidget *parent,
+                    const QStyleOptionViewItem & /*option*/,
+                    const QModelIndex & /*index*/,
+                    QWidget **widget) const override {
     auto combo = new QComboBox(parent);
 
     combo->addItem(NO_CHANNEL_STRING.c_str());
@@ -247,18 +239,16 @@ public:
     *widget = combo;
     return true;
   }
-  bool setEditorData(const QStyledItemDelegate *delegate, QWidget *editor,
+  bool setEditorData(const QStyledItemDelegate * /*delegate*/, QWidget *editor,
                      const QModelIndex &index) const override {
-    (void)delegate;
     QComboBox *combo = reinterpret_cast<QComboBox *>(editor);
     int i = index.data(Qt::EditRole).toInt();
     combo->setCurrentIndex(i + 2);
     return true;
   }
-  bool setModelData(const QStyledItemDelegate *delegate, QWidget *editor,
+  bool setModelData(const QStyledItemDelegate * /*delegate*/, QWidget *editor,
                     QAbstractItemModel *model,
                     const QModelIndex &index) const override {
-    (void)delegate;
     QComboBox *combo = reinterpret_cast<QComboBox *>(editor);
     model->setData(index, combo->currentIndex() - 2);
     return true;
@@ -311,9 +301,7 @@ EventTableModel::EventTableModel(OpenDataFile *file, QObject *parent)
           SLOT(beginEndReset()));
 }
 
-int EventTableModel::rowCount(const QModelIndex &parent) const {
-  (void)parent;
-
+int EventTableModel::rowCount(const QModelIndex & /*parent*/) const {
   if (0 < file->dataModel->montageTable()->rowCount())
     return currentEventTable(file)->rowCount();
   return 0;

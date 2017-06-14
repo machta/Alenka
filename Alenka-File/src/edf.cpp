@@ -245,7 +245,6 @@ void EDF::readChannelsFloatDouble(vector<T *> dataChannels,
 
   int handle = edfhdr->handle;
   long long err;
-  (void)err;
 
   for (unsigned int i = 0; i < getChannelCount(); ++i) {
     err = edfseek(handle, i, firstSample, EDFSEEK_SET);

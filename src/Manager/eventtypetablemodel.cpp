@@ -173,8 +173,7 @@ EventTypeTableModel::EventTypeTableModel(OpenDataFile *file, QObject *parent)
           SLOT(removeDataModelRows(int, int)));
 }
 
-int EventTypeTableModel::rowCount(const QModelIndex &parent) const {
-  (void)parent;
+int EventTypeTableModel::rowCount(const QModelIndex & /*parent*/) const {
   return file->dataModel->eventTypeTable()->rowCount();
 }
 

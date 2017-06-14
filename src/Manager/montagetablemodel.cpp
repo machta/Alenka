@@ -34,6 +34,13 @@ public:
 
     return false;
   }
+
+  Qt::ItemFlags flags(int row) const override {
+    if (row == 0)
+      return Qt::NoItemFlags;
+
+    return TableColumn::flags(row);
+  }
 };
 
 class Save : public BoolTableColumn {
@@ -75,8 +82,7 @@ MontageTableModel::MontageTableModel(OpenDataFile *file, QObject *parent)
           SLOT(removeDataModelRows(int, int)));
 }
 
-int MontageTableModel::rowCount(const QModelIndex &parent) const {
-  (void)parent;
+int MontageTableModel::rowCount(const QModelIndex & /*parent*/) const {
   return file->dataModel->montageTable()->rowCount();
 }
 

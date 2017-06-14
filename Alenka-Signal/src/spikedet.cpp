@@ -19,14 +19,8 @@ public:
     m_channels.resize(loader->channelCount());
   }
 
-  void OpenFile(const char *fileName) override {
-    (void)fileName;
-    assert(0);
-  }
-  void OpenFile(const wchar_t *fileName) override {
-    (void)fileName;
-    assert(0);
-  }
+  void OpenFile(const char * /*fileName*/) override { assert(0); }
+  void OpenFile(const wchar_t * /*fileName*/) override { assert(0); }
   void CloseFile() override { assert(0); }
   bool IsOpen() const override {
     assert(0);

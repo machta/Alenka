@@ -20,9 +20,7 @@ public:
       : QWidget(parent), fun(std::move(fun)) {}
 
 protected:
-  void showEvent(QShowEvent *event) override {
-    (void)event;
-
+  void showEvent(QShowEvent * /*event*/) override {
     if (notYetTriggered)
       fun();
     notYetTriggered = false;

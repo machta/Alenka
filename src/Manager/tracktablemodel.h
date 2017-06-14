@@ -15,6 +15,7 @@ public:
 
 protected:
   void removeRowsFromDataModel(int row, int count) override;
+  bool areAllRowsDeletable(int row, int count) override;
 
 private slots:
   void setSelectedMontage(int i);
