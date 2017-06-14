@@ -17,7 +17,7 @@ namespace {
 template <typename T>
 void fillWithZeroes(vector<T *> &dataChannels, uint64_t n) {
   for (auto &e : dataChannels) {
-    for (uint64_t i = 0; i < n; i++) {
+    for (uint64_t i = 0; i < n; ++i) {
       *e = 0;
       e++;
     }
@@ -33,7 +33,7 @@ void readSignalFloatDouble(DataFile *file, T *data, int64_t firstSample,
 
   int64_t len = lastSample - firstSample + 1;
   vector<T *> dataChannels(file->getChannelCount());
-  for (unsigned int i = 0; i < file->getChannelCount(); i++)
+  for (unsigned int i = 0; i < file->getChannelCount(); ++i)
     dataChannels[i] = data + i * len;
 
   if (firstSample < 0) {
@@ -54,7 +54,7 @@ void readSignalFloatDouble(DataFile *file, T *data, int64_t firstSample,
     fillWithZeroes(dataChannels, min(lastSample - lastInFile, len));
 
 #ifndef NDEBUG
-  for (unsigned int i = 0; i < file->getChannelCount(); i++)
+  for (unsigned int i = 0; i < file->getChannelCount(); ++i)
     assert(dataChannels.at(i) == data + (i + 1) * len &&
            "Make sure that precisely the required number of samples was read.");
 #endif
@@ -78,7 +78,7 @@ void appendTrack(xml_node node, const Track &t) {
 
 void appendTrackTable(xml_node node, AbstractTrackTable *tt) {
   xml_node trackTable = node.append_child("trackTable");
-  for (int i = 0; i < tt->rowCount(); i++)
+  for (int i = 0; i < tt->rowCount(); ++i)
     appendTrack(trackTable, tt->row(i));
 }
 
@@ -97,7 +97,7 @@ void appendEvent(xml_node node, const Event &e) {
 
 void appendEventTable(xml_node node, AbstractEventTable *et) {
   xml_node eventTable = node.append_child("eventTable");
-  for (int i = 0; i < et->rowCount(); i++)
+  for (int i = 0; i < et->rowCount(); ++i)
     appendEvent(eventTable, et->row(i));
 }
 
@@ -116,7 +116,7 @@ void buildXML(xml_document &xml, DataModel *dataModel) {
   xml_node document = xml.append_child("document");
 
   xml_node montageTable = document.append_child("montageTable");
-  for (int i = 0; i < dataModel->montageTable()->rowCount(); i++) {
+  for (int i = 0; i < dataModel->montageTable()->rowCount(); ++i) {
     Montage m = dataModel->montageTable()->row(i);
     xml_node montage = montageTable.append_child("montage");
 
@@ -131,7 +131,7 @@ void buildXML(xml_document &xml, DataModel *dataModel) {
   }
 
   xml_node eventTypeTable = document.append_child("eventTypeTable");
-  for (int i = 0; i < dataModel->eventTypeTable()->rowCount(); i++)
+  for (int i = 0; i < dataModel->eventTypeTable()->rowCount(); ++i)
     appendEventType(eventTypeTable, dataModel->eventTypeTable()->row(i));
 }
 

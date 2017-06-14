@@ -31,8 +31,8 @@ void testFilter(Filter<T> filter, int M, int channelCount,
     vector<T> output(n * channelCount);
 
     vector<T> input(n * channelCount, 0);
-    for (int j = 0; j < channelCount; j++)
-      for (int i = 0; i < data.size() / channelCount; i++)
+    for (int j = 0; j < channelCount; ++j)
+      for (int i = 0; i < data.size() / channelCount; ++i)
         input[j * n + i + M - 1] = data[j * data.size() / channelCount + i];
 
     cl_command_queue queue = clCreateCommandQueue(
@@ -59,9 +59,9 @@ void testFilter(Filter<T> filter, int M, int channelCount,
     checkClErrorCode(err, "clEnqueueReadBuffer");
 
     double maxError = 0;
-    for (int j = 0; j < channelCount; j++) {
+    for (int j = 0; j < channelCount; ++j) {
       for (int i = 0;
-           i < answer.size() / channelCount - processor.delaySamples(); i++) {
+           i < answer.size() / channelCount - processor.delaySamples(); ++i) {
         T a = output[j * n + i + processor.discardSamples() +
                      processor.delaySamples()];
         T b = answer[j * answer.size() / channelCount + i];
@@ -87,16 +87,16 @@ void testFilter(Filter<T> filter, int M, int channelCount,
 template <class T>
 void generateSin(double A, double f, double Fs, int shift, int channelIndex,
                  int length, int channelCount, vector<T> *data) {
-  for (int i = 0; i < length; i++)
+  for (int i = 0; i < length; ++i)
     data->at(channelIndex * length + i) =
-        A * sin((i + shift) * f / Fs * 2 * M_PI);
+        static_cast<T>(A * sin((i + shift) * f / Fs * 2 * M_PI));
 }
 
 template <class T>
 vector<T> addSignal(int length, int channelCount, vector<T> *data1,
                     vector<T> *data2) {
   vector<T> tmp;
-  for (int i = 0; i < length * channelCount; i++)
+  for (int i = 0; i < length * channelCount; ++i)
     tmp.push_back(data1->at(i) + data2->at(i));
   return tmp;
 }
@@ -108,7 +108,7 @@ TEST(filter_test, allpass_float) {
   int c = 2;
 
   vector<float> data(n * c);
-  for (int i = 0; i < c; i++)
+  for (int i = 0; i < c; ++i)
     generateSin(i + 1, 2, 200, i * 10, i, n, c, &data);
 
   Filter<float> filter(200, 200);

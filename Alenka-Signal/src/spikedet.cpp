@@ -15,7 +15,7 @@ public:
   InputModel(int fs, AbstractSpikedetLoader<SIGNALTYPE> *loader)
       : loader(loader) {
     m_fs = fs;
-    m_countSamples = loader->sampleCount();
+    m_countSamples = static_cast<int>(loader->sampleCount());
     m_channels.resize(loader->channelCount());
   }
 

@@ -53,7 +53,7 @@ void randomTest(int cap, int iters, int range, int clearInterval) {
       EXPECT_EQ(static_cast<int>(*ptr), r);
     } else {
       ptr = cache.setOldest(r);
-      *ptr = r;
+      *ptr = static_cast<float>(r);
     }
 
     if (clearInterval && i % clearInterval == 0)

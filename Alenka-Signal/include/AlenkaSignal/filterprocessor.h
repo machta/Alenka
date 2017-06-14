@@ -44,7 +44,7 @@ public:
 
   void changeFilter(const std::vector<T> &coefficients) {
     coefficientsChanged = true;
-    M = coefficients.size();
+    M = static_cast<int>(coefficients.size());
     this->coefficients = coefficients;
   }
   void changeSampleFilter(int M, const std::vector<T> &samples);

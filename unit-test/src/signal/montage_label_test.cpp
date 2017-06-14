@@ -31,7 +31,8 @@ TEST(montage_label_test, double_parameter) {
   vector<string> labels{"L0", "L1"};
   OpenCLContext context(OPENCL_PLATFORM, OPENCL_DEVICE);
 
-  Montage<float> m("out = in(\"L0\")*dist(\"L0\", \"L1\");", &context, "", labels);
+  Montage<float> m("out = in(\"L0\")*dist(\"L0\", \"L1\");", &context, "",
+                   labels);
   Montage<float> m_index("out = in(0)*dist(0, 1);", &context, "", labels);
   EXPECT_FALSE(m.isCopyMontage());
   EXPECT_EQ(m.getSource(), m_index.getSource());

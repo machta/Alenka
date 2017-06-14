@@ -202,7 +202,9 @@ string injectIndex(const smatch &m, const vector<string> &labels,
 
   for (int i = 1; i <= paramCount; ++i) {
     auto it = find(labels.begin(), labels.end(), matches[2 * i]);
-    indexes.push_back(it == labels.end() ? -1 : distance(labels.begin(), it));
+    indexes.push_back(it == labels.end()
+                          ? -1
+                          : static_cast<int>(distance(labels.begin(), it)));
   }
 
   string result = matches[1];

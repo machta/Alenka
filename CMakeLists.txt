@@ -44,7 +44,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   set(WARNINGS "-Wall -pedantic -Wextra")# -Wconversion")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-  set(WARNINGS "-W4")
+  #set(WARNINGS "-W4") # This can be used to get some additional warnings.
+  set(WARNINGS " ") # The space must be there, otherwise there is a cmake error.
 endif()
 
 # Find packages.
@@ -66,7 +67,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
 # Alenka executable.
-add_definitions(-DCL_USE_DEPRECATED_OPENCL_1_2_APIS)
+add_definitions(-DCL_USE_DEPRECATED_OPENCL_1_2_APIS
+  -DCL_USE_DEPRECATED_OPENCL_2_0_APIS) # To silence some silly warnings.
 
 include_directories(libraries/boost_1_63 libraries/pugixml/src libraries/eigen
   ${OpenCL_INCLUDE_DIR})

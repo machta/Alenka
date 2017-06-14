@@ -196,7 +196,7 @@ void processOutput(OpenDataFile *file, SpikedetAnalysis *spikedetAnalysis,
     file->undoFactory->insertEvent(OpenDataFile::infoTable.getSelectedMontage(),
                                    etIndex, count);
 
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; ++i) {
       Event e = eventTable->row(etIndex + i);
 
       e.label = "Spike " + to_string(i);

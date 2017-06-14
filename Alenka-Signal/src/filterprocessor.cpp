@@ -5,10 +5,14 @@
 
 #include <clFFT.h>
 
+#ifndef WIN_BUILD
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#endif
 #include <fasttransforms.h>
+#ifndef WIN_BUILD
 #pragma GCC diagnostic pop
+#endif
 
 #include <cmath>
 #include <complex>
@@ -23,14 +27,14 @@ namespace {
 #include "kernels.cl"
 
 template <class T> T hammingWindow(int n, int M) {
-  const T tmp = 2 * M_PI * n / (M - 1);
-  return 0.54 - 0.46 * cos(tmp);
+  const double tmp = 2 * M_PI * n / (M - 1);
+  return static_cast<T>(0.54 - 0.46 * cos(tmp));
 }
 
 template <class T> T blackmanWindow(int n, int M) {
-  const T a = 0.16, a0 = (1 - a) / 2, a1 = 0.5, a2 = a / 2,
-          tmp = 2 * M_PI * n / (M - 1);
-  return a0 - a1 * cos(tmp) + a2 * cos(2 * tmp);
+  const double a = 0.16, a0 = (1 - a) / 2, a1 = 0.5, a2 = a / 2,
+               tmp = 2 * M_PI * n / (M - 1);
+  return static_cast<T>(a0 - a1 * cos(tmp) + a2 * cos(2 * tmp));
 }
 
 string clfftErrorCodeToString(clfftStatus code) {
@@ -326,8 +330,8 @@ void FilterProcessor<T>::changeSampleFilter(int M,
   alglib::fftr1dinv(inArray, M, outArray);
 
   coefficients.resize(M);
-  for (int i = 0; i < M; i++)
-    coefficients[i] = outArray[i];
+  for (int i = 0; i < M; ++i)
+    coefficients[i] = static_cast<T>(outArray[i]);
 }
 
 template <class T>

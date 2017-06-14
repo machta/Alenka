@@ -84,7 +84,7 @@ void outOfBoundsTest(DataFile *file) {
   vector<int> valuesToTry = {29, 31, 37, 41, 43, 47,  53,  59,  61,  67,  71,
                              73, 79, 83, 89, 97, 100, 101, 149, 200, 229, 1111};
 
-  for (int i = 1; i <= 25; i++)
+  for (int i = 1; i <= 25; ++i)
     valuesToTry.push_back(i);
 
   for (int e : valuesToTry)

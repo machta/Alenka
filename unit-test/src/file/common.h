@@ -72,8 +72,8 @@ void compareMatrix(T *arr, U *sol, int rows, int cols, int arrRowLen,
   double rel = 0;
   double abs = 0;
 
-  for (int j = 0; j < rows; j++) {
-    for (int i = 0; i < cols; i++) {
+  for (int j = 0; j < rows; ++j) {
+    for (int i = 0; i < cols; ++i) {
       double diff = fabs(arr[i] - sol[i]);
       abs = max<double>(abs, diff);
       if (sol[i] != 0)
@@ -100,8 +100,8 @@ void compareMatrixAverage(T *arr, U *sol, int rows, int cols, int arrRowLen,
   double rel = 0;
   double abs = 0;
 
-  for (int j = 0; j < rows; j++) {
-    for (int i = 0; i < cols; i++) {
+  for (int j = 0; j < rows; ++j) {
+    for (int i = 0; i < cols; ++i) {
       double diff = fabs(arr[i] - sol[i]);
       abs += diff;
       if (sol[i] != 0)

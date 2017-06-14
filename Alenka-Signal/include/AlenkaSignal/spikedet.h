@@ -55,8 +55,8 @@ public:
   void readSignal(T *data, int64_t firstSample, int64_t lastSample) override {
     int64_t len = lastSample - firstSample + 1;
 
-    for (int j = 0; j < channels; j++) {
-      for (int64_t i = firstSample; i <= lastSample; i++) {
+    for (int j = 0; j < channels; ++j) {
+      for (int64_t i = firstSample; i <= lastSample; ++i) {
         T sample = i < 0 || i >= length ? 0 : signal.at(j * length + i);
 
         data[j * len + i - firstSample] = sample;

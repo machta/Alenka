@@ -247,7 +247,7 @@ void EDF::readChannelsFloatDouble(vector<T *> dataChannels,
   long long err;
   (void)err;
 
-  for (unsigned int i = 0; i < getChannelCount(); i++) {
+  for (unsigned int i = 0; i < getChannelCount(); ++i) {
     err = edfseek(handle, i, firstSample, EDFSEEK_SET);
 
     if (err != static_cast<long long>(firstSample))
@@ -262,13 +262,13 @@ void EDF::readChannelsFloatDouble(vector<T *> dataChannels,
     uint64_t last = min(nextBoundary, lastSample + 1);
     int n = static_cast<int>(last - firstSample);
 
-    for (unsigned int i = 0; i < getChannelCount(); i++) {
+    for (unsigned int i = 0; i < getChannelCount(); ++i) {
       err = edfread_physical_samples(handle, i, n, readChunkBuffer.data());
 
       if (err != n)
         throw runtime_error("edfread_physical_samples failed");
 
-      for (int j = 0; j < n; j++)
+      for (int j = 0; j < n; ++j)
         dataChannels[i][j] = static_cast<T>(readChunkBuffer[j]);
 
       dataChannels[i] += n;

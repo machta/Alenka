@@ -37,8 +37,8 @@ void test(function<void(FilterProcessor<T> *)> change,
     vector<T> signal(processor.discardSamples() - processor.delaySamples());
     vector<T> output(n);
     for (int i = 1;
-         i <= n - processor.discardSamples() + processor.delaySamples(); i++)
-      signal.push_back(i);
+         i <= n - processor.discardSamples() + processor.delaySamples(); ++i)
+      signal.push_back(static_cast<float>(i));
 
     cl_command_queue queue = clCreateCommandQueue(
         context.getCLContext(), context.getCLDevice(), 0, &err);
@@ -61,7 +61,7 @@ void test(function<void(FilterProcessor<T> *)> change,
                               output.data(), 0, nullptr, nullptr);
     checkClErrorCode(err, "clEnqueueReadBuffer");
 
-    for (int i = 0; i < n - processor.discardSamples(); i++)
+    for (int i = 0; i < n - processor.discardSamples(); ++i)
       compare(
           output[i + processor.discardSamples()],
           signal[i + processor.discardSamples() - processor.delaySamples()]);

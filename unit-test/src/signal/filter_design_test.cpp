@@ -11,11 +11,7 @@ using namespace AlenkaSignal;
 
 namespace {
 
-double answerLowpassD[8] = {-0.105969883127822, 0.0293291419087276,
-                            0.220670858091272,  0.355969883127822,
-                            0.355969883127822,  0.220670858091272,
-                            0.0293291419087275, -0.105969883127822};
-float answerLowpassF[8] = {-0.105969883127822, 0.0293291419087276,
+double answerLowpass[8] = {-0.105969883127822, 0.0293291419087276,
                            0.220670858091272,  0.355969883127822,
                            0.355969883127822,  0.220670858091272,
                            0.0293291419087275, -0.105969883127822};
@@ -30,7 +26,7 @@ void compareDouble(double a, double b) {
   EXPECT_NEAR(a, b, 0.000000001);
 }
 
-template <class T> void test(function<void(T, T)> compare, T *answer) {
+template <class T> void test(function<void(T, T)> compare, double *answer) {
   OpenCLContext::clfftInit();
 
   {
@@ -42,8 +38,8 @@ template <class T> void test(function<void(T, T)> compare, T *answer) {
 
     vector<T> signal;
     vector<T> output(n);
-    for (int i = 1; i <= n; i++)
-      signal.push_back(i);
+    for (int i = 1; i <= n; ++i)
+      signal.push_back(static_cast<float>(i));
 
     cl_command_queue queue = clCreateCommandQueue(
         context.getCLContext(), context.getCLDevice(), 0, &err);
@@ -73,7 +69,7 @@ template <class T> void test(function<void(T, T)> compare, T *answer) {
 
     auto res = processor.getCoefficients();
     for (int i = 0; i < 8; ++i)
-      compare(res[i], answer[i]);
+      compare(res[i], static_cast<T>(answer[i]));
 
     err = clReleaseMemObject(inBuffer);
     checkClErrorCode(err, "clReleaseMemObject");
@@ -88,9 +84,9 @@ template <class T> void test(function<void(T, T)> compare, T *answer) {
 } // namespace
 
 TEST(filter_design_test, simple_float) {
-  test<float>(&compareFloat, answerLowpassF);
+  test<float>(&compareFloat, answerLowpass);
 }
 
 TEST(filter_design_test, simple_double) {
-  test<double>(&compareDouble, answerLowpassD);
+  test<double>(&compareDouble, answerLowpass);
 }

@@ -62,9 +62,9 @@ template <class T> void test(function<void(T, T)> compare, int outputCopies) {
   vector<Montage<T> *> montage = {&m1, &m2, &m3, &m4, &m5};
   vector<T> signal;
 
-  for (int j = 0; j < inChannels; j++)
-    for (int i = 1; i <= n; i++)
-      signal.push_back(10 * pow(10, j) + i);
+  for (int j = 0; j < inChannels; ++j)
+    for (int i = 1; i <= n; ++i)
+      signal.push_back(static_cast<T>(10 * pow(10, j) + i));
 
   vector<T> output(outputCopies * (n - offset) * montage.size());
 
@@ -113,7 +113,7 @@ template <class T> void test(function<void(T, T)> compare, int outputCopies) {
       compare(output[outputCopies * ((n - offset) * 2 + i) + j],
               signal[i] + signal[n + i]);
       compare(output[outputCopies * ((n - offset) * 3 + i) + j],
-              signal[2 * n + i] * 3.14);
+              static_cast<T>(signal[2 * n + i] * 3.14));
       compare(output[outputCopies * ((n - offset) * 4 + i) + j], -1);
     }
   }

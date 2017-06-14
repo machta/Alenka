@@ -210,7 +210,7 @@ void testMontages(const DataModel *dataModel) {
                         "P4",  "O1",  "O2", "F7", "F8", "T3", "T4",
                         "T5",  "T6",  "Fz", "Cz", "Pz"};
 
-  for (int i = 0; i < trackCount; i++) {
+  for (int i = 0; i < trackCount; ++i) {
     Track t = trackTable->row(i);
     EXPECT_EQ(t.label.substr(0, labels[i].size()), labels[i]);
     EXPECT_EQ(t.color[0], 0);

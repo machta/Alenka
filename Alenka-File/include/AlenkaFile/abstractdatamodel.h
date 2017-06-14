@@ -119,7 +119,7 @@ public:
 
   static std::string colorArray2str(std::array<int, 3> color) {
     std::string str = "#";
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; ++i) {
       char tmp[3];
       sprintf(tmp, "%02x", color[i]);
       str += tmp;

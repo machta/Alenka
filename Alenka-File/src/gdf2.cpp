@@ -17,7 +17,7 @@ namespace {
 const bool isLittleEndian = DataFile::testLittleEndian();
 
 template <typename T>
-void readFile(fstream &file, T *val, unsigned int elements = 1) {
+void readFile(fstream &file, T *val, size_t elements = 1) {
   file.read(reinterpret_cast<char *>(val), sizeof(T) * elements);
 
   assert(file && "File read successfully.");
@@ -59,13 +59,14 @@ void writeFile(fstream &file, const T *val, unsigned int elements = 1) {
   }
 }
 
+#ifndef NDEBUG
 streampos tellFile(fstream &file, bool isGet = true) {
-  (void)tellFile;
   return isGet ? file.tellg() : file.tellp();
 }
+#endif
 
 template <class T> void convertSamples(T *dataBuffer, double *samples, int n) {
-  for (int i = 0; i < n; i++) {
+  for (int i = 0; i < n; ++i) {
     samples[i] = static_cast<double>(dataBuffer[i]);
   }
 }
@@ -113,7 +114,7 @@ void readRecord(fstream &file, char *rawBuffer, double *samples, int n,
  */
 void calibrateSamples(double *samples, int n, double digitalMinimum,
                       double scale, double physicalMinimum) {
-  for (int i = 0; i < n; i++) {
+  for (int i = 0; i < n; ++i) {
     samples[i] -= digitalMinimum;
     samples[i] /= scale;
     samples[i] += physicalMinimum;
@@ -439,7 +440,7 @@ void GDF2::readChannelsFloatDouble(vector<T *> dataChannels,
                          vh.digitalMinimum[channelI], scale[channelI],
                          vh.physicalMinimum[channelI]);
 
-      for (int i = 0; i < copyCount; i++)
+      for (int i = 0; i < copyCount; ++i)
         dataChannels[channelI][i] =
             static_cast<T>(recordDoubleBuffer[firstSampleToCopy + i]);
 

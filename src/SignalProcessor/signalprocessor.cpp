@@ -360,7 +360,7 @@ void SignalProcessor::updateMontage() {
   clearMontage();
   vector<string> montageCode;
 
-  for (int i = 0; i < getTrackTable(file)->rowCount(); i++) {
+  for (int i = 0; i < getTrackTable(file)->rowCount(); ++i) {
     Track t = getTrackTable(file)->row(i);
     if (!t.hidden)
       montageCode.push_back(t.code);

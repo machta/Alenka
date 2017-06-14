@@ -30,7 +30,7 @@ template <class T> vector<T> Filter<T>::computeSamples() {
       }
     }
 
-    samples[i] = val;
+    samples[i] = static_cast<T>(val);
   }
 
   return samples;
