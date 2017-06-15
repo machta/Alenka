@@ -45,6 +45,7 @@ private:
   // The following values are not saved to .info files.
   int pixelViewWidth;
   std::vector<float> filterCoefficients;
+  QString globalMontageHeader;
 
 public:
   InfoTable(QObject *parent = nullptr) : QObject(parent) { setDefaultValues(); }
@@ -98,6 +99,7 @@ public:
   const std::vector<float> &getFilterCoefficients() const {
     return filterCoefficients;
   }
+  QString getGlobalMontageHeader() const { return globalMontageHeader; }
 
 signals:
   void virtualWidthChanged(int);
@@ -121,6 +123,7 @@ signals:
 
   void pixelViewWidthChanged(int);
   void filterCoefficientsChanged();
+  void globalMontageHeaderChanged(QString);
 
 public slots:
   void setVirtualWidth(int value) {
@@ -243,6 +246,12 @@ public slots:
     if (value != filterCoefficients) {
       filterCoefficients = value;
       emit filterCoefficientsChanged();
+    }
+  }
+  void setGlobalMontageHeader(const QString &value) {
+    if (value != globalMontageHeader) {
+      globalMontageHeader = value;
+      emit globalMontageHeaderChanged(value);
     }
   }
 };

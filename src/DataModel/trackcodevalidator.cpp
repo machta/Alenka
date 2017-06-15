@@ -1,26 +1,22 @@
 #include "trackcodevalidator.h"
 
-#include "../SignalProcessor/signalprocessor.h"
-#include "../myapplication.h"
-
 #include "../../Alenka-Signal/include/AlenkaSignal/montage.h"
 #include "../../Alenka-Signal/include/AlenkaSignal/openclcontext.h"
+#include "../SignalProcessor/signalprocessor.h"
+#include "../myapplication.h"
+#include "opendatafile.h"
 
 #include <QFile>
 
 using namespace std;
 using namespace AlenkaSignal;
 
-TrackCodeValidator::TrackCodeValidator() {
-  context = globalContext.get();
-
-  QFile headerFile(":/montageHeader.cl");
-  headerFile.open(QIODevice::ReadOnly);
-  header = headerFile.readAll().toStdString();
-}
+TrackCodeValidator::TrackCodeValidator() { context = globalContext.get(); }
 
 bool TrackCodeValidator::validate(const QString &input, QString *errorMessage) {
   string code = SignalProcessor::simplifyMontage<float>(input.toStdString());
+  string header =
+      OpenDataFile::infoTable.getGlobalMontageHeader().toStdString();
 
   if (errorMessage) {
     string message;

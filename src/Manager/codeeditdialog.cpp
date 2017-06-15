@@ -1,6 +1,7 @@
 #include "codeeditdialog.h"
 
 #include "../../Alenka-Signal/include/AlenkaSignal/montage.h"
+#include "../DataModel/opendatafile.h"
 #include "../DataModel/trackcodevalidator.h"
 
 #include <QDialogButtonBox>
@@ -13,12 +14,6 @@
 #include <string>
 
 using namespace std;
-
-namespace {
-
-QString headerString;
-
-} // namespace
 
 CodeEditDialog::CodeEditDialog(QWidget *parent)
     : QDialog(parent), validator(new TrackCodeValidator()) {
@@ -38,17 +33,8 @@ Definitions included in the source code that you can use:)";
 
   box->addWidget(new QLabel(help)); // TODO: Move these to help sub dialog.
 
-  if (headerString.isNull()) {
-    QFile headerFile(":/montageHeader.cl");
-    headerFile.open(QIODevice::ReadOnly);
-    headerString = AlenkaSignal::Montage<float>::stripComments(
-                       headerFile.readAll().toStdString())
-                       .c_str();
-    headerString = headerString.trimmed();
-  }
-
   auto header = new QTextEdit(this);
-  header->setPlainText(headerString);
+  header->setPlainText(OpenDataFile::infoTable.getGlobalMontageHeader());
   header->setReadOnly(true);
   box->addWidget(header);
 

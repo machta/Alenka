@@ -70,7 +70,6 @@ class SignalProcessor {
       filterProcessors;
   std::unique_ptr<AlenkaSignal::MontageProcessor<float>> montageProcessor;
   std::vector<std::unique_ptr<AlenkaSignal::Montage<float>>> montage;
-  std::string header;
   int extraSamplesFront, extraSamplesBack;
   std::unique_ptr<AlenkaSignal::Filter<float>> filter;
 

@@ -30,6 +30,7 @@ void InfoTable::setDefaultValues() {
 
   pixelViewWidth = 0;
   filterCoefficients.clear();
+  globalMontageHeader.clear();
 }
 
 void InfoTable::writeXML(const string &filePath,

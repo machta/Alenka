@@ -125,11 +125,6 @@ SignalProcessor::SignalProcessor(unsigned int nBlock,
   cache = make_unique<LRUCache<int, float>>(
       capacity, make_unique<FloatAllocator>(blockFloats));
 
-  QFile headerFile(":/montageHeader.cl"); // TODO: Consolidate the 4 copies of
-                                          // this into one instance.
-  headerFile.open(QIODevice::ReadOnly);
-  header = headerFile.readAll().toStdString();
-
   updateFilter();
   setUpdateMontageFlag();
 
@@ -372,6 +367,8 @@ void SignalProcessor::updateMontage() {
 
   updateXyzBuffer(commandQueues[0], xyzBuffer, defaultTrackTable);
 
+  string header =
+      OpenDataFile::infoTable.getGlobalMontageHeader().toStdString();
   montage = makeMontage<float>(montageCode, context, file->kernelCache, header,
                                collectLabels(defaultTrackTable));
 }

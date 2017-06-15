@@ -309,7 +309,7 @@ vector<string> DataFile::getLabels() {
 void DataFile::fillDefaultMontage(int index) {
   assert(0 < getChannelCount());
 
-  AbstractMontageTable * mt = getDataModel()->montageTable();
+  AbstractMontageTable *mt = getDataModel()->montageTable();
   Montage montage = mt->row(0);
   montage.name = "Default Montage";
   mt->row(0, montage);

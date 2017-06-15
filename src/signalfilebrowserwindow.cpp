@@ -1002,6 +1002,12 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
 
   setWindowTitle(fileInfo.fileName() + " - " + TITLE);
 
+  // Load OpenCL header from file.
+  QFile headerFile(MyApplication::applicationDirPath() +
+                   MyApplication::dirSeparator() + "montageHeader.cl");
+  if (headerFile.open(QIODevice::ReadOnly))
+    OpenDataFile::infoTable.setGlobalMontageHeader(headerFile.readAll());
+
   // Check for any values in InfoTable that could make trouble.
   if (OpenDataFile::infoTable.getSelectedMontage() < 0 ||
       OpenDataFile::infoTable.getSelectedMontage() >=

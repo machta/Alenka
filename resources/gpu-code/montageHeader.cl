@@ -1,3 +1,5 @@
+// TODO: Move these comments somewhere, then delete this file.
+
 /**
  * @brief In this file the user can define custom functions for use in the
  * montage track code.

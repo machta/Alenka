@@ -13,6 +13,8 @@ class OpenCLContext;
  * @brief A convenience class for testing montage track code.
  */
 class TrackCodeValidator {
+  AlenkaSignal::OpenCLContext *context;
+
 public:
   TrackCodeValidator();
 
@@ -23,10 +25,6 @@ public:
    * @return True if the test succeeds.
    */
   bool validate(const QString &input, QString *errorMessage = nullptr);
-
-private:
-  AlenkaSignal::OpenCLContext *context;
-  std::string header;
 };
 
 #endif // TRACKCODEVALIDATOR_H

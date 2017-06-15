@@ -139,10 +139,6 @@ public:
 
 template <class T>
 auto makeMontage(OpenDataFile *file, OpenCLContext *context) {
-  QFile headerFile(":/montageHeader.cl");
-  headerFile.open(QIODevice::ReadOnly);
-  string header = headerFile.readAll().toStdString();
-
   const AlenkaFile::AbstractTrackTable *trackTable =
       file->dataModel->montageTable()->trackTable(
           OpenDataFile::infoTable.getSelectedMontage());
@@ -153,6 +149,8 @@ auto makeMontage(OpenDataFile *file, OpenCLContext *context) {
 
   auto labels = SignalProcessor::collectLabels(
       file->file->getDataModel()->montageTable()->trackTable(0));
+  string header =
+      OpenDataFile::infoTable.getGlobalMontageHeader().toStdString();
   return SignalProcessor::makeMontage<T>(montageCode, context,
                                          file->kernelCache, header, labels);
 }

@@ -178,6 +178,10 @@ INI="`dirname $0`/options.ini"
 cp -v "$INI" $folder/$name
 cp -v "$INI" $folder32/$name-32
 
+HEADER="`dirname $0`/montageHeader.cl"
+cp -v "$HEADER" $folder/$name
+cp -v "$HEADER" $folder32/$name-32
+
 # Make zip using .Net.
 rm -f "$name.zip" "$name-32.zip" &&
 powershell.exe -nologo -noprofile -command "& { Add-Type -A 'System.IO.Compression.FileSystem'; [IO.Compression.ZipFile]::CreateFromDirectory('$folder', '$name.zip'); }" &&
