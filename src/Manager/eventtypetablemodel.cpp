@@ -130,9 +130,9 @@ public:
   }
 };
 
-class Hidden : public BoolTableColumn {
+class Hidden : public TableColumn {
 public:
-  Hidden(OpenDataFile *file) : BoolTableColumn("Hidden", file) {}
+  Hidden(OpenDataFile *file) : TableColumn("Hidden", file) {}
 
   QVariant data(int row, int role) const override {
     if (role == Qt::DisplayRole || role == Qt::EditRole)

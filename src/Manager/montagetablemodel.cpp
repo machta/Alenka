@@ -43,9 +43,9 @@ public:
   }
 };
 
-class Save : public BoolTableColumn {
+class Save : public TableColumn {
 public:
-  Save(OpenDataFile *file) : BoolTableColumn("Save", file) {}
+  Save(OpenDataFile *file) : TableColumn("Save", file) {}
 
   QVariant data(int row, int role) const override {
     if (role == Qt::DisplayRole || role == Qt::EditRole)
