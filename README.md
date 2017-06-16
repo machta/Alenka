@@ -1,6 +1,8 @@
 # Alenka
 A Visualisation System for Biosignals
 
+See the Wiki on GitHub for [build instructions](https://github.com/machta/Alenka/wiki).
+
 ### Requirments
 * git
 * cmake 3.1 (for Ubuntu 14 download the latest version)
@@ -10,5 +12,5 @@ A Visualisation System for Biosignals
 * OpenGL 2.0
 * Matio library
 
-See the Wiki on GitHub for [build instructions](https://github.com/machta/Alenka/wiki).
+If your device doesn't support OpenCL (e.g. when running a Linux guest in VirtualBox), use AMD APP SDK for a CPU implementation of OpenCL.
 
