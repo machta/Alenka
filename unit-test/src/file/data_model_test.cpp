@@ -198,7 +198,7 @@ void testMontages(const DataModel *dataModel) {
   EXPECT_EQ(dataModel->montageTable()->rowCount(), 1);
 
   Montage m1 = dataModel->montageTable()->row(0);
-  EXPECT_EQ(m1.name, "Default Montage");
+  EXPECT_EQ(m1.name, "Recording Montage");
   EXPECT_EQ(m1.save, false);
 
   const AbstractTrackTable *trackTable =

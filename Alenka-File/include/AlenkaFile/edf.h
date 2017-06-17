@@ -62,8 +62,6 @@ private:
   void openFile();
   void loadEvents();
   void addUsedEventTypes();
-  static void saveAsWithType(const std::string &filePath, DataFile *sourceFile,
-                             const edf_hdr_struct *edfhdr);
 };
 
 } // namespace AlenkaFile
