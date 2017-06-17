@@ -908,6 +908,24 @@ void SignalFileBrowserWindow::setSecondsPerPage(double seconds) {
   }
 }
 
+void SignalFileBrowserWindow::copyDefaultMontage() {
+  auto montageTable = fileResources->dataModel->montageTable();
+  assert(montageTable->rowCount() == 1);
+  montageTable->insertRows(1);
+
+  Montage m = montageTable->row(1);
+  m.name = "Default Montage";
+  montageTable->row(1, m);
+
+  auto recordingTracks = montageTable->trackTable(0);
+  int count = recordingTracks->rowCount();
+  auto defaultTracks = montageTable->trackTable(1);
+  defaultTracks->insertRows(0, count);
+
+  for (int i = 0; i < count; ++i)
+    defaultTracks->row(i, recordingTracks->row(i));
+}
+
 void SignalFileBrowserWindow::openFile() {
   if (!closeFile())
     return; // User chose to keep open the current file.
@@ -999,6 +1017,9 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
     allowSaveOnClean = false;
   }
   cleanChanged(undoStack->isClean());
+
+  if (!secondaryFileExists)
+    copyDefaultMontage();
 
   setWindowTitle(fileInfo.fileName() + " - " + TITLE);
 

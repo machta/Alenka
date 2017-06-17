@@ -134,6 +134,7 @@ private:
   void sortInLastItem(QComboBox *combo);
   QString imageFilePathDialog();
   void setSecondsPerPage(double seconds);
+  void copyDefaultMontage();
 
 private slots:
   void openFile();

@@ -311,7 +311,7 @@ void DataFile::fillDefaultMontage(int index) {
 
   AbstractMontageTable *mt = getDataModel()->montageTable();
   Montage montage = mt->row(0);
-  montage.name = "Default Montage";
+  montage.name = "Recording Montage";
   mt->row(0, montage);
 
   AbstractTrackTable *tt = mt->trackTable(index);
