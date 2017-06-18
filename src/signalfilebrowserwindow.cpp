@@ -538,7 +538,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   });
 
   // Construct File menu.
-  QMenu *fileMenu = menuBar()->addMenu("&File");
+  fileMenu = menuBar()->addMenu("&File");
 
   fileMenu->addAction(openFileAction);
   fileMenu->addAction(closeFileAction);
@@ -548,6 +548,8 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   fileMenu->addSeparator();
   fileMenu->addAction(undoAction);
   fileMenu->addAction(redoAction);
+  fileMenu->addSeparator();
+  addRecentFilesActions();
 
   // Construct View menu.
   QMenu *viewMenu = menuBar()->addMenu("&View");
@@ -926,6 +928,63 @@ void SignalFileBrowserWindow::copyDefaultMontage() {
     defaultTracks->row(i, recordingTracks->row(i));
 }
 
+void SignalFileBrowserWindow::addRecentFilesActions() {
+  for (auto e : recentFilesActions)
+    fileMenu->removeAction(e);
+  recentFilesActions.clear();
+
+  QVariant recent = PROGRAM_OPTIONS->settings("resent files");
+
+  if (!recent.isNull()) {
+    QStringList list = recent.toStringList();
+
+    if (0 < list.size()) {
+      int i = 1;
+
+      for (const auto &e : list) {
+        QFileInfo fileInfo(e);
+
+        if (fileInfo.exists()) {
+          auto text = QString::fromStdString(to_string(i++) + " ");
+          text = (i <= 10 ? "&" : "") + text + fileInfo.filePath();
+
+          auto action = new QAction(text, this);
+          action->setToolTip(fileInfo.filePath());
+          action->setStatusTip(action->toolTip());
+          fileMenu->addAction(action);
+          recentFilesActions.push_back(action);
+
+          connect(action, &QAction::triggered, [this, fileInfo]() {
+            if (!closeFile())
+              return;
+            openFile(fileInfo.filePath());
+          });
+        }
+      }
+    }
+  }
+}
+
+void SignalFileBrowserWindow::updateRecentFiles(const QFileInfo &fileInfo) {
+  QString filePath = fileInfo.filePath();
+  QVariant recent = PROGRAM_OPTIONS->settings("resent files");
+  QStringList list, newList;
+
+  if (!recent.isNull())
+    list = recent.toStringList();
+
+  newList.push_back(filePath);
+
+  for (auto it = list.begin(); it != list.end(); ++it)
+    if (*it != filePath)
+      newList.push_back(*it);
+
+  if (RECENT_FILE_COUNT < newList.size())
+    newList.pop_back();
+
+  PROGRAM_OPTIONS->settings("resent files", newList);
+}
+
 void SignalFileBrowserWindow::openFile() {
   if (!closeFile())
     return; // User chose to keep open the current file.
@@ -968,6 +1027,9 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
 
   logToFile("Opening file '" << fileName.toStdString() << "'.");
   setEnableFileActions(true);
+
+  updateRecentFiles(fileInfo);
+  addRecentFilesActions();
 
   fileResources->dataModel = make_unique<DataModel>(
       make_unique<VitnessEventTypeTable>(), make_unique<VitnessMontageTable>());
