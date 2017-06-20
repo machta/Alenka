@@ -291,7 +291,8 @@ template <class T> string Montage<T>::stripComments(const string &code) {
   } catch (regex_error) {
   }
 
-  return code;
+  return code; // TODO: Remove consecutive empty lines that sometimes appear
+               // when you remove multiline comments.
 }
 
 template <class T>

@@ -91,8 +91,10 @@ class SignalFileBrowserWindow : public QMainWindow {
   QPushButton *switchButton;
   QByteArray windowState, windowGeometry;
   QStackedWidget *stackedWidget;
-  const int COMBO_PRECISION = 2;
+  const int COMBO_PRECISION = 2, RECENT_FILE_COUNT = 10;
   int nameIndex = 0;
+  QMenu *fileMenu;
+  std::vector<QAction *> recentFilesActions;
 
   struct OpenFileResources {
     std::unique_ptr<AlenkaFile::DataFile> file;
@@ -134,6 +136,9 @@ private:
   void sortInLastItem(QComboBox *combo);
   QString imageFilePathDialog();
   void setSecondsPerPage(double seconds);
+  void copyDefaultMontage();
+  void addRecentFilesActions();
+  void updateRecentFiles(const QFileInfo &fileInfo);
 
 private slots:
   void openFile();

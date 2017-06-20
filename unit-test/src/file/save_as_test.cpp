@@ -5,6 +5,8 @@
 
 using namespace boost::filesystem;
 
+// TODO: Add save_MAT_as_EDF test.
+
 TEST(save_as_test, save_GDF_as_EDF) {
   TestFile gdf00(TEST_DATA_PATH + "gdf/gdf00", 200, 19, 364000);
   unique_ptr<DataFile> gdf_file(gdf00.makeGDF2());
@@ -31,10 +33,8 @@ TEST(save_as_test, save_GDF_as_EDF) {
   double relErr, absErr;
 
   // The conversion introduces an error (probably in the extreme values that
-  // need to be clipped
-  // in order to fit to 16 bits) so these tests have a higher tolerance. But the
-  // result looks OK
-  // in Alenka.
+  // need to be clipped in order to fit into 16 bits) so these tests have a
+  // higher tolerance. But the result looks OK in Alenka.
   compareMatrixAverage(dataD.data(), gdf00.getValues().data(), channelCount,
                        samplesRecorded, &relErr, &absErr);
   EXPECT_LT(relErr, 0.3);

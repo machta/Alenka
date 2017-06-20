@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <iostream>
 #include <stdexcept>
 #include <type_traits>
 
@@ -293,6 +294,20 @@ void DataFile::readSignal(double *data, int64_t firstSample,
   readSignalFloatDouble(this, data, firstSample, lastSample);
 }
 
+double DataFile::getPhysicalMaximum(unsigned int channel) {
+  if (physicalMax.empty())
+    computePhysicalMinMax();
+
+  return physicalMax[channel];
+}
+
+double DataFile::getPhysicalMinimum(unsigned int channel) {
+  if (physicalMin.empty())
+    computePhysicalMinMax();
+
+  return physicalMin[channel];
+}
+
 vector<string> DataFile::getLabels() {
   std::vector<std::string> labels;
   labels.reserve(getChannelCount());
@@ -311,7 +326,7 @@ void DataFile::fillDefaultMontage(int index) {
 
   AbstractMontageTable *mt = getDataModel()->montageTable();
   Montage montage = mt->row(0);
-  montage.name = "Default Montage";
+  montage.name = "Recording Montage";
   mt->row(0, montage);
 
   AbstractTrackTable *tt = mt->trackTable(index);
@@ -324,6 +339,52 @@ void DataFile::fillDefaultMontage(int index) {
     Track t = tt->row(i);
     t.label = labels[i];
     tt->row(i, t);
+  }
+}
+
+void DataFile::computePhysicalMinMax() {
+  assert(physicalMax.empty());
+  assert(physicalMin.empty());
+
+  const int channels = getChannelCount();
+  physicalMax.reserve(channels);
+  physicalMin.reserve(channels);
+
+  for (int i = 0; i < channels; ++i) {
+    physicalMax.push_back(getDigitalMinimum(i));
+    physicalMin.push_back(getDigitalMaximum(i));
+  }
+
+  const int chunkSize = static_cast<int>(getSamplingFrequency());
+  vector<double> tmpData(chunkSize * channels);
+  const auto sampleCount = static_cast<int64_t>(getSamplesRecorded());
+
+  for (int64_t i = 0; i < sampleCount; i += chunkSize) {
+    int64_t to = i + chunkSize - 1;
+    readSignal(tmpData.data(), i, to);
+
+    int size = static_cast<int>(min<int64_t>(chunkSize, sampleCount - i));
+
+    for (int j = 0; j < channels; ++j) {
+      auto itB = tmpData.begin();
+      advance(itB, j * size);
+
+      auto itE = itB;
+      advance(itE, size);
+
+      auto minMax = minmax_element(itB, itE);
+
+      if (*minMax.first < physicalMin[j])
+        physicalMin[j] = *minMax.first;
+
+      if (physicalMax[j] < *minMax.second)
+        physicalMax[j] = *minMax.second;
+    }
+  }
+
+  for (int i = 0; i < channels; ++i) {
+    physicalMax[i] = min(physicalMax[i], getDigitalMaximum(i));
+    physicalMin[i] = max(physicalMin[i], getDigitalMinimum(i));
   }
 }
 

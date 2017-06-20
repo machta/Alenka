@@ -91,6 +91,87 @@ int convertEventPositionBack(long long onset, double samplingFrequency) {
       round(static_cast<double>(onset) * samplingFrequency / 10000 / 1000));
 }
 
+void saveAsWithType(const string &filePath, DataFile *sourceFile,
+                    const edf_hdr_struct *edfhdr) {
+  int numberOfChannels = sourceFile->getChannelCount();
+  double samplingFrequency = sourceFile->getSamplingFrequency();
+  uint64_t samplesRecorded = sourceFile->getSamplesRecorded();
+
+  int type = EDFLIB_FILETYPE_EDFPLUS;
+  if (edfhdr)
+    type = edfhdr->filetype;
+  if (type == EDFLIB_FILETYPE_EDF || type == EDFLIB_FILETYPE_BDF)
+    ++type; // This is because edfopen_file_writeonly accepts only these two
+            // types.
+
+  int tmpFile =
+      edfopen_file_writeonly(filePath.c_str(), type, numberOfChannels);
+
+  if (tmpFile < 0)
+    throw runtime_error("edfopen_file_writeonly error: " + to_string(tmpFile));
+
+  // Copy data into the new file.
+  writeSignalInfo(tmpFile, sourceFile, edfhdr);
+  writeMetaInfo(tmpFile, edfhdr); // TODO: Write some of this (at least date)
+                                  // even when saving as/exporting.
+
+  int fs = static_cast<int>(round(samplingFrequency));
+  unique_ptr<double[]> buffer(
+      new double[numberOfChannels * fs * sizeof(double)]);
+
+  for (uint64_t sampleIndex = 0; sampleIndex < samplesRecorded;
+       sampleIndex += fs) {
+    sourceFile->readSignal(buffer.get(), sampleIndex, sampleIndex + fs - 1);
+
+    for (int i = 0; i < numberOfChannels; ++i) {
+      int res = edfwrite_physical_samples(tmpFile, buffer.get() + i * fs);
+
+      if (res != 0)
+        throw runtime_error("edfwrite_physical_samples failed");
+    }
+  }
+
+  // Write events.
+  AbstractMontageTable *montageTable =
+      sourceFile->getDataModel()->montageTable();
+
+  for (int i = 0; i < montageTable->rowCount(); ++i) {
+    if (montageTable->row(i).save) {
+      AbstractEventTable *eventTable = montageTable->eventTable(i);
+
+      for (int j = 0; j < eventTable->rowCount(); ++j) {
+        Event e = eventTable->row(j);
+
+        // Skip events belonging to tracks greater thatn the number of channels
+        // in the file.
+        // TODO: Perhaps make a warning about this?
+        if (-1 <= e.channel && e.channel < static_cast<int>(numberOfChannels) &&
+            e.type >= 0) {
+          long long onset = convertEventPosition(e.position, samplingFrequency);
+          long long duration =
+              convertEventPosition(e.duration, samplingFrequency);
+
+          stringstream ss;
+          ss << "t=" << e.type << " c=" << e.channel << "|" << e.label << "|"
+             << e.description;
+
+          int res = edfwrite_annotation_utf8(tmpFile, onset, duration,
+                                             ss.str().c_str());
+
+          if (res != 0)
+            throw runtime_error("edfwrite_annotation_utf8 failed");
+        }
+      }
+    }
+  }
+
+  // Close the open files.
+  int res = edfclose_file(tmpFile);
+
+  if (res != 0)
+    throw runtime_error("Closing tmp EDF file failed");
+}
+
 } // namespace
 
 namespace AlenkaFile {
@@ -355,87 +436,6 @@ void EDF::addUsedEventTypes() {
 
     et->row(i, e);
   }
-}
-
-void EDF::saveAsWithType(const string &filePath, DataFile *sourceFile,
-                         const edf_hdr_struct *edfhdr) {
-  int numberOfChannels = sourceFile->getChannelCount();
-  double samplingFrequency = sourceFile->getSamplingFrequency();
-  uint64_t samplesRecorded = sourceFile->getSamplesRecorded();
-
-  int type = EDFLIB_FILETYPE_EDFPLUS;
-  if (edfhdr)
-    type = edfhdr->filetype;
-  if (type == EDFLIB_FILETYPE_EDF || type == EDFLIB_FILETYPE_BDF)
-    ++type; // This is because edfopen_file_writeonly accepts only these two
-            // types.
-
-  int tmpFile =
-      edfopen_file_writeonly(filePath.c_str(), type, numberOfChannels);
-
-  if (tmpFile < 0)
-    throw runtime_error("edfopen_file_writeonly error: " + to_string(tmpFile));
-
-  // Copy data into the new file.
-  writeSignalInfo(tmpFile, sourceFile, edfhdr);
-  writeMetaInfo(tmpFile, edfhdr); // TODO: Write some of this (at least date)
-                                  // even when saving as/exporting.
-
-  int fs = static_cast<int>(round(samplingFrequency));
-  unique_ptr<double[]> buffer(
-      new double[numberOfChannels * fs * sizeof(double)]);
-
-  for (uint64_t sampleIndex = 0; sampleIndex < samplesRecorded;
-       sampleIndex += fs) {
-    sourceFile->readSignal(buffer.get(), sampleIndex, sampleIndex + fs - 1);
-
-    for (int i = 0; i < numberOfChannels; ++i) {
-      int res = edfwrite_physical_samples(tmpFile, buffer.get() + i * fs);
-
-      if (res != 0)
-        throw runtime_error("edfwrite_physical_samples failed");
-    }
-  }
-
-  // Write events.
-  AbstractMontageTable *montageTable =
-      sourceFile->getDataModel()->montageTable();
-
-  for (int i = 0; i < montageTable->rowCount(); ++i) {
-    if (montageTable->row(i).save) {
-      AbstractEventTable *eventTable = montageTable->eventTable(i);
-
-      for (int j = 0; j < eventTable->rowCount(); ++j) {
-        Event e = eventTable->row(j);
-
-        // Skip events belonging to tracks greater thatn the number of channels
-        // in the file.
-        // TODO: Perhaps make a warning about this?
-        if (-1 <= e.channel && e.channel < static_cast<int>(numberOfChannels) &&
-            e.type >= 0) {
-          long long onset = convertEventPosition(e.position, samplingFrequency);
-          long long duration =
-              convertEventPosition(e.duration, samplingFrequency);
-
-          stringstream ss;
-          ss << "t=" << e.type << " c=" << e.channel << "|" << e.label << "|"
-             << e.description;
-
-          int res = edfwrite_annotation_utf8(tmpFile, onset, duration,
-                                             ss.str().c_str());
-
-          if (res != 0)
-            throw runtime_error("edfwrite_annotation_utf8 failed");
-        }
-      }
-    }
-  }
-
-  // Close the open files.
-  int res = edfclose_file(tmpFile);
-
-  if (res != 0)
-    throw runtime_error("Closing tmp EDF file failed");
 }
 
 } // namespace AlenkaFile

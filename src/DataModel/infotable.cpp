@@ -17,7 +17,7 @@ void InfoTable::setDefaultValues() {
   highpassOn = false;
   notchOn = false;
   filterWindow = AlenkaSignal::WindowFunction::None;
-  selectedMontage = 0;
+  selectedMontage = 1;
   timeMode = InfoTable::TimeMode::offset;
   selectedType = 0;
   timeLineInterval = 1;

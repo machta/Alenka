@@ -8,7 +8,8 @@
 #include <string>
 #include <vector>
 
-// TODO: add a public interface for access to the headers
+// TODO: Add a public interface for access to the headers.
+// TODO: Get rid of the unsigned types in the interface.
 
 namespace AlenkaFile {
 
@@ -32,6 +33,7 @@ namespace AlenkaFile {
 class DataFile {
   std::string filePath;
   DataModel *dataModel;
+  std::vector<double> physicalMax, physicalMin;
 
 public:
   /**
@@ -135,8 +137,8 @@ public:
   }
   void setDataModel(DataModel *dataModel) { this->dataModel = dataModel; }
 
-  virtual double getPhysicalMaximum(unsigned int /*channel*/) { return 32767; }
-  virtual double getPhysicalMinimum(unsigned int /*channel*/) { return -32768; }
+  virtual double getPhysicalMaximum(unsigned int channel);
+  virtual double getPhysicalMinimum(unsigned int channel);
   virtual double getDigitalMaximum(unsigned int /*channel*/) { return 32767; }
   virtual double getDigitalMinimum(unsigned int /*channel*/) { return -32768; }
   virtual std::string getLabel(unsigned int channel) = 0;
@@ -181,6 +183,9 @@ public:
   template <typename T> static void changeEndianness(T *val) {
     changeEndianness(reinterpret_cast<char *>(val), sizeof(T));
   }
+
+private:
+  void computePhysicalMinMax();
 };
 
 } // namespace AlenkaFile

@@ -327,6 +327,12 @@ Canvas::~Canvas() {
     checkClErrorCode(err, "clReleaseCommandQueue()");
   }
 
+  // Release these three objects here explicitly to make sure the right GL
+  // context is bound by makeCurrent().
+  signalProgram.reset();
+  eventProgram.reset();
+  rectangleLineProgram.reset();
+
   logLastGLMessage();
   OPENGL_INTERFACE->checkGLErrors();
   doneCurrent();
