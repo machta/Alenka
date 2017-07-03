@@ -122,6 +122,9 @@ set(SRC
   src/Manager/trackmanager.h
   src/Manager/tracktablemodel.cpp
   src/Manager/tracktablemodel.h
+  src/SignalProcessor/automaticmontage.h
+  src/SignalProcessor/bipolarmontage.cpp
+  src/SignalProcessor/bipolarmontage.h
   src/SignalProcessor/lrucache.h
   src/SignalProcessor/signalprocessor.cpp
   src/SignalProcessor/signalprocessor.h

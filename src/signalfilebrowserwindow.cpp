@@ -17,6 +17,7 @@
 #include "Manager/montagetablemodel.h"
 #include "Manager/trackmanager.h"
 #include "Manager/tracktablemodel.h"
+#include "SignalProcessor/bipolarmontage.h"
 #include "SignalProcessor/signalprocessor.h"
 #include "Sync/syncclient.h"
 #include "Sync/syncdialog.h"
@@ -632,6 +633,21 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
 
   toolsMenu->addAction(showSyncDialog);
   toolsMenu->addAction(synchronize);
+  toolsMenu->addSeparator();
+
+  autoMontages.push_back(make_unique<AutomaticMontage>());
+  autoMontages.push_back(make_unique<BipolarMontage>());
+  autoMontages.push_back(make_unique<BipolarNeighboursMontage>());
+
+  for (const auto &e : autoMontages) {
+    QAction *autoMontageAction =
+        new QAction("Add " + QString::fromStdString(e->getName()), this);
+
+    connect(autoMontageAction, &QAction::triggered,
+            [this, &e]() { addAutoMontage(e.get()); });
+
+    toolsMenu->addAction(autoMontageAction);
+  }
 
   // Construct status bar.
   timeModeStatusLabel = new QLabel(this);
@@ -983,6 +999,20 @@ void SignalFileBrowserWindow::updateRecentFiles(const QFileInfo &fileInfo) {
     newList.pop_back();
 
   PROGRAM_OPTIONS->settings("resent files", newList);
+}
+
+void SignalFileBrowserWindow::addAutoMontage(AutomaticMontage *autoMontage) {
+  AbstractMontageTable *mt = fileResources->dataModel->montageTable();
+
+  int index = mt->rowCount();
+  mt->insertRows(index);
+
+  Montage m = mt->row(index);
+  m.name = autoMontage->getName();
+  mt->row(index, m);
+
+  autoMontage->fillTrackTable(mt->trackTable(0), mt->trackTable(index));
+  OpenDataFile::infoTable.setSelectedMontage(index);
 }
 
 void SignalFileBrowserWindow::openFile() {

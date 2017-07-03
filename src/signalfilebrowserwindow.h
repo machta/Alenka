@@ -13,6 +13,7 @@ namespace AlenkaFile {
 class DataFile;
 class DataModel;
 }
+class AutomaticMontage;
 class OpenDataFile;
 class SignalViewer;
 class TrackManager;
@@ -95,6 +96,7 @@ class SignalFileBrowserWindow : public QMainWindow {
   int nameIndex = 0;
   QMenu *fileMenu;
   std::vector<QAction *> recentFilesActions;
+  std::vector<std::unique_ptr<AutomaticMontage>> autoMontages;
 
   struct OpenFileResources {
     std::unique_ptr<AlenkaFile::DataFile> file;
@@ -139,6 +141,7 @@ private:
   void copyDefaultMontage();
   void addRecentFilesActions();
   void updateRecentFiles(const QFileInfo &fileInfo);
+  void addAutoMontage(AutomaticMontage *autoMontage);
 
 private slots:
   void openFile();
