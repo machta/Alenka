@@ -24,6 +24,7 @@
 #include "Sync/syncserver.h"
 #include "canvas.h"
 #include "error.h"
+#include "montagetemplatedialog.h"
 #include "myapplication.h"
 #include "options.h"
 #include "signalviewer.h"
@@ -423,9 +424,11 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   selectToolBar->setObjectName("Select QToolBar");
   selectToolBar->layout()->setSpacing(spacing);
 
-  label = new QLabel("Mont:", this);
-  label->setToolTip("Montage");
-  selectToolBar->addWidget(label);
+  auto addMontageButton = new QPushButton("Montage:");
+  addMontageButton->setToolTip("Add new montage");
+  addMontageButton->setStatusTip(addMontageButton->toolTip());
+  selectToolBar->addWidget(addMontageButton);
+
   montageComboBox = new QComboBox(this);
   montageComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
   montageComboBox->setMaximumWidth(200);
@@ -635,6 +638,16 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   toolsMenu->addAction(synchronize);
   toolsMenu->addSeparator();
 
+  QMenu *addMontageMenu = toolsMenu->addMenu("Add Montage");
+  addMontageButton->setMenu(addMontageMenu);
+  QAction *montageTemplatesAction = new QAction("Montage Templates...", this);
+  connect(montageTemplatesAction, &QAction::triggered, [this]() {
+    MontageTemplateDialog dialog(fileResources->dataModel->montageTable());
+    dialog.exec();
+  });
+  addMontageMenu->addAction(montageTemplatesAction);
+  addMontageMenu->addSeparator();
+
   autoMontages.push_back(make_unique<AutomaticMontage>());
   autoMontages.push_back(make_unique<BipolarMontage>());
   autoMontages.push_back(make_unique<BipolarNeighboursMontage>());
@@ -646,7 +659,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
     connect(autoMontageAction, &QAction::triggered,
             [this, &e]() { addAutoMontage(e.get()); });
 
-    toolsMenu->addAction(autoMontageAction);
+    addMontageMenu->addAction(autoMontageAction);
   }
 
   // Construct status bar.

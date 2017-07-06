@@ -139,6 +139,8 @@ set(SRC
   src/error.cpp
   src/error.h
   src/main.cpp
+  src/montagetemplatedialog.cpp
+  src/montagetemplatedialog.h
   src/myapplication.cpp
   src/myapplication.h
   src/openglinterface.cpp
@@ -222,7 +224,13 @@ elseif(APPLE)
 endif()
 
 add_custom_command(TARGET Alenka POST_BUILD COMMAND ${CMAKE_COMMAND}
-  -E make_directory $<TARGET_FILE_DIR:Alenka>/log)
+  -E make_directory $<TARGET_FILE_DIR:Alenka>/log
+  $<TARGET_FILE_DIR:Alenka>/montageTemplates)
+
+add_custom_command(TARGET Alenka POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory 
+  ${Alenka_SOURCE_DIR}/misc/deploy/montageTemplates
+  $<TARGET_FILE_DIR:Alenka>/montageTemplates)
 
 # Tests.
 set(CMAKE_AUTOMOC OFF)

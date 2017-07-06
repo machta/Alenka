@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<document>
+	<row label="T 0">
+		<code>out = in("Fp1") - in("F7");</code>
+	</row>
+	<row label="T 1">
+		<code>out = in("F7") - in("T3");</code>
+	</row>
+	<row label="T 2">
+		<code>out = in("T3") - in("T5");</code>
+	</row>
+	<row label="T 3">
+		<code>out = in("T5") - in("O1");</code>
+	</row>
+	<row label="T 4">
+		<code>out = in("O1") - in("P3");</code>
+	</row>
+	<row label="T 5">
+		<code>out = in("P3") - in("C3");</code>
+	</row>
+	<row label="T 6">
+		<code>out = in("C3") - in("F3");</code>
+	</row>
+	<row label="T 7">
+		<code>out = in("F3") - in("Fp1");</code>
+	</row>
+	<row label="T 8">
+		<code>out = in("Fz") - in("Cz");</code>
+	</row>
+	<row label="T 9">
+		<code>out = in("Cz") - in("Pz");</code>
+	</row>
+	<row label="T 10">
+		<code>out = in("Fp2") - in("F8");</code>
+	</row>
+	<row label="T 11">
+		<code>out = in("F8") - in("T4");</code>
+	</row>
+	<row label="T 12">
+		<code>out = in("T4") - in("T6");</code>
+	</row>
+	<row label="T 13">
+		<code>out = in("T6") - in("O2");</code>
+	</row>
+	<row label="T 14">
+		<code>out = in("O2") - in("P4");</code>
+	</row>
+	<row label="T 15">
+		<code>out = in("P2") - in("C4");</code>
+	</row>
+	<row label="T 16">
+		<code>out = in("C4") - in("F4");</code>
+	</row>
+	<row label="T 17">
+		<code>out = in("F4") - in("Fp2");</code>
+	</row>
+</document>

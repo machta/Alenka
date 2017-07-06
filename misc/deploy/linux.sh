@@ -19,6 +19,7 @@ folder=`mktemp -d -p .`
 echo -e Deploying to $name'\n'
 
 mkdir -p $folder/$name/log
+mkdir -p $folder/$name/montageTemplates
 mkdir -p $folder/$name/platforms
 mkdir -p $folder/$name/xcbglintegrations
 mkdir -p $folder/$name/imageformats
@@ -63,6 +64,7 @@ chmod u+x $folder/$name/Alenka*
 cp -v "`dirname $0`/readme-linux.txt" $folder/$name/README
 cp -v "`dirname $0`/options.ini" $folder/$name
 cp -v "`dirname $0`/montageHeader.cl" $folder/$name
+cp -v "`dirname $0`/montageTemplates"/* $folder/$name/montageTemplates
 
 cd $folder &&
 zip -r $name.zip $name &&

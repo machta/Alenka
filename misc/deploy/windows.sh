@@ -24,6 +24,7 @@ folder32=`mktemp -d -p .`
 echo -e Deploying to $name.zip and $name-32.zip'\n'
 
 mkdir -p $folder/$name/log
+mkdir -p $folder/$name/montageTemplates
 mkdir -p $folder/$name/platforms
 mkdir -p $folder/$name/imageformats
 mkdir -p $folder/$name/Qt/labs/folderlistmodel
@@ -40,6 +41,7 @@ mkdir -p $folder/$name/QtQuick/XmlListModel
 mkdir -p $folder/$name/QtQuick.2
 
 mkdir -p $folder32/$name-32/log
+mkdir -p $folder32/$name-32/montageTemplates
 mkdir -p $folder32/$name-32/platforms
 mkdir -p $folder32/$name-32/imageformats
 mkdir -p $folder32/$name-32/Qt/labs/folderlistmodel
@@ -181,6 +183,10 @@ cp -v "$INI" $folder32/$name-32
 HEADER="`dirname $0`/montageHeader.cl"
 cp -v "$HEADER" $folder/$name
 cp -v "$HEADER" $folder32/$name-32
+
+TEMPLATES="`dirname $0`/montageTemplates"
+cp -v "$TEMPLATES"/* $folder/$name/montageTemplates
+cp -v "$TEMPLATES"/* $folder32/$name-32/montageTemplates
 
 # Make zip using .Net.
 rm -f "$name.zip" "$name-32.zip" &&
