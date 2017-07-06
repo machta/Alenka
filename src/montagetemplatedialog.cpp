@@ -9,6 +9,7 @@
 #include <QAction>
 #include <QApplication>
 #include <QDialogButtonBox>
+#include <QFileInfo>
 #include <QInputDialog>
 #include <QLabel>
 #include <QLayout>
@@ -124,7 +125,6 @@ MontageTemplateDialog::MontageTemplateDialog(AbstractMontageTable *montageTable,
   // Set up button box.
   auto addButton = new QPushButton("Add");
   addButton->setToolTip("Create a new montage from the selected template");
-  addButton->setDefault(true);
   connect(addButton, SIGNAL(clicked()), this, SLOT(addMontage()));
 
   auto saveButton = new QPushButton("Save Current");

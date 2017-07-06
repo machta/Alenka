@@ -3,7 +3,6 @@
 
 #include <QDialog>
 #include <QDir>
-#include <QFileinfo>
 
 #include <array>
 #include <string>
@@ -14,6 +13,7 @@ class AbstractMontageTable;
 }
 class QListWidget;
 class QTextEdit;
+class QFileInfo;
 
 struct TemplateFile {
   QString fileName;
