@@ -10,7 +10,9 @@ public:
   BipolarMontage() { name = "Bipolar Montage"; }
 
   void fillTrackTable(const AlenkaFile::AbstractTrackTable *source,
-                      AlenkaFile::AbstractTrackTable *output) override;
+                      const AlenkaFile::AbstractTrackTable *output,
+                      int outputIndex,
+                      UndoCommandFactory *undoFactory) override;
 
 protected:
   virtual int matchPair(int i, const std::vector<std::string> &prefixes,

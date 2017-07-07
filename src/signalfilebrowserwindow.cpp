@@ -642,7 +642,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   addMontageButton->setMenu(addMontageMenu);
   QAction *montageTemplatesAction = new QAction("Montage Templates...", this);
   connect(montageTemplatesAction, &QAction::triggered, [this]() {
-    MontageTemplateDialog dialog(fileResources->dataModel->montageTable());
+    MontageTemplateDialog dialog(openDataFile.get());
     dialog.exec();
   });
   addMontageMenu->addAction(montageTemplatesAction);
@@ -1015,16 +1015,22 @@ void SignalFileBrowserWindow::updateRecentFiles(const QFileInfo &fileInfo) {
 }
 
 void SignalFileBrowserWindow::addAutoMontage(AutomaticMontage *autoMontage) {
-  AbstractMontageTable *mt = fileResources->dataModel->montageTable();
+  UndoCommandFactory *undoFactory = openDataFile->undoFactory;
+  undoFactory->beginMacro("Add " +
+                          QString::fromStdString(autoMontage->getName()));
 
+  const AbstractMontageTable *mt = fileResources->dataModel->montageTable();
   int index = mt->rowCount();
-  mt->insertRows(index);
+  undoFactory->insertMontage(index);
 
   Montage m = mt->row(index);
   m.name = autoMontage->getName();
-  mt->row(index, m);
+  undoFactory->changeMontage(index, m);
 
-  autoMontage->fillTrackTable(mt->trackTable(0), mt->trackTable(index));
+  autoMontage->fillTrackTable(mt->trackTable(0), mt->trackTable(index), index,
+                              undoFactory);
+  undoFactory->endMacro();
+
   OpenDataFile::infoTable.setSelectedMontage(index);
 }
 

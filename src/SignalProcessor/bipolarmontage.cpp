@@ -38,32 +38,41 @@ void parseLabels(const AbstractTrackTable *source, vector<string> &prefixes,
 } // nemespace
 
 void BipolarMontage::fillTrackTable(const AbstractTrackTable *source,
-                                    AbstractTrackTable *output) {
+                                    const AbstractTrackTable *output,
+                                    int outputIndex,
+                                    UndoCommandFactory *undoFactory) {
   vector<string> prefixes;
   vector<int> indexes;
-  int outputSize = output->rowCount();
+  int trackIndex = 0;
 
   parseLabels(source, prefixes, indexes);
   assert(prefixes.size() == indexes.size());
   assert(static_cast<int>(prefixes.size()) == source->rowCount());
 
+  vector<string> labels, codes;
+
   for (unsigned int i = 0; i < prefixes.size(); ++i) {
     int match = matchPair(i, prefixes, indexes);
 
     if (0 <= match) {
-      output->insertRows(outputSize);
-
-      Track t = output->row(outputSize);
-
-      t.label =
-          prefixes[i] + to_string(indexes[i]) + "-" + to_string(indexes[match]);
+      labels.push_back(prefixes[i] + to_string(indexes[i]) + "-" +
+                       to_string(indexes[match]));
 
       string lA = prefixes[i] + to_string(indexes[i]);
       string lB = prefixes[i] + to_string(indexes[match]);
-      t.code = "out = in(\"" + lA + "\") - in(\"" + lB + "\");";
-
-      output->row(outputSize++, t);
+      codes.push_back("out = in(\"" + lA + "\") - in(\"" + lB + "\");");
     }
+  }
+
+  int count = labels.size();
+  assert(count == static_cast<int>(codes.size()));
+  undoFactory->insertTrack(outputIndex, 0, count);
+
+  for (int i = 0; i < count; ++i) {
+    Track t = output->row(trackIndex);
+    t.label = labels[i];
+    t.code = codes[i];
+    undoFactory->changeTrack(outputIndex, i, t);
   }
 }
 

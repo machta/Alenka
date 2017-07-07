@@ -8,9 +8,7 @@
 #include <string>
 #include <vector>
 
-namespace AlenkaFile {
-class AbstractMontageTable;
-}
+class OpenDataFile;
 class QListWidget;
 class QTextEdit;
 class QFileInfo;
@@ -23,15 +21,14 @@ struct TemplateFile {
 class MontageTemplateDialog : public QDialog {
   Q_OBJECT
 
-  AlenkaFile::AbstractMontageTable *montageTable;
+  OpenDataFile *file;
   QDir dir;
   std::vector<TemplateFile> templates;
   QListWidget *list;
   QTextEdit *textEdit;
 
 public:
-  explicit MontageTemplateDialog(AlenkaFile::AbstractMontageTable *montageTable,
-                                 QWidget *parent = nullptr);
+  explicit MontageTemplateDialog(OpenDataFile *file, QWidget *parent = nullptr);
 
 private:
   void readTemplates();

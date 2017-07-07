@@ -2,6 +2,7 @@
 
 #include "../Alenka-File/include/AlenkaFile/datafile.h"
 #include "DataModel/opendatafile.h"
+#include "DataModel/undocommandfactory.h"
 #include "error.h"
 
 #include <pugixml.hpp>
@@ -67,11 +68,10 @@ QString indentString(const QString &str, int spaces) {
 
 } // namespace
 
-MontageTemplateDialog::MontageTemplateDialog(AbstractMontageTable *montageTable,
+MontageTemplateDialog::MontageTemplateDialog(OpenDataFile *file,
                                              QWidget *parent)
-    : QDialog(parent), montageTable(montageTable),
-      dir(QApplication::applicationDirPath() + QDir::separator() +
-          "montageTemplates") {
+    : QDialog(parent), file(file), dir(QApplication::applicationDirPath() +
+                                       QDir::separator() + "montageTemplates") {
   readTemplates();
 
   QVBoxLayout *box = new QVBoxLayout();
@@ -191,25 +191,31 @@ void MontageTemplateDialog::addMontage() {
     return;
 
   const TemplateFile &selectedItem = templates[selectedRow];
+  QFileInfo fi(selectedItem.fileName);
+  string montageName = fi.baseName().toStdString();
+  UndoCommandFactory *undoFactory = file->undoFactory;
+  undoFactory->beginMacro("Add " + QString::fromStdString(montageName));
+
+  const AbstractMontageTable *montageTable = file->dataModel->montageTable();
   int index = montageTable->rowCount();
-  montageTable->insertRows(index);
+  undoFactory->insertMontage(index);
 
   Montage m = montageTable->row(index);
-  QFileInfo fi(selectedItem.fileName);
-  m.name = fi.baseName().toStdString();
-  montageTable->row(index, m);
+  m.name = montageName;
+  undoFactory->changeMontage(index, m);
 
-  AbstractTrackTable *trackTable = montageTable->trackTable(index);
+  const AbstractTrackTable *trackTable = montageTable->trackTable(index);
   int trackCount = selectedItem.rows.size();
-  trackTable->insertRows(0, trackCount);
+  undoFactory->insertTrack(index, 0, trackCount);
 
   for (int i = 0; i < trackCount; ++i) {
     Track t = trackTable->row(i);
     t.label = selectedItem.rows[i][0].toStdString();
     t.code = selectedItem.rows[i][1].toStdString();
-    trackTable->row(i, t);
+    undoFactory->changeTrack(index, i, t);
   }
 
+  undoFactory->endMacro();
   OpenDataFile::infoTable.setSelectedMontage(index);
   accept();
 }
@@ -257,7 +263,7 @@ void MontageTemplateDialog::renameTemplate() {
 void MontageTemplateDialog::saveCurrentMontage() {
   int selectedMontage = OpenDataFile::infoTable.getSelectedMontage();
   const AbstractTrackTable *trackTable =
-      montageTable->trackTable(selectedMontage);
+      file->dataModel->montageTable()->trackTable(selectedMontage);
 
   TemplateFile tf;
   xml_document xmlFile;
@@ -280,8 +286,9 @@ void MontageTemplateDialog::saveCurrentMontage() {
   }
 
   QFileInfo fi;
-  bool res =
-      getUniqueFileName(montageTable->row(selectedMontage).name.c_str(), &fi);
+  QString name =
+      file->dataModel->montageTable()->row(selectedMontage).name.c_str();
+  bool res = getUniqueFileName(name, &fi);
 
   if (res) {
     tf.fileName = fi.fileName();
