@@ -17,13 +17,12 @@ void parseLabels(const AbstractTrackTable *source, vector<string> &prefixes,
   for (int i = 0; i < sourceRows; ++i) {
     Track t = source->row(i);
     string label = t.label;
+    auto digit = [](char c) { return isdigit(c) == 0; };
 
-    auto prefixEnd = find_if(label.begin(), label.end(),
-                             [](char c) { return isalpha(c) == 0; });
+    auto prefixEnd = find_if_not(label.begin(), label.end(), digit);
     string prefix(label.begin(), prefixEnd);
 
-    auto indexEnd =
-        find_if(prefixEnd, label.end(), [](char c) { return isdigit(c) == 0; });
+    auto indexEnd = find_if(prefixEnd, label.end(), digit);
     string index(prefixEnd, indexEnd);
 
     if (indexEnd != label.end() || prefix.empty() || index.empty()) {
