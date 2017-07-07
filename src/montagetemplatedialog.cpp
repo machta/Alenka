@@ -31,9 +31,9 @@ namespace {
 
 auto readRows(const QFileInfo &fi) {
   vector<array<QString, 2>> rows;
-
+  string filePath = fi.filePath().toStdString();
   xml_document xmlFile;
-  xml_parse_result res = xmlFile.load_file(fi.filePath().toStdString().c_str());
+  xml_parse_result res = xmlFile.load_file(filePath.c_str());
 
   if (res) {
     xml_node document = xmlFile.child("document");
@@ -47,7 +47,10 @@ auto readRows(const QFileInfo &fi) {
 
       row = row.next_sibling("row");
     }
+  } else {
+    cerr << "Error while opening file '" << filePath << "'" << endl;
   }
+  assert(res && "Error while opening file");
 
   return rows;
 }
@@ -222,6 +225,7 @@ void MontageTemplateDialog::deleteTemplate() {
   if (!res)
     cerr << "Error while removing file '" << fileName.toStdString() << "'"
          << endl;
+  assert(res && "Error while removing file");
 
   templates.erase(next(templates.begin(), index));
   populateList();
@@ -243,6 +247,7 @@ void MontageTemplateDialog::renameTemplate() {
     if (!res)
       cerr << "Error while renaming file from '" << fileName.toStdString()
            << "' to '" << newFileName.toStdString() << "'" << endl;
+    assert(res && "Error while renaming file");
 
     templates[index].fileName = newFileName;
     populateList();
@@ -284,6 +289,7 @@ void MontageTemplateDialog::saveCurrentMontage() {
 
     if (!xmlFile.save_file(path.c_str())) {
       logToFileAndConsole("Error while writing file '" << path << "'.");
+      assert(false && "Error while writing file");
     } else {
       templates.push_back(tf);
       populateList();
