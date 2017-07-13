@@ -41,7 +41,8 @@ endif()
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   set(WARNINGS "-Wall -pedantic -Wextra")# -Wconversion")
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR
+  "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
   set(WARNINGS "-Wall -pedantic -Wextra")# -Wconversion")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   #set(WARNINGS "-W4") # This can be used to get some additional warnings.
