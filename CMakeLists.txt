@@ -233,6 +233,11 @@ add_custom_command(TARGET Alenka POST_BUILD
   ${Alenka_SOURCE_DIR}/misc/deploy/montageTemplates
   $<TARGET_FILE_DIR:Alenka>/montageTemplates)
 
+add_custom_command(TARGET Alenka POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+  ${Alenka_SOURCE_DIR}/misc/deploy/montageHeader.cl
+  $<TARGET_FILE_DIR:Alenka>)
+
 # Tests.
 set(CMAKE_AUTOMOC OFF)
 set(CMAKE_AUTORCC OFF)
