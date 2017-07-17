@@ -12,8 +12,14 @@ class TrackCodeValidator;
  * @brief Implements a dialog for entering more detailed montage track code.
  */
 class CodeEditDialog : public QDialog {
+  Q_OBJECT
+
+  QTextEdit *editor;
+  std::unique_ptr<TrackCodeValidator> validator;
+
 public:
   CodeEditDialog(QWidget *parent);
+  ~CodeEditDialog();
 
   QString getText() const;
 
@@ -30,10 +36,6 @@ public slots:
    * @brief This method gets called when the user closes the dialog.
    */
   void done(int r) override;
-
-private:
-  QTextEdit *editor;
-  std::unique_ptr<TrackCodeValidator> validator;
 };
 
 #endif // CODEEDITDIALOG_H

@@ -52,6 +52,8 @@ Definitions included in the source code that you can use:)";
   setLayout(box);
 }
 
+CodeEditDialog::~CodeEditDialog() {}
+
 QString CodeEditDialog::getText() const { return editor->toPlainText(); }
 
 void CodeEditDialog::errorMessageDialog(const QString &message,

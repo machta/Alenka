@@ -75,13 +75,6 @@ float z(int i, PARA) {
     return /*NAN*/ 0;
 }
 #define z(a_) z(a_, PASS)
-
-// Euclidean distance between channels i and j.
-float dist(int i, int j, PARA) {
-  return sqrt(pown(x(i) - x(j), 2) + pown(y(i) - y(j), 2) +
-              pown(z(i) - z(j), 2));
-}
-#define dist(a_, b_) dist(a_, b_, PASS)
 )";
   src += headerSource;
   src += R"(

@@ -13,6 +13,13 @@ float sumAll(PARA) { return sum(0, _inputRowCount_ - 1); }
 float average(PARA) { return sumAll() / _inputRowCount_; }
 #define average() average(PASS)
 
+// Euclidean distance between channels i and j.
+float dist(int i, int j, PARA) {
+  return sqrt(pown(x(i) - x(j), 2) + pown(y(i) - y(j), 2) +
+              pown(z(i) - z(j), 2));
+}
+#define dist(a_, b_) dist(a_, b_, PASS)
+
 // Weigted average by distance d where weights = 1/(d*coeff + 1).
 // For ceoff = 1 the weights for distances 0, 1, 2, ... are 1, 1/2, 1/3, ...
 float distAverage(int i, int coeff, PARA) {
