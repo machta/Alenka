@@ -1,3 +1,9 @@
+// Retrun the index of the channel with the label passed as the first parameter.
+int label(int i) {
+  return i;
+}
+
+// Sum channels in range of indexes [from, to].
 float sum(int from, int to, PARA) {
   float tmp = 0;
   for (int i = from; i <= to; ++i) {
@@ -7,9 +13,21 @@ float sum(int from, int to, PARA) {
 }
 #define sum(a_, b_) sum(a_, b_, PASS)
 
+// Sum all channels.
 float sumAll(PARA) { return sum(0, _inputRowCount_ - 1); }
 #define sumAll() sumAll(PASS)
 
+// Sum channels in an array of indexes.
+float sumArr(int *indexArr, int n, PARA) {
+  float tmp = 0;
+  for (int i = 0; i < n; ++i) {
+    tmp += in(indexArr[i]);
+  }
+  return tmp;
+}
+#define sumArr(a_, b_) sumArr(a_, b_, PASS)
+
+// Arithmetic average of all channels.
 float average(PARA) { return sumAll() / _inputRowCount_; }
 #define average() average(PASS)
 
