@@ -15,10 +15,8 @@ using namespace std;
 
 SpikedetSettingsDialog::SpikedetSettingsDialog(DETECTOR_SETTINGS *settings,
                                                double *eventDuration,
-                                               bool *originalSpikedet,
                                                QWidget *parent)
-    : QDialog(parent), settings(settings), eventDuration(eventDuration),
-      originalSpikedet(originalSpikedet) {
+    : QDialog(parent), settings(settings), eventDuration(eventDuration) {
   auto box = new QVBoxLayout();
 
   auto grid = new QFormLayout();
@@ -31,10 +29,9 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(DETECTOR_SETTINGS *settings,
   connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
   connect(buttonBox, &QDialogButtonBox::clicked,
-          [this, buttonBox, settings, eventDuration,
-           originalSpikedet](QAbstractButton *button) {
+          [this, buttonBox, settings, eventDuration](QAbstractButton *button) {
             if (buttonBox->buttonRole(button) == QDialogButtonBox::ResetRole) {
-              resetSettings(settings, eventDuration, originalSpikedet);
+              resetSettings(settings, eventDuration);
               setValues();
             }
           });
@@ -167,20 +164,11 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(DETECTOR_SETTINGS *settings,
           [eventDuration](double val) { *eventDuration = val; });
   grid->addRow(label, sed_box);
 
-  label = new QLabel("Original Spikedet:");
-  label->setToolTip("Use orginal Spikedet implementation instead of the "
-                    "optimized version (--osd)");
-  odm_box = new QCheckBox();
-  connect(odm_box, &QCheckBox::clicked,
-          [originalSpikedet](bool val) { *originalSpikedet = val; });
-  grid->addRow(label, odm_box);
-
   setValues();
 }
 
 void SpikedetSettingsDialog::resetSettings(DETECTOR_SETTINGS *settings,
-                                           double *eventDuration,
-                                           bool *originalSpikedet) {
+                                           double *eventDuration) {
   programOption("fl", settings->m_band_low);
   programOption("fh", settings->m_band_high);
   programOption("k1", settings->m_k1);
@@ -196,9 +184,6 @@ void SpikedetSettingsDialog::resetSettings(DETECTOR_SETTINGS *settings,
 
   if (eventDuration)
     programOption("sed", *eventDuration);
-
-  if (originalSpikedet)
-    programOption("osd", *originalSpikedet);
 }
 
 void SpikedetSettingsDialog::setValues() {
@@ -215,5 +200,4 @@ void SpikedetSettingsDialog::setValues() {
   pt_box->setValue(settings->m_polyspike_union_time);
   dec_box->setValue(settings->m_decimation);
   sed_box->setValue(*eventDuration);
-  odm_box->setChecked(*originalSpikedet);
 }

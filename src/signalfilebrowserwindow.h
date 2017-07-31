@@ -13,6 +13,9 @@ namespace AlenkaFile {
 class DataFile;
 class DataModel;
 }
+class Analysis;
+class SpikedetAnalysis;
+class ModifiedSpikedetAnalysis;
 class AutomaticMontage;
 class OpenDataFile;
 class SignalViewer;
@@ -26,7 +29,6 @@ class QCheckBox;
 class QActionGroup;
 class QLabel;
 class QAction;
-class SpikedetAnalysis;
 class SyncServer;
 class SyncClient;
 class SyncDialog;
@@ -69,9 +71,11 @@ class SignalFileBrowserWindow : public QMainWindow {
   QLabel *timeStatusLabel;
   QLabel *positionStatusLabel;
   QLabel *cursorStatusLabel;
-  std::unique_ptr<SpikedetAnalysis> spikedetAnalysis;
   double spikeDuration;
-  bool originalSpikedet;
+  std::vector<std::unique_ptr<Analysis>> signalAnalysis;
+  SpikedetAnalysis *spikedetAnalysis;
+  ModifiedSpikedetAnalysis *modifiedSpikedetAnalysis;
+  std::vector<QAction *> analysisActions;
   std::unique_ptr<SyncServer> syncServer;
   std::unique_ptr<SyncClient> syncClient;
   SyncDialog *syncDialog;
@@ -87,7 +91,6 @@ class SignalFileBrowserWindow : public QMainWindow {
   QAction *saveFileAction;
   QAction *closeFileAction;
   QAction *exportToEdfAction;
-  QAction *runSpikedetAction;
   bool allowSaveOnClean;
   QPushButton *switchButton;
   QByteArray windowState, windowGeometry;
@@ -165,7 +168,7 @@ private slots:
   void updateCursorStatusLabel();
   void updateMontageComboBox();
   void updateEventTypeComboBox();
-  void runSpikedet();
+  void runSignalAnalysis(int i);
   void receiveSyncMessage(const QByteArray &message);
   void sendSyncMessage();
   void cleanChanged(bool clean);

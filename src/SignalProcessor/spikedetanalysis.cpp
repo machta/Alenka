@@ -1,14 +1,14 @@
 #include "spikedetanalysis.h"
 
-#include "../Alenka-Signal/include/AlenkaSignal/montage.h"
-#include "../Alenka-Signal/include/AlenkaSignal/montageprocessor.h"
-#include "../Alenka-Signal/include/AlenkaSignal/openclcontext.h"
-#include "DataModel/opendatafile.h"
-#include "DataModel/undocommandfactory.h"
-#include "SignalProcessor/signalprocessor.h"
-#include "myapplication.h"
-#include "signalfilebrowserwindow.h"
-#include "spikedetsettingsdialog.h"
+#include "../../Alenka-Signal/include/AlenkaSignal/montage.h"
+#include "../../Alenka-Signal/include/AlenkaSignal/montageprocessor.h"
+#include "../../Alenka-Signal/include/AlenkaSignal/openclcontext.h"
+#include "../DataModel/opendatafile.h"
+#include "../DataModel/undocommandfactory.h"
+#include "../myapplication.h"
+#include "../signalfilebrowserwindow.h"
+#include "../spikedetsettingsdialog.h"
+#include "signalprocessor.h"
 
 #include <QFile>
 #include <QFileInfo>
@@ -220,16 +220,21 @@ const int SLEEP_FOR_MS = 1;
 
 } // namespace
 
-void SpikedetAnalysis::runAnalysis(OpenDataFile *file,
-                                   QProgressDialog *progress,
-                                   bool originalSpikedet) {
+void SpikedetAnalysis::runAnalysis(OpenDataFile *file, QWidget *parent) {
   assert(file);
+
+  QProgressDialog progress("Running Spikedet analysis", "Abort", 0, 100,
+                           parent);
+  progress.setWindowModality(Qt::WindowModal);
+
+  progress.setMinimumDuration(0); // This is to show the dialog immediately.
+  progress.setValue(1);
 
   vector<unique_ptr<Montage<SIGNALTYPE>>> montage =
       makeMontage<SIGNALTYPE>(file, context);
 
   int Fs = static_cast<int>(round(file->file->getSamplingFrequency()));
-  Spikedet spikedet(Fs, originalSpikedet, settings);
+  Spikedet spikedet(Fs, originalSpikedet(), settings);
   Loader<SIGNALTYPE> loader(file->file, montage, context);
 
   output = make_unique<CDetectorOutput>();
@@ -240,9 +245,9 @@ void SpikedetAnalysis::runAnalysis(OpenDataFile *file,
 
   while (1) {
     int percentage = spikedet.progressPercentage();
-    progress->setValue(percentage);
+    progress.setValue(percentage);
 
-    if (progress->wasCanceled()) {
+    if (progress.wasCanceled()) {
       spikedet.cancel();
       break;
     }
@@ -254,7 +259,7 @@ void SpikedetAnalysis::runAnalysis(OpenDataFile *file,
   }
 
   t.join();
-  progress->setValue(100);
+  progress.setValue(100);
 
   processOutput(file, this, spikeDuration);
 }
@@ -279,13 +284,10 @@ void SpikedetAnalysis::analyseCommandLineFile() {
   }
 
   int Fs = static_cast<int>(round(file->getSamplingFrequency()));
-  bool originalSpikedet;
-  programOption("osd", originalSpikedet);
-
   auto settings = AlenkaSignal::Spikedet::defaultSettings();
-  SpikedetSettingsDialog::resetSettings(&settings, nullptr, &originalSpikedet);
+  SpikedetSettingsDialog::resetSettings(&settings, nullptr);
 
-  Spikedet spikedet(Fs, originalSpikedet, settings);
+  Spikedet spikedet(Fs, true, settings);
   FileSpikedetLoader<SIGNALTYPE> loader(file.get());
 
   auto output = make_unique<CDetectorOutput>();

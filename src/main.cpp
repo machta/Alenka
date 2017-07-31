@@ -6,11 +6,11 @@
  * @file
  */
 
+#include "SignalProcessor/spikedetanalysis.h"
 #include "error.h"
 #include "myapplication.h"
 #include "options.h"
 #include "signalfilebrowserwindow.h"
-#include "spikedetanalysis.h"
 
 #include <stdexcept>
 #include <string>

@@ -29,15 +29,13 @@ class SpikedetSettingsDialog : public QDialog {
   QDoubleSpinBox *pt_box;
   QSpinBox *dec_box;
   QDoubleSpinBox *sed_box;
-  QCheckBox *odm_box;
 
 public:
   explicit SpikedetSettingsDialog(DETECTOR_SETTINGS *settings,
-                                  double *eventDuration, bool *originalSpikedet,
+                                  double *eventDuration,
                                   QWidget *parent = nullptr);
 
-  static void resetSettings(DETECTOR_SETTINGS *settings, double *eventDuration,
-                            bool *originalSpikedet);
+  static void resetSettings(DETECTOR_SETTINGS *settings, double *eventDuration);
 
 private:
   void setValues();

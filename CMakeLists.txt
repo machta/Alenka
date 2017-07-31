@@ -123,12 +123,16 @@ set(SRC
   src/Manager/trackmanager.h
   src/Manager/tracktablemodel.cpp
   src/Manager/tracktablemodel.h
+  src/SignalProcessor/analysis.h
   src/SignalProcessor/automaticmontage.h
   src/SignalProcessor/bipolarmontage.cpp
   src/SignalProcessor/bipolarmontage.h
   src/SignalProcessor/lrucache.h
+  src/SignalProcessor/modifiedspikedetanalysis.h
   src/SignalProcessor/signalprocessor.cpp
   src/SignalProcessor/signalprocessor.h
+  src/SignalProcessor/spikedetanalysis.cpp
+  src/SignalProcessor/spikedetanalysis.h
   src/Sync/syncclient.cpp
   src/Sync/syncclient.h
   src/Sync/syncdialog.cpp
@@ -154,8 +158,6 @@ set(SRC
   src/signalfilebrowserwindow.h
   src/signalviewer.cpp
   src/signalviewer.h
-  src/spikedetanalysis.cpp
-  src/spikedetanalysis.h
   src/spikedetsettingsdialog.cpp
   src/spikedetsettingsdialog.h
   src/tracklabelbar.cpp

@@ -18,7 +18,9 @@
 #include "Manager/trackmanager.h"
 #include "Manager/tracktablemodel.h"
 #include "SignalProcessor/bipolarmontage.h"
+#include "SignalProcessor/modifiedspikedetanalysis.h"
 #include "SignalProcessor/signalprocessor.h"
+#include "SignalProcessor/spikedetanalysis.h"
 #include "Sync/syncclient.h"
 #include "Sync/syncdialog.h"
 #include "Sync/syncserver.h"
@@ -28,7 +30,6 @@
 #include "myapplication.h"
 #include "options.h"
 #include "signalviewer.h"
-#include "spikedetanalysis.h"
 #include "spikedetsettingsdialog.h"
 
 #include <QAction>
@@ -46,7 +47,6 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
-#include <QProgressDialog>
 #include <QPushButton>
 #include <QQmlContext>
 #include <QQuickItem>
@@ -136,6 +136,18 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   setCentralWidget(stackedWidget);
 
   openDataFile = make_unique<OpenDataFile>();
+
+  // Set up Signal analysis.
+  spikedetAnalysis = new SpikedetAnalysis(globalContext.get());
+  signalAnalysis.push_back(unique_ptr<Analysis>(spikedetAnalysis));
+
+  modifiedSpikedetAnalysis = new ModifiedSpikedetAnalysis(globalContext.get());
+  signalAnalysis.push_back(unique_ptr<Analysis>(modifiedSpikedetAnalysis));
+
+  auto settings = spikedetAnalysis->getSettings();
+  SpikedetSettingsDialog::resetSettings(&settings, &spikeDuration);
+  spikedetAnalysis->setSettings(settings);
+  modifiedSpikedetAnalysis->setSettings(settings);
 
   // Construct dock widgets.
   setDockNestingEnabled(true);
@@ -278,11 +290,19 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   });
 
   // Construct Spikedet actions.
-  runSpikedetAction =
-      new QAction(QIcon(":/icons/play.png"), "Run Spikedet Analysis", this);
-  runSpikedetAction->setToolTip("Run Spikedet analysis on the current montage");
-  runSpikedetAction->setStatusTip(runSpikedetAction->toolTip());
-  connect(runSpikedetAction, &QAction::triggered, [this]() { runSpikedet(); });
+  for (unsigned int i = 0; i < signalAnalysis.size(); ++i) {
+    QString name = "Run " + QString::fromStdString(signalAnalysis[i]->name());
+
+    QAction *action = new QAction(name, this);
+    action->setToolTip(name + " on the current montage");
+    action->setStatusTip(action->toolTip());
+    connect(action, &QAction::triggered, [this, i]() { runSignalAnalysis(i); });
+
+    analysisActions.push_back(action);
+  }
+
+  QAction *runSpikedetAction = analysisActions[0];
+  runSpikedetAction->setIcon(QIcon(":/icons/play.png"));
 
   QAction *spikedetSettingsAction =
       new QAction(QIcon(":/icons/settings.png"), "Spikedet Settings...", this);
@@ -291,15 +311,13 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   connect(spikedetSettingsAction, &QAction::triggered, [this]() {
     DETECTOR_SETTINGS settings = spikedetAnalysis->getSettings();
     double newDuration = spikeDuration;
-    bool newOriginalSpikedet = originalSpikedet;
 
-    SpikedetSettingsDialog dialog(&settings, &newDuration, &newOriginalSpikedet,
-                                  this);
+    SpikedetSettingsDialog dialog(&settings, &newDuration, this);
 
     if (dialog.exec() == QDialog::Accepted) {
       spikedetAnalysis->setSettings(settings);
+      modifiedSpikedetAnalysis->setSettings(settings);
       spikeDuration = newDuration;
-      originalSpikedet = newOriginalSpikedet;
     }
   });
 
@@ -630,7 +648,9 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   // Construct Tools menu.
   QMenu *toolsMenu = menuBar()->addMenu("&Tools");
 
-  toolsMenu->addAction(runSpikedetAction);
+  QMenu *analysisMenu = toolsMenu->addMenu("Run Analysis");
+  for (auto &e : analysisActions)
+    analysisMenu->addAction(e);
   toolsMenu->addAction(spikedetSettingsAction);
   toolsMenu->addSeparator();
 
@@ -696,14 +716,6 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
                       .toByteArray());
   restoreState(
       PROGRAM_OPTIONS->settings("SignalFileBrowserWindow state").toByteArray());
-
-  // Set up Spikedet.
-  spikedetAnalysis = make_unique<SpikedetAnalysis>(globalContext.get());
-
-  auto settings = spikedetAnalysis->getSettings();
-  SpikedetSettingsDialog::resetSettings(&settings, &spikeDuration,
-                                        &originalSpikedet);
-  spikedetAnalysis->setSettings(settings);
 
   setEnableFileActions(false);
 }
@@ -1114,9 +1126,9 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
       secondaryFileExists = fileResources->file->load();
 
     DETECTOR_SETTINGS settings = AlenkaSignal::Spikedet::defaultSettings();
-    OpenDataFile::infoTable.readXML(
-        fileResources->file->getFilePath() + ".info", &settings, &spikeDuration,
-        &originalSpikedet);
+    OpenDataFile::infoTable.readXML(fileResources->file->getFilePath() +
+                                        ".info",
+                                    &settings, &spikeDuration);
   });
 
   if (useAutoSave || !secondaryFileExists) {
@@ -1459,7 +1471,7 @@ bool SignalFileBrowserWindow::closeFile() {
       executeWithCLocale([this]() {
         OpenDataFile::infoTable.writeXML(
             fileResources->file->getFilePath() + ".info",
-            spikedetAnalysis->getSettings(), spikeDuration, originalSpikedet);
+            spikedetAnalysis->getSettings(), spikeDuration);
       });
     } catch (runtime_error e) {
       errorMessage(this, e.what(), "Error while autosaving file");
@@ -1701,7 +1713,7 @@ void SignalFileBrowserWindow::updateEventTypeComboBox() {
   }
 }
 
-void SignalFileBrowserWindow::runSpikedet() {
+void SignalFileBrowserWindow::runSignalAnalysis(int i) {
   if (!fileResources->file)
     return;
 
@@ -1715,15 +1727,12 @@ void SignalFileBrowserWindow::runSpikedet() {
   if (trackTable->rowCount() <= 0)
     return;
 
-  QProgressDialog progress("Running Spikedet analysis", "Abort", 0, 100, this);
-  progress.setWindowModality(Qt::WindowModal);
-
-  progress.setMinimumDuration(0); // This is to show the dialog immediately.
-  progress.setValue(1);
-
+  // Set some details in for the analysis objects.
   spikedetAnalysis->setSpikeDuration(spikeDuration);
-  spikedetAnalysis->runAnalysis(openDataFile.get(), &progress,
-                                originalSpikedet);
+  modifiedSpikedetAnalysis->setSpikeDuration(spikeDuration);
+
+  // Run the appropriate analysis.
+  signalAnalysis[i]->runAnalysis(openDataFile.get(), this);
 }
 
 void SignalFileBrowserWindow::receiveSyncMessage(const QByteArray &message) {
@@ -1821,8 +1830,10 @@ void SignalFileBrowserWindow::closeFilePropagate() {
 
 void SignalFileBrowserWindow::setEnableFileActions(bool enable) {
   closeFileAction->setEnabled(enable);
-  runSpikedetAction->setEnabled(enable);
   exportToEdfAction->setEnabled(enable);
+
+  for (auto &e : analysisActions)
+    e->setEnabled(enable);
 }
 
 void SignalFileBrowserWindow::setFilePathInQML() {

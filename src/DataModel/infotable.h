@@ -56,14 +56,14 @@ public:
    * @brief Writes info file.
    */
   void writeXML(const std::string &filePath,
-                const DETECTOR_SETTINGS &spikedetSettings, double spikeDuration,
-                bool originalSpikedet) const;
+                const DETECTOR_SETTINGS &spikedetSettings,
+                double spikeDuration) const;
 
   /**
    * @brief Reads info file.
    */
   void readXML(const std::string &filePath, DETECTOR_SETTINGS *spikedetSettings,
-               double *spikeDuration, bool *originalSpikedet);
+               double *spikeDuration);
 
   /**
    * @brief Emit all signals defined by this class.
