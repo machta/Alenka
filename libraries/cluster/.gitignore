@@ -1,0 +1,11 @@
+cluster.prj
+*.mex*
+
+codegen/lib/spike_cluster_cpp/*.mat
+codegen/lib/spike_cluster_cpp/*.tmw
+codegen/lib/spike_cluster_cpp/*.rsp
+codegen/lib/spike_cluster_cpp/*.mk
+codegen/lib/spike_cluster_cpp/examples
+codegen/lib/spike_cluster_cpp/html
+codegen/lib/spike_cluster_cpp/interface
+

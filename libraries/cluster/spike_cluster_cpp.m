@@ -264,3 +264,36 @@ for i=1:length(s_idx)
 end
 
 end
+
+
+function [ res ] = my_corr( x, y )
+%MY_CORR This is a trivial implementation of corr() via corrcoef().
+%   
+
+xCols = size(x, 2);
+yCols = size(y, 2);
+res = zeros(xCols, yCols);
+
+for i = 1:xCols
+    for j = 1:yCols
+        tmp = corrcoef(x(:, i), y(:, j));
+        res(i, j) = tmp(1, 2);
+    end    
+end
+
+end
+
+
+function [ out ] = repeat_if_smaller( x, n )
+%REPEAT_IF_SMALLER Repeat the first element n times if x is not of length n.
+%   
+
+if length(x) ~= n
+    fprintf(2, 'Warning: size mismatch\n');
+    out = repmat(x(1), n, 1);
+else
+    out = x;
+end
+
+end
+
