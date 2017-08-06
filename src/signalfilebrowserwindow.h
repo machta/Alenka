@@ -16,6 +16,8 @@ class DataModel;
 class Analysis;
 class SpikedetAnalysis;
 class ModifiedSpikedetAnalysis;
+class ClusterAnalysis;
+class CenteringClusterAnalysis;
 class AutomaticMontage;
 class OpenDataFile;
 class SignalViewer;
@@ -75,6 +77,8 @@ class SignalFileBrowserWindow : public QMainWindow {
   std::vector<std::unique_ptr<Analysis>> signalAnalysis;
   SpikedetAnalysis *spikedetAnalysis;
   ModifiedSpikedetAnalysis *modifiedSpikedetAnalysis;
+  ClusterAnalysis *clusterAnalysis;
+  CenteringClusterAnalysis *centeringClusterAnalysis;
   std::vector<QAction *> analysisActions;
   std::unique_ptr<SyncServer> syncServer;
   std::unique_ptr<SyncClient> syncClient;

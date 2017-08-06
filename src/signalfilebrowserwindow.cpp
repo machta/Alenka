@@ -18,6 +18,7 @@
 #include "Manager/trackmanager.h"
 #include "Manager/tracktablemodel.h"
 #include "SignalProcessor/bipolarmontage.h"
+#include "SignalProcessor/clusteranalysis.h"
 #include "SignalProcessor/modifiedspikedetanalysis.h"
 #include "SignalProcessor/signalprocessor.h"
 #include "SignalProcessor/spikedetanalysis.h"
@@ -148,6 +149,12 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   SpikedetSettingsDialog::resetSettings(&settings, &spikeDuration);
   spikedetAnalysis->setSettings(settings);
   modifiedSpikedetAnalysis->setSettings(settings);
+
+  clusterAnalysis = new ClusterAnalysis();
+  signalAnalysis.push_back(unique_ptr<Analysis>(clusterAnalysis));
+
+  centeringClusterAnalysis = new CenteringClusterAnalysis();
+  signalAnalysis.push_back(unique_ptr<Analysis>(centeringClusterAnalysis));
 
   // Construct dock widgets.
   setDockNestingEnabled(true);
@@ -1733,6 +1740,20 @@ void SignalFileBrowserWindow::runSignalAnalysis(int i) {
 
   // Run the appropriate analysis.
   signalAnalysis[i]->runAnalysis(openDataFile.get(), this);
+
+  // Send Spikedet result to Cluster.
+  CDischarges *discharges = nullptr;
+
+  if (signalAnalysis[i].get() == spikedetAnalysis) {
+    discharges = spikedetAnalysis->getDischarges();
+  } else if (signalAnalysis[i].get() == modifiedSpikedetAnalysis) {
+    discharges = modifiedSpikedetAnalysis->getDischarges();
+  }
+
+  if (discharges) {
+    clusterAnalysis->setDischarges(discharges);
+    centeringClusterAnalysis->setDischarges(discharges);
+  }
 }
 
 void SignalFileBrowserWindow::receiveSyncMessage(const QByteArray &message) {

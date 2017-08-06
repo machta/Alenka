@@ -14,7 +14,6 @@
 #include <QFileInfo>
 #include <QProgressDialog>
 
-#include <memory>
 #include <thread>
 
 using namespace std;

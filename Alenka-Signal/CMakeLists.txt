@@ -26,9 +26,15 @@ add_subdirectory(../libraries/clFFT/src ${CMAKE_CURRENT_BINARY_DIR}/clFFT)
 include_directories(../libraries/clFFT/src/include
   ${CMAKE_CURRENT_BINARY_DIR}/clFFT/include)
 
+add_subdirectory(../libraries/cluster ${CMAKE_CURRENT_BINARY_DIR}/cluster)
+
 # If you want to use this library, you need to link to these libraries.
-set(LIBS_TO_LINK_ALENKA_SIGNAL alenka-signal clFFT ${OpenCL_LIBRARIES})
+set(LIBS_TO_LINK_ALENKA_SIGNAL alenka-signal clFFT cluster ${OpenCL_LIBRARIES})
 set(LIBS_TO_LINK_ALENKA_SIGNAL ${LIBS_TO_LINK_ALENKA_SIGNAL} PARENT_SCOPE)
+
+find_package(OpenMP REQUIRED)
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
 # Alenka-Signal library.
 include_directories(../libraries/spikedetsrc
@@ -47,6 +53,7 @@ set(SRC_SD
   ../libraries/spikedet/src/CException.cpp)
 
 set(SRC
+  include/AlenkaSignal/cluster.h
   include/AlenkaSignal/filter.h
   include/AlenkaSignal/filterprocessor.h
   include/AlenkaSignal/montage.h
@@ -54,6 +61,7 @@ set(SRC
   include/AlenkaSignal/openclcontext.h
   include/AlenkaSignal/openclprogram.h
   include/AlenkaSignal/spikedet.h
+  src/cluster.cpp
   src/filter.cpp
   src/filterprocessor.cpp
   src/filtfilt.h
@@ -67,7 +75,3 @@ set_source_files_properties(${SRC} PROPERTIES COMPILE_FLAGS ${WARNINGS})
 
 add_library(alenka-signal STATIC ${SRC} ${SRC_ALG} ${SRC_SR} ${SRC_SD}
   ../libraries/SignalResampler/src/resample.cpp)
-
-if(BUILD_TESTS_ALENKA_SIGNAL)
-  add_subdirectory(unit-test)
-endif()

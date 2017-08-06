@@ -55,7 +55,3 @@ set(SRC
 set_source_files_properties(${SRC} PROPERTIES COMPILE_FLAGS ${WARNINGS})
 
 add_library(alenka-file STATIC ${SRC} ${SRC_BOOST_S} ${SRC_BOOST_FS})
-
-if(BUILD_TESTS_ALENKA_FILE)
-  add_subdirectory(unit-test)
-endif()

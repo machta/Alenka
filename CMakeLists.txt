@@ -67,6 +67,10 @@ add_subdirectory(Alenka-Signal)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
+find_package(OpenMP REQUIRED)
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+
 # Alenka executable.
 add_definitions(-DCL_USE_DEPRECATED_OPENCL_1_2_APIS
   -DCL_USE_DEPRECATED_OPENCL_2_0_APIS) # To silence some silly warnings.
@@ -127,6 +131,8 @@ set(SRC
   src/SignalProcessor/automaticmontage.h
   src/SignalProcessor/bipolarmontage.cpp
   src/SignalProcessor/bipolarmontage.h
+  src/SignalProcessor/clusteranalysis.cpp
+  src/SignalProcessor/clusteranalysis.h
   src/SignalProcessor/lrucache.h
   src/SignalProcessor/modifiedspikedetanalysis.h
   src/SignalProcessor/signalprocessor.cpp
@@ -168,7 +174,7 @@ add_executable(Alenka ${SRC} ${RESOURCES} ${SRC_BOOST_PO}
   libraries/spikedet/src/CResultsModel.cpp)
 
 target_link_libraries(Alenka
-  alenka-signal clFFT
+  alenka-signal clFFT cluster
   alenka-file pugixml
   # matio is excluded here on purpose, because I want to link it differently on
   # different platforms.
