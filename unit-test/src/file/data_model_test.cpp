@@ -218,7 +218,7 @@ void testMontages(const DataModel *dataModel) {
     EXPECT_EQ(t.color[2], 0);
     EXPECT_EQ(t.amplitude, 1);
     EXPECT_EQ(t.hidden, false);
-    EXPECT_EQ(t.code, "out = in(" + to_string(i) + ");");
+    EXPECT_EQ(t.code, "out = in(INDEX);");
   }
 }
 

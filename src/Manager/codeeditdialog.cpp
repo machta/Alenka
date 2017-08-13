@@ -24,10 +24,12 @@ CodeEditDialog::CodeEditDialog(QWidget *parent)
   auto box = new QVBoxLayout;
 
   const char *help = R"(Input and output:
-	float out = 0;
-	float in(int channelIndex);
+    float out = 0;
+    float in(int channelIndex);
 
-Identifiers of the form "_*_" and all OpenCL reserved names and keywords are forbidden.
+Useful variables:
+    int INDEX -- montage row index
+    int IN_COUNT -- input row count
 
 Definitions included in the source code that you can use:)";
 

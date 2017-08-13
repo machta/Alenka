@@ -72,7 +72,7 @@ Track TrackTable::defaultValue(int row) const {
   Track t;
 
   t.label = "T " + to_string(row);
-  t.code = "out = in(" + to_string(row) + ");";
+  t.code = "out = in(INDEX);";
   t.color[0] = t.color[1] = t.color[2] = 0;
   t.amplitude = 1;
   t.hidden = false;

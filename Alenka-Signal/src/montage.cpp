@@ -40,12 +40,12 @@ string buildSource(const string &source, const string &headerSource = "",
   src += R"(
 #define PARA                                                                   \
   __global float *_input_, int _inputRowLength_, int _inputRowOffset_,         \
-     int _inputRowCount_, __global float *_xyz_
-#define PASS _input_, _inputRowLength_, _inputRowOffset_, _inputRowCount_, _xyz_
+     int IN_COUNT, __global float *_xyz_, int INDEX
+#define PASS _input_, _inputRowLength_, _inputRowOffset_, IN_COUNT, _xyz_, INDEX
 
 // Input: value of a sample for channel i.
 float in(int i, PARA) {
-  if (0 <= i && i < _inputRowCount_)
+  if (0 <= i && i < IN_COUNT)
     return _input_[_inputRowLength_ * i + _inputRowOffset_ + get_global_id(0)];
   else
     return /*NAN*/ 0;
@@ -53,7 +53,7 @@ float in(int i, PARA) {
 #define in(a_) in(a_, PASS)
 
 float x(int i, PARA) {
-  if (0 <= i && i < _inputRowCount_)
+  if (0 <= i && i < IN_COUNT)
     return _xyz_[3 * i];
   else
     return /*NAN*/ 0;
@@ -61,7 +61,7 @@ float x(int i, PARA) {
 #define x(a_) x(a_, PASS)
 
 float y(int i, PARA) {
-  if (0 <= i && i < _inputRowCount_)
+  if (0 <= i && i < IN_COUNT)
     return _xyz_[3 * i + 1];
   else
     return /*NAN*/ 0;
@@ -69,7 +69,7 @@ float y(int i, PARA) {
 #define y(a_) y(a_, PASS)
 
 float z(int i, PARA) {
-  if (0 <= i && i < _inputRowCount_)
+  if (0 <= i && i < IN_COUNT)
     return _xyz_[3 * i + 2];
   else
     return /*NAN*/ 0;
@@ -81,8 +81,8 @@ float z(int i, PARA) {
 
 __kernel void montage(__global float *_input_, __global float *_output_,
                       int _inputRowLength_, int _inputRowOffset_,
-                      int _inputRowCount_, int _outputRowLength_,
-                      int _outputRowIndex_, int _outputCopyCount_,
+                      int IN_COUNT, int _outputRowLength_,
+                      int INDEX, int _outputCopyCount_,
                       __global float *_xyz_)";
   src += additionalParameters + R"() {
   float out = 0;
@@ -93,7 +93,7 @@ __kernel void montage(__global float *_input_, __global float *_output_,
   src += R"(  }
 
   int outputIndex = _outputCopyCount_ *
-                    (_outputRowLength_ * _outputRowIndex_ + get_global_id(0));
+                    (_outputRowLength_ * INDEX + get_global_id(0));
   for (int i = 0; i < _outputCopyCount_; ++i) {
     _output_[outputIndex + i] = out;
   }

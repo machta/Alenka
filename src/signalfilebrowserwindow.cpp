@@ -1734,7 +1734,7 @@ void SignalFileBrowserWindow::runSignalAnalysis(int i) {
   if (trackTable->rowCount() <= 0)
     return;
 
-  // Set some details in for the analysis objects.
+  // Set some details in the analysis objects.
   spikedetAnalysis->setSpikeDuration(spikeDuration);
   modifiedSpikedetAnalysis->setSpikeDuration(spikeDuration);
   clusterAnalysis->setSpikeDuration(spikeDuration);

@@ -14,7 +14,7 @@ float sum(int from, int to, PARA) {
 #define sum(a_, b_) sum(a_, b_, PASS)
 
 // Sum all channels.
-float sumAll(PARA) { return sum(0, _inputRowCount_ - 1); }
+float sumAll(PARA) { return sum(0, IN_COUNT - 1); }
 #define sumAll() sumAll(PASS)
 
 // Sum channels in an array of indexes.
@@ -28,7 +28,7 @@ float sumArr(int *indexArr, int n, PARA) {
 #define sumArr(a_, b_) sumArr(a_, b_, PASS)
 
 // Arithmetic average of all channels.
-float average(PARA) { return sumAll() / _inputRowCount_; }
+float average(PARA) { return sumAll() / IN_COUNT; }
 #define average() average(PASS)
 
 // Euclidean distance between channels i and j.
@@ -42,7 +42,7 @@ float dist(int i, int j, PARA) {
 // For ceoff = 1 the weights for distances 0, 1, 2, ... are 1, 1/2, 1/3, ...
 float distAverage(int i, int coeff, PARA) {
   float tmp = 0;
-  for (int j = 0; j < _inputRowCount_; ++j) {
+  for (int j = 0; j < IN_COUNT; ++j) {
     if (i != j) {
       float d = dist(i, j) * coeff + 1;
       tmp += (in(i) - in(j)) * 1 / d;
@@ -57,7 +57,7 @@ float distAverage(int i, int coeff, PARA) {
 // For d > maxDist weights are 0.
 float distAverageLinear(int i, int maxDist, PARA) {
   float tmp = 0;
-  for (int j = 0; j < _inputRowCount_; ++j) {
+  for (int j = 0; j < IN_COUNT; ++j) {
     float d = dist(i, j);
     if (i != j && d < maxDist) {
       d = -(d / maxDist) + 1;
