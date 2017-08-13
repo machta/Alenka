@@ -1,11 +1,14 @@
 set(TEST_OPENCL_PLATFORM 0 CACHE STRING "OpenCL platform id used for testing")
 set(TEST_OPENCL_DEVICE 0 CACHE STRING "OpenCL device id used for testing")
 
+find_package(OpenMP REQUIRED)
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+
 add_definitions(
   -DOPENCL_PLATFORM=${TEST_OPENCL_PLATFORM}
   -DOPENCL_DEVICE=${TEST_OPENCL_DEVICE}
-  -DTEST_DATA="${CMAKE_CURRENT_SOURCE_DIR}/test-data"
-  )
+  -DTEST_DATA="${CMAKE_CURRENT_SOURCE_DIR}/test-data")
 
 include_directories(../libraries/googletest/googletest/include
   ../libraries/googletest/googletest)
@@ -16,6 +19,8 @@ set(SRC
   src/file/data_model_test.cpp
   src/file/primary_file_test.cpp
   src/file/save_as_test.cpp
+  src/signal/cluster_data.dat
+  src/signal/cluster_test.cpp
   src/signal/filter_allpass_test.cpp
   src/signal/filter_design_test.cpp
   src/signal/filter_test.cpp
@@ -23,8 +28,7 @@ set(SRC
   src/signal/montage_label_test.cpp
   src/signal/montage_static_test.cpp
   src/signal/simple_montage_test.cpp
-  src/signal/spikedet_test.cpp
-  )
+  src/signal/spikedet_test.cpp)
 
 add_executable(unit-test ${SRC}
   ../libraries/googletest/googletest/src/gtest-all.cc
