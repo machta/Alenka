@@ -95,7 +95,8 @@ void ClusterAnalysis::runAnalysis(OpenDataFile *file, QWidget * /*parent*/) {
 
     e.type = typeIndex + classes[i];
     e.position = resolvePosition(channels, i, discharges->m_MP) * fs;
-    e.duration = discharges->m_MD[0][i] * fs;
+    e.duration = spikeDuration * fs;
+    // e.duration = discharges->m_MD[0][i] * fs;
     e.label = "Cluster " + to_string(i);
     e.channel = -1;
 

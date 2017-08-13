@@ -1737,6 +1737,8 @@ void SignalFileBrowserWindow::runSignalAnalysis(int i) {
   // Set some details in for the analysis objects.
   spikedetAnalysis->setSpikeDuration(spikeDuration);
   modifiedSpikedetAnalysis->setSpikeDuration(spikeDuration);
+  clusterAnalysis->setSpikeDuration(spikeDuration);
+  centeringClusterAnalysis->setSpikeDuration(spikeDuration);
 
   // Run the appropriate analysis.
   signalAnalysis[i]->runAnalysis(openDataFile.get(), this);

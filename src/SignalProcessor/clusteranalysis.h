@@ -15,12 +15,14 @@ class OpenDataFile;
 class ClusterAnalysis : public Analysis {
   std::unique_ptr<AlenkaSignal::Cluster> cluster;
   CDischarges *discharges = nullptr;
+  double spikeDuration = 1;
 
 public:
   void runAnalysis(OpenDataFile *file, QWidget *parent) override;
   std::string name() override { return "Cluster Analysis"; }
 
   void setDischarges(CDischarges *ptr) { discharges = ptr; }
+  void setSpikeDuration(double duration) { spikeDuration = duration; }
 
 protected:
   virtual bool pcaCentering() { return false; }

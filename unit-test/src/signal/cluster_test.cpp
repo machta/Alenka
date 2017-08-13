@@ -45,24 +45,25 @@ TEST(cluster_test, test_8kHz) {
   auto cluster = make_unique<Cluster>();
   cluster->process(n, channels, MA, MW, false);
 
-  int size = cluster->getArea().size();
+  int size = static_cast<int>(cluster->getArea().size());
   EXPECT_EQ(n, size);
   EXPECT_GE(0, compare(cluster->getArea().data(),
                        reinterpret_cast<double *>(area_0_8kHz), n));
 
-  size = cluster->getClass().size();
+  size = static_cast<int>(cluster->getClass().size());
   EXPECT_EQ(n, size);
   EXPECT_GE(0, compare(cluster->getClass().data(),
                        reinterpret_cast<double *>(class_0_8kHz), n));
 
-  size = cluster->getWeight().size();
+  size = static_cast<int>(cluster->getWeight().size());
   EXPECT_EQ(n, size);
   EXPECT_GE(0, compare(cluster->getWeight().data(),
                        reinterpret_cast<double *>(weight_0_8kHz), n));
 
   cluster.release(); // For some reason there is a segfault in the destructor
                      // that doesn't appear when the code is used in Alenka.
-                     // Let's ignore it for now.
+                     // Let's ignore it for now. TODO: Find out what the problem
+                     // is.
 }
 
 TEST(cluster_test, test_8kHz_centering) {
@@ -83,20 +84,20 @@ TEST(cluster_test, test_8kHz_centering) {
   auto cluster = make_unique<Cluster>();
   cluster->process(n, channels, MA, MW, true);
 
-  int size = cluster->getArea().size();
+  int size = static_cast<int>(cluster->getArea().size());
   EXPECT_EQ(n, size);
   EXPECT_GE(5, compare(cluster->getArea().data(),
-                        reinterpret_cast<double *>(area_1_8kHz), n));
+                       reinterpret_cast<double *>(area_1_8kHz), n));
 
-  size = cluster->getClass().size();
+  size = static_cast<int>(cluster->getClass().size());
   EXPECT_EQ(n, size);
   EXPECT_GE(5, compare(cluster->getClass().data(),
-                        reinterpret_cast<double *>(class_1_8kHz), n));
+                       reinterpret_cast<double *>(class_1_8kHz), n));
 
-  size = cluster->getWeight().size();
+  size = static_cast<int>(cluster->getWeight().size());
   EXPECT_EQ(n, size);
   EXPECT_GE(5, compare(cluster->getWeight().data(),
-                        reinterpret_cast<double *>(weight_1_8kHz), n));
+                       reinterpret_cast<double *>(weight_1_8kHz), n));
 
   cluster.release();
 }
@@ -119,17 +120,17 @@ TEST(cluster_test, test_sample) {
   auto cluster = make_unique<Cluster>();
   cluster->process(n, channels, MA, MW, false);
 
-  int size = cluster->getArea().size();
+  int size = static_cast<int>(cluster->getArea().size());
   EXPECT_EQ(n, size);
   EXPECT_GE(0, compare(cluster->getArea().data(),
                        reinterpret_cast<double *>(area_0_sample), n));
 
-  size = cluster->getClass().size();
+  size = static_cast<int>(cluster->getClass().size());
   EXPECT_EQ(n, size);
   EXPECT_GE(0, compare(cluster->getClass().data(),
                        reinterpret_cast<double *>(class_0_sample), n));
 
-  size = cluster->getWeight().size();
+  size = static_cast<int>(cluster->getWeight().size());
   EXPECT_EQ(n, size);
   EXPECT_GE(0, compare(cluster->getWeight().data(),
                        reinterpret_cast<double *>(weight_0_sample), n));
