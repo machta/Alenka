@@ -13,10 +13,10 @@ using namespace AlenkaSignal;
 
 TrackCodeValidator::TrackCodeValidator() { context = globalContext.get(); }
 
-bool TrackCodeValidator::validate(const QString &input, QString *errorMessage) {
+bool TrackCodeValidator::validate(const QString &input, const QString &header,
+                                  QString *errorMessage) {
   string code = SignalProcessor::simplifyMontage<float>(input.toStdString());
-  string header =
-      OpenDataFile::infoTable.getGlobalMontageHeader().toStdString();
+  string stdHeader = header.toStdString();
 
   if (errorMessage) {
     string message;
@@ -24,13 +24,14 @@ bool TrackCodeValidator::validate(const QString &input, QString *errorMessage) {
     // I don't pass the labels here, because a montage formula with a bad label
     // doesn't violate the syntax. Instead a fall back to zero is used. This is
     // consistent with how an invalid index is handled.
-    bool result = Montage<float>::test(code, context, &message, header);
+    bool result =
+        Montage<float>::testHeader(code, context, stdHeader, &message);
 
     *errorMessage = QString::fromStdString(message);
 
     return result;
   } else {
-    return Montage<float>::test(code, context, nullptr, header);
+    return Montage<float>::testHeader(code, context, stdHeader, nullptr);
   }
 
   return true;

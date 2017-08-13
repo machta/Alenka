@@ -68,7 +68,9 @@ public:
       QString qc = value.toString();
       string c = qc.toStdString();
 
-      if (t.code != c && validator->validate(qc)) {
+      if (t.code != c &&
+          validator->validate(
+              qc, OpenDataFile::infoTable.getGlobalMontageHeader())) {
         t.code = c;
         file->undoFactory->changeTrack(
             OpenDataFile::infoTable.getSelectedMontage(), row, t,
@@ -118,7 +120,9 @@ public:
     QLineEdit *lineEdit = reinterpret_cast<QLineEdit *>(editor);
     QString message;
 
-    if (!validator->validate(lineEdit->text(), &message)) {
+    if (!validator->validate(lineEdit->text(),
+                             OpenDataFile::infoTable.getGlobalMontageHeader(),
+                             &message)) {
       CodeEditDialog::errorMessageDialog(message, editor);
       return true;
     }

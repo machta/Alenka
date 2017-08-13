@@ -14,6 +14,7 @@ class TrackCodeValidator;
 class CodeEditDialog : public QDialog {
   Q_OBJECT
 
+  QTextEdit *header;
   QTextEdit *editor;
   std::unique_ptr<TrackCodeValidator> validator;
 
@@ -36,6 +37,9 @@ public slots:
    * @brief This method gets called when the user closes the dialog.
    */
   void done(int r) override;
+
+private slots:
+  void validate();
 };
 
 #endif // CODEEDITDIALOG_H

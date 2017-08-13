@@ -252,11 +252,27 @@ template <class T> Montage<T>::~Montage() {
 
 template <class T>
 bool Montage<T>::test(const string &source, OpenCLContext *context,
-                      string *errorMessage, const string &headerSource) {
-  // logToFile("Testing montage code.");
-
+                      string *errorMessage) {
   if (parseCopyMontage(source))
     return true;
+
+  return testHeader(source, context, "", errorMessage);
+}
+
+template <class T> string Montage<T>::stripComments(const string &code) {
+  try {
+    const static regex commentre(R"((/\*([^*]|(\*+[^*/]))*\*+/)|(//.*))");
+    return regex_replace(code, commentre, string(""));
+  } catch (regex_error) {
+  }
+
+  return code; // TODO: Remove consecutive empty lines that sometimes appear
+               // when you remove multiline comments.
+}
+
+template <class T>
+bool Montage<T>::testHeader(const string &source, OpenCLContext *context,
+                            const string &headerSource, string *errorMessage) {
 
   // Use the OpenCL compiler to test the source.
   OpenCLProgram program(buildSource<T>(source, headerSource), context);
@@ -275,17 +291,6 @@ bool Montage<T>::test(const string &source, OpenCLContext *context,
   }
 
   return false;
-}
-
-template <class T> string Montage<T>::stripComments(const string &code) {
-  try {
-    const static regex commentre(R"((/\*([^*]|(\*+[^*/]))*\*+/)|(//.*))");
-    return regex_replace(code, commentre, string(""));
-  } catch (regex_error) {
-  }
-
-  return code; // TODO: Remove consecutive empty lines that sometimes appear
-               // when you remove multiline comments.
 }
 
 template <class T>

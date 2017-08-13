@@ -78,8 +78,10 @@ public:
    * @return True if the test succeeds.
    */
   static bool test(const std::string &source, OpenCLContext *context,
-                   std::string *errorMessage = nullptr,
-                   const std::string &headerSource = "");
+                   std::string *errorMessage = nullptr);
+  static bool testHeader(const std::string &source, OpenCLContext *context,
+                         const std::string &headerSource,
+                         std::string *errorMessage = nullptr);
 
   /**
    * @brief Removes single line and block comments from OpenCL code.

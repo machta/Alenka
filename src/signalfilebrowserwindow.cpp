@@ -69,6 +69,23 @@ namespace {
 
 const char *TITLE = "Signal File Browser";
 
+QString headerFilePath() {
+  return MyApplication::applicationDirPath() + MyApplication::dirSeparator() +
+         "montageHeader.cl";
+}
+
+void saveMontageHeader() {
+  QFile headerFile(headerFilePath());
+  string text = OpenDataFile::infoTable.getGlobalMontageHeader().toStdString();
+
+  if (headerFile.open(QIODevice::WriteOnly)) {
+    headerFile.write(text.c_str());
+    headerFile.close();
+  } else {
+    cerr << "Error writing file " << headerFilePath().toStdString() << endl;
+  }
+}
+
 double byteArray2Double(const char *data) {
   return *reinterpret_cast<const double *>(data);
 }
@@ -1154,8 +1171,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   setWindowTitle(fileInfo.fileName() + " - " + TITLE);
 
   // Load OpenCL header from file.
-  QFile headerFile(MyApplication::applicationDirPath() +
-                   MyApplication::dirSeparator() + "montageHeader.cl");
+  QFile headerFile(headerFilePath());
   if (headerFile.open(QIODevice::ReadOnly))
     OpenDataFile::infoTable.setGlobalMontageHeader(headerFile.readAll());
 
@@ -1380,6 +1396,11 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   c = connect(&OpenDataFile::infoTable, SIGNAL(sampleUnitsChanged(int)),
               signalViewer, SLOT(updateSignalViewer()));
   openFileConnections.push_back(c);
+  c = connect(&OpenDataFile::infoTable,
+              SIGNAL(globalMontageHeaderChanged(QString)), signalViewer,
+              SLOT(updateSignalViewer()));
+
+  openFileConnections.push_back(c);
 
   cc = connectVitness(
       VitnessMontageTable::vitness(fileResources->dataModel->montageTable()),
@@ -1474,6 +1495,8 @@ bool SignalFileBrowserWindow::closeFile() {
   setEnableFileActions(false);
 
   if (fileResources->file) {
+    saveMontageHeader();
+
     try {
       executeWithCLocale([this]() {
         OpenDataFile::infoTable.writeXML(

@@ -1339,6 +1339,13 @@ void Canvas::selectMontage() {
                   SLOT(updateMontage()));
       montageConnections.push_back(c);
     }
+
+    // Also connect the global OpenCL header so that the montage gets recompiled
+    // every time it changes.
+    c = connect(&OpenDataFile::infoTable,
+                SIGNAL(globalMontageHeaderChanged(QString)), this,
+                SLOT(updateMontage()));
+    montageConnections.push_back(c);
   }
 
   updateMontage();
@@ -1351,12 +1358,12 @@ void Canvas::updateMontage(int /*row*/, int col) {
 }
 
 void Canvas::updateMontage() {
-  assert(signalProcessor);
-
-  makeCurrent();
-  signalProcessor->setUpdateMontageFlag();
-  updateProcessor();
-  doneCurrent();
+  if (signalProcessor) {
+    makeCurrent();
+    signalProcessor->setUpdateMontageFlag();
+    updateProcessor();
+    doneCurrent();
+  }
 }
 
 bool Canvas::ready() { return signalProcessor && signalProcessor->ready(); }

@@ -8,6 +8,8 @@
 #include <QFile>
 #include <QLabel>
 #include <QMessageBox>
+#include <QPushButton>
+#include <QSplitter>
 #include <QTextEdit>
 #include <QVBoxLayout>
 
@@ -18,10 +20,11 @@ using namespace std;
 CodeEditDialog::CodeEditDialog(QWidget *parent)
     : QDialog(parent), validator(new TrackCodeValidator()) {
   setWindowFlags(Qt::Window);
-  setMinimumWidth(500);
-  setMinimumHeight(500);
+  setMinimumWidth(600);
+  setMinimumHeight(600);
 
-  auto box = new QVBoxLayout;
+  auto splitter = new QSplitter(Qt::Vertical);
+  QVBoxLayout *box = new QVBoxLayout;
 
   const char *help = R"(Input and output:
     float out = 0;
@@ -31,27 +34,41 @@ Useful variables:
     int INDEX -- montage row index
     int IN_COUNT -- input row count
 
-Definitions included in the source code that you can use:)";
+Code common for all montage formulas:)";
 
   box->addWidget(new QLabel(help)); // TODO: Move these to help sub dialog.
 
-  auto header = new QTextEdit(this);
+  header = new QTextEdit(this);
   header->setPlainText(OpenDataFile::infoTable.getGlobalMontageHeader());
-  header->setReadOnly(true);
   box->addWidget(header);
 
-  box->addWidget(new QLabel("Enter code here:", this));
+  QWidget *widget = new QWidget;
+  widget->setLayout(box);
+  splitter->addWidget(widget);
+  box = new QVBoxLayout;
+
+  box->addWidget(new QLabel("Enter montage code here:", this));
 
   editor = new QTextEdit(this);
   box->addWidget(editor);
 
   auto buttonBox = new QDialogButtonBox(
       QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
-  connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
-  connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
+  auto button = new QPushButton("Validate", this);
+  buttonBox->addButton(button, QDialogButtonBox::ActionRole);
   box->addWidget(buttonBox);
 
-  setLayout(box);
+  connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
+  connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
+  connect(button, SIGNAL(clicked(bool)), this, SLOT(validate()));
+
+  widget = new QWidget;
+  widget->setLayout(box);
+  splitter->addWidget(widget);
+
+  setLayout(new QVBoxLayout);
+  layout()->setMargin(0);
+  layout()->addWidget(splitter);
 }
 
 CodeEditDialog::~CodeEditDialog() {}
@@ -76,13 +93,27 @@ void CodeEditDialog::setText(const QString &text) {
 void CodeEditDialog::done(int r) {
   if (QDialog::Accepted == r) {
     QString message;
+    bool res = validator->validate(getText(), header->toPlainText(), &message);
 
-    if (validator->validate(getText(), &message)) {
+    if (res) {
+      OpenDataFile::infoTable.setGlobalMontageHeader(header->toPlainText());
       QDialog::done(r);
     } else {
       errorMessageDialog(message, this);
     }
   } else {
     QDialog::done(r);
+  }
+}
+
+void CodeEditDialog::validate() {
+  QString message;
+  bool res = validator->validate(getText(), header->toPlainText(), &message);
+
+  if (res) {
+    QMessageBox::information(this, "Compilation Successful",
+                             "Montage code compiled correctly");
+  } else {
+    errorMessageDialog(message, this);
   }
 }

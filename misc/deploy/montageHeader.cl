@@ -1,4 +1,4 @@
-// Retrun the index of the channel with the label passed as the first parameter.
+// Return the index of the channel with the label passed as the first parameter.
 int label(int i) {
   return i;
 }
