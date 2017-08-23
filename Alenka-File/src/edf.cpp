@@ -20,6 +20,17 @@ namespace {
 const int MIN_READ_CHUNK = 200;
 const int OPT_READ_CHUNK = 2 * 1000;
 const int MAX_READ_CHUNK = 2 * 1000 * 1000;
+const double ZERO_TOLERANCE = 0.001;
+
+double calculateDiffToAdd(double maxVal, double minVal) {
+  double absMax = max(fabs(maxVal), fabs(minVal));
+  double diff = fabs(maxVal - minVal) / absMax;
+
+  if (absMax < ZERO_TOLERANCE || diff < ZERO_TOLERANCE)
+    return 10;
+
+  return 0;
+}
 
 void writeSignalInfo(int file, DataFile *dataFile,
                      const edf_hdr_struct *edfhdr) {
@@ -29,8 +40,17 @@ void writeSignalInfo(int file, DataFile *dataFile,
   for (unsigned int i = 0; i < dataFile->getChannelCount(); ++i) {
     res |= edf_set_samplefrequency(
         file, i, static_cast<int>(dataFile->getSamplingFrequency()));
-    res |= edf_set_physical_maximum(file, i, dataFile->getPhysicalMaximum(i));
-    res |= edf_set_physical_minimum(file, i, dataFile->getPhysicalMinimum(i));
+
+    double physMax = dataFile->getPhysicalMaximum(i);
+    double physMin = dataFile->getPhysicalMinimum(i);
+    // If the values are very close, add some so that the min and max is not the
+    // same.
+    double diff = calculateDiffToAdd(physMax, physMin);
+    physMax += diff;
+    physMin -= diff;
+    res |= edf_set_physical_maximum(file, i, physMax);
+    res |= edf_set_physical_minimum(file, i, physMin);
+
     res |= edf_set_digital_maximum(
         file, i,
         static_cast<int>(min<double>(dataFile->getDigitalMaximum(i), 32767)));
