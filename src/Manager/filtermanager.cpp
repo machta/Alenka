@@ -110,12 +110,13 @@ FilterManager::FilterManager(QWidget *parent) : QWidget(parent) {
   windowCombo->addItem("None");
   windowCombo->addItem("Hamming");
   windowCombo->addItem("Blackman");
-  connect(windowCombo, static_cast<void (QComboBox::*)(int)>(
-                           &QComboBox::currentIndexChanged),
-          [](int index) {
-            OpenDataFile::infoTable.setFilterWindow(
-                static_cast<AlenkaSignal::WindowFunction>(index));
-          });
+  connect(
+      windowCombo,
+      static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+      [](int index) {
+        OpenDataFile::infoTable.setFilterWindow(
+            static_cast<AlenkaSignal::WindowFunction>(index));
+      });
   connect(&OpenDataFile::infoTable, &InfoTable::filterWindowChanged,
           [windowCombo](AlenkaSignal::WindowFunction index) {
             windowCombo->setCurrentIndex(static_cast<int>(index));

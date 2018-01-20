@@ -35,7 +35,7 @@ void parseLabels(const AbstractTrackTable *source, vector<string> &prefixes,
   }
 }
 
-} // nemespace
+} // namespace
 
 void BipolarMontage::fillTrackTable(const AbstractTrackTable *source,
                                     const AbstractTrackTable *output,

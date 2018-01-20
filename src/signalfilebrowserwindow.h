@@ -12,7 +12,8 @@
 namespace AlenkaFile {
 class DataFile;
 class DataModel;
-}
+} // namespace AlenkaFile
+
 class Analysis;
 class SpikedetAnalysis;
 class ModifiedSpikedetAnalysis;

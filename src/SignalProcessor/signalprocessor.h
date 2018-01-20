@@ -25,12 +25,14 @@
 namespace AlenkaFile {
 class AbstractTrackTable;
 }
+
 namespace AlenkaSignal {
 class OpenCLContext;
 template <class T> class FilterProcessor;
 template <class T> class MontageProcessor;
 template <class T> class Filter;
-}
+} // namespace AlenkaSignal
+
 class OpenDataFile;
 
 /**

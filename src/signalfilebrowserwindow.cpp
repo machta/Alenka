@@ -638,9 +638,9 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   QAction *secondsPerPageAction = new QAction("Set seconds per page...", this);
   connect(secondsPerPageAction, &QAction::triggered, [this] {
     bool ok;
-    double d =
-        QInputDialog::getDouble(this, "Seconds per page", "Seconds per page:",
-                                10, 0, 1000 * 1000, 2, &ok);
+    double d = QInputDialog::getDouble(this, "Seconds per page",
+                                       "Seconds per page:", 10, 0, 1000 * 1000,
+                                       2, &ok);
     if (ok)
       setSecondsPerPage(d);
   });
@@ -959,9 +959,10 @@ QString SignalFileBrowserWindow::imageFilePathDialog() {
   if (suffix == "jpg" || suffix == "png" || suffix == "bmp") {
     return fileName;
   } else {
-    QMessageBox::critical(this, "Bad suffix", "The file name must have either "
-                                              "of the following suffixes: jpg, "
-                                              "png, or bmp. Try again.");
+    QMessageBox::critical(this, "Bad suffix",
+                          "The file name must have either "
+                          "of the following suffixes: jpg, "
+                          "png, or bmp. Try again.");
     return imageFilePathDialog();
   }
 }
@@ -1075,8 +1076,9 @@ void SignalFileBrowserWindow::openFile() {
     return; // User chose to keep open the current file.
 
   QString fileName = QFileDialog::getOpenFileName(
-      this, "Open File", "", "Signal files (*.edf *.gdf *.mat);;EDF files "
-                             "(*.edf);;GDF files (*.gdf);;MAT files (*.mat)");
+      this, "Open File", "",
+      "Signal files (*.edf *.gdf *.mat);;EDF files "
+      "(*.edf);;GDF files (*.gdf);;MAT files (*.mat)");
 
   if (fileName.isNull())
     return; // No file was selected.
@@ -1133,10 +1135,11 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   autoSaveName = fileResources->file->getFilePath() + ".mont.autosave";
   bool useAutoSave = false;
   if (QFileInfo(autoSaveName.c_str()).exists()) {
-    auto res = QMessageBox::question(
-        this, "Load Autosave File?", "An autosave file was "
+    auto res = QMessageBox::question(this, "Load Autosave File?",
+                                     "An autosave file was "
                                      "detected. Would you like to load it?",
-        QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+                                     QMessageBox::Yes | QMessageBox::No,
+                                     QMessageBox::Yes);
 
     useAutoSave = res == QMessageBox::Yes;
   }

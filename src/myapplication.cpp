@@ -39,9 +39,9 @@ MyApplication::MyApplication(int &argc, char **argv)
     if (!LOG_FILE.good())
       LOG_FILE.open(logFileName);
 
-    checkErrorCode(LOG_FILE.good(), true, "Could not open log file '"
-                                              << logFilePath
-                                              << "' for writing.");
+    checkErrorCode(LOG_FILE.good(), true,
+                   "Could not open log file '" << logFilePath
+                                               << "' for writing.");
   } catch (exception &e) {
     QMessageBox::critical(nullptr, "Exception caught",
                           QString::fromStdString(e.what()));

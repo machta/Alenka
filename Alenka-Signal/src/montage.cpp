@@ -1,6 +1,6 @@
 /**
-  * @file
-  */
+ * @file
+ */
 
 #include "../include/AlenkaSignal/montage.h"
 

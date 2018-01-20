@@ -10,12 +10,13 @@
 
 class OpenDataFile;
 class QAction;
+
 namespace QtCharts {
 class QChart;
 class QChartView;
 class QLineSeries;
 class QValueAxis;
-}
+} // namespace QtCharts
 
 class FilterVisualizer : public QWidget {
   Q_OBJECT

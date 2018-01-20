@@ -65,8 +65,9 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(DETECTOR_SETTINGS *settings,
   k1_box = new QDoubleSpinBox();
   k1_box->setDecimals(maxDecimals);
   k1_box->setMaximum(1000);
-  connect(k1_box, static_cast<void (QDoubleSpinBox::*)(double)>(
-                      &QDoubleSpinBox::valueChanged),
+  connect(k1_box,
+          static_cast<void (QDoubleSpinBox::*)(double)>(
+              &QDoubleSpinBox::valueChanged),
           [settings](double val) { settings->m_k1 = val; });
   grid->addRow(label, k1_box);
 
@@ -75,8 +76,9 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(DETECTOR_SETTINGS *settings,
   k2_box = new QDoubleSpinBox();
   k2_box->setDecimals(maxDecimals);
   k2_box->setMaximum(1000);
-  connect(k2_box, static_cast<void (QDoubleSpinBox::*)(double)>(
-                      &QDoubleSpinBox::valueChanged),
+  connect(k2_box,
+          static_cast<void (QDoubleSpinBox::*)(double)>(
+              &QDoubleSpinBox::valueChanged),
           [settings](double val) { settings->m_k2 = val; });
   grid->addRow(label, k2_box);
 
@@ -85,8 +87,9 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(DETECTOR_SETTINGS *settings,
   k3_box = new QDoubleSpinBox();
   k3_box->setDecimals(maxDecimals);
   k3_box->setMaximum(1000);
-  connect(k3_box, static_cast<void (QDoubleSpinBox::*)(double)>(
-                      &QDoubleSpinBox::valueChanged),
+  connect(k3_box,
+          static_cast<void (QDoubleSpinBox::*)(double)>(
+              &QDoubleSpinBox::valueChanged),
           [settings](double val) { settings->m_k3 = val; });
   grid->addRow(label, k3_box);
 
@@ -103,8 +106,9 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(DETECTOR_SETTINGS *settings,
   n_box = new QDoubleSpinBox();
   n_box->setDecimals(maxDecimals);
   // n_box->setMaximum();
-  connect(n_box, static_cast<void (QDoubleSpinBox::*)(double)>(
-                     &QDoubleSpinBox::valueChanged),
+  connect(n_box,
+          static_cast<void (QDoubleSpinBox::*)(double)>(
+              &QDoubleSpinBox::valueChanged),
           [settings](double val) { settings->m_noverlap = val; });
   grid->addRow(label, n_box);
 
@@ -130,8 +134,9 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(DETECTOR_SETTINGS *settings,
   dt_box = new QDoubleSpinBox();
   dt_box->setDecimals(maxDecimals);
   // dt_box->setMaximum();
-  connect(dt_box, static_cast<void (QDoubleSpinBox::*)(double)>(
-                      &QDoubleSpinBox::valueChanged),
+  connect(dt_box,
+          static_cast<void (QDoubleSpinBox::*)(double)>(
+              &QDoubleSpinBox::valueChanged),
           [settings](double val) { settings->m_discharge_tol = val; });
   grid->addRow(label, dt_box);
 
@@ -140,8 +145,9 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(DETECTOR_SETTINGS *settings,
   pt_box = new QDoubleSpinBox();
   pt_box->setDecimals(maxDecimals);
   // ps_box->setMaximum();
-  connect(pt_box, static_cast<void (QDoubleSpinBox::*)(double)>(
-                      &QDoubleSpinBox::valueChanged),
+  connect(pt_box,
+          static_cast<void (QDoubleSpinBox::*)(double)>(
+              &QDoubleSpinBox::valueChanged),
           [settings](double val) { settings->m_polyspike_union_time = val; });
   grid->addRow(label, pt_box);
 
@@ -159,8 +165,9 @@ SpikedetSettingsDialog::SpikedetSettingsDialog(DETECTOR_SETTINGS *settings,
   sed_box = new QDoubleSpinBox();
   sed_box->setDecimals(maxDecimals);
   // sed_box->setMaximum();
-  connect(sed_box, static_cast<void (QDoubleSpinBox::*)(double)>(
-                       &QDoubleSpinBox::valueChanged),
+  connect(sed_box,
+          static_cast<void (QDoubleSpinBox::*)(double)>(
+              &QDoubleSpinBox::valueChanged),
           [eventDuration](double val) { *eventDuration = val; });
   grid->addRow(label, sed_box);
 
