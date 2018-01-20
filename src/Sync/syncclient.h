@@ -6,6 +6,9 @@
 
 class QWebSocket;
 
+/**
+ * @brief Manages clinet-server connections via WebSocket.
+ */
 class SyncClient : public QObject {
   Q_OBJECT
 

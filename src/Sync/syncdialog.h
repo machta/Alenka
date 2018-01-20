@@ -10,6 +10,10 @@ class SyncServer;
 class SyncClient;
 class QLabel;
 
+/**
+ * @brief This class implements the dialog window used for managing
+ * timeline-synchronization connections.
+ */
 class SyncDialog : public QDialog {
   Q_OBJECT
 

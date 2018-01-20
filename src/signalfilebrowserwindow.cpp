@@ -1784,6 +1784,12 @@ void SignalFileBrowserWindow::runSignalAnalysis(int i) {
   }
 }
 
+/**
+ * @brief Interprets and acts on the received sync message.
+ *
+ * Also saves the last received position so that we can use it in
+ * sendSyncMessage() to break the deadlock.
+ */
 void SignalFileBrowserWindow::receiveSyncMessage(const QByteArray &message) {
   if (fileResources->file && shouldSynchronizeView()) {
     double timePosition;
@@ -1806,6 +1812,23 @@ void SignalFileBrowserWindow::receiveSyncMessage(const QByteArray &message) {
   }
 }
 
+/**
+ * @brief Creates the sync message and sends it to both the server and the
+ * client.
+ *
+ * It's OK to send the message to both, because they should never be active
+ * simultaneously. So one of them will always ignore it.
+ *
+ * There is a special case in which the message shouldn't be sent ot prevent
+ * message deadlock.This comes about because the source of the signal that
+ * trigers this method cannot be distinguished between user input and a received
+ * sync message.
+ *
+ * So when the current position is very close (within a small fraction of a
+ * second) to the last received position, you are most likely just repeating
+ * what the server already has. So there is no need to send this information
+ * back again.
+ */
 void SignalFileBrowserWindow::sendSyncMessage() {
   if (fileResources->file && shouldSynchronizeView()) {
     const int position = OpenDataFile::infoTable.getPosition() +
@@ -1818,17 +1841,10 @@ void SignalFileBrowserWindow::sendSyncMessage() {
     const int epsilon =
         max<int>(3, fileResources->file->getSamplingFrequency() / 50 / ratio);
 
-    // This condition is to break the message deadlock. This comes about because
-    // the source of the signal that trigers
-    // this method cannot be distinguished between user input and received sync
-    // message.
-
-    // When the current position is very close (within a small fraction of a
-    // second) to the last received position,
-    // you are most likely just repeating what the server already has. So there
-    // is no need to send this information.
-    if (position < (lastPositionReceived - epsilon) ||
-        position > (lastPositionReceived + epsilon)) {
+    // This condition is to break the message deadlock.
+    bool shouldNotSkip = position < (lastPositionReceived - epsilon) ||
+                         position > (lastPositionReceived + epsilon);
+    if (shouldNotSkip) {
       const double timePosition =
           position * ratio / fileResources->file->getSamplingFrequency();
 #ifndef NDEBUG

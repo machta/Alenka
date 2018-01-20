@@ -9,6 +9,10 @@
 class QWebSocketServer;
 class QWebSocket;
 
+/**
+ * @brief This class manages a WebSocket server stack and takes care of
+ * server-client connections.
+ */
 class SyncServer : public QObject {
   Q_OBJECT
 
