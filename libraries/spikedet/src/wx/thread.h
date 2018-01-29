@@ -20,7 +20,7 @@ public:
 
 	int Run()
 	{
-		t = std::thread([this] {
+		thread = std::thread([this] {
 			entryReturn = Entry();
 		});
 
@@ -32,26 +32,21 @@ public:
 
 	ExitCode Wait()
 	{
-		t.join();
+		thread.join();
 		return entryReturn;
 	}
 
 	virtual bool TestDestroy() { return stop; }
-
-	void Stop()
-	{
-		stop = true;
-	}
+	void Stop() { stop = true; }
 
 protected:
 	virtual ExitCode Entry() = 0;
 
 private:
-	std::thread t;
+	std::thread thread;
 	int kind;
 	ExitCode entryReturn;
 	std::atomic<bool> stop{false};
 };
-
 
 #endif // THREAD_H

@@ -25,17 +25,13 @@ public:
 	template<class... T>
 	int Printf(const wxString& format, T... args)
 	{
-		const char* formatStr = format.c_str();
-
-		int size1 = snprintf(nullptr, 0, formatStr, args...);
-
+		int size1 = snprintf(nullptr, 0, format.c_str(), args...);
 		std::unique_ptr<char[]> buffer(new char[size1 + 1]);
 
-		int size2 = sprintf(buffer.get(), formatStr, args...);
+		int size2 = sprintf(buffer.get(), format.c_str(), args...);
 		assert(size1 == size2); (void)size2;
 
 		assign(buffer.get(), buffer.get() + size1);
-
 		return size1;
 	}
 
