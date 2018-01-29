@@ -639,7 +639,7 @@ wxThread::ExitCode COneChannelDetect::Entry()
 			assert(yrealMedian.length() == yrealStd.length());
 			assert(retMedian.length() == 0 && retStd.length() == 0);
 
-			wxVector<double> allZeroes(yrealMedian.length());
+			std::vector<double> allZeroes(yrealMedian.length());
 			retMedian.setcontent(allZeroes.size(), allZeroes.data());
 			retStd.setcontent(allZeroes.size(), allZeroes.data());
 		}
@@ -659,7 +659,8 @@ wxThread::ExitCode COneChannelDetect::Entry()
 //			phat_int[0].insert(phat_int[0].begin(), temp_elem0);
 //			phat_int[1].insert(phat_int[1].begin(), temp_elem1);
 //		}
-// My optimization: insert constants at one to prevent repeated copying in the vector. Makes is about 2.5x faster.
+// My optimization: insert all constants at once to prevent repeated copying of
+// the underlying memory in the vector. Makes is about 2.5x faster.
 		int n = floor(m_settings->m_winsize * m_fs / 2);
 		phat_int[0].insert(phat_int[0].begin(), n, temp_elem0);
 		phat_int[1].insert(phat_int[1].begin(), n, temp_elem1);
