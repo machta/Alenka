@@ -105,9 +105,9 @@ MyApplication::MyApplication(int &argc, char **argv)
   logToFile(ss.str());
 
   if (isProgramOptionSet("help")) {
-    cout << R"(Usage:"
-  Alenka [OPTION]... [FILE]...";
-  Alenka --spikedet OUTPUT_FILE [SPIKEDET_SETTINGS]... FILE [FILE]..."
+    cout << R"(Usage:
+  Alenka [OPTION]... [FILE]...
+  Alenka --spikedet OUTPUT_FILE [SPIKEDET_SETTINGS]... FILE [FILE]...
   Alenka --help|--clInfo|--version
 )";
 
