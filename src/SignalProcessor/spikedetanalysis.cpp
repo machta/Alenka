@@ -286,7 +286,10 @@ void SpikedetAnalysis::analyseCommandLineFile() {
   auto settings = AlenkaSignal::Spikedet::defaultSettings();
   SpikedetSettingsDialog::resetSettings(&settings, nullptr);
 
-  Spikedet spikedet(Fs, true, settings);
+  bool useOriginalDecimation;
+  programOption("osd", useOriginalDecimation);
+
+  Spikedet spikedet(Fs, useOriginalDecimation, settings);
   FileSpikedetLoader<SIGNALTYPE> loader(file.get());
 
   auto output = make_unique<CDetectorOutput>();

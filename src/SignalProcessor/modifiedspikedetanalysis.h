@@ -6,8 +6,6 @@
 namespace AlenkaSignal {
 class OpenCLContext;
 }
-class OpenDataFile;
-class QProgressDialog;
 
 class ModifiedSpikedetAnalysis : public SpikedetAnalysis {
 public:

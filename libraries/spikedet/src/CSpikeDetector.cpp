@@ -661,7 +661,7 @@ wxThread::ExitCode COneChannelDetect::Entry()
 //		}
 // My optimization: insert all constants at once to prevent repeated copying of
 // the underlying memory in the vector. Makes is about 2.5x faster.
-		int n = floor(m_settings->m_winsize * m_fs / 2);
+		const int n = floor(m_settings->m_winsize * m_fs / 2);
 		phat_int[0].insert(phat_int[0].begin(), n, temp_elem0);
 		phat_int[1].insert(phat_int[1].begin(), n, temp_elem1);
 
