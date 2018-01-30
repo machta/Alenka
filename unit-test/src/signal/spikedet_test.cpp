@@ -58,7 +58,8 @@ TEST(spikedet_test_optimized, IED_P001_default) {
 
   EXPECT_NO_THROW(printException(
       [&]() { spikes = test(&loader, file.getSamplingFrequency(), false); }));
-  EXPECT_LE(relativeError(spikes, spikeCounts[0]), ALLOWED_ERROR);
+  EXPECT_LE(relativeError(spikes, spikeCounts[0]), ALLOWED_ERROR)
+      << "The diference is " << spikes - spikeCounts[0];
 }
 
 TEST(spikedet_test_optimized, IED_P002_default) {
@@ -68,7 +69,8 @@ TEST(spikedet_test_optimized, IED_P002_default) {
 
   EXPECT_NO_THROW(printException(
       [&]() { spikes = test(&loader, file.getSamplingFrequency(), false); }));
-  EXPECT_LE(relativeError(spikes, spikeCounts[1]), ALLOWED_ERROR);
+  EXPECT_LE(relativeError(spikes, spikeCounts[1]), ALLOWED_ERROR)
+      << "The diference is " << spikes - spikeCounts[1];
 }
 
 TEST(spikedet_test_optimized, IED_P003_default) {
@@ -78,7 +80,8 @@ TEST(spikedet_test_optimized, IED_P003_default) {
 
   EXPECT_NO_THROW(printException(
       [&]() { spikes = test(&loader, file.getSamplingFrequency(), false); }));
-  EXPECT_LE(relativeError(spikes, spikeCounts[2]), ALLOWED_ERROR);
+  EXPECT_LE(relativeError(spikes, spikeCounts[2]), ALLOWED_ERROR)
+      << "The diference is " << spikes - spikeCounts[2];
 }
 
 TEST(spikedet_test_optimized, IED_P004_default) {
@@ -88,7 +91,8 @@ TEST(spikedet_test_optimized, IED_P004_default) {
 
   EXPECT_NO_THROW(printException(
       [&]() { spikes = test(&loader, file.getSamplingFrequency(), false); }));
-  EXPECT_LE(relativeError(spikes, spikeCounts[3]), ALLOWED_ERROR);
+  EXPECT_LE(relativeError(spikes, spikeCounts[3]), ALLOWED_ERROR)
+      << "The diference is " << spikes - spikeCounts[3];
 }
 
 TEST(spikedet_test_optimized, IED_P005_default) {
@@ -98,7 +102,8 @@ TEST(spikedet_test_optimized, IED_P005_default) {
 
   EXPECT_NO_THROW(printException(
       [&]() { spikes = test(&loader, file.getSamplingFrequency(), false); }));
-  EXPECT_LE(relativeError(spikes, spikeCounts[4]), ALLOWED_ERROR);
+  EXPECT_LE(relativeError(spikes, spikeCounts[4]), ALLOWED_ERROR)
+      << "The diference is " << spikes - spikeCounts[4];
 }
 
 TEST(spikedet_test_optimized, IED_P006_default) {
@@ -108,7 +113,8 @@ TEST(spikedet_test_optimized, IED_P006_default) {
 
   EXPECT_NO_THROW(printException(
       [&]() { spikes = test(&loader, file.getSamplingFrequency(), false); }));
-  EXPECT_LE(relativeError(spikes, spikeCounts[5]), ALLOWED_ERROR);
+  EXPECT_LE(relativeError(spikes, spikeCounts[5]), ALLOWED_ERROR)
+      << "The diference is " << spikes - spikeCounts[5];
 }
 
 TEST(spikedet_test_optimized, IED_P007_default) {
@@ -118,7 +124,8 @@ TEST(spikedet_test_optimized, IED_P007_default) {
 
   EXPECT_NO_THROW(printException(
       [&]() { spikes = test(&loader, file.getSamplingFrequency(), false); }));
-  EXPECT_LE(relativeError(spikes, spikeCounts[6]), ALLOWED_ERROR);
+  EXPECT_LE(relativeError(spikes, spikeCounts[6]), ALLOWED_ERROR)
+      << "The diference is " << spikes - spikeCounts[6];
 }
 
 // The original implementation
@@ -130,7 +137,8 @@ TEST(spikedet_test, IED_P001_default) {
 
   EXPECT_NO_THROW(printException(
       [&]() { spikes = test(&loader, file.getSamplingFrequency(), true); }));
-  EXPECT_LE(relativeError(spikes, spikeCounts[0]), ALLOWED_ERROR_ORIGINAL);
+  EXPECT_LE(relativeError(spikes, spikeCounts[0]), ALLOWED_ERROR_ORIGINAL)
+      << "The diference is " << spikes - spikeCounts[0];
 }
 
 TEST(spikedet_test, IED_P002_default) {
@@ -140,7 +148,8 @@ TEST(spikedet_test, IED_P002_default) {
 
   EXPECT_NO_THROW(printException(
       [&]() { spikes = test(&loader, file.getSamplingFrequency(), true); }));
-  EXPECT_LE(relativeError(spikes, spikeCounts[1]), ALLOWED_ERROR_ORIGINAL * 2);
+  EXPECT_LE(relativeError(spikes, spikeCounts[1]), ALLOWED_ERROR_ORIGINAL)
+      << "The diference is " << spikes - spikeCounts[1];
 }
 
 TEST(spikedet_test, IED_P003_default) {
@@ -150,7 +159,8 @@ TEST(spikedet_test, IED_P003_default) {
 
   EXPECT_NO_THROW(printException(
       [&]() { spikes = test(&loader, file.getSamplingFrequency(), true); }));
-  EXPECT_LE(relativeError(spikes, spikeCounts[2]), ALLOWED_ERROR_ORIGINAL);
+  EXPECT_LE(relativeError(spikes, spikeCounts[2]), ALLOWED_ERROR_ORIGINAL)
+      << "The diference is " << spikes - spikeCounts[2];
 }
 
 TEST(spikedet_test, IED_P004_default) {
@@ -160,7 +170,8 @@ TEST(spikedet_test, IED_P004_default) {
 
   EXPECT_NO_THROW(printException(
       [&]() { spikes = test(&loader, file.getSamplingFrequency(), true); }));
-  EXPECT_LE(relativeError(spikes, spikeCounts[3]), ALLOWED_ERROR_ORIGINAL);
+  EXPECT_LE(relativeError(spikes, spikeCounts[3]), ALLOWED_ERROR_ORIGINAL)
+      << "The diference is " << spikes - spikeCounts[3];
 }
 
 TEST(spikedet_test, IED_P005_default) {
@@ -170,7 +181,8 @@ TEST(spikedet_test, IED_P005_default) {
 
   EXPECT_NO_THROW(printException(
       [&]() { spikes = test(&loader, file.getSamplingFrequency(), true); }));
-  EXPECT_LE(relativeError(spikes, spikeCounts[4]), ALLOWED_ERROR_ORIGINAL);
+  EXPECT_LE(relativeError(spikes, spikeCounts[4]), ALLOWED_ERROR_ORIGINAL)
+      << "The diference is " << spikes - spikeCounts[4];
 }
 
 TEST(spikedet_test, IED_P006_default) {
@@ -180,7 +192,8 @@ TEST(spikedet_test, IED_P006_default) {
 
   EXPECT_NO_THROW(printException(
       [&]() { spikes = test(&loader, file.getSamplingFrequency(), true); }));
-  EXPECT_LE(relativeError(spikes, spikeCounts[5]), ALLOWED_ERROR_ORIGINAL);
+  EXPECT_LE(relativeError(spikes, spikeCounts[5]), ALLOWED_ERROR_ORIGINAL)
+      << "The diference is " << spikes - spikeCounts[5];
 }
 
 TEST(spikedet_test, IED_P007_default) {
@@ -190,7 +203,8 @@ TEST(spikedet_test, IED_P007_default) {
 
   EXPECT_NO_THROW(printException(
       [&]() { spikes = test(&loader, file.getSamplingFrequency(), true); }));
-  EXPECT_LE(relativeError(spikes, spikeCounts[6]), ALLOWED_ERROR_ORIGINAL);
+  EXPECT_LE(relativeError(spikes, spikeCounts[6]), ALLOWED_ERROR_ORIGINAL)
+      << "The diference is " << spikes - spikeCounts[6];
 }
 
 TEST(spikedet_test, index_bug) {
