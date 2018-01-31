@@ -28,33 +28,23 @@ const AbstractTrackTable *getTrackTable(OpenDataFile *file) {
 }
 
 void multiplySamples(vector<float> *samples) {
-  // Assume input is already sorted.
-  vector<pair<double, double>> input =
+  const vector<pair<double, double>> input =
       OpenDataFile::infoTable.getFrequencyMultipliers();
+
   if (input.empty())
     return;
 
-  int inputSize = static_cast<int>(input.size());
-  int samplesSize = static_cast<int>(samples->size());
-  input.push_back(
-      make_pair(samplesSize, input.back().second)); // End of vector guard.
+  vector<float> multipliers(samples->size(), 1);
 
-  vector<float> multipliers(samplesSize, 1);
+  for (auto e : input) {
+    const int f = max<int>(0, round(e.first));
+    const double multi = e.second;
 
-  for (int i = 0; i < inputSize; ++i) {
-    double multi = input[i].second;
-    int f = round(input[i].first);
-    double nextF = input[i + 1].first;
-
-    if (samplesSize < f || samplesSize < nextF)
-      continue;
-
-    for (; f < nextF; ++f)
-      multipliers[f] = multi;
+    fill(multipliers.begin() + f, multipliers.end(), multi);
   }
 
-  for (int i = 0; i < samplesSize; ++i)
-    (*samples)[i] *= multipliers[i];
+  transform(samples->begin(), samples->end(), multipliers.begin(),
+            samples->begin(), [](int a, int b) { return a * b; });
 }
 
 // TODO: Fix this this *allocator* hack. Change the cache so that it default
