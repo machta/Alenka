@@ -18,6 +18,10 @@ class QLineSeries;
 class QValueAxis;
 } // namespace QtCharts
 
+/**
+ * @brief Implements the user control responsible for visualizing filter
+ * response and spectrum.
+ */
 class FilterVisualizer : public QWidget {
   Q_OBJECT
 

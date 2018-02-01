@@ -8,19 +8,21 @@ class OpenDataFile;
 class QPlainTextEdit;
 class QSpinBox;
 
+/**
+ * @brief This class implements the window for managing custom filtering.
+ */
 class FilterManager : public QWidget {
   Q_OBJECT
+
+  OpenDataFile *file;
+  FilterVisualizer *filterVisulizer;
+  QPlainTextEdit *multipliersEdit;
+  QSpinBox *channelSpinBox;
 
 public:
   explicit FilterManager(QWidget *parent = nullptr);
 
   void changeFile(OpenDataFile *file);
-
-private:
-  OpenDataFile *file;
-  FilterVisualizer *filterVisulizer;
-  QPlainTextEdit *multipliersEdit;
-  QSpinBox *channelSpinBox;
 
 private slots:
   void setMultipliersText();

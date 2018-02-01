@@ -221,10 +221,7 @@ void FilterVisualizer::updateResponse() {
     responseSeries->append(1, maxVal);
 
     // One more point needs to be added, otherwise Qt draws nothing at all.
-    if (abs(maxVal) < 0.001)
-      responseSeries->append(1, maxVal - 1);
-    else
-      responseSeries->append(1, 0);
+    responseSeries->append(1, abs(maxVal) < 0.001 ? maxVal - 1 : 0);
   } else {
     for (int i = 0; i < n2; ++i) {
       float val = response[i];
