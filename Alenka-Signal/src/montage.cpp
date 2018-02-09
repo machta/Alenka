@@ -102,6 +102,16 @@ __kernel void montage(__global float *_input_, __global float *_output_,
   return src;
 }
 
+/**
+ * @brief Tries to match a trivial copy-montage.
+ *
+ * An example of a copy montage:
+ * ```
+ * out = in(5);
+ * ```
+ *
+ * Tests of the regex [here](https://regex101.com/r/TWqWyU/1/tests).
+ */
 bool parseCopyMontage(const string &source, cl_int *index = nullptr) {
   try {
     const static regex re(R"(\s*out\s*=\s*in\s*\(\s*(\d+)\s*\)\s*;\s*)");
@@ -161,9 +171,9 @@ regex_replace_transform(BidirIt first, BidirIt last,
  * This expression matches a C-like identifier followed by parentheses enclosing
  * paramCount string-literal parameters.
  *
- * Tests of the expressions:
- * * [for paramCount=1](https://regex101.com/r/41wEzp/1)
- * * [for paramCount=2](https://regex101.com/r/kQCLwW/1)
+ * Tests of the regex:
+ * * [for paramCount=1](https://regex101.com/r/41wEzp/1/tests)
+ * * [for paramCount=2](https://regex101.com/r/kQCLwW/1/tests)
  */
 regex labelRegex(int paramCount) {
   const string front = R"(([_a-zA-Z][_a-zA-Z0-9]{0,30})\s*\()";

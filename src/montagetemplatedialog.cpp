@@ -4,11 +4,11 @@
 #include "DataModel/opendatafile.h"
 #include "DataModel/undocommandfactory.h"
 #include "error.h"
+#include "myapplication.h"
 
 #include <pugixml.hpp>
 
 #include <QAction>
-#include <QApplication>
 #include <QDialogButtonBox>
 #include <QFileInfo>
 #include <QInputDialog>
@@ -70,8 +70,8 @@ QString indentString(const QString &str, int spaces) {
 
 MontageTemplateDialog::MontageTemplateDialog(OpenDataFile *file,
                                              QWidget *parent)
-    : QDialog(parent), file(file), dir(QApplication::applicationDirPath() +
-                                       QDir::separator() + "montageTemplates") {
+    : QDialog(parent), file(file),
+      dir(MyApplication::makeAppSubdir({"montageTemplates"})) {
   readTemplates();
 
   QVBoxLayout *box = new QVBoxLayout();

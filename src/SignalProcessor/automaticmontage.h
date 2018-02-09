@@ -9,6 +9,9 @@ namespace AlenkaFile {
 class AbstractTrackTable;
 }
 
+/**
+ * @brief Gives an empty montage.
+ */
 class AutomaticMontage {
 public:
   std::string getName() const { return name; }

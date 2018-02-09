@@ -2,6 +2,7 @@
 #define MYAPPLICATION_H
 
 #include <QApplication>
+#include <QDir>
 
 #include <array>
 #include <memory>
@@ -56,7 +57,11 @@ public:
   }
   static std::string versionString() { return versionString(version()); }
 
-  static char dirSeparator();
+  static QDir makeSubdir(const QString &path,
+                         const std::vector<QString> &relPath);
+  static QDir makeAppSubdir(const std::vector<QString> &relPath) {
+    return makeSubdir(QApplication::applicationDirPath(), relPath);
+  }
 };
 
 extern std::unique_ptr<AlenkaSignal::OpenCLContext> globalContext;

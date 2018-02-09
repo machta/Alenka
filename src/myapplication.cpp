@@ -23,7 +23,8 @@ MyApplication::MyApplication(int &argc, char **argv)
     // Set up the global options object.
     PROGRAM_OPTIONS = make_unique<Options>(argc, argv);
 
-    // Set up the log.
+    // Set up the log. This is a potential bug. TODO: Do it in a way doesn't
+    // rely on a max length.
     const int maxLogFileNameLength = 1000;
     char logFileName[maxLogFileNameLength + 1];
     time_t now = time(nullptr);
@@ -31,9 +32,8 @@ MyApplication::MyApplication(int &argc, char **argv)
                           "%Y-%m-%d--%H-%M-%S.log", localtime(&now));
     logFileName[len] = 0;
 
-    char s = dirSeparator();
     string logFilePath =
-        applicationDirPath().toStdString() + s + "log" + s + logFileName;
+        makeAppSubdir({"log", logFileName}).absolutePath().toStdString();
     LOG_FILE.open(logFilePath);
 
     if (!LOG_FILE.good())
@@ -151,6 +151,15 @@ int MyApplication::logExitStatus(int status) {
   return status;
 }
 
-char MyApplication::dirSeparator() { return QDir::separator().toLatin1(); }
+QDir MyApplication::makeSubdir(const QString &path,
+                               const std::vector<QString> &relPath) {
+  QString dirPath = path;
+
+  for (auto &e : relPath) {
+    dirPath += QDir::separator() + e;
+  }
+
+  return QDir(dirPath);
+}
 
 unique_ptr<AlenkaSignal::OpenCLContext> globalContext(nullptr);

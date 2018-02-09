@@ -70,8 +70,7 @@ namespace {
 const char *TITLE = "Signal File Browser";
 
 QString headerFilePath() {
-  return MyApplication::applicationDirPath() + MyApplication::dirSeparator() +
-         "montageHeader.cl";
+  return MyApplication::makeAppSubdir({"montageHeader.cl"}).absolutePath();
 }
 
 void saveMontageHeader() {

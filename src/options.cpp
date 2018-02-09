@@ -180,8 +180,9 @@ void Options::parseConfigFile(const options_description &configuration) {
       logToFileAndConsole("Config file '" << configPath << "' not found.");
     }
   } else {
-    configPath = MyApplication::applicationDirPath().toStdString() +
-                 MyApplication::dirSeparator() + "options.ini";
+    configPath = MyApplication::makeAppSubdir({"options.ini"})
+                     .absolutePath()
+                     .toStdString();
     ifs.open(configPath);
 
     if (!ifs.good()) {

@@ -18,6 +18,10 @@ struct TemplateFile {
   std::vector<std::array<QString, 2>> rows;
 };
 
+/**
+ * @brief This class implements the dialog window that manages montage
+ * templates.
+ */
 class MontageTemplateDialog : public QDialog {
   Q_OBJECT
 

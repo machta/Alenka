@@ -18,14 +18,20 @@ string cacheFilePath() {
   programOption("clPlatform", platform);
   programOption("clDevice", device);
 
-  string str;
-  if (isProgramOptionSet("kernelCacheDir"))
-    programOption("kernelCacheDir", str);
-  else
-    str = MyApplication::applicationDirPath().toStdString();
+  const QString fileName = QString::fromStdString(
+      "kernel-cache-" + to_string(platform) + '-' + to_string(device) + ".txt");
 
-  return str + MyApplication::dirSeparator() + "kernel-cache-" +
-         to_string(platform) + '-' + to_string(device) + ".txt";
+  QString path;
+  if (isProgramOptionSet("kernelCacheDir")) {
+    string tmp;
+    programOption("kernelCacheDir", tmp);
+    path = MyApplication::makeSubdir(QString::fromStdString(tmp), {fileName})
+               .absolutePath();
+  } else {
+    path = MyApplication::makeAppSubdir({fileName}).absolutePath();
+  }
+
+  return path.toStdString();
 }
 
 } // namespace
