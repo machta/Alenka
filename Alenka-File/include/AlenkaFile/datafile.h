@@ -73,7 +73,7 @@ public:
    *
    * @param infoFile [out]
    */
-  virtual void saveSecondaryFile(std::string montFilePath = "");
+  void saveSecondaryFile(std::string montFilePath = "");
   virtual void save() { saveSecondaryFile(); }
 
   /**
@@ -87,11 +87,8 @@ public:
    * An empty montage is always created.???
    * @param infoFile [in]
    */
-  virtual bool loadSecondaryFile(std::string montFilePath = "");
-  virtual bool load() {
-    return loadSecondaryFile();
-    ;
-  }
+  bool loadSecondaryFile(std::string montFilePath = "");
+  virtual bool load() { return loadSecondaryFile(); }
   // TODO: Make sure load can be called repeatedly with the same results.
 
   /**

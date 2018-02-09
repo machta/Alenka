@@ -86,8 +86,8 @@ void writeMetaInfo(int file, const edf_hdr_struct *edfhdr) {
   res |= edf_set_patientcode(file, edfhdr->patientcode);
 
   // TODO: Figure out how to set these. This version causes problems. Or don't
-  // copy it: isntead show a warning
-  // that the file will have some incorrect values, and make it a known issue.
+  // copy it at all: instead show a warning that the file will have some
+  // incorrect values, and make it a known issue.
   // edf_set_gender_char(file, edfhdr->gender);
   // edf_set_birthdate_char(file, edfhdr->birthdate);
 
