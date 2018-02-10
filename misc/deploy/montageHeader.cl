@@ -53,7 +53,7 @@ float distAverage(int i, int coeff, PARA) {
 #define distAverage(a_, b_) distAverage(a_, b_, PASS)
 
 // Weigted average by distance d where weights = -d/maxDist + 1.
-// It's a linear function wiht maximum at [0, 1] and minimum at [maxDist, 0].
+// It's a linear function with maximum at [0, 1] and minimum at [maxDist, 0].
 // For d > maxDist weights are 0.
 float distAverageLinear(int i, int maxDist, PARA) {
   float tmp = 0;

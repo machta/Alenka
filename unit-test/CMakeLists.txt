@@ -26,6 +26,7 @@ set(SRC
   src/signal/filter_test.cpp
   src/signal/montage_coordinate_test.cpp
   src/signal/montage_label_test.cpp
+  src/signal/montage_special_test.cpp
   src/signal/montage_static_test.cpp
   src/signal/simple_montage_test.cpp
   src/signal/spikedet_test.cpp)

@@ -37,8 +37,8 @@ class OpenCLContext {
   cl_context context;
   cl_platform_id platformId;
   cl_device_id deviceId;
-  std::unique_ptr<OpenCLProgram> copyOnlyProgramFloat;
-  std::unique_ptr<OpenCLProgram> copyOnlyProgramDouble;
+  std::unique_ptr<OpenCLProgram> identityProgramFloat, identityProgramDouble,
+      copyOnlyProgramFloat, copyOnlyProgramDouble;
 
 public:
   /**
@@ -89,13 +89,35 @@ public:
    */
   std::string getDeviceInfo() const;
 
+  bool hasIdentityKernelFloat() const {
+    return identityProgramFloat.get() != nullptr;
+  }
+  void setIdentityKernelFloat(std::unique_ptr<OpenCLProgram> val) {
+    identityProgramFloat = std::move(val);
+  }
+  cl_kernel identityKernelFloat() const {
+    return identityProgramFloat->createKernel("montage");
+  }
+
+  bool hasIdentityKernelDouble() const {
+    return identityProgramDouble.get() != nullptr;
+  }
+  void setIdentityKernelDouble(std::unique_ptr<OpenCLProgram> val) {
+    identityProgramDouble = std::move(val);
+  }
+  cl_kernel identityKernelDouble() const {
+    return identityProgramDouble->createKernel("montage");
+  }
+
   bool hasCopyOnlyKernelFloat() const {
     return copyOnlyProgramFloat.get() != nullptr;
   }
   void setCopyOnlyKernelFloat(std::unique_ptr<OpenCLProgram> val) {
     copyOnlyProgramFloat = std::move(val);
   }
-  cl_kernel copyOnlyKernelFloat() const;
+  cl_kernel copyOnlyKernelFloat() const {
+    return copyOnlyProgramFloat->createKernel("montage");
+  }
 
   bool hasCopyOnlyKernelDouble() const {
     return copyOnlyProgramDouble.get() != nullptr;
@@ -103,7 +125,9 @@ public:
   void setCopyOnlyKernelDouble(std::unique_ptr<OpenCLProgram> val) {
     copyOnlyProgramDouble = std::move(val);
   }
-  cl_kernel copyOnlyKernelDouble() const;
+  cl_kernel copyOnlyKernelDouble() const {
+    return copyOnlyProgramDouble->createKernel("montage");
+  }
 
   static void CCEC(cl_int val, std::string message, const char *file, int line);
   static std::string clErrorCodeToString(cl_int code);

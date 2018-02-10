@@ -14,6 +14,8 @@
 
 namespace AlenkaSignal {
 
+enum MontageType { NormalMontage, IdentityMontage, CopyMontage };
+
 /**
  * @brief A class for creating kernel program for montage computation.
  *
@@ -29,11 +31,11 @@ namespace AlenkaSignal {
  */
 template <class T> class Montage {
   OpenCLContext *context = nullptr;
-  bool copyMontage = false;
+  MontageType montageType = NormalMontage;
   std::string source;
   std::unique_ptr<OpenCLProgram> program;
   cl_kernel kernel = nullptr;
-  cl_int index = -1;
+  cl_int copyIndex = -1;
 
 public:
   /**
@@ -65,8 +67,8 @@ public:
       return nullptr;
   }
 
-  bool isCopyMontage() const { return copyMontage; }
-  cl_int copyMontageIndex() const { return index; }
+  MontageType getMontageType() const { return montageType; }
+  cl_int copyMontageIndex() const { return copyIndex; }
 
   std::string getSource() const { return source; }
 
@@ -93,6 +95,7 @@ private:
                                const std::vector<std::string> &labels);
   void buildProgram();
   void buildCopyProgram();
+  void buildIdentityProgram();
 };
 
 } // namespace AlenkaSignal

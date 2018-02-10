@@ -199,14 +199,6 @@ string OpenCLContext::getDeviceInfo() const {
   return str;
 }
 
-cl_kernel OpenCLContext::copyOnlyKernelFloat() const {
-  return copyOnlyProgramFloat->createKernel("montage");
-}
-
-cl_kernel OpenCLContext::copyOnlyKernelDouble() const {
-  return copyOnlyProgramDouble->createKernel("montage");
-}
-
 void OpenCLContext::CCEC(cl_int val, string message, const char *file,
                          int line) {
   std::stringstream ss;

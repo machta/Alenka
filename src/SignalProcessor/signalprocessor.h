@@ -163,7 +163,7 @@ public:
         montage.push_back(make_unique<AlenkaSignal::Montage<T>>(ptr, context));
       } else {
 #ifndef NDEBUG
-        if (!sourceMontage->isCopyMontage())
+        if (AlenkaSignal::NormalMontage == sourceMontage->getMontageType())
           ++needToCompile;
 #endif
         if (kernelCache) {

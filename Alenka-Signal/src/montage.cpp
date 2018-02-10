@@ -103,6 +103,28 @@ __kernel void montage(__global float *_input_, __global float *_output_,
 }
 
 /**
+ * @brief Tries to match an identity-montage.
+ *
+ * An identity-montage looks exactly like this:
+ * ```
+ * out = in(INDEX);
+ * ```
+ *
+ * Tests of the regex are [here](https://regex101.com/r/P2RlrZ/1).
+ */
+bool parseIdentityMontage(const string &source) {
+  try {
+    const static regex re(R"(\s*out\s*=\s*in\s*\(\s*INDEX\s*\)\s*;\s*)");
+
+    smatch matches;
+    return regex_match(source, matches, re);
+  } catch (regex_error) {
+  }
+
+  return false;
+}
+
+/**
  * @brief Tries to match a trivial copy-montage.
  *
  * An example of a copy montage:
@@ -110,7 +132,7 @@ __kernel void montage(__global float *_input_, __global float *_output_,
  * out = in(5);
  * ```
  *
- * Tests of the regex [here](https://regex101.com/r/TWqWyU/1).
+ * Tests of the regex are [here](https://regex101.com/r/TWqWyU/1).
  */
 bool parseCopyMontage(const string &source, cl_int *index = nullptr) {
   try {
@@ -252,9 +274,12 @@ Montage<T>::Montage(const string &source, OpenCLContext *context,
                     const string &headerSource, const vector<string> &labels)
     : context(context) {
   string src = preprocessSource(source, labels);
-  copyMontage = parseCopyMontage(src, &index);
 
-  if (!copyMontage)
+  if (parseIdentityMontage(src))
+    montageType = IdentityMontage;
+  else if (parseCopyMontage(src, &copyIndex))
+    montageType = CopyMontage;
+  else
     this->source = stripComments(buildSource<T>(src, headerSource));
 }
 
@@ -268,7 +293,7 @@ template <class T> Montage<T>::~Montage() {
 template <class T>
 bool Montage<T>::test(const string &source, OpenCLContext *context,
                       string *errorMessage) {
-  if (parseCopyMontage(source))
+  if (parseIdentityMontage(source) || parseCopyMontage(source))
     return true;
 
   return testHeader(source, context, "", errorMessage);
@@ -277,7 +302,7 @@ bool Montage<T>::test(const string &source, OpenCLContext *context,
 /**
  * @brief Remove C and C++ comments from code.
  *
- * Tests of the regex [here](https://regex101.com/r/HoZ7v5/1).
+ * Tests of the regex are [here](https://regex101.com/r/HoZ7v5/1).
  */
 template <class T> string Montage<T>::stripComments(const string &code) {
   try {
@@ -330,49 +355,66 @@ template <class T> void Montage<T>::buildProgram() {
   if (kernel || program)
     return; // The program is already built.
 
-  if (copyMontage) {
+  switch (montageType) {
+  case IdentityMontage:
+    buildIdentityProgram();
+    break;
+  case CopyMontage:
     buildCopyProgram();
-  } else {
+    break;
+  case NormalMontage:
     program = make_unique<OpenCLProgram>(source, context);
     if (!program->compileSuccess()) {
       cerr << "Montage compilation error:\n" << program->getCompileLog();
       throw runtime_error("Montage: compilation failed");
     }
+    break;
+  default:
+    assert(false && "Unexpected montage type");
   }
 }
 
 template <class T> void Montage<T>::buildCopyProgram() {
-  if (is_same<T, double>::value) {
-    if (!context->hasCopyOnlyKernelDouble()) {
-      string src =
-          buildSource<T>("out = in(_copyIndex_);", "", ", int _copyIndex_");
+  const bool isDouble = is_same<T, double>::value;
 
-      auto p = make_unique<OpenCLProgram>(src, context);
-      if (!p->compileSuccess()) {
-        cerr << "Copy only kernel compilation error:\n" << p->getCompileLog();
-        throw runtime_error("Montage: compilation failed");
-      }
+  if (isDouble ? !context->hasCopyOnlyKernelDouble()
+               : !context->hasCopyOnlyKernelFloat()) {
+    auto p = make_unique<OpenCLProgram>(
+        buildSource<T>("out = in(_copyIndex_);", "", ", int _copyIndex_"),
+        context);
 
-      context->setCopyOnlyKernelDouble(move(p));
+    if (!p->compileSuccess()) {
+      cerr << "Copy only kernel compilation error:\n" << p->getCompileLog();
+      throw runtime_error("Montage: compilation failed");
     }
 
-    kernel = context->copyOnlyKernelDouble();
-  } else {
-    if (!context->hasCopyOnlyKernelFloat()) {
-      string src =
-          buildSource<T>("out = in(_copyIndex_);", "", ", int _copyIndex_");
-
-      auto p = make_unique<OpenCLProgram>(src, context);
-      if (!p->compileSuccess()) {
-        cerr << "Copy only kernel compilation error:\n" << p->getCompileLog();
-        throw runtime_error("Montage: compilation failed");
-      }
-
-      context->setCopyOnlyKernelFloat(move(p));
-    }
-
-    kernel = context->copyOnlyKernelFloat();
+    isDouble ? context->setCopyOnlyKernelDouble(move(p))
+             : context->setCopyOnlyKernelFloat(move(p));
   }
+
+  kernel = isDouble ? context->copyOnlyKernelDouble()
+                    : context->copyOnlyKernelFloat();
+}
+
+template <class T> void Montage<T>::buildIdentityProgram() {
+  const bool isDouble = is_same<T, double>::value;
+
+  if (isDouble ? !context->hasIdentityKernelDouble()
+               : !context->hasIdentityKernelFloat()) {
+    auto p =
+        make_unique<OpenCLProgram>(buildSource<T>("out = in(INDEX);"), context);
+
+    if (!p->compileSuccess()) {
+      cerr << "Identity kernel compilation error:\n" << p->getCompileLog();
+      throw runtime_error("Montage: compilation failed");
+    }
+
+    isDouble ? context->setIdentityKernelDouble(move(p))
+             : context->setIdentityKernelFloat(move(p));
+  }
+
+  kernel = isDouble ? context->identityKernelDouble()
+                    : context->identityKernelFloat();
 }
 
 template class Montage<float>;

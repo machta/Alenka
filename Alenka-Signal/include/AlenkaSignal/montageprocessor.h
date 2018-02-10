@@ -10,10 +10,9 @@
 #include <type_traits>
 #include <vector>
 
+#include "montage.h"
+
 namespace AlenkaSignal {
-
-template <class T> class Montage;
-
 /**
  * @brief This class handles computation of montages.
  */
@@ -53,7 +52,8 @@ public:
     int i = 0;
     for (Iter it = montageBegin; it != montageEnd; ++it) {
       auto &mont = *it;
-      int copyIndex = mont->isCopyMontage() ? mont->copyMontageIndex() : -1;
+      int copyIndex =
+          CopyMontage == mont->getMontageType() ? mont->copyMontageIndex() : -1;
       processOneMontage(inBuffer, outBuffer, xyzBuffer, queue, outputRowLength,
                         inputRowOffset, i++, mont->getKernel(), copyIndex);
     }
