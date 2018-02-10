@@ -110,7 +110,7 @@ __kernel void montage(__global float *_input_, __global float *_output_,
  * out = in(5);
  * ```
  *
- * Tests of the regex [here](https://regex101.com/r/TWqWyU/1/tests).
+ * Tests of the regex [here](https://regex101.com/r/TWqWyU/1).
  */
 bool parseCopyMontage(const string &source, cl_int *index = nullptr) {
   try {
@@ -165,6 +165,11 @@ regex_replace_transform(BidirIt first, BidirIt last,
   return s;
 }
 
+struct LabelRegex {
+  int paramCount;
+  regex re;
+};
+
 /**
  * @brief Return regular expressions for label replacement.
  *
@@ -172,10 +177,10 @@ regex_replace_transform(BidirIt first, BidirIt last,
  * paramCount string-literal parameters.
  *
  * Tests of the regex:
- * * [for paramCount=1](https://regex101.com/r/41wEzp/1/tests)
- * * [for paramCount=2](https://regex101.com/r/kQCLwW/1/tests)
+ * * [for paramCount=1](https://regex101.com/r/41wEzp/1)
+ * * [for paramCount=2](https://regex101.com/r/kQCLwW/1)
  */
-regex labelRegex(int paramCount) {
+LabelRegex makeLabelRegex(int paramCount) {
   const string front = R"(([_a-zA-Z][_a-zA-Z0-9]{0,30})\s*\()";
   const string stringLiteral = R"(\s*\"(([^\\\"]|\\.)*)\"\s*)";
   const string back = R"(\))";
@@ -186,24 +191,24 @@ regex labelRegex(int paramCount) {
     expression += "," + stringLiteral;
   expression += back;
 
-  return regex(expression);
+  return {paramCount, regex(expression)};
 }
 
 string injectIndex(const smatch &m, const vector<string> &labels,
-                   int paramCount) {
+                   const LabelRegex &labelRegex) {
   string mStr = m.str(0);
   smatch matches;
   // matches[1] = the first group -- the identifier
   // matches[2, 4, ...] = the string parameters
 
-  bool res = regex_match(mStr, matches, labelRegex(paramCount));
+  bool res = regex_match(mStr, matches, labelRegex.re);
   assert(res);
   (void)res;
 
   vector<int> indexes;
-  indexes.reserve(paramCount);
+  indexes.reserve(labelRegex.paramCount);
 
-  for (int i = 1; i <= paramCount; ++i) {
+  for (int i = 1; i <= labelRegex.paramCount; ++i) {
     auto it = find(labels.begin(), labels.end(), matches[2 * i]);
     indexes.push_back(it == labels.end()
                           ? -1
@@ -213,7 +218,7 @@ string injectIndex(const smatch &m, const vector<string> &labels,
   string result = matches[1];
   result += '(';
 
-  assert(0 < paramCount);
+  assert(0 < labelRegex.paramCount);
   result += to_string(indexes[0]);
 
   for (unsigned int i = 1; i < indexes.size(); ++i)
@@ -223,12 +228,12 @@ string injectIndex(const smatch &m, const vector<string> &labels,
 }
 
 string replaceLabels(const string &source, const vector<string> &labels,
-                     int paramCount) {
+                     const LabelRegex &labelRegex) {
   try {
     return regex_replace_transform(source.cbegin(), source.cend(),
-                                   labelRegex(paramCount),
-                                   [&labels, paramCount](const smatch &m) {
-                                     return injectIndex(m, labels, paramCount);
+                                   labelRegex.re,
+                                   [&labels, &labelRegex](const smatch &m) {
+                                     return injectIndex(m, labels, labelRegex);
                                    });
   } catch (regex_error) {
   }
@@ -269,10 +274,15 @@ bool Montage<T>::test(const string &source, OpenCLContext *context,
   return testHeader(source, context, "", errorMessage);
 }
 
+/**
+ * @brief Remove C and C++ comments from code.
+ *
+ * Tests of the regex [here](https://regex101.com/r/HoZ7v5/1).
+ */
 template <class T> string Montage<T>::stripComments(const string &code) {
   try {
-    const static regex commentre(R"((/\*([^*]|(\*+[^*/]))*\*+/)|(//.*))");
-    return regex_replace(code, commentre, string(""));
+    const static regex re(R"((/\*([^*]|(\*+[^*/]))*\*+/)|(//.*))");
+    return regex_replace(code, re, string(""));
   } catch (regex_error) {
   }
 
@@ -307,8 +317,12 @@ template <class T>
 string Montage<T>::preprocessSource(const string &source,
                                     const vector<string> &labels) {
   string src = stripComments(source);
-  src = replaceLabels(src, labels, 1);
-  src = replaceLabels(src, labels, 2);
+
+  const static LabelRegex labelRegex1 = makeLabelRegex(1);
+  const static LabelRegex labelRegex2 = makeLabelRegex(2);
+  src = replaceLabels(src, labels, labelRegex1);
+  src = replaceLabels(src, labels, labelRegex2);
+
   return src;
 }
 
