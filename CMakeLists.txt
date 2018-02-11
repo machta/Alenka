@@ -10,12 +10,18 @@ option(ALENKA_STATIC_LINK
 Use this to make a package that works for both Ubuntu 14 and 15." OFF)
 option(ALENKA_BUILD_TESTS "Whether to build unit-tests for Alenka." OFF)
 
+option(ALENKA_COVERAGE "Turns on lcov." OFF)
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(DEBUG true)
 endif()
 
 if(UNIX)
   add_definitions(-DUNIX_BUILD)
+
+  if(ALENKA_COVERAGE)
+    set(DEBUG_FLAGS "--coverage")
+  endif()
 
   if(DEBUG)
     #add_definitions(-D_GLIBCXX_DEBUG)
@@ -68,8 +74,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
 find_package(OpenMP REQUIRED)
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS} ${DEBUG_FLAGS}")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} ${DEBUG_FLAGS}")
 
 # Alenka executable.
 add_definitions(-DCL_USE_DEPRECATED_OPENCL_1_2_APIS

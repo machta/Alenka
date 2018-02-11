@@ -34,6 +34,9 @@ include_directories(../libraries/pugixml/src)
 set(LIBS_TO_LINK_ALENKA_FILE alenka-file pugixml matio)
 set(LIBS_TO_LINK_ALENKA_FILE ${LIBS_TO_LINK_ALENKA_FILE} PARENT_SCOPE)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${DEBUG_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${DEBUG_FLAGS}")
+
 # Alenka-File library.
 file(GLOB SRC_BOOST_S ../libraries/boost_1_63/libs/system/src/*.cpp)
 file(GLOB SRC_BOOST_FS ../libraries/boost_1_63/libs/filesystem/src/*.cpp)

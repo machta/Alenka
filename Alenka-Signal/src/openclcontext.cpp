@@ -199,6 +199,8 @@ string OpenCLContext::getDeviceInfo() const {
   return str;
 }
 
+// LCOV_EXCL_START
+// TODO: Test this with a unit test.
 void OpenCLContext::CCEC(cl_int val, string message, const char *file,
                          int line) {
   std::stringstream ss;
@@ -212,6 +214,7 @@ void OpenCLContext::CCEC(cl_int val, string message, const char *file,
   throw std::runtime_error(ss.str());
 }
 
+// TODO: Test this with a unit test.
 string OpenCLContext::clErrorCodeToString(cl_int code) {
 #define CASE(a_)                                                               \
   case a_:                                                                     \
@@ -286,6 +289,7 @@ string OpenCLContext::clErrorCodeToString(cl_int code) {
 
   return "unknown code " + errorCodeToString(code);
 }
+// LCOV_EXCL_STOP
 
 void OpenCLContext::clfftInit() {
   clfftStatus errFFT;
@@ -306,6 +310,8 @@ void OpenCLContext::clfftDeinit() {
   (void)errFFT;
 }
 
+// This is for debugging purposes only, so it doesn't need to be tested.
+// LCOV_EXCL_START
 void OpenCLContext::printBuffer(FILE *file, float *data, int n) {
 #ifndef NDEBUG
   for (int i = 0; i < n; ++i) {
@@ -432,5 +438,6 @@ void OpenCLContext::printBufferDouble(const string &filePath, cl_mem buffer,
   (void)queue;
 #endif
 }
+// LCOV_EXCL_STOP
 
 } // namespace AlenkaSignal
