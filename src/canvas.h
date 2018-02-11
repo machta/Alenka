@@ -79,6 +79,7 @@ class Canvas : public QOpenGLWidget {
   bool paintingDisabled = false;
   std::string lastGLMessage;
   int lastGLMessageCount = 0;
+  bool printTiming = false;
 
 public:
   explicit Canvas(QWidget *parent = nullptr);

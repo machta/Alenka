@@ -14,6 +14,7 @@
 #include <QFileInfo>
 #include <QProgressDialog>
 
+#include <chrono>
 #include <thread>
 
 using namespace std;

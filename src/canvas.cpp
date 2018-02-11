@@ -19,6 +19,7 @@
 #include <QWheelEvent>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <set>
@@ -303,6 +304,7 @@ Canvas::Canvas(QWidget *parent) : QOpenGLWidget(parent) {
   programOption("blockSize", nBlock);
   duplicateSignal = !programOption<bool>("gl43");
   programOption("glSharing", glSharing);
+  printTiming = isProgramOptionSet("printTiming");
 
   extraSamplesFront = extraSamplesBack = 0; // TODO: Test this with other values
                                             // if it is ever needed for for the
@@ -547,6 +549,8 @@ void Canvas::resizeGL(int /*w*/, int /*h*/) {
 }
 
 void Canvas::paintGL() {
+  using namespace chrono;
+
   if (paintingDisabled)
     return;
 
@@ -557,6 +561,11 @@ void Canvas::paintGL() {
   gl()->glClear(GL_COLOR_BUFFER_BIT);
 
   if (ready()) {
+    decltype(high_resolution_clock::now()) start;
+    if (printTiming) {
+      start = high_resolution_clock::now();
+    }
+
     // Calculate the transformMatrix.
     double ratio = samplesRecorded / OpenDataFile::infoTable.getVirtualWidth();
 
@@ -567,7 +576,7 @@ void Canvas::paintGL() {
     // Then there can be no problems with limited float range.
 
     // Set uniform variables.
-    vector<float> units = {1000 * 1000, 1000, 1, 0.001f, 0.001f * 0.001f};
+    const vector<float> units = {1000 * 1000, 1000, 1, 0.001f, 0.001f * 0.001f};
     sampleScale = OpenDataFile::infoTable.getSampleScale() /
                   units[OpenDataFile::infoTable.getSampleUnits()];
     sampleScale /= physicalDpiY() / 2.54;
@@ -676,7 +685,14 @@ void Canvas::paintGL() {
     drawPositionIndicator();
     drawCross();
 
-    //		gl3()->glBindVertexArray(0);
+    // gl3()->glBindVertexArray(0);
+
+    if (printTiming) {
+      const nanoseconds time = high_resolution_clock::now() - start;
+      cerr << "Frame " << lastSample - firstSample << " samples long took "
+           << static_cast<double>(time.count()) / 1000 / 1000 / 1000
+           << " s to redraw\n";
+    }
   }
 
   gl()->glFinish();
@@ -860,7 +876,6 @@ void Canvas::updateProcessor() {
     gpuMemorySize = gpuSize / 4 * 3;
   }
 
-  cout << "gpuMemorySize = " << gpuMemorySize << endl;
   int cacheCapacity = static_cast<int>(gpuMemorySize / size);
 
   // SignalProcessor uses 2 temporary buffers plus 1 FilterProcessor per queue.

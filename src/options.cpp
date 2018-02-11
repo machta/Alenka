@@ -41,6 +41,7 @@ Options::Options(int argc, char **argv)
   ("clInfo", "print OpenCL platform and device info")
   ("glInfo", "print OpenGL info")
   ("version", "print version number")
+  ("printTiming", "print the time it took to redraw Canvas")
 #ifndef NDEBUG
   ("printBuffers", "dump OpenCL buffers for debugging")
 #endif
