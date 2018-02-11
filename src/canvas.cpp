@@ -845,20 +845,22 @@ void Canvas::updateProcessor() {
   if (duplicateSignal)
     size *= 2;
 
-  cl_ulong gpuMemorySize = programOption<int>("gpuMemorySize");
-  gpuMemorySize *= 1000 * 1000;
+  int64_t gpuMemorySize = programOption<int>("gpuMemorySize");
+  gpuMemorySize *= 1000; // Convert from MB.
 
   if (gpuMemorySize <= 0) {
+    cl_ulong gpuSize;
     cl_int err =
         clGetDeviceInfo(context->getCLDevice(), CL_DEVICE_GLOBAL_MEM_SIZE,
-                        sizeof(cl_ulong), &gpuMemorySize, nullptr);
+                        sizeof(cl_ulong), &gpuSize, nullptr);
     checkClErrorCode(err, "clGetDeviceInfo()");
 
     // The desktop environment usually needs some memory to work with, so we
     // leave it 25%.
-    gpuMemorySize *= 0.75;
+    gpuMemorySize = gpuSize / 4 * 3;
   }
 
+  cout << "gpuMemorySize = " << gpuMemorySize << endl;
   int cacheCapacity = static_cast<int>(gpuMemorySize / size);
 
   // SignalProcessor uses 2 temporary buffers plus 1 FilterProcessor per queue.
