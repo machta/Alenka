@@ -106,7 +106,7 @@ SignalProcessor::SignalProcessor(unsigned int nBlock,
 
   int blockFloats = nBlock * fileChannels;
   int64_t fileCacheMemory = programOption<int>("fileCacheSize");
-  fileCacheMemory *= 1000 / sizeof(float); // Convert from MB.
+  fileCacheMemory *= 1000 * 1000 / sizeof(float); // Convert from MB.
   int capacity = max(1, static_cast<int>(fileCacheMemory / blockFloats));
 
   logToFile("Creating File cache with " << capacity

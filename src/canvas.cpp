@@ -862,7 +862,7 @@ void Canvas::updateProcessor() {
     size *= 2;
 
   int64_t gpuMemorySize = programOption<int>("gpuMemorySize");
-  gpuMemorySize *= 1000; // Convert from MB.
+  gpuMemorySize *= 1000 * 1000; // Convert from MB.
 
   if (gpuMemorySize <= 0) {
     cl_ulong gpuSize;
