@@ -14,21 +14,20 @@
 namespace AlenkaFile {
 
 /**
- * @brief An abstract base class of the data files.
+ * @brief An abstract base class for the data files.
  *
  * DataFile implements all the operations concerning the secondary files --
- * extensions of the primary files. It is assumed that the primary and secondary
- * file is always in the same directory, and the secondary file's name is
- * primaryFileName.info (e.g. primary file is 'sample.gdf' and secondary is
- * 'sample.gdf.info'.
+ * extensions of the files containing the actual signal data. It is assumed that
+ * the primary and secondary file is always in the same directory, and the
+ * secondary file's name is primaryFileName.info (e.g. primary file is
+ * 'sample.gdf' and secondary is 'sample.gdf.info', or 'sample.gdf.mont'.
  *
  * To implement a new file type you need to subclass DataFile and implement
- * the all the pure virtual functions to provide the implementation of the most
+ * all the pure virtual functions to provide the implementation of the most
  * basic file-type specific functionality.
  *
- * It is assumed that every channel has the same sampling frequency and the same
- * total
- * number of samples recorded.
+ * It is assumed that every channel has the same sampling frequency and length
+ * (the same total number of samples recorded).
  */
 class DataFile {
   std::string filePath;
@@ -40,7 +39,7 @@ public:
    * @brief DataFile constructor.
    * @param filePath The file path of the primary file.
    */
-  DataFile(std::string filePath) : filePath(std::move(filePath)) {}
+  DataFile(const std::string &filePath) : filePath(filePath) {}
   virtual ~DataFile() = default;
 
   std::string getFilePath() const { return filePath; }

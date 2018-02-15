@@ -38,12 +38,9 @@ class OpenDataFile;
 /**
  * @brief A class used for retrieving the processed signal blocks.
  *
- * This is the main class in the SignalProcessor package. As such it is the only
- * one directly accessed from the rest of the code.
- *
  * Before an object of this class is constructed or used an OpenGL context must
- * be set current.
- * There is example usage outside of a method that guarantees this:
+ * be set current. This is an example how to make it current in a method that
+ * doesn't guarantee this:
  * @code{.cpp}
 makeCurrent();
 signalProcessor->setUpdateMontageFlag();
@@ -100,10 +97,9 @@ public:
   /**
    * @brief The montage will be updated next time it is needed.
    *
-   * The update is lazy -- consecutive calls will do nothing.
-   * The reason for this is that needles repeated compilation of the montage
-   * code
-   * caused significant slowdown.
+   * The update is lazy -- consecutive calls will do nothing. The reason for
+   * this is that needles repeated compilation of the montage code used to cause
+   * significant slowdown.
    */
   void setUpdateMontageFlag();
 
@@ -117,8 +113,6 @@ public:
    * through glFinish() and clFinish().
    *
    * Montage is updated if needed.
-   *
-   * If onlineFilter is set in Options filtration is performed here also.
    *
    * When called ready() should be true.
    */

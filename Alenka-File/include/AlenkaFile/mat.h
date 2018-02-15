@@ -19,6 +19,9 @@ struct MATvars {
               eventDuration = "out.dur", eventChannel = "out.chan";
 };
 
+/**
+ * @brief This class implements Mat files (a format native to Matlab).
+ */
 class MAT : public DataFile {
   const int MAX_CHANNELS = 10 * 1000;
   MATvars vars;

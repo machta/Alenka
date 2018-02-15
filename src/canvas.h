@@ -31,15 +31,13 @@ struct GPUCacheItem {
 };
 
 /**
- * @brief This class implements GUI control for rendering signal data and
+ * @brief This class implements a GUI control for rendering signal data and
  * events.
  *
  * Every time this control gets updated the whole surface gets repainted.
  *
  * This class also handles user keyboard and mouse input. Scrolling related
  * events are skipped and handled by the parent.
- *
- *
  */
 class Canvas : public QOpenGLWidget {
   Q_OBJECT
@@ -101,15 +99,16 @@ public:
    * @brief This method defines logic of changing color of objects during
    * selection.
    *
-   * This method is used at different places in code.
-   * It is defined here so that this behavior is uniform.
+   * This method is used at different places in code. It is defined here so that
+   * this behavior is uniform.
    *
    * @todo The ad hoc method used to achieve this is not ideal and could be
    * improved.
+   *
    * All three components or are modified the same way. For colors that have two
    * of the three components equal to zero or for black the resulting color
-   * differs little
-   * from the original color and the selected object is not very distinctive.
+   * differs little from the original color and the selected object is not very
+   * distinctive.
    */
   static QColor modifySelectionColor(const QColor &color);
 

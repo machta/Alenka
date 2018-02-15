@@ -23,7 +23,7 @@ public:
   /**
    * @brief MyApplication constructor.
    *
-   * Qt is initialized by the QApplication constructor.
+   * Qt is initialized by this constructor.
    *
    * Log and Options are initialized here as well as clFFT.
    * Some OpenGL context details are specified here.
@@ -41,8 +41,7 @@ public:
    *
    * Currently when an exception is caught, it is logged and then program
    * execution continues. It is not clear whether this causes problems.
-   * If so, abort call should be added here (like it is done in the loader
-   * thread).
+   * If so, abort call should be added here.
    */
   bool notify(QObject *receiver, QEvent *event) override;
 

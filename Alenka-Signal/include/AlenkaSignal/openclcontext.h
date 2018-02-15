@@ -46,13 +46,9 @@ public:
    * @param platform Used as an index to an array returned by
    * clGetPlatformIDs().
    * @param device Used as an index to an array returned by clGetDeviceIDs().
-   * @param shareCurrentGLContext If true, use current context during creation.
    *
-   * The current OpenGL context is needed to setup proper communication between
-   * OpenGL and OpenCL.
-   * This is the only platform dependent code in the whole program and
-   * will probably need to be modified when the code is ported to other
-   * platforms.
+   * If you want to set up OpenCL/OpenGL sharing you can do that by passing the
+   * right properties.
    */
   OpenCLContext(unsigned int platform, unsigned int device,
                 std::vector<cl_context_properties> properties =
@@ -79,6 +75,9 @@ public:
    * platform.
    *
    * clGetPlatformInfo() is used to retrieve this info.
+   *
+   * This can be used to print some diagnostic info about the hardware to the
+   * user.
    */
   std::string getPlatformInfo() const;
 
@@ -86,6 +85,9 @@ public:
    * @brief Returns a human-readable string with info about the selected device.
    *
    * clGetDeviceInfo() is used to retrieve this info.
+   *
+   * This can be used to print some diagnostic info about the hardware to the
+   * user.
    */
   std::string getDeviceInfo() const;
 

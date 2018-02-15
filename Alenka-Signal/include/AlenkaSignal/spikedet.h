@@ -82,12 +82,11 @@ public:
                    CDetectorOutput *out, CDischarges *discharges);
 
   /**
-   * @brief progressPercentage is used to query the completion status of the
-   * analysis.
+   * @brief This is used to query the completion status of the analysis.
    *
-   * This method is thread safe. It can be called from a thread other than the
-   * one
-   * that launched the detector via runAnalysis.
+   * This method is thread-safe. It can be called from a thread other than the
+   * one that launched the detector via runAnalysis.
+   *
    * @return Returns the percentage towards completion of the operation.
    */
   int progressPercentage() const { return progressCurrent; }
@@ -96,7 +95,7 @@ public:
    * @brief Use cancel to tell the detector to quit the computation at the
    * earliest oppurtunity.
    *
-   * Thread safe.
+   * Also thread-safe.
    */
   void cancel();
 

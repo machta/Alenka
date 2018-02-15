@@ -2,13 +2,8 @@
  * @brief The header with the Options class definition.
  *
  * MyApplication's constructor creates one Options object and stores its pointer
- * in PROGRAM_OPTIONS_POINTER and SET_PROGRAM_OPTIONS_POINTER.
- * All code that needs to access the options needs to include this header.
- *
- * Then PROGRAM_OPTIONS macro can be used to retrieve the values like this:
- * @code{.cpp}
-int memoryAvailable = PROGRAM_OPTIONS["fileCacheSize"].as<int>();
- * @endcode
+ * in PROGRAM_OPTIONS_POINTER and SET_PROGRAM_OPTIONS_POINTER. All code that
+ * needs to access the options needs to include this header.
  *
  * @file
  */
@@ -30,15 +25,11 @@ class QSettings;
 /**
  * @brief This class makes the options and settings available for use in code.
  *
- * In MyApplication constructor one object of this type is created. This object
- * can be accessed via  PROGRAM_OPTIONS macro defined in this header.
- *
  * boost::program_options library is used for the command line options and
  * config file parsing.
  *
  * This class also offers convenience methods for accessing the settings
- * database
- * provided by QSettings. Qt handles how this data is stored.
+ * database provided by QSettings. Qt handles how this data is stored.
  * This is handy for storing and retrieving state of various Qt controls.
  */
 class Options {
@@ -84,7 +75,7 @@ public:
   bool isSet(const std::string &key) const { return vm.count(key) == 1; }
 
   /**
-   * @brief Returns options description text.
+   * @brief Returns options description text. This is used to print help.
    */
   const std::string &getDescription() const { return desc; }
 
@@ -127,6 +118,9 @@ template <class T> T programOption(const std::string &name) {
 
 /**
  * @brief Use this to assign global program options to variables.
+ *
+ * This has the advantage over the other function that you don't have to specify
+ * the type as a template parameter.
  */
 template <class T> void programOption(const std::string &name, T &var) {
   var = (*PROGRAM_OPTIONS)[name].as<T>();

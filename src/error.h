@@ -69,7 +69,7 @@ void CNEC(T val, std::string message, const char *file, int line) {
 } // namespace
 
 /**
- * @brief Compared the returned error code with the success value.
+ * @brief Compares the returned error code with the success value.
  * @param val_ The error code.
  * @param expected_ The expected error code.
  */
@@ -81,7 +81,7 @@ void CNEC(T val, std::string message, const char *file, int line) {
   }
 
 /**
- * @brief Compared the returned error code with the failure value.
+ * @brief Compares the returned error code with the failure value.
  * @param val_The error code.
  * @param notExpected_ The error code you are trying to avoid.
  */

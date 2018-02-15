@@ -17,7 +17,7 @@ namespace AlenkaSignal {
 enum MontageType { NormalMontage, IdentityMontage, CopyMontage };
 
 /**
- * @brief A class for creating kernel program for montage computation.
+ * @brief A class for creating kernel programs for montage computation.
  *
  * This class generates a source string for a kernel function called 'montage'.
  * For this it uses the formulas passed to it in the constructor, the

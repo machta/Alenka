@@ -26,7 +26,7 @@ class EDF : public DataFile {
 
 public:
   /**
-   * @brief
+   * @brief Constructor.
    * @param filePath The file path of the primary data file.
    */
   EDF(const std::string &filePath);

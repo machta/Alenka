@@ -10,8 +10,9 @@
 typedef struct detectorSettings DETECTOR_SETTINGS;
 
 /**
- * @brief A class for handling program wide used information stored in .info
- * files.
+ * @brief A class for handling program-wide (i.e. global) used information.
+ *
+ * Most of this info is stored in .info files.
  */
 class InfoTable : public QObject {
   Q_OBJECT

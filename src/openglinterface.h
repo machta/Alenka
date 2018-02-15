@@ -26,12 +26,10 @@ class QOpenGLDebugLogger;
  * @brief This is a convenience class for accessing OpenGL.
  *
  * This object must be initialized using initializeOpenGLInterface() after an
- * OpenGL
- * context is created and made current.
+ * OpenGL context is created and made current.
  *
  * All the public functions must be called only from within an active OpenGL
- * context section
- * (i.e. between makeCurrent() and doneCurrent()).
+ * context section (i.e. between makeCurrent() and doneCurrent()).
  *
  * @todo Force only one global instance via the singleton pattern.
  */
@@ -92,11 +90,10 @@ public:
    *
    * This also checks OpenGL errors.
    *
-   * For some reason the log is always empty.
-   * (I guess the OpenGL implementation doesn't use it or perhaps I didn't
-   * initialize it properly...)
-   *
    * @return Returns a nullptr if initialization of the log failed.
+   *
+   * @note For some reason the log is always empty.(I guess the OpenGL
+   * implementation doesn't use it or perhaps I didn't initialize it properly.
    */
   QOpenGLDebugLogger *log() {
     checkGLErrors();
@@ -104,17 +101,15 @@ public:
   }
 
   /**
-   * @brief Checks whether glGetError() return any errors.
+   * @brief Checks whether glGetError() returned any errors.
    *
    * The error messages are written to log, then, unless the only error detected
    * is GL_OUT_OF_MEMORY, throw an exception.
    *
    * At most 10 messages at a time are printed so that the log doesn't get
-   * flooded.
-   * This can happen on some platforms, where (for some reason) glGetError()
-   * never stops returning the same error over and over.
-   * In extreme cases this can lead to filling the harddrive with a huge log
-   * file.
+   * flooded. This can happen on some platforms, where (for some reason)
+   * glGetError() never stops returning the same error over and over. In extreme
+   * cases this can lead to filling the hard drive with a huge log file.
    *
    * @return Whether GL_OUT_OF_MEMORY was detected.
    */

@@ -22,7 +22,6 @@ template <class T> class MontageProcessor {
 public:
   /**
    * @brief MontageProcessor constructor.
-   * @param offset Skip this many samples at the beginning of the input buffer.
    */
   MontageProcessor(unsigned int inputRowLength, int inputRowCount,
                    int outputCopyCount = 1)

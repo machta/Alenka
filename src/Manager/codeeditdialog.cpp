@@ -17,6 +17,8 @@
 
 using namespace std;
 
+// TODO: Improve the help text in the dialog, possibly make a wiki entry and put
+// here a link to it.
 CodeEditDialog::CodeEditDialog(QWidget *parent)
     : QDialog(parent), validator(new TrackCodeValidator()) {
   setWindowFlags(Qt::Window);
