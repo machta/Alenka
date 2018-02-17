@@ -43,15 +43,16 @@ class OpenCLContext {
 public:
   /**
    * @brief OpenCLContext constructor.
-   * @param platform Used as an index to an array returned by
+   * @param platformIndex Used as an index to an array returned by
    * clGetPlatformIDs().
-   * @param device Used as an index to an array returned by clGetDeviceIDs().
+   * @param deviceIndex Used as an index to an array returned by
+   * clGetDeviceIDs().
    *
    * If you want to set up OpenCL/OpenGL sharing you can do that by passing the
    * right properties.
    */
-  OpenCLContext(unsigned int platform, unsigned int device,
-                std::vector<cl_context_properties> properties =
+  OpenCLContext(unsigned int platformIndex, unsigned int deviceIndex,
+                const std::vector<cl_context_properties> &properties =
                     std::vector<cl_context_properties>());
   ~OpenCLContext();
 
@@ -69,27 +70,6 @@ public:
    * @brief Returns the device id resolved during construction.
    */
   cl_device_id getCLDevice() const { return deviceId; }
-
-  /**
-   * @brief Returns a human-readable string with info about the selected
-   * platform.
-   *
-   * clGetPlatformInfo() is used to retrieve this info.
-   *
-   * This can be used to print some diagnostic info about the hardware to the
-   * user.
-   */
-  std::string getPlatformInfo() const;
-
-  /**
-   * @brief Returns a human-readable string with info about the selected device.
-   *
-   * clGetDeviceInfo() is used to retrieve this info.
-   *
-   * This can be used to print some diagnostic info about the hardware to the
-   * user.
-   */
-  std::string getDeviceInfo() const;
 
   bool hasIdentityKernelFloat() const {
     return identityProgramFloat.get() != nullptr;
@@ -130,6 +110,27 @@ public:
   cl_kernel copyOnlyKernelDouble() const {
     return copyOnlyProgramDouble->createKernel("montage");
   }
+
+  /**
+   * @brief Returns a human-readable string with info about the selected
+   * platform.
+   *
+   * clGetPlatformInfo() is used to retrieve this info.
+   *
+   * This can be used to print some diagnostic info about the hardware to the
+   * user.
+   */
+  static std::string getPlatformInfo(unsigned int platformIndex);
+  /**
+   * @brief Returns a human-readable string with info about the selected device.
+   *
+   * clGetDeviceInfo() is used to retrieve this info.
+   *
+   * This can be used to print some diagnostic info about the hardware to the
+   * user.
+   */
+  static std::string getDeviceInfo(unsigned int platformIndex,
+                                   unsigned int deviceIndex);
 
   static void CCEC(cl_int val, std::string message, const char *file, int line);
   static std::string clErrorCodeToString(cl_int code);

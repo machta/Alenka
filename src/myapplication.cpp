@@ -77,9 +77,34 @@ MyApplication::MyApplication(int &argc, char **argv)
 
   PROGRAM_OPTIONS->logConfigFile();
 
+  // Process some of the command-line-only options.
+  const unsigned int platformIndex = programOption<int>("clPlatform");
+  const unsigned int deviceIndex = programOption<int>("clDevice");
+  const string clInfoString =
+      AlenkaSignal::OpenCLContext::getPlatformInfo(platformIndex) + "\n\n" +
+      AlenkaSignal::OpenCLContext::getDeviceInfo(platformIndex, deviceIndex) +
+      "\n";
+  logToFile(clInfoString);
+
+  if (isProgramOptionSet("help")) { // Help should be always the first.
+    cout << R"(Usage:
+  Alenka [OPTION]... [FILE]...
+  Alenka --spikedet OUTPUT_FILE [SPIKEDET_SETTINGS]... FILE [FILE]...
+  Alenka --help|--clInfo|--glInfo|--version
+)";
+    cout << PROGRAM_OPTIONS->getDescription() << endl;
+    mainExit();
+  } else if (isProgramOptionSet("version")) {
+    cout << "Alenka " << versionString() << endl;
+    mainExit();
+  } else if (isProgramOptionSet("clInfo")) {
+    cout << clInfoString;
+    mainExit();
+  }
+
   // Initialize the global OpenCL context.
-  globalContext = make_unique<AlenkaSignal::OpenCLContext>(
-      programOption<int>("clPlatform"), programOption<int>("clDevice"));
+  globalContext =
+      make_unique<AlenkaSignal::OpenCLContext>(platformIndex, deviceIndex);
 
   // Set up the clFFT library.
   AlenkaSignal::OpenCLContext::clfftInit();
@@ -95,31 +120,6 @@ MyApplication::MyApplication(int &argc, char **argv)
 #endif
 
   QSurfaceFormat::setDefaultFormat(format);
-
-  // Process some of the command-line only options.
-  stringstream ss;
-
-  ss << globalContext->getPlatformInfo() << "\n\n";
-  ss << globalContext->getDeviceInfo() << endl;
-
-  logToFile(ss.str());
-
-  if (isProgramOptionSet("help")) {
-    cout << R"(Usage:
-  Alenka [OPTION]... [FILE]...
-  Alenka --spikedet OUTPUT_FILE [SPIKEDET_SETTINGS]... FILE [FILE]...
-  Alenka --help|--clInfo|--version
-)";
-
-    cout << PROGRAM_OPTIONS->getDescription() << endl;
-    mainExit();
-  } else if (isProgramOptionSet("clInfo")) {
-    cout << ss.str();
-    mainExit();
-  } else if (isProgramOptionSet("version")) {
-    cout << "Alenka " << versionString() << endl;
-    mainExit();
-  }
 
   // Set locale.
   QLocale locale(programOption<string>("locale").c_str());

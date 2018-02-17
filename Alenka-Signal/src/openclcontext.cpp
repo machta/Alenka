@@ -63,45 +63,69 @@ string deviceInfo(cl_device_id id, cl_device_info name) {
   return string(tmp.begin(), --tmp.end());
 }
 
+vector<cl_platform_id> getPlatformIDs() {
+  cl_int err;
+  cl_uint platformCount;
+
+  err = clGetPlatformIDs(0, nullptr, &platformCount);
+  checkClErrorCode(err, "clGetPlatformIDs()");
+
+  vector<cl_platform_id> platformIDs(platformCount);
+  err = clGetPlatformIDs(platformCount, platformIDs.data(), nullptr);
+  checkClErrorCode(err, "clGetPlatformIDs()");
+
+  return platformIDs;
+}
+
+vector<cl_device_id> getDeviceIDs(const cl_platform_id platformID) {
+  cl_int err;
+  cl_uint deviceCount;
+
+  err =
+      clGetDeviceIDs(platformID, CL_DEVICE_TYPE_ALL, 0, nullptr, &deviceCount);
+  checkClErrorCode(err, "clGetDeviceIDs()");
+
+  vector<cl_device_id> deviceIDs(deviceCount);
+  err = clGetDeviceIDs(platformID, CL_DEVICE_TYPE_ALL, deviceCount,
+                       deviceIDs.data(), nullptr);
+  checkClErrorCode(err, "clGetDeviceIDs()");
+
+  return deviceIDs;
+}
+
 } // namespace
 
 namespace AlenkaSignal {
 
-OpenCLContext::OpenCLContext(unsigned int platform, unsigned int device,
-                             vector<cl_context_properties> properties) {
+OpenCLContext::OpenCLContext(const unsigned int platformIndex,
+                             const unsigned int deviceIndex,
+                             const vector<cl_context_properties> &properties) {
   cl_int err;
 
-  // Retrieve the platform and device ids.
-  cl_uint pCount = platform + 1;
-  vector<cl_platform_id> platforms(pCount);
+  const vector<cl_platform_id> platforms = getPlatformIDs();
 
-  err = clGetPlatformIDs(pCount, platforms.data(), &pCount);
-  checkClErrorCode(err, "clGetPlatformIDs()");
+  if (platformIndex >= platforms.size())
+    throw runtime_error("Platform ID " + to_string(platformIndex) +
+                        " too high.");
 
-  if (platform >= pCount)
-    throw runtime_error("Platform ID " + to_string(platform) + " too high.");
+  platformId = platforms[platformIndex];
 
-  platformId = platforms[platform];
+  cl_uint dCount = deviceIndex + 1;
+  const vector<cl_device_id> devices = getDeviceIDs(platformId);
 
-  cl_uint dCount = device + 1;
-  vector<cl_device_id> devices(dCount);
+  if (deviceIndex >= dCount)
+    throw runtime_error("Device ID " + to_string(deviceIndex) + " too high.");
 
-  err = clGetDeviceIDs(platformId, CL_DEVICE_TYPE_ALL, dCount, devices.data(),
-                       &dCount);
-  checkClErrorCode(err, "clGetDeviceIDs()");
-
-  if (device >= dCount)
-    throw runtime_error("Device ID " + to_string(device) + " too high.");
-
-  deviceId = devices[device];
+  deviceId = devices[deviceIndex];
 
   // Create the context.
-  properties.push_back(CL_CONTEXT_PLATFORM);
-  properties.push_back(reinterpret_cast<cl_context_properties>(platformId));
-  properties.push_back(0);
-
-  context =
-      clCreateContext(properties.data(), 1, &deviceId, nullptr, nullptr, &err);
+  vector<cl_context_properties> extraProperties{
+      CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(platformId),
+      0};
+  extraProperties.insert(extraProperties.begin(), properties.begin(),
+                         properties.end());
+  context = clCreateContext(extraProperties.data(), 1, &deviceId, nullptr,
+                            nullptr, &err);
   checkClErrorCode(err, "clCreateContext()");
 
   // logToFile("OpenCLContext " << this << " created.");
@@ -114,87 +138,82 @@ OpenCLContext::~OpenCLContext() {
   // logToFile("OpenCLContext " << this << " destroyed.");
 }
 
-string OpenCLContext::getPlatformInfo() const {
-  cl_int err;
-  cl_uint platformCount;
-
-  err = clGetPlatformIDs(0, nullptr, &platformCount);
-  checkClErrorCode(err, "clGetPlatformIDs()");
-
-  vector<cl_platform_id> platformIDs(platformCount);
-  err = clGetPlatformIDs(platformCount, platformIDs.data(), nullptr);
-  checkClErrorCode(err, "clGetPlatformIDs()");
+string OpenCLContext::getPlatformInfo(const unsigned int platformIndex) {
+  const vector<cl_platform_id> platformIDs = getPlatformIDs();
 
   // Build the string.
   string str;
 
-  str += "Available platforms (" + to_string(platformCount) + "):";
-  for (cl_uint i = 0; i < platformCount; ++i) {
-    str += platformIDs[i] == getCLPlatform() ? "\n * " : "\n   ";
+  str += "Available platforms (" + to_string(platformIDs.size()) + "):";
+  for (cl_uint i = 0; i < platformIDs.size(); ++i) {
+    str += i == platformIndex ? "\n * " : "\n   ";
     str += platformInfo(platformIDs[i], CL_PLATFORM_NAME);
   }
 
-  str += "\n\nSelected platform: ";
-  str += platformInfo(getCLPlatform(), CL_PLATFORM_NAME);
+  if (platformIndex < platformIDs.size()) {
+    const cl_platform_id id = platformIDs[platformIndex];
 
-  str += "\nVersion: ";
-  str += platformInfo(getCLPlatform(), CL_PLATFORM_VERSION);
+    str += "\n\nSelected platform: ";
+    str += platformInfo(id, CL_PLATFORM_NAME);
 
-  str += "\nVendor: ";
-  str += platformInfo(getCLPlatform(), CL_PLATFORM_VENDOR);
+    str += "\nVersion: ";
+    str += platformInfo(id, CL_PLATFORM_VERSION);
 
-  str += "\nExtensions: ";
-  str += platformInfo(getCLPlatform(), CL_PLATFORM_EXTENSIONS);
+    str += "\nVendor: ";
+    str += platformInfo(id, CL_PLATFORM_VENDOR);
 
+    str += "\nExtensions: ";
+    str += platformInfo(id, CL_PLATFORM_EXTENSIONS);
+  }
   return str;
 }
 
-string OpenCLContext::getDeviceInfo() const {
+string OpenCLContext::getDeviceInfo(const unsigned int platformIndex,
+                                    const unsigned int deviceIndex) {
   cl_int err;
+  const vector<cl_platform_id> platformIDs = getPlatformIDs();
 
-  cl_uint deviceCount;
+  if (platformIndex >= platformIDs.size())
+    throw runtime_error("Platform ID " + to_string(platformIndex) +
+                        " too high.");
 
-  err = clGetDeviceIDs(getCLPlatform(), CL_DEVICE_TYPE_ALL, 0, nullptr,
-                       &deviceCount);
-  checkClErrorCode(err, "clGetDeviceIDs()");
-
-  vector<cl_device_id> deviceIDs(deviceCount);
-  err = clGetDeviceIDs(getCLPlatform(), CL_DEVICE_TYPE_ALL, deviceCount,
-                       deviceIDs.data(), nullptr);
-  checkClErrorCode(err, "clGetDeviceIDs()");
+  const vector<cl_device_id> deviceIDs =
+      getDeviceIDs(platformIDs[platformIndex]);
 
   // Build the string.
   string str;
 
-  str += "Available devices (" + to_string(deviceCount) + "):";
-  for (cl_uint i = 0; i < deviceCount; ++i) {
-    str += deviceIDs[i] == getCLDevice() ? "\n * " : "\n   ";
+  str += "Available devices (" + to_string(deviceIDs.size()) + "):";
+  for (cl_uint i = 0; i < deviceIDs.size(); ++i) {
+    str += i == deviceIndex ? "\n * " : "\n   ";
     str += deviceInfo(deviceIDs[i], CL_DEVICE_NAME);
   }
 
-  str += "\n\nSelected device: ";
-  str += deviceInfo(getCLDevice(), CL_DEVICE_NAME);
+  if (deviceIndex < deviceIDs.size()) {
+    const cl_device_id id = deviceIDs[deviceIndex];
 
-  str += "\nVersion: ";
-  str += deviceInfo(getCLDevice(), CL_DEVICE_VERSION);
+    str += "\n\nSelected device: ";
+    str += deviceInfo(id, CL_DEVICE_NAME);
 
-  str += "\nVendor: ";
-  str += deviceInfo(getCLDevice(), CL_DEVICE_VENDOR);
+    str += "\nVersion: ";
+    str += deviceInfo(id, CL_DEVICE_VERSION);
 
-  str += "\nExtensions: ";
-  checkClErrorCode(err, "clGetDeviceInfo()");
-  str += deviceInfo(getCLDevice(), CL_DEVICE_EXTENSIONS);
+    str += "\nVendor: ";
+    str += deviceInfo(id, CL_DEVICE_VENDOR);
 
-  str += "\nDevice global memory size: ";
-  cl_ulong memSize;
-  err = clGetDeviceInfo(getCLDevice(), CL_DEVICE_GLOBAL_MEM_SIZE,
-                        sizeof(cl_ulong), &memSize, nullptr);
-  checkClErrorCode(err, "clGetDeviceInfo()");
-  stringstream ss;
-  double memGigs = memSize / (1000. * 1000 * 1000);
-  ss << memGigs;
-  str += ss.str();
-  str += " GB (this is the GPU memory size iff the sected device is a GPU)";
+    str += "\nExtensions: ";
+    str += deviceInfo(id, CL_DEVICE_EXTENSIONS);
+
+    str += "\nDevice global memory size: ";
+    cl_ulong memSize;
+    err = clGetDeviceInfo(id, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong),
+                          &memSize, nullptr);
+    checkClErrorCode(err, "clGetDeviceInfo()");
+
+    const double memGigs = memSize / (1000. * 1000 * 1000);
+    str += to_string(memGigs);
+    str += " GB (this is the GPU memory size iff the sected device is a GPU)";
+  }
 
   return str;
 }
