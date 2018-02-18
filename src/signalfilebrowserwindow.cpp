@@ -17,8 +17,10 @@
 #include "Manager/montagetablemodel.h"
 #include "Manager/trackmanager.h"
 #include "Manager/tracktablemodel.h"
+#include "SignalProcessor/automaticmontage.h"
 #include "SignalProcessor/bipolarmontage.h"
 #include "SignalProcessor/clusteranalysis.h"
+#include "SignalProcessor/defaultmontage.h"
 #include "SignalProcessor/modifiedspikedetanalysis.h"
 #include "SignalProcessor/signalprocessor.h"
 #include "SignalProcessor/spikedetanalysis.h"
@@ -692,6 +694,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   addMontageMenu->addSeparator();
 
   autoMontages.push_back(make_unique<AutomaticMontage>());
+  autoMontages.push_back(make_unique<DefaultMontage>());
   autoMontages.push_back(make_unique<BipolarMontage>());
   autoMontages.push_back(make_unique<BipolarNeighboursMontage>());
 
@@ -979,22 +982,14 @@ void SignalFileBrowserWindow::setSecondsPerPage(double seconds) {
   }
 }
 
-void SignalFileBrowserWindow::copyDefaultMontage() {
-  auto montageTable = fileResources->dataModel->montageTable();
-  assert(montageTable->rowCount() == 1);
-  montageTable->insertRows(1);
+void SignalFileBrowserWindow::createDefaultMontage() {
+  auto mont = make_unique<DefaultMontage>();
+  addAutoMontage(mont.get());
 
-  Montage m = montageTable->row(1);
-  m.name = "Default Montage";
-  montageTable->row(1, m);
-
-  auto recordingTracks = montageTable->trackTable(0);
-  int count = recordingTracks->rowCount();
-  auto defaultTracks = montageTable->trackTable(1);
-  defaultTracks->insertRows(0, count);
-
-  for (int i = 0; i < count; ++i)
-    defaultTracks->row(i, recordingTracks->row(i));
+  // The code above creates an entry in the undo stack. We don't want it so we
+  // need to clear it.
+  assert(1 == undoStack->count() && "There should be only one command.");
+  undoStack->clear();
 }
 
 void SignalFileBrowserWindow::addRecentFilesActions() {
@@ -1172,7 +1167,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   cleanChanged(undoStack->isClean());
 
   if (!secondaryFileExists)
-    copyDefaultMontage();
+    createDefaultMontage();
 
   setWindowTitle(fileInfo.fileName() + " - " + TITLE);
 

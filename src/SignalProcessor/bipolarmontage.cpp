@@ -10,12 +10,12 @@ using namespace AlenkaFile;
 
 namespace {
 
-void parseLabels(const AbstractTrackTable *source, vector<string> &prefixes,
-                 vector<int> &indexes) {
-  int sourceRows = source->rowCount();
+void parseLabels(const AbstractTrackTable *recordingMontage,
+                 vector<string> &prefixes, vector<int> &indexes) {
+  int recordingMontageRows = recordingMontage->rowCount();
 
-  for (int i = 0; i < sourceRows; ++i) {
-    Track t = source->row(i);
+  for (int i = 0; i < recordingMontageRows; ++i) {
+    Track t = recordingMontage->row(i);
     string label = t.label;
     auto digit = [](char c) { return isdigit(c) == 0; };
 
@@ -37,7 +37,7 @@ void parseLabels(const AbstractTrackTable *source, vector<string> &prefixes,
 
 } // namespace
 
-void BipolarMontage::fillTrackTable(const AbstractTrackTable *source,
+void BipolarMontage::fillTrackTable(const AbstractTrackTable *recordingMontage,
                                     const AbstractTrackTable *output,
                                     int outputIndex,
                                     UndoCommandFactory *undoFactory) {
@@ -45,9 +45,9 @@ void BipolarMontage::fillTrackTable(const AbstractTrackTable *source,
   vector<int> indexes;
   int trackIndex = 0;
 
-  parseLabels(source, prefixes, indexes);
+  parseLabels(recordingMontage, prefixes, indexes);
   assert(prefixes.size() == indexes.size());
-  assert(static_cast<int>(prefixes.size()) == source->rowCount());
+  assert(static_cast<int>(prefixes.size()) == recordingMontage->rowCount());
 
   vector<string> labels, codes;
 

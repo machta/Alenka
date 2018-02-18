@@ -26,7 +26,7 @@ class BipolarMontage : public AutomaticMontage {
 public:
   BipolarMontage() { name = "Bipolar Montage"; }
 
-  void fillTrackTable(const AlenkaFile::AbstractTrackTable *source,
+  void fillTrackTable(const AlenkaFile::AbstractTrackTable *recordingMontage,
                       const AlenkaFile::AbstractTrackTable *output,
                       int outputIndex,
                       UndoCommandFactory *undoFactory) override;
