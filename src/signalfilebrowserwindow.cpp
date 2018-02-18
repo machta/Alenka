@@ -944,10 +944,11 @@ void SignalFileBrowserWindow::sortInLastItem(QComboBox *combo) {
 }
 
 QString SignalFileBrowserWindow::imageFilePathDialog() {
-  QString filter =
-      "JPEG Image (*.jpg);;PNG Image (*.png);;Bitmap Image (*.bmp)";
-  QString fileName =
-      QFileDialog::getSaveFileName(this, "Choose image file path", "", filter);
+  const QString filter =
+      "PNG Image (*.png);;JPEG Image (*.jpg);;Bitmap Image (*.bmp)";
+  QString selectedFilter;
+  const QString fileName = QFileDialog::getSaveFileName(
+      this, "Choose image file path", "", filter, &selectedFilter);
 
   if (fileName.isNull())
     return fileName;
@@ -955,13 +956,16 @@ QString SignalFileBrowserWindow::imageFilePathDialog() {
   QFileInfo fileInfo(fileName);
   QString suffix = fileInfo.suffix();
 
-  if (suffix == "jpg" || suffix == "png" || suffix == "bmp") {
+  if (selectedFilter.contains(".png") && suffix == "png") {
+    return fileName;
+  } else if (selectedFilter.contains(".jpg") && suffix == "jpg") {
+    return fileName;
+  } else if (selectedFilter.contains(".bmp") && suffix == "bmp") {
     return fileName;
   } else {
     QMessageBox::critical(this, "Bad suffix",
-                          "The file name must have either "
-                          "of the following suffixes: jpg, "
-                          "png, or bmp. Try again.");
+                          "The file name must have either of the following "
+                          "suffixes: png, jpg, or bmp.\n\nTry again.");
     return imageFilePathDialog();
   }
 }
