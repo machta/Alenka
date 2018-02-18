@@ -9,6 +9,9 @@ class QUndoStack;
 class QUndoCommand;
 
 class UndoCommandFactory {
+  AlenkaFile::DataModel *dataModel;
+  QUndoStack *undoStack;
+
 public:
   UndoCommandFactory(AlenkaFile::DataModel *dataModel, QUndoStack *undoStack)
       : dataModel(dataModel), undoStack(undoStack) {}
@@ -35,10 +38,6 @@ public:
   void removeMontage(int i, int c = 1, const QString &text = "") const;
   void removeEvent(int i, int j, int c = 1, const QString &text = "") const;
   void removeTrack(int i, int j, int c = 1, const QString &text = "") const;
-
-private:
-  AlenkaFile::DataModel *dataModel;
-  QUndoStack *undoStack;
 };
 
 #endif // UNDOCOMMANDFACTORY_H

@@ -1,28 +1,8 @@
 #include "../include/AlenkaFile/datamodel.h"
 
-#include <cassert>
-
-using namespace AlenkaFile;
 using namespace std;
 
-namespace {
-
-template <class T> void eraseVector(vector<T> &v, int i, int count) {
-  v.erase(v.begin() + i, v.begin() + i + count);
-}
-
-} // namespace
-
 namespace AlenkaFile {
-
-void EventTypeTable::insertRows(int row, int count) {
-  for (int i = 0; i < count; ++i)
-    table.insert(table.begin() + row + i, defaultValue(row + i));
-}
-
-void EventTypeTable::removeRows(int row, int count) {
-  eraseVector(table, row, count);
-}
 
 EventType EventTypeTable::defaultValue(int row) const {
   EventType et;
@@ -37,15 +17,6 @@ EventType EventTypeTable::defaultValue(int row) const {
   return et;
 }
 
-void EventTable::insertRows(int row, int count) {
-  for (int i = 0; i < count; ++i)
-    table.insert(table.begin() + row + i, defaultValue(row + i));
-}
-
-void EventTable::removeRows(int row, int count) {
-  eraseVector(table, row, count);
-}
-
 Event EventTable::defaultValue(int row) const {
   Event e;
 
@@ -57,15 +28,6 @@ Event EventTable::defaultValue(int row) const {
   e.description = "";
 
   return e;
-}
-
-void TrackTable::insertRows(int row, int count) {
-  for (int i = 0; i < count; ++i)
-    table.insert(table.begin() + row + i, defaultValue(row + i));
-}
-
-void TrackTable::removeRows(int row, int count) {
-  eraseVector(table, row, count);
 }
 
 Track TrackTable::defaultValue(int row) const {
@@ -82,8 +44,7 @@ Track TrackTable::defaultValue(int row) const {
 }
 
 void MontageTable::insertRows(int row, int count) {
-  for (int i = 0; i < count; ++i)
-    table.insert(table.begin() + row + i, defaultValue(row + i));
+  Table<Montage, AbstractMontageTable>::insertRows(row, count);
 
   for (int i = 0; i < count; ++i) {
     eTable.insert(eTable.begin() + row + i, makeEventTable());
@@ -92,9 +53,10 @@ void MontageTable::insertRows(int row, int count) {
 }
 
 void MontageTable::removeRows(int row, int count) {
-  eraseVector(table, row, count);
-  eraseVector(eTable, row, count);
-  eraseVector(tTable, row, count);
+  Table<Montage, AbstractMontageTable>::removeRows(row, count);
+
+  eTable.erase(eTable.begin() + row, eTable.begin() + row + count);
+  tTable.erase(tTable.begin() + row, tTable.begin() + row + count);
 }
 
 Montage MontageTable::defaultValue(int row) const {

@@ -17,73 +17,57 @@ signals:
   void rowsRemoved(int row, int col);
 };
 
-class VitnessEventTypeTable : public AlenkaFile::EventTypeTable {
-  std::unique_ptr<DataModelVitness> vitnessObject =
-      std::make_unique<DataModelVitness>();
-
+template <class Base, class BaseBase> class VitnessTable : public Base {
 public:
-  VitnessEventTypeTable() : AlenkaFile::EventTypeTable() {}
-  void insertRows(int row, int count = 1) override;
-  void removeRows(int row, int count = 1) override;
-  void row(int i, const AlenkaFile::EventType &value) override;
-
-  static const DataModelVitness *
-  vitness(const AlenkaFile::AbstractEventTypeTable *table) {
-    return dynamic_cast<const VitnessEventTypeTable *>(table)
-        ->vitnessObject.get();
+  void insertRows(int row, int count) override {
+    if (count > 0) {
+      Base::insertRows(row, count);
+      emit vitnessObject->rowsInserted(row, count);
+    }
   }
-};
-
-class VitnessEventTable : public AlenkaFile::EventTable {
-  std::unique_ptr<DataModelVitness> vitnessObject =
-      std::make_unique<DataModelVitness>();
-
-public:
-  VitnessEventTable() : AlenkaFile::EventTable() {}
-  void insertRows(int row, int count = 1) override;
-  void removeRows(int row, int count = 1) override;
-  void row(int i, const AlenkaFile::Event &value) override;
-
-  static const DataModelVitness *
-  vitness(const AlenkaFile::AbstractEventTable *table) {
-    return dynamic_cast<const VitnessEventTable *>(table)->vitnessObject.get();
+  void removeRows(int row, int count) override {
+    if (count > 0) {
+      Base::removeRows(row, count);
+      emit vitnessObject->rowsRemoved(row, count);
+    }
   }
-};
 
-class VitnessTrackTable : public AlenkaFile::TrackTable {
-  std::unique_ptr<DataModelVitness> vitnessObject =
-      std::make_unique<DataModelVitness>();
-
-public:
-  VitnessTrackTable() : AlenkaFile::TrackTable() {}
-  void insertRows(int row, int count = 1) override;
-  void removeRows(int row, int count = 1) override;
-  void row(int i, const AlenkaFile::Track &value) override;
-  AlenkaFile::Track defaultValue(int row) const override;
-
-  static const DataModelVitness *
-  vitness(const AlenkaFile::AbstractTrackTable *table) {
-    return dynamic_cast<const VitnessTrackTable *>(table)->vitnessObject.get();
-  }
-};
-
-class VitnessMontageTable : public AlenkaFile::MontageTable {
-  std::unique_ptr<DataModelVitness> vitnessObject =
-      std::make_unique<DataModelVitness>();
-
-public:
-  VitnessMontageTable() : AlenkaFile::MontageTable() {}
-  void insertRows(int row, int count = 1) override;
-  void removeRows(int row, int count = 1) override;
-  void row(int i, const AlenkaFile::Montage &value) override;
-
-  static const DataModelVitness *
-  vitness(const AlenkaFile::AbstractMontageTable *table) {
-    return dynamic_cast<const VitnessMontageTable *>(table)
-        ->vitnessObject.get();
+  static const DataModelVitness *vitness(const BaseBase *table) {
+    return dynamic_cast<const VitnessTable *>(table)->vitnessObject.get();
   }
 
 protected:
+  std::unique_ptr<DataModelVitness> vitnessObject =
+      std::make_unique<DataModelVitness>();
+};
+
+class VitnessEventTypeTable
+    : public VitnessTable<AlenkaFile::EventTypeTable,
+                          AlenkaFile::AbstractEventTypeTable> {
+public:
+  void row(int i, const AlenkaFile::EventType &value) override;
+};
+
+class VitnessEventTable : public VitnessTable<AlenkaFile::EventTable,
+                                              AlenkaFile::AbstractEventTable> {
+public:
+  void row(int i, const AlenkaFile::Event &value) override;
+};
+
+class VitnessTrackTable : public VitnessTable<AlenkaFile::TrackTable,
+                                              AlenkaFile::AbstractTrackTable> {
+public:
+  void row(int i, const AlenkaFile::Track &value) override;
+  AlenkaFile::Track defaultValue(int row) const override;
+};
+
+class VitnessMontageTable
+    : public VitnessTable<AlenkaFile::MontageTable,
+                          AlenkaFile::AbstractMontageTable> {
+public:
+  void row(int i, const AlenkaFile::Montage &value) override;
+
+private:
   std::unique_ptr<AlenkaFile::AbstractEventTable>
   makeEventTable() const override {
     return std::make_unique<VitnessEventTable>();

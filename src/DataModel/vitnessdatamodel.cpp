@@ -5,26 +5,16 @@ using namespace AlenkaFile;
 
 namespace {
 
-// Convert an enum-class item to the underlying value type.
+/**
+ * @brief Convert an enum-class item to the underlying value type.
+ *
+ * ec() is for enum cast.
+ */
 template <typename E> constexpr auto ec(E e) noexcept {
   return static_cast<std::underlying_type_t<E>>(e);
 }
 
 } // namespace
-
-void VitnessEventTypeTable::insertRows(int row, int count) {
-  if (count > 0) {
-    EventTypeTable::insertRows(row, count);
-    emit vitnessObject->rowsInserted(row, count);
-  }
-}
-
-void VitnessEventTypeTable::removeRows(int row, int count) {
-  if (count > 0) {
-    EventTypeTable::removeRows(row, count);
-    emit vitnessObject->rowsRemoved(row, count);
-  }
-}
 
 void VitnessEventTypeTable::row(int i, const EventType &value) {
   EventType oldValue = EventTypeTable::row(i);
@@ -44,20 +34,6 @@ void VitnessEventTypeTable::row(int i, const EventType &value) {
 
   if (oldValue.hidden != value.hidden)
     emit vitnessObject->valueChanged(i, ec(EventType::Index::hidden));
-}
-
-void VitnessEventTable::insertRows(int row, int count) {
-  if (count > 0) {
-    EventTable::insertRows(row, count);
-    emit vitnessObject->rowsInserted(row, count);
-  }
-}
-
-void VitnessEventTable::removeRows(int row, int count) {
-  if (count > 0) {
-    EventTable::removeRows(row, count);
-    emit vitnessObject->rowsRemoved(row, count);
-  }
 }
 
 void VitnessEventTable::row(int i, const Event &value) {
@@ -81,20 +57,6 @@ void VitnessEventTable::row(int i, const Event &value) {
 
   if (oldValue.description != value.description)
     emit vitnessObject->valueChanged(i, ec(Event::Index::description));
-}
-
-void VitnessTrackTable::insertRows(int row, int count) {
-  if (count > 0) {
-    TrackTable::insertRows(row, count);
-    emit vitnessObject->rowsInserted(row, count);
-  }
-}
-
-void VitnessTrackTable::removeRows(int row, int count) {
-  if (count > 0) {
-    TrackTable::removeRows(row, count);
-    emit vitnessObject->rowsRemoved(row, count);
-  }
 }
 
 void VitnessTrackTable::row(int i, const Track &value) {
@@ -130,20 +92,6 @@ AlenkaFile::Track VitnessTrackTable::defaultValue(int row) const {
   auto t = TrackTable::defaultValue(row);
   t.amplitude = 0.000001;
   return t;
-}
-
-void VitnessMontageTable::insertRows(int row, int count) {
-  if (count > 0) {
-    MontageTable::insertRows(row, count);
-    emit vitnessObject->rowsInserted(row, count);
-  }
-}
-
-void VitnessMontageTable::removeRows(int row, int count) {
-  if (count > 0) {
-    MontageTable::removeRows(row, count);
-    emit vitnessObject->rowsRemoved(row, count);
-  }
 }
 
 void VitnessMontageTable::row(int i, const Montage &value) {

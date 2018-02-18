@@ -8,6 +8,27 @@
 
 namespace AlenkaFile {
 
+template <class T> class AbstractTable {
+public:
+  virtual ~AbstractTable() = default;
+  virtual int rowCount() const = 0;
+  virtual void insertRows(int row, int count = 1) = 0;
+  virtual void removeRows(int row, int count = 1) = 0;
+  virtual T row(int i) const = 0;
+  virtual void row(int i, const T &value) = 0;
+  virtual T defaultValue(int row) const = 0;
+
+  void copy(const AbstractTable *src) {
+    removeRows(0, rowCount());
+
+    const int count = src->rowCount();
+    insertRows(0, count);
+
+    for (int i = 0; i < count; ++i)
+      row(i, src->row(i));
+  }
+};
+
 struct EventType {
   int id;
   std::string name;
@@ -18,16 +39,7 @@ struct EventType {
   enum class Index { id, name, opacity, color, hidden, size };
 };
 
-class AbstractEventTypeTable {
-public:
-  virtual ~AbstractEventTypeTable() = default;
-  virtual int rowCount() const = 0;
-  virtual void insertRows(int row, int count = 1) = 0;
-  virtual void removeRows(int row, int count = 1) = 0;
-  virtual EventType row(int i) const = 0;
-  virtual void row(int i, const EventType &value) = 0;
-  virtual EventType defaultValue(int row) const = 0;
-};
+class AbstractEventTypeTable : public AbstractTable<EventType> {};
 
 struct Event {
   std::string label;
@@ -45,16 +57,7 @@ struct Event {
   };
 };
 
-class AbstractEventTable {
-public:
-  virtual ~AbstractEventTable() = default;
-  virtual int rowCount() const = 0;
-  virtual void insertRows(int row, int count = 1) = 0;
-  virtual void removeRows(int row, int count = 1) = 0;
-  virtual Event row(int i) const = 0;
-  virtual void row(int i, const Event &value) = 0;
-  virtual Event defaultValue(int row) const = 0;
-};
+class AbstractEventTable : public AbstractTable<Event> {};
 
 struct Track {
   std::string label, code;
@@ -66,16 +69,7 @@ struct Track {
   enum class Index { label, code, color, amplitude, hidden, x, y, z, size };
 };
 
-class AbstractTrackTable {
-public:
-  virtual ~AbstractTrackTable() = default;
-  virtual int rowCount() const = 0;
-  virtual void insertRows(int row, int count = 1) = 0;
-  virtual void removeRows(int row, int count = 1) = 0;
-  virtual Track row(int i) const = 0;
-  virtual void row(int i, const Track &value) = 0;
-  virtual Track defaultValue(int row) const = 0;
-};
+class AbstractTrackTable : public AbstractTable<Track> {};
 
 struct Montage {
   std::string name;
@@ -84,19 +78,22 @@ struct Montage {
   enum class Index { name, save, size };
 };
 
-class AbstractMontageTable {
+class AbstractMontageTable : public AbstractTable<Montage> {
 public:
-  virtual ~AbstractMontageTable() = default;
-  virtual int rowCount() const = 0;
-  virtual void insertRows(int row, int count = 1) = 0;
-  virtual void removeRows(int row, int count = 1) = 0;
-  virtual Montage row(int i) const = 0;
-  virtual void row(int i, const Montage &value) = 0;
-  virtual Montage defaultValue(int row) const = 0;
   virtual AbstractEventTable *eventTable(int i) = 0;
   virtual const AbstractEventTable *eventTable(int i) const = 0;
   virtual AbstractTrackTable *trackTable(int i) = 0;
   virtual const AbstractTrackTable *trackTable(int i) const = 0;
+
+  void copy(const AbstractMontageTable *src) {
+    AbstractTable<Montage>::copy(src);
+
+    const int count = rowCount();
+    for (int i = 0; i < count; ++i) {
+      eventTable(i)->copy(src->eventTable(i));
+      trackTable(i)->copy(src->trackTable(i));
+    }
+  }
 
 protected:
   virtual std::unique_ptr<AbstractEventTable> makeEventTable() const = 0;
@@ -117,6 +114,7 @@ public:
   AbstractMontageTable *montageTable() { return mt.get(); }
   const AbstractMontageTable *montageTable() const { return mt.get(); }
 
+  // Some helper functions for converting colors.
   static std::string colorArray2str(std::array<int, 3> color) {
     std::string str = "#";
     for (int i = 0; i < 3; ++i) {

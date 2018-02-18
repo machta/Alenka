@@ -8,53 +8,49 @@
 
 namespace AlenkaFile {
 
-class EventTypeTable : public AbstractEventTypeTable {
-  std::vector<EventType> table;
-
+template <class T, class Base> class Table : public Base {
 public:
   int rowCount() const override { return static_cast<int>(table.size()); }
-  void insertRows(int row, int count) override;
-  void removeRows(int row, int count) override;
-  EventType row(int i) const override { return table[i]; }
-  void row(int i, const EventType &value) override { table[i] = value; }
+  void insertRows(int row, int count) override {
+    for (int i = 0; i < count; ++i)
+      table.insert(table.begin() + row + i, defaultValue(row + i));
+  }
+  void removeRows(int row, int count) override {
+    table.erase(table.begin() + row, table.begin() + row + count);
+  }
+  T row(int i) const override { return table[i]; }
+  void row(int i, const T &value) override { table[i] = value; }
+
+  // This must be here, otherwise there is a compile error.
+  // Perhaps ask about it on Stack Overflow?
+  T defaultValue(int row) const = 0;
+
+protected:
+  std::vector<T> table;
+};
+
+class EventTypeTable : public Table<EventType, AbstractEventTypeTable> {
+public:
   EventType defaultValue(int row) const override;
 };
 
-class EventTable : public AbstractEventTable {
-  std::vector<Event> table;
-
+class EventTable : public Table<Event, AbstractEventTable> {
 public:
-  int rowCount() const override { return static_cast<int>(table.size()); }
-  void insertRows(int row, int count = 1) override;
-  void removeRows(int row, int count = 1) override;
-  Event row(int i) const override { return table[i]; }
-  void row(int i, const Event &value) override { table[i] = value; }
   Event defaultValue(int row) const override;
 };
 
-class TrackTable : public AbstractTrackTable {
-  std::vector<Track> table;
-
+class TrackTable : public Table<Track, AbstractTrackTable> {
 public:
-  int rowCount() const override { return static_cast<int>(table.size()); }
-  void insertRows(int row, int count = 1) override;
-  void removeRows(int row, int count = 1) override;
-  Track row(int i) const override { return table[i]; }
-  void row(int i, const Track &value) override { table[i] = value; }
   Track defaultValue(int row) const override;
 };
 
-class MontageTable : public AbstractMontageTable {
-  std::vector<Montage> table;
+class MontageTable : public Table<Montage, AbstractMontageTable> {
   std::vector<std::unique_ptr<AbstractEventTable>> eTable;
   std::vector<std::unique_ptr<AbstractTrackTable>> tTable;
 
 public:
-  int rowCount() const override { return static_cast<int>(table.size()); }
-  void insertRows(int row, int count = 1) override;
-  void removeRows(int row, int count = 1) override;
-  Montage row(int i) const override { return table[i]; }
-  void row(int i, const Montage &value) override { table[i] = value; }
+  void insertRows(int row, int count) override;
+  void removeRows(int row, int count) override;
   Montage defaultValue(int row) const override;
   AbstractEventTable *eventTable(int i) override { return eTable[i].get(); }
   const AbstractEventTable *eventTable(int i) const override {

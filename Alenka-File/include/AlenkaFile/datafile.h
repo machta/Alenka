@@ -84,11 +84,12 @@ public:
    * load this information instead from the primary file.
    *
    * An empty montage is always created.???
+   * @todo Make sure load can be called repeatedly with the same results.
+   *
    * @param infoFile [in]
    */
   bool loadSecondaryFile(std::string montFilePath = "");
   virtual bool load() { return loadSecondaryFile(); }
-  // TODO: Make sure load can be called repeatedly with the same results.
 
   /**
    * @brief Reads signal data specified by the sample range.
