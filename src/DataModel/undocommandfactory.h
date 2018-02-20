@@ -20,6 +20,9 @@ public:
   void beginMacro(const QString &text);
   void endMacro();
 
+  void overwriteDataModel(std::unique_ptr<AlenkaFile::DataModel> newDataModel,
+                          const QString &text = "");
+
   void changeEventType(int i, const AlenkaFile::EventType &value,
                        const QString &text = "") const;
   void changeMontage(int i, const AlenkaFile::Montage &value,
@@ -38,6 +41,8 @@ public:
   void removeMontage(int i, int c = 1, const QString &text = "") const;
   void removeEvent(int i, int j, int c = 1, const QString &text = "") const;
   void removeTrack(int i, int j, int c = 1, const QString &text = "") const;
+
+  static std::unique_ptr<AlenkaFile::DataModel> emptyDataModel();
 };
 
 #endif // UNDOCOMMANDFACTORY_H

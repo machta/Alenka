@@ -1,6 +1,7 @@
 #include "undocommandfactory.h"
 
 #include "../DataModel/opendatafile.h"
+#include "../DataModel/vitnessdatamodel.h"
 
 #include <QUndoCommand>
 #include <QUndoStack>
@@ -20,8 +21,7 @@ class ChangeEventType : public QUndoCommand {
 public:
   ChangeEventType(DataModel *dataModel, int i, EventType value,
                   const QString &text)
-      : QUndoCommand(text), dataModel(dataModel), i(i),
-        after(std::move(value)) {
+      : QUndoCommand(text), dataModel(dataModel), i(i), after(move(value)) {
     before = dataModel->eventTypeTable()->row(i);
   }
   void redo() override { dataModel->eventTypeTable()->row(i, after); }
@@ -35,8 +35,7 @@ class ChangeMontage : public QUndoCommand {
 
 public:
   ChangeMontage(DataModel *dataModel, int i, Montage value, const QString &text)
-      : QUndoCommand(text), dataModel(dataModel), i(i),
-        after(std::move(value)) {
+      : QUndoCommand(text), dataModel(dataModel), i(i), after(move(value)) {
     before = dataModel->montageTable()->row(i);
   }
   void redo() override { dataModel->montageTable()->row(i, after); }
@@ -52,7 +51,7 @@ public:
   ChangeEvent(DataModel *dataModel, int i, int j, Event value,
               const QString &text)
       : QUndoCommand(text), dataModel(dataModel), i(i), j(j),
-        after(std::move(value)) {
+        after(move(value)) {
     before = dataModel->montageTable()->eventTable(i)->row(j);
   }
   void redo() override {
@@ -72,7 +71,7 @@ public:
   ChangeTrack(DataModel *dataModel, int i, int j, Track value,
               const QString &text)
       : QUndoCommand(text), dataModel(dataModel), i(i), j(j),
-        after(std::move(value)) {
+        after(move(value)) {
     before = dataModel->montageTable()->trackTable(i)->row(j);
   }
   void redo() override {
@@ -268,6 +267,22 @@ public:
   }
 };
 
+class OverwriteDataModel : public QUndoCommand {
+  DataModel *dataModel;
+  unique_ptr<DataModel> oldDataModel, newDataModel;
+
+public:
+  OverwriteDataModel(DataModel *dataModel, unique_ptr<DataModel> newDataModel,
+                     const QString &text)
+      : QUndoCommand(text), dataModel(dataModel),
+        newDataModel(move(newDataModel)) {
+    oldDataModel = UndoCommandFactory::emptyDataModel();
+    oldDataModel->copy(*dataModel);
+  }
+  void redo() override { dataModel->copy(*newDataModel); }
+  void undo() override { dataModel->copy(*oldDataModel); }
+};
+
 } // namespace
 
 void UndoCommandFactory::push(QUndoCommand *cmd) { undoStack->push(cmd); }
@@ -277,6 +292,11 @@ void UndoCommandFactory::beginMacro(const QString &text) {
 }
 
 void UndoCommandFactory::endMacro() { undoStack->endMacro(); }
+
+void UndoCommandFactory::overwriteDataModel(unique_ptr<DataModel> newDataModel,
+                                            const QString &text) {
+  undoStack->push(new OverwriteDataModel(dataModel, move(newDataModel), text));
+}
 
 void UndoCommandFactory::changeEventType(int i, const EventType &value,
                                          const QString &text) const {
@@ -336,4 +356,9 @@ void UndoCommandFactory::removeEvent(int i, int j, int c,
 void UndoCommandFactory::removeTrack(int i, int j, int c,
                                      const QString &text) const {
   undoStack->push(new RemoveTrack(dataModel, i, j, c, text));
+}
+
+std::unique_ptr<DataModel> UndoCommandFactory::emptyDataModel() {
+  return std::make_unique<DataModel>(std::make_unique<VitnessEventTypeTable>(),
+                                     std::make_unique<VitnessMontageTable>());
 }

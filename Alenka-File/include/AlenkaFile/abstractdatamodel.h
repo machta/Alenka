@@ -2,6 +2,7 @@
 #define ALENKAFILE_ABSTRACTDATAMODEL_H
 
 #include <array>
+#include <cassert>
 #include <cstdio>
 #include <memory>
 #include <string>
@@ -19,12 +20,17 @@ public:
   virtual T defaultValue(int row) const = 0;
 
   void copy(const AbstractTable *src) {
-    removeRows(0, rowCount());
+    const int oldCount = rowCount();
+    const int newCount = src->rowCount();
+    const int diff = abs(oldCount - newCount);
 
-    const int count = src->rowCount();
-    insertRows(0, count);
+    if (oldCount < newCount)
+      insertRows(oldCount, diff);
+    else if (oldCount > newCount)
+      removeRows(newCount, diff);
+    assert(newCount == rowCount());
 
-    for (int i = 0; i < count; ++i)
+    for (int i = 0; i < newCount; ++i)
       row(i, src->row(i));
   }
 };
@@ -113,6 +119,11 @@ public:
   const AbstractEventTypeTable *eventTypeTable() const { return ett.get(); }
   AbstractMontageTable *montageTable() { return mt.get(); }
   const AbstractMontageTable *montageTable() const { return mt.get(); }
+
+  void copy(const DataModel &src) {
+    ett->copy(src.ett.get());
+    mt->copy(src.mt.get());
+  }
 
   // Some helper functions for converting colors.
   static std::string colorArray2str(std::array<int, 3> color) {

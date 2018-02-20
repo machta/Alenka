@@ -1116,15 +1116,15 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   updateRecentFiles(fileInfo);
   addRecentFilesActions();
 
-  fileResources->dataModel = make_unique<DataModel>(
-      make_unique<VitnessEventTypeTable>(), make_unique<VitnessMontageTable>());
-  fileResources->file->setDataModel(fileResources->dataModel.get());
+  fileResources->dataModel = UndoCommandFactory::emptyDataModel();
+  auto oldDataModel = fileResources->dataModel.get();
+  fileResources->file->setDataModel(oldDataModel);
 
-  fileResources->undoFactory = make_unique<UndoCommandFactory>(
-      fileResources->dataModel.get(), undoStack);
+  fileResources->undoFactory =
+      make_unique<UndoCommandFactory>(oldDataModel, undoStack);
 
   openDataFile->file = fileResources->file.get();
-  openDataFile->dataModel = fileResources->dataModel.get();
+  openDataFile->dataModel = oldDataModel;
   openDataFile->undoFactory = fileResources->undoFactory.get();
   openDataFile->kernelCache = kernelCache.get();
 
@@ -1142,13 +1142,22 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
     useAutoSave = res == QMessageBox::Yes;
   }
 
-  bool secondaryFileExists;
-  executeWithCLocale([this, useAutoSave, &secondaryFileExists]() {
-    if (useAutoSave)
-      secondaryFileExists =
+  executeWithCLocale([this, useAutoSave, oldDataModel]() {
+    const bool secondaryFileExists = fileResources->file->load();
+    if (!secondaryFileExists)
+      createDefaultMontage();
+
+    if (useAutoSave) {
+      auto newDataModel = UndoCommandFactory::emptyDataModel();
+      fileResources->file->setDataModel(newDataModel.get());
+      const bool autosaveFileExists =
           fileResources->file->loadSecondaryFile(autoSaveName);
-    else
-      secondaryFileExists = fileResources->file->load();
+      assert(autosaveFileExists);
+
+      fileResources->file->setDataModel(oldDataModel);
+      openDataFile->undoFactory->overwriteDataModel(std::move(newDataModel),
+                                                    "Restore auto-save");
+    }
 
     DETECTOR_SETTINGS settings = AlenkaSignal::Spikedet::defaultSettings();
     OpenDataFile::infoTable.readXML(fileResources->file->getFilePath() +
@@ -1156,19 +1165,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
                                     &settings, &spikeDuration);
   });
 
-  if (useAutoSave || !secondaryFileExists) {
-    saveFileAction->setEnabled(true); // Allow save when the secondary file can
-                                      // be created or is out of sync with the
-                                      // autosave.
-    allowSaveOnClean = true;
-  } else {
-    allowSaveOnClean = false;
-  }
   cleanChanged(undoStack->isClean());
-
-  if (!secondaryFileExists)
-    createDefaultMontage();
-
   setWindowTitle(fileInfo.fileName() + " - " + TITLE);
 
   // Load OpenCL header from file.
@@ -1439,7 +1436,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   openFileConnections.push_back(c);
 
   // Load Elko session.
-  QString elkoSession = OpenDataFile::infoTable.getElkoSession();
+  const QString elkoSession = OpenDataFile::infoTable.getElkoSession();
 
   if (!elkoSession.isEmpty()) {
     QVariant returnValue, arg = elkoSession;
@@ -1452,7 +1449,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   OpenDataFile::infoTable.emitAllSignals();
 
   // Set up autosave.
-  int ms = 1000 * programOption<int>("autosave");
+  const int ms = 1000 * programOption<int>("autosave");
 
   if (ms > 0) {
     c = connect(autoSaveTimer, &QTimer::timeout, [this]() {
@@ -1534,7 +1531,6 @@ void SignalFileBrowserWindow::saveFile() {
 
     deleteAutoSave();
 
-    allowSaveOnClean = false;
     undoStack->setClean();
     saveFileAction->setEnabled(false);
     autoSaveTimer->start();
@@ -1866,12 +1862,7 @@ void SignalFileBrowserWindow::sendSyncMessage() {
 }
 
 void SignalFileBrowserWindow::cleanChanged(bool clean) {
-  if (clean && allowSaveOnClean) {
-    saveFileAction->setEnabled(true);
-    switchButton->setEnabled(true);
-  } else {
-    saveFileAction->setEnabled(!clean);
-  }
+  saveFileAction->setEnabled(!clean);
 }
 
 void SignalFileBrowserWindow::closeFilePropagate() {
