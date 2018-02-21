@@ -7,7 +7,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 set(BUILD_SHARED_LIBS off CACHE BOOL "")
 
 # First build all the library dependencies.
-include_directories(../libraries/boost_1_63)
+include_directories(../libraries/boost_1_66)
 
 if(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS
@@ -38,8 +38,8 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${DEBUG_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${DEBUG_FLAGS}")
 
 # Alenka-File library.
-file(GLOB SRC_BOOST_S ../libraries/boost_1_63/libs/system/src/*.cpp)
-file(GLOB SRC_BOOST_FS ../libraries/boost_1_63/libs/filesystem/src/*.cpp)
+file(GLOB SRC_BOOST_S ../libraries/boost_1_66/libs/system/src/*.cpp)
+file(GLOB SRC_BOOST_FS ../libraries/boost_1_66/libs/filesystem/src/*.cpp)
 
 set(SRC
   include/AlenkaFile/abstractdatamodel.h

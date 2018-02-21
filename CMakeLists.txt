@@ -81,10 +81,10 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} ${DEBUG_FLAGS}")
 add_definitions(-DCL_USE_DEPRECATED_OPENCL_1_2_APIS
   -DCL_USE_DEPRECATED_OPENCL_2_0_APIS) # To silence some silly warnings.
 
-include_directories(libraries/boost_1_63 libraries/pugixml/src libraries/eigen
+include_directories(libraries/boost_1_66 libraries/pugixml/src libraries/eigen
   ${OpenCL_INCLUDE_DIR})
 
-file(GLOB SRC_BOOST_PO libraries/boost_1_63/libs/program_options/src/*.cpp)
+file(GLOB SRC_BOOST_PO libraries/boost_1_66/libs/program_options/src/*.cpp)
 
 set(RESOURCES
   libraries/ElkoAlenka/resources/resources.qrc

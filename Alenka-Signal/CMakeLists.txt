@@ -17,7 +17,7 @@ include_directories(${OpenCL_INCLUDE_DIR})
 
 # Alenka-File
 set(Boost_INCLUDE_DIR "")
-include_directories(../libraries/boost_1_63)
+include_directories(../libraries/boost_1_66)
 
 # First build all the library dependencies.
 set(BUILD_LOADLIBRARIES off CACHE BOOL "")
