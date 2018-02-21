@@ -1066,6 +1066,8 @@ void SignalFileBrowserWindow::addAutoMontage(AutomaticMontage *autoMontage) {
                               undoFactory);
   undoFactory->endMacro();
 
+  assert(0 <= index && index < mt->rowCount() &&
+         "Make sure the selected index is legal");
   OpenDataFile::infoTable.setSelectedMontage(index);
 }
 
@@ -1174,9 +1176,9 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
     OpenDataFile::infoTable.setGlobalMontageHeader(headerFile.readAll());
 
   // Check for any values in InfoTable that could make trouble.
-  if (OpenDataFile::infoTable.getSelectedMontage() < 0 ||
-      OpenDataFile::infoTable.getSelectedMontage() >=
-          openDataFile->dataModel->montageTable()->rowCount())
+  const int index = OpenDataFile::infoTable.getSelectedMontage();
+  const int count = openDataFile->dataModel->montageTable()->rowCount();
+  if (index < 0 || index >= count)
     OpenDataFile::infoTable.setSelectedMontage(0);
 
   // Pass the file to the child widgets.
@@ -1269,8 +1271,16 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   openFileConnections.insert(openFileConnections.end(), cc.begin(), cc.end());
   updateMontageComboBox();
 
-  c = connect(montageComboBox, SIGNAL(currentIndexChanged(int)),
-              &OpenDataFile::infoTable, SLOT(setSelectedMontage(int)));
+  auto indexChangedPtr =
+      static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged);
+  c = connect(montageComboBox, indexChangedPtr, [this](const int index) {
+    const int count = fileResources->dataModel->montageTable()->rowCount();
+    // If the index is out of range, ignore it. This can happen when deleting
+    // the items in the montage select combo.
+    if (0 <= index && index < count)
+      OpenDataFile::infoTable.setSelectedMontage(index);
+  });
+
   openFileConnections.push_back(c);
   c = connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)),
               montageComboBox, SLOT(setCurrentIndex(int)));
@@ -1282,10 +1292,9 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   openFileConnections.insert(openFileConnections.end(), cc.begin(), cc.end());
   updateEventTypeComboBox();
 
-  c = connect(
-      eventTypeComboBox,
-      static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
-      [](int index) { OpenDataFile::infoTable.setSelectedType(index - 1); });
+  c = connect(eventTypeComboBox, indexChangedPtr, [](int index) {
+    OpenDataFile::infoTable.setSelectedType(index - 1);
+  });
   openFileConnections.push_back(c);
 
   c = connect(
@@ -1715,8 +1724,10 @@ void SignalFileBrowserWindow::updateMontageComboBox() {
     for (int i = 0; i < itemCount; ++i)
       montageComboBox->removeItem(0);
 
-    OpenDataFile::infoTable.setSelectedMontage(
-        min(selectedMontage, montageTable->rowCount() - 1));
+    const int index = min(selectedMontage, montageTable->rowCount() - 1);
+    assert(0 <= index && index < montageTable->rowCount() &&
+           "Make sure the selected index is legal");
+    OpenDataFile::infoTable.setSelectedMontage(index);
   }
 }
 

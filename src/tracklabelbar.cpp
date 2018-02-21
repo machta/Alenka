@@ -151,7 +151,7 @@ void TrackLabelBar::updateConnections(int row) {
   if (file) {
     const AbstractMontageTable *mt = file->dataModel->montageTable();
 
-    if (0 <= row && 0 < mt->rowCount()) {
+    if (0 <= row && row < mt->rowCount()) {
       auto vitness = VitnessTrackTable::vitness(mt->trackTable(row));
 
       auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this,

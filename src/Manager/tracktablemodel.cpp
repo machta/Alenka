@@ -366,8 +366,8 @@ TrackTableModel::TrackTableModel(OpenDataFile *file, QObject *parent)
   columns.push_back(make_unique<Z>(file));
 
   connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this,
-          SLOT(setSelectedMontage(int)));
-  setSelectedMontage(OpenDataFile::infoTable.getSelectedMontage());
+          SLOT(selectMontage(int)));
+  selectMontage(OpenDataFile::infoTable.getSelectedMontage());
 }
 
 int TrackTableModel::rowCount(const QModelIndex & /*parent*/) const {
@@ -405,7 +405,7 @@ bool TrackTableModel::areAllRowsDeletable(int /*row*/, int /*count*/) {
   return file->infoTable.getSelectedMontage() != 0;
 }
 
-void TrackTableModel::setSelectedMontage(int i) {
+void TrackTableModel::selectMontage(int i) {
   beginResetModel();
 
   for (auto e : trackTableConnections)
