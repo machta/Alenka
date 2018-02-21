@@ -293,8 +293,8 @@ EventTableModel::EventTableModel(OpenDataFile *file, QObject *parent)
   columns.push_back(make_unique<Description>(file));
 
   connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this,
-          SLOT(setSelectedMontage(int)));
-  setSelectedMontage(OpenDataFile::infoTable.getSelectedMontage());
+          SLOT(selectMontage(int)));
+  selectMontage(OpenDataFile::infoTable.getSelectedMontage());
 
   connect(&OpenDataFile::infoTable,
           SIGNAL(timeModeChanged(InfoTable::TimeMode)), this,
@@ -314,7 +314,7 @@ void EventTableModel::removeRowsFromDataModel(int row, int count) {
   file->undoFactory->endMacro();
 }
 
-void EventTableModel::setSelectedMontage(int i) {
+void EventTableModel::selectMontage(int i) {
   beginResetModel();
 
   for (auto e : montageTableConnections)

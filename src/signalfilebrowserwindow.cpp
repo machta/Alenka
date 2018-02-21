@@ -17,8 +17,10 @@
 #include "Manager/montagetablemodel.h"
 #include "Manager/trackmanager.h"
 #include "Manager/tracktablemodel.h"
+#include "SignalProcessor/automaticmontage.h"
 #include "SignalProcessor/bipolarmontage.h"
 #include "SignalProcessor/clusteranalysis.h"
+#include "SignalProcessor/defaultmontage.h"
 #include "SignalProcessor/modifiedspikedetanalysis.h"
 #include "SignalProcessor/signalprocessor.h"
 #include "SignalProcessor/spikedetanalysis.h"
@@ -692,6 +694,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   addMontageMenu->addSeparator();
 
   autoMontages.push_back(make_unique<AutomaticMontage>());
+  autoMontages.push_back(make_unique<DefaultMontage>());
   autoMontages.push_back(make_unique<BipolarMontage>());
   autoMontages.push_back(make_unique<BipolarNeighboursMontage>());
 
@@ -944,10 +947,11 @@ void SignalFileBrowserWindow::sortInLastItem(QComboBox *combo) {
 }
 
 QString SignalFileBrowserWindow::imageFilePathDialog() {
-  QString filter =
-      "JPEG Image (*.jpg);;PNG Image (*.png);;Bitmap Image (*.bmp)";
-  QString fileName =
-      QFileDialog::getSaveFileName(this, "Choose image file path", "", filter);
+  const QString filter =
+      "PNG Image (*.png);;JPEG Image (*.jpg);;Bitmap Image (*.bmp)";
+  QString selectedFilter;
+  const QString fileName = QFileDialog::getSaveFileName(
+      this, "Choose image file path", "", filter, &selectedFilter);
 
   if (fileName.isNull())
     return fileName;
@@ -955,13 +959,16 @@ QString SignalFileBrowserWindow::imageFilePathDialog() {
   QFileInfo fileInfo(fileName);
   QString suffix = fileInfo.suffix();
 
-  if (suffix == "jpg" || suffix == "png" || suffix == "bmp") {
+  if (selectedFilter.contains(".png") && suffix == "png") {
+    return fileName;
+  } else if (selectedFilter.contains(".jpg") && suffix == "jpg") {
+    return fileName;
+  } else if (selectedFilter.contains(".bmp") && suffix == "bmp") {
     return fileName;
   } else {
     QMessageBox::critical(this, "Bad suffix",
-                          "The file name must have either "
-                          "of the following suffixes: jpg, "
-                          "png, or bmp. Try again.");
+                          "The file name must have either of the following "
+                          "suffixes: png, jpg, or bmp.\n\nTry again.");
     return imageFilePathDialog();
   }
 }
@@ -975,22 +982,14 @@ void SignalFileBrowserWindow::setSecondsPerPage(double seconds) {
   }
 }
 
-void SignalFileBrowserWindow::copyDefaultMontage() {
-  auto montageTable = fileResources->dataModel->montageTable();
-  assert(montageTable->rowCount() == 1);
-  montageTable->insertRows(1);
+void SignalFileBrowserWindow::createDefaultMontage() {
+  auto mont = make_unique<DefaultMontage>();
+  addAutoMontage(mont.get());
 
-  Montage m = montageTable->row(1);
-  m.name = "Default Montage";
-  montageTable->row(1, m);
-
-  auto recordingTracks = montageTable->trackTable(0);
-  int count = recordingTracks->rowCount();
-  auto defaultTracks = montageTable->trackTable(1);
-  defaultTracks->insertRows(0, count);
-
-  for (int i = 0; i < count; ++i)
-    defaultTracks->row(i, recordingTracks->row(i));
+  // The code above creates an entry in the undo stack. We don't want it so we
+  // need to clear it.
+  assert(1 == undoStack->count() && "There should be only one command.");
+  undoStack->clear();
 }
 
 void SignalFileBrowserWindow::addRecentFilesActions() {
@@ -1067,6 +1066,8 @@ void SignalFileBrowserWindow::addAutoMontage(AutomaticMontage *autoMontage) {
                               undoFactory);
   undoFactory->endMacro();
 
+  assert(0 <= index && index < mt->rowCount() &&
+         "Make sure the selected index is legal");
   OpenDataFile::infoTable.setSelectedMontage(index);
 }
 
@@ -1117,15 +1118,15 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   updateRecentFiles(fileInfo);
   addRecentFilesActions();
 
-  fileResources->dataModel = make_unique<DataModel>(
-      make_unique<VitnessEventTypeTable>(), make_unique<VitnessMontageTable>());
-  fileResources->file->setDataModel(fileResources->dataModel.get());
+  fileResources->dataModel = UndoCommandFactory::emptyDataModel();
+  auto oldDataModel = fileResources->dataModel.get();
+  fileResources->file->setDataModel(oldDataModel);
 
-  fileResources->undoFactory = make_unique<UndoCommandFactory>(
-      fileResources->dataModel.get(), undoStack);
+  fileResources->undoFactory =
+      make_unique<UndoCommandFactory>(oldDataModel, undoStack);
 
   openDataFile->file = fileResources->file.get();
-  openDataFile->dataModel = fileResources->dataModel.get();
+  openDataFile->dataModel = oldDataModel;
   openDataFile->undoFactory = fileResources->undoFactory.get();
   openDataFile->kernelCache = kernelCache.get();
 
@@ -1143,13 +1144,22 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
     useAutoSave = res == QMessageBox::Yes;
   }
 
-  bool secondaryFileExists;
-  executeWithCLocale([this, useAutoSave, &secondaryFileExists]() {
-    if (useAutoSave)
-      secondaryFileExists =
+  executeWithCLocale([this, useAutoSave, oldDataModel]() {
+    const bool secondaryFileExists = fileResources->file->load();
+    if (!secondaryFileExists)
+      createDefaultMontage();
+
+    if (useAutoSave) {
+      auto newDataModel = UndoCommandFactory::emptyDataModel();
+      fileResources->file->setDataModel(newDataModel.get());
+      const bool autosaveFileExists =
           fileResources->file->loadSecondaryFile(autoSaveName);
-    else
-      secondaryFileExists = fileResources->file->load();
+      assert(autosaveFileExists);
+
+      fileResources->file->setDataModel(oldDataModel);
+      openDataFile->undoFactory->overwriteDataModel(std::move(newDataModel),
+                                                    "Restore auto-save");
+    }
 
     DETECTOR_SETTINGS settings = AlenkaSignal::Spikedet::defaultSettings();
     OpenDataFile::infoTable.readXML(fileResources->file->getFilePath() +
@@ -1157,19 +1167,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
                                     &settings, &spikeDuration);
   });
 
-  if (useAutoSave || !secondaryFileExists) {
-    saveFileAction->setEnabled(true); // Allow save when the secondary file can
-                                      // be created or is out of sync with the
-                                      // autosave.
-    allowSaveOnClean = true;
-  } else {
-    allowSaveOnClean = false;
-  }
   cleanChanged(undoStack->isClean());
-
-  if (!secondaryFileExists)
-    copyDefaultMontage();
-
   setWindowTitle(fileInfo.fileName() + " - " + TITLE);
 
   // Load OpenCL header from file.
@@ -1178,9 +1176,9 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
     OpenDataFile::infoTable.setGlobalMontageHeader(headerFile.readAll());
 
   // Check for any values in InfoTable that could make trouble.
-  if (OpenDataFile::infoTable.getSelectedMontage() < 0 ||
-      OpenDataFile::infoTable.getSelectedMontage() >=
-          openDataFile->dataModel->montageTable()->rowCount())
+  const int index = OpenDataFile::infoTable.getSelectedMontage();
+  const int count = openDataFile->dataModel->montageTable()->rowCount();
+  if (index < 0 || index >= count)
     OpenDataFile::infoTable.setSelectedMontage(0);
 
   // Pass the file to the child widgets.
@@ -1273,8 +1271,16 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   openFileConnections.insert(openFileConnections.end(), cc.begin(), cc.end());
   updateMontageComboBox();
 
-  c = connect(montageComboBox, SIGNAL(currentIndexChanged(int)),
-              &OpenDataFile::infoTable, SLOT(setSelectedMontage(int)));
+  auto indexChangedPtr =
+      static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged);
+  c = connect(montageComboBox, indexChangedPtr, [this](const int index) {
+    const int count = fileResources->dataModel->montageTable()->rowCount();
+    // If the index is out of range, ignore it. This can happen when deleting
+    // the items in the montage select combo.
+    if (0 <= index && index < count)
+      OpenDataFile::infoTable.setSelectedMontage(index);
+  });
+
   openFileConnections.push_back(c);
   c = connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)),
               montageComboBox, SLOT(setCurrentIndex(int)));
@@ -1286,10 +1292,9 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   openFileConnections.insert(openFileConnections.end(), cc.begin(), cc.end());
   updateEventTypeComboBox();
 
-  c = connect(
-      eventTypeComboBox,
-      static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
-      [](int index) { OpenDataFile::infoTable.setSelectedType(index - 1); });
+  c = connect(eventTypeComboBox, indexChangedPtr, [](int index) {
+    OpenDataFile::infoTable.setSelectedType(index - 1);
+  });
   openFileConnections.push_back(c);
 
   c = connect(
@@ -1440,7 +1445,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   openFileConnections.push_back(c);
 
   // Load Elko session.
-  QString elkoSession = OpenDataFile::infoTable.getElkoSession();
+  const QString elkoSession = OpenDataFile::infoTable.getElkoSession();
 
   if (!elkoSession.isEmpty()) {
     QVariant returnValue, arg = elkoSession;
@@ -1453,7 +1458,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   OpenDataFile::infoTable.emitAllSignals();
 
   // Set up autosave.
-  int ms = 1000 * programOption<int>("autosave");
+  const int ms = 1000 * programOption<int>("autosave");
 
   if (ms > 0) {
     c = connect(autoSaveTimer, &QTimer::timeout, [this]() {
@@ -1535,7 +1540,6 @@ void SignalFileBrowserWindow::saveFile() {
 
     deleteAutoSave();
 
-    allowSaveOnClean = false;
     undoStack->setClean();
     saveFileAction->setEnabled(false);
     autoSaveTimer->start();
@@ -1720,8 +1724,10 @@ void SignalFileBrowserWindow::updateMontageComboBox() {
     for (int i = 0; i < itemCount; ++i)
       montageComboBox->removeItem(0);
 
-    OpenDataFile::infoTable.setSelectedMontage(
-        min(selectedMontage, montageTable->rowCount() - 1));
+    const int index = min(selectedMontage, montageTable->rowCount() - 1);
+    assert(0 <= index && index < montageTable->rowCount() &&
+           "Make sure the selected index is legal");
+    OpenDataFile::infoTable.setSelectedMontage(index);
   }
 }
 
@@ -1867,12 +1873,7 @@ void SignalFileBrowserWindow::sendSyncMessage() {
 }
 
 void SignalFileBrowserWindow::cleanChanged(bool clean) {
-  if (clean && allowSaveOnClean) {
-    saveFileAction->setEnabled(true);
-    switchButton->setEnabled(true);
-  } else {
-    saveFileAction->setEnabled(!clean);
-  }
+  saveFileAction->setEnabled(!clean);
 }
 
 void SignalFileBrowserWindow::closeFilePropagate() {

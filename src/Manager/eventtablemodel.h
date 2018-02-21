@@ -17,7 +17,7 @@ protected:
   void removeRowsFromDataModel(int row, int count) override;
 
 private slots:
-  void setSelectedMontage(int i);
+  void selectMontage(int i);
   void beginEndReset() {
     beginResetModel();
     endResetModel();

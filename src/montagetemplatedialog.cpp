@@ -216,7 +216,11 @@ void MontageTemplateDialog::addMontage() {
   }
 
   undoFactory->endMacro();
+
+  assert(0 <= index && index < file->dataModel->montageTable()->rowCount() &&
+         "Make sure the selected index is legal");
   OpenDataFile::infoTable.setSelectedMontage(index);
+
   accept();
 }
 

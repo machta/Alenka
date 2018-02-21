@@ -146,7 +146,7 @@ private:
   void sortInLastItem(QComboBox *combo);
   QString imageFilePathDialog();
   void setSecondsPerPage(double seconds);
-  void copyDefaultMontage();
+  void createDefaultMontage();
   void addRecentFilesActions();
   void updateRecentFiles(const QFileInfo &fileInfo);
   void addAutoMontage(AutomaticMontage *autoMontage);

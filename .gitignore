@@ -44,6 +44,7 @@ Thumbs.db
 # ----------------------------------------------------------------------------
 CMakeLists.txt.user
 build*
+.vscode
 
 # config file
 local-options.ini

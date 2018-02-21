@@ -18,7 +18,7 @@ protected:
   bool areAllRowsDeletable(int row, int count) override;
 
 private slots:
-  void setSelectedMontage(int i);
+  void selectMontage(int i);
 
 private:
   std::vector<QMetaObject::Connection> trackTableConnections;

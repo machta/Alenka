@@ -137,6 +137,8 @@ set(SRC
   src/SignalProcessor/automaticmontage.h
   src/SignalProcessor/bipolarmontage.cpp
   src/SignalProcessor/bipolarmontage.h
+  src/SignalProcessor/defaultmontage.cpp
+  src/SignalProcessor/defaultmontage.h
   src/SignalProcessor/clusteranalysis.cpp
   src/SignalProcessor/clusteranalysis.h
   src/SignalProcessor/lrucache.h
