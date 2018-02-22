@@ -23,6 +23,8 @@
 #include <string>
 #include <thread>
 
+#include <detailedexception.h>
+
 /**
  * @brief Returns error code converted to a suitable form for printing.
  */
@@ -50,7 +52,7 @@ void CEC(T val, T expected, std::string message, const char *file, int line) {
 
   ss << message << " " << file << ":" << line;
 
-  throw std::runtime_error(ss.str());
+  throwDetailed(std::runtime_error(ss.str()));
 }
 
 template <typename T>
@@ -63,7 +65,7 @@ void CNEC(T val, std::string message, const char *file, int line) {
 
   ss << message << " " << file << ":" << line;
 
-  throw std::runtime_error(ss.str());
+  throwDetailed(std::runtime_error(ss.str()));
 }
 
 } // namespace
@@ -119,7 +121,7 @@ extern std::mutex LOG_FILE_MUTEX;
  * The format of the log entries (for the log file and stderr) is defined here.
  */
 #define logToStream(message_, stream_)                                         \
-  stream_ << message_ << " ["                                                  \
+  stream_ << message_ << "["                                                   \
           << "in T" << std::this_thread::get_id() << " from " << __FILE__      \
           << ":" << __LINE__ << "]" << std::endl
 

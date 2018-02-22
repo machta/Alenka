@@ -25,6 +25,8 @@
 #include <set>
 #include <string>
 
+#include <detailedexception.h>
+
 #ifndef __APPLE__
 #if defined WIN_BUILD
 #include <windows.h>
@@ -886,8 +888,8 @@ void Canvas::updateProcessor() {
   cacheCapacity -= parallelQueues * (glSharing ? 3 : 4);
 
   if (cacheCapacity <= 0)
-    throw runtime_error(
-        "Not enough GPU memory to create cache with non zero capacity.");
+    throwDetailed(runtime_error(
+        "Not enough GPU memory to create cache with non zero capacity."));
 
   logToFile("Creating GPU cache with "
             << cacheCapacity << " capacity and blocks of size " << size << ".");

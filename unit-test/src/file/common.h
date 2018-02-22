@@ -126,7 +126,7 @@ void compareMatrixAverage(T *arr, U *sol, int rows, int cols, double *relErr,
 inline void printException(function<void(void)> fun) {
   try {
     fun();
-  } catch (exception &e) {
+  } catch (const exception &e) {
     cerr << "Caught an std exception: " << e.what() << endl;
     throw;
   } catch (...) {

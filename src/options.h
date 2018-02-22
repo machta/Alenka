@@ -20,6 +20,8 @@
 #include <stdexcept>
 #include <string>
 
+#include <detailedexception.h>
+
 class QSettings;
 
 /**
@@ -63,7 +65,7 @@ public:
     if (isSet(key))
       return vm[key];
     else
-      throw std::runtime_error("Option '" + key + "' has no value.");
+      throwDetailed(std::runtime_error("Option '" + key + "' has no value."));
   }
 
   /**

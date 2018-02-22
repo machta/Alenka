@@ -11,6 +11,8 @@
 #include <memory>
 #include <sstream>
 
+#include <detailedexception.h>
+
 using namespace std;
 
 namespace {
@@ -105,8 +107,8 @@ OpenCLContext::OpenCLContext(const unsigned int platformIndex,
   const vector<cl_platform_id> platforms = getPlatformIDs();
 
   if (platformIndex >= platforms.size())
-    throw runtime_error("Platform ID " + to_string(platformIndex) +
-                        " too high.");
+    throwDetailed(runtime_error("Platform ID " + to_string(platformIndex) +
+                                " too high."));
 
   platformId = platforms[platformIndex];
 
@@ -114,7 +116,8 @@ OpenCLContext::OpenCLContext(const unsigned int platformIndex,
   const vector<cl_device_id> devices = getDeviceIDs(platformId);
 
   if (deviceIndex >= dCount)
-    throw runtime_error("Device ID " + to_string(deviceIndex) + " too high.");
+    throwDetailed(
+        runtime_error("Device ID " + to_string(deviceIndex) + " too high."));
 
   deviceId = devices[deviceIndex];
 
@@ -174,8 +177,8 @@ string OpenCLContext::getDeviceInfo(const unsigned int platformIndex,
   const vector<cl_platform_id> platformIDs = getPlatformIDs();
 
   if (platformIndex >= platformIDs.size())
-    throw runtime_error("Platform ID " + to_string(platformIndex) +
-                        " too high.");
+    throwDetailed(runtime_error("Platform ID " + to_string(platformIndex) +
+                                " too high."));
 
   const vector<cl_device_id> deviceIDs =
       getDeviceIDs(platformIDs[platformIndex]);
@@ -230,7 +233,7 @@ void OpenCLContext::CCEC(cl_int val, string message, const char *file,
 
   ss << message << " " << file << ":" << line;
 
-  throw std::runtime_error(ss.str());
+  throwDetailed(std::runtime_error(ss.str()));
 }
 
 // TODO: Test this with a unit test.

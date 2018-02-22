@@ -19,6 +19,8 @@
 #include <iostream>
 #include <type_traits>
 
+#include <detailedexception.h>
+
 using namespace std;
 
 namespace {
@@ -68,7 +70,7 @@ void CFCEC(clfftStatus val, string message, const char *file, int line) {
 
   ss << message << " " << file << ":" << line;
 
-  throw std::runtime_error(ss.str());
+  throwDetailed(std::runtime_error(ss.str()));
 }
 
 /**
@@ -109,7 +111,7 @@ FilterProcessor<T>::FilterProcessor(unsigned int blockLength,
 
   if (!program.compileSuccess()) {
     cerr << "Compilation failed:\n" << program.getCompileLog() << endl;
-    throw runtime_error("FilterProcessor: compilation failed");
+    throwDetailed(runtime_error("FilterProcessor: compilation failed"));
   }
 
   filterKernel = program.createKernel("filter");
@@ -213,14 +215,15 @@ void FilterProcessor<T>::process(cl_mem inBuffer, cl_mem outBuffer,
   checkClErrorCode(err, "clGetMemObjectInfo");
 
   if (inSize < minSize)
-    throw runtime_error("FilterProcessor: the inBuffer is too small.");
+    throwDetailed(runtime_error("FilterProcessor: the inBuffer is too small."));
 
   err = clGetMemObjectInfo(outBuffer, CL_MEM_SIZE, sizeof(size_t), &outSize,
                            nullptr);
   checkClErrorCode(err, "clGetMemObjectInfo");
 
   if (outSize < minSize)
-    throw runtime_error("FilterProcessor: the outBuffer is too small.");
+    throwDetailed(
+        runtime_error("FilterProcessor: the outBuffer is too small."));
 
   if (coefficientsChanged) {
     err = clEnqueueWriteBuffer(queue, filterBuffer, CL_TRUE, 0, M * sizeof(T),

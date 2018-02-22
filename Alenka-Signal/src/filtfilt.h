@@ -16,8 +16,9 @@ void filtfilt(vector<T> B, vector<T> A, const vector<T> &X, vector<T> &Y) {
   int nfact = 3 * (nfilt - 1); // length of edge transients
 
   if (len <= nfact) {
-    throw std::domain_error("Input data too short! Data must have length more "
-                            "than 3 times filter order.");
+    throwDetailed(
+        std::domain_error("Input data too short! Data must have length more "
+                          "than 3 times filter order."));
   }
 
   // set up filter's initial conditions to remove DC offset problems at the

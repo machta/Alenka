@@ -109,11 +109,14 @@ void executeWithCLocale(function<void()> code) {
   std::locale::global(localeCopy);
 }
 
-void errorMessage(QWidget *parent, const QString &text,
+void errorMessage(QWidget *parent, const string &text,
                   const QString &title = "Error") {
-  QString padding(max(0, title.size() * 2 - text.size()), ' ');
+  QString qText = QString::fromStdString(text);
+  // Use only the first 10 lines. This will ensure we don't get huge messages.
+  qText = qText.section('\n', 0, 9);
 
-  QMessageBox::critical(parent, title, text + padding);
+  QString padding(max(0, title.size() * 2 - qText.size()), ' ');
+  QMessageBox::critical(parent, title, qText + padding);
 }
 
 } // namespace
@@ -825,7 +828,7 @@ unique_ptr<DataFile> SignalFileBrowserWindow::dataFileBySuffix(
 
     return make_unique<MAT>(files, vars);
   } else {
-    throw runtime_error("Unknown file extension.");
+    throwDetailed(runtime_error("Unknown file extension."));
   }
 }
 
@@ -1107,8 +1110,8 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
 
   try {
     fileResources->file = dataFileBySuffix(fileInfo, additionalFiles);
-  } catch (runtime_error e) {
-    errorMessage(this, e.what(), "Error while opening file");
+  } catch (const runtime_error &e) {
+    errorMessage(this, catchDetailed(e), "Error while opening file");
     return; // Ignore opening of the file as there was an error.
   }
 
@@ -1470,8 +1473,8 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
           fileResources->file->saveSecondaryFile(autoSaveName);
           logToFileAndConsole("Autosaving to " << autoSaveName);
         });
-      } catch (runtime_error e) {
-        errorMessage(this, e.what());
+      } catch (const runtime_error &e) {
+        errorMessage(this, catchDetailed(e));
       }
     });
     openFileConnections.push_back(c);
@@ -1510,8 +1513,8 @@ bool SignalFileBrowserWindow::closeFile() {
             fileResources->file->getFilePath() + ".info",
             spikedetAnalysis->getSettings(), spikeDuration);
       });
-    } catch (runtime_error e) {
-      errorMessage(this, e.what(), "Error while autosaving file");
+    } catch (const runtime_error &e) {
+      errorMessage(this, catchDetailed(e), "Error while autosaving file");
     }
   }
 
@@ -1534,8 +1537,8 @@ void SignalFileBrowserWindow::saveFile() {
   if (fileResources->file) {
     try {
       executeWithCLocale([this]() { fileResources->file->save(); });
-    } catch (runtime_error e) {
-      errorMessage(this, e.what(), "Error while saving file");
+    } catch (const runtime_error &e) {
+      errorMessage(this, catchDetailed(e), "Error while saving file");
     }
 
     deleteAutoSave();
@@ -1567,8 +1570,8 @@ void SignalFileBrowserWindow::exportToEdf() {
 
   try {
     EDF::saveAs(fileName.toStdString(), fileResources->file.get());
-  } catch (runtime_error e) {
-    errorMessage(this, e.what(), "Error while exporting file");
+  } catch (const runtime_error &e) {
+    errorMessage(this, catchDetailed(e), "Error while exporting file");
   }
 }
 

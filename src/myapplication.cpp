@@ -42,9 +42,9 @@ MyApplication::MyApplication(int &argc, char **argv)
     checkErrorCode(LOG_FILE.good(), true,
                    "Could not open log file '" << logFilePath
                                                << "' for writing.");
-  } catch (exception &e) {
+  } catch (const exception &e) {
     QMessageBox::critical(nullptr, "Exception caught",
-                          QString::fromStdString(e.what()));
+                          QString::fromStdString(catchDetailed(e)));
     mainExit(EXIT_FAILURE);
   } catch (...) {
     QMessageBox::critical(nullptr, "Exception caught",
@@ -131,8 +131,8 @@ MyApplication::~MyApplication() { AlenkaSignal::OpenCLContext::clfftDeinit(); }
 bool MyApplication::notify(QObject *receiver, QEvent *event) {
   try {
     return QApplication::notify(receiver, event);
-  } catch (exception &e) {
-    logToFileAndConsole("Standard exception caught: " << e.what());
+  } catch (const exception &e) {
+    logToFileAndConsole("Standard exception caught: " << catchDetailed(e));
   } catch (...) {
     logToFileAndConsole("Unknown exception caught.");
   }

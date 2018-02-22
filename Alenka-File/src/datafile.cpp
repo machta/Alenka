@@ -9,6 +9,8 @@
 #include <stdexcept>
 #include <type_traits>
 
+#include <detailedexception.h>
+
 using namespace std;
 using namespace pugi;
 using namespace AlenkaFile;
@@ -29,8 +31,8 @@ template <typename T>
 void readSignalFloatDouble(DataFile *file, T *data, int64_t firstSample,
                            int64_t lastSample) {
   if (lastSample < firstSample)
-    throw invalid_argument(
-        "'lastSample' must be greater than or equal to 'firstSample'.");
+    throwDetailed(invalid_argument(
+        "'lastSample' must be greater than or equal to 'firstSample'"));
 
   int64_t len = lastSample - firstSample + 1;
   vector<T *> dataChannels(file->getChannelCount());
@@ -268,7 +270,7 @@ void DataFile::saveSecondaryFile(string montFilePath) {
   buildXML(doc, dataModel);
 
   if (!doc.save_file(montFilePath.c_str()))
-    throw runtime_error("Error writing " + montFilePath);
+    throwDetailed(runtime_error("Error writing " + montFilePath));
 }
 
 bool DataFile::loadSecondaryFile(string montFilePath) {

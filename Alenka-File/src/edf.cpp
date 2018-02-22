@@ -11,6 +11,8 @@
 #include <set>
 #include <sstream>
 
+#include <detailedexception.h>
+
 using namespace std;
 using namespace AlenkaFile;
 using namespace boost;
@@ -128,7 +130,8 @@ void saveAsWithType(const string &filePath, DataFile *sourceFile,
       edfopen_file_writeonly(filePath.c_str(), type, numberOfChannels);
 
   if (tmpFile < 0)
-    throw runtime_error("edfopen_file_writeonly error: " + to_string(tmpFile));
+    throwDetailed(
+        runtime_error("edfopen_file_writeonly error: " + to_string(tmpFile)));
 
   // Copy data into the new file.
   writeSignalInfo(tmpFile, sourceFile, edfhdr);
@@ -147,7 +150,7 @@ void saveAsWithType(const string &filePath, DataFile *sourceFile,
       int res = edfwrite_physical_samples(tmpFile, buffer.get() + i * fs);
 
       if (res != 0)
-        throw runtime_error("edfwrite_physical_samples failed");
+        throwDetailed(runtime_error("edfwrite_physical_samples failed"));
     }
   }
 
@@ -179,7 +182,7 @@ void saveAsWithType(const string &filePath, DataFile *sourceFile,
                                              ss.str().c_str());
 
           if (res != 0)
-            throw runtime_error("edfwrite_annotation_utf8 failed");
+            throwDetailed(runtime_error("edfwrite_annotation_utf8 failed"));
         }
       }
     }
@@ -189,7 +192,7 @@ void saveAsWithType(const string &filePath, DataFile *sourceFile,
   int res = edfclose_file(tmpFile);
 
   if (res != 0)
-    throw runtime_error("Closing tmp EDF file failed");
+    throwDetailed(runtime_error("Closing tmp EDF file failed"));
 }
 
 } // namespace
@@ -311,10 +314,10 @@ void EDF::openFile() {
 
   if (err < 0) {
     if (edfhdr->filetype == EDFLIB_FILE_CONTAINS_FORMAT_ERRORS)
-      throw runtime_error("Warning: EDF format error");
+      throwDetailed(runtime_error("Warning: EDF format error"));
     else
-      throw runtime_error("edfopen_file_readonly error: " +
-                          to_string(edfhdr->filetype));
+      throwDetailed(runtime_error("edfopen_file_readonly error: " +
+                                  to_string(edfhdr->filetype)));
   }
 
   samplesRecorded = edfhdr->signalparam[0].smp_in_file;
@@ -351,7 +354,7 @@ void EDF::readChannelsFloatDouble(vector<T *> dataChannels,
     err = edfseek(handle, i, firstSample, EDFSEEK_SET);
 
     if (err != static_cast<long long>(firstSample))
-      throw runtime_error("edfseek failed");
+      throwDetailed(runtime_error("edfseek failed"));
   }
 
   assert(readChunk > 0);
@@ -366,7 +369,7 @@ void EDF::readChannelsFloatDouble(vector<T *> dataChannels,
       err = edfread_physical_samples(handle, i, n, readChunkBuffer.data());
 
       if (err != n)
-        throw runtime_error("edfread_physical_samples failed");
+        throwDetailed(runtime_error("edfread_physical_samples failed"));
 
       for (int j = 0; j < n; ++j)
         dataChannels[i][j] = static_cast<T>(readChunkBuffer[j]);
