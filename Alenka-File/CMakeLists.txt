@@ -28,7 +28,7 @@ include_directories(../libraries/EDFlib)
 set(BUILD_SHARED_LIBS false) # TODO: Check if this is needed.
 
 add_subdirectory(../libraries/pugixml ${CMAKE_CURRENT_BINARY_DIR}/pugixml)
-include_directories(../libraries/pugixml/src)
+include_directories(../libraries/pugixml/src ../include)
 
 # If you want to use this library, you need to link to these libraries.
 set(LIBS_TO_LINK_ALENKA_FILE alenka-file pugixml matio)
@@ -54,7 +54,8 @@ set(SRC
   src/edflib_extended.cpp
   src/edflib_extended.h
   src/gdf2.cpp
-  src/mat.cpp)
+  src/mat.cpp
+)
 set_source_files_properties(${SRC} PROPERTIES COMPILE_FLAGS ${WARNINGS})
 
 add_library(alenka-file STATIC ${SRC} ${SRC_BOOST_S} ${SRC_BOOST_FS})

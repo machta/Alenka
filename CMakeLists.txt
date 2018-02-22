@@ -82,7 +82,7 @@ add_definitions(-DCL_USE_DEPRECATED_OPENCL_1_2_APIS
   -DCL_USE_DEPRECATED_OPENCL_2_0_APIS) # To silence some silly warnings.
 
 include_directories(libraries/boost_1_66 libraries/pugixml/src libraries/eigen
-  ${OpenCL_INCLUDE_DIR})
+  ${OpenCL_INCLUDE_DIR} include)
 
 file(GLOB SRC_BOOST_PO libraries/boost_1_66/libs/program_options/src/*.cpp)
 
@@ -92,6 +92,7 @@ set(RESOURCES
   resources/icons/icons.qrc)
 
 set(SRC
+  include/detailedexception.h
   src/DataModel/infotable.cpp
   src/DataModel/infotable.h
   src/DataModel/kernelcache.cpp
@@ -175,7 +176,8 @@ set(SRC
   src/spikedetsettingsdialog.cpp
   src/spikedetsettingsdialog.h
   src/tracklabelbar.cpp
-  src/tracklabelbar.h)
+  src/tracklabelbar.h
+)
 set_source_files_properties(${SRC} PROPERTIES COMPILE_FLAGS ${WARNINGS})
 
 add_executable(Alenka ${SRC} ${RESOURCES} ${SRC_BOOST_PO}
@@ -245,7 +247,7 @@ add_custom_command(TARGET Alenka POST_BUILD COMMAND ${CMAKE_COMMAND}
   $<TARGET_FILE_DIR:Alenka>/montageTemplates)
 
 add_custom_command(TARGET Alenka POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_directory 
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
   ${Alenka_SOURCE_DIR}/misc/deploy/montageTemplates
   $<TARGET_FILE_DIR:Alenka>/montageTemplates)
 
