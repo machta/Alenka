@@ -62,7 +62,7 @@ public:
     return QVariant();
   }
 
-  bool setData(const int row, const QVariant &value, const int role) override {
+  bool setData(int row, const QVariant &value, int role) override {
     const int selected = OpenDataFile::infoTable.getSelectedMontage();
 
     // Code for montage with index 0 shouldn't be edited.

@@ -54,7 +54,7 @@ void ClusterAnalysis::runAnalysis(OpenDataFile *file, QWidget * /*parent*/) {
     return;
 
   int channels = discharges->GetCountChannels();
-  int n = discharges->m_MA->size();
+  int n = static_cast<int>(discharges->m_MA->size());
 
   vector<double> MA, MW;
   MA.reserve(n * channels);

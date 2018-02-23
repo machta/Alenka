@@ -205,7 +205,7 @@ void MontageTemplateDialog::addMontage() {
   undoFactory->changeMontage(index, m);
 
   const AbstractTrackTable *trackTable = montageTable->trackTable(index);
-  int trackCount = selectedItem.rows.size();
+  int trackCount = static_cast<int>(selectedItem.rows.size());
   undoFactory->insertTrack(index, 0, trackCount);
 
   for (int i = 0; i < trackCount; ++i) {
