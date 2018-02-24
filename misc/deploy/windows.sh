@@ -188,6 +188,10 @@ TEMPLATES="`dirname $0`/montageTemplates"
 cp -v "$TEMPLATES"/* $folder/$name/montageTemplates
 cp -v "$TEMPLATES"/* $folder32/$name-32/montageTemplates
 
+LIC="`dirname $0`/../../LICENSE.txt"
+cp -v "$LIC" $folder/$name
+cp -v "$LIC" $folder32/$name-32
+
 # Make zip using .Net.
 rm -f "$name.zip" "$name-32.zip" &&
 powershell.exe -nologo -noprofile -command "& { Add-Type -A 'System.IO.Compression.FileSystem'; [IO.Compression.ZipFile]::CreateFromDirectory('$folder', '$name.zip'); }" &&
