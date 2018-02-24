@@ -278,8 +278,8 @@ void SpikedetAnalysis::analyseCommandLineFile() {
     vector<string> rest(fn.begin() + 1, fn.end());
 
     file = SignalFileBrowserWindow::dataFileBySuffix(fileInfo, rest);
-  } catch (runtime_error e) {
-    cerr << "Error while opening file: " << e.what() << endl;
+  } catch (const runtime_error &e) {
+    cerr << "Error while opening file: " << catchDetailed(e) << endl;
     MyApplication::mainExit(EXIT_FAILURE);
   }
 

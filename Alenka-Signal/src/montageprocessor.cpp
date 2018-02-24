@@ -2,6 +2,8 @@
 
 #include "../include/AlenkaSignal/openclcontext.h"
 
+#include <detailedexception.h>
+
 using namespace std;
 
 namespace AlenkaSignal {
@@ -19,21 +21,24 @@ void MontageProcessor<T>::checkBufferSizes(cl_mem inBuffer, cl_mem outBuffer,
   checkClErrorCode(err, "clGetMemObjectInfo");
 
   if (inSize < inputRowLength * inputRowCount * sizeof(T))
-    throw runtime_error("MontageProcessor: the inBuffer is too small.");
+    throwDetailed(
+        runtime_error("MontageProcessor: the inBuffer is too small."));
 
   err = clGetMemObjectInfo(outBuffer, CL_MEM_SIZE, sizeof(size_t), &outSize,
                            nullptr);
   checkClErrorCode(err, "clGetMemObjectInfo");
 
   if (outSize < outputRowLength * montageSize * outputCopyCount * sizeof(T))
-    throw runtime_error("MontageProcessor: the outBuffer is too small.");
+    throwDetailed(
+        runtime_error("MontageProcessor: the outBuffer is too small."));
 
   err = clGetMemObjectInfo(xyzBuffer, CL_MEM_SIZE, sizeof(size_t), &xyzSize,
                            nullptr);
   checkClErrorCode(err, "clGetMemObjectInfo");
 
   if (xyzSize < inputRowCount * 3 * sizeof(T))
-    throw runtime_error("MontageProcessor: the xyzBuffer is too small.");
+    throwDetailed(
+        runtime_error("MontageProcessor: the xyzBuffer is too small."));
 }
 
 template <class T>

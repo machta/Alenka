@@ -11,6 +11,7 @@
 #include "myapplication.h"
 #include "options.h"
 #include "signalfilebrowserwindow.h"
+#include <detailedexception.h>
 
 #include <stdexcept>
 #include <string>
@@ -57,8 +58,8 @@ int main(int argc, char **argv) {
 
     window.openCommandLineFile();
     ret = app.exec();
-  } catch (exception &e) {
-    logToFileAndConsole("Standard exception caught: " << e.what());
+  } catch (const exception &e) {
+    logToFileAndConsole("Standard exception caught: " << catchDetailed(e));
   } catch (...) {
     logToFileAndConsole("Unknown exception caught.");
   }

@@ -8,6 +8,8 @@
 #include <fstream>
 #include <sstream>
 
+#include <detailedexception.h>
+
 #ifdef UNIX_BUILD
 #include <sys/ioctl.h>
 #endif
@@ -134,22 +136,22 @@ void Options::settings(const QString &key, const QVariant &value) {
 
 void Options::validateValues() {
   if (get("gl43").as<bool>())
-    throw runtime_error("Option 'gl43' is disabled at the moment.");
+    throwDetailed(runtime_error("Option 'gl43' is disabled at the moment."));
 
   const int parallelProcessors = get("parProc").as<int>();
   if (parallelProcessors <= 0)
-    throw validation_error(validation_error::invalid_option_value, "parProc",
-                           to_string(parallelProcessors));
+    throwDetailed(validation_error(validation_error::invalid_option_value,
+                                   "parProc", to_string(parallelProcessors)));
 
   const int blockSize = get("blockSize").as<int>();
   if (blockSize <= 0)
-    throw validation_error(validation_error::invalid_option_value, "blockSize",
-                           to_string(blockSize));
+    throwDetailed(validation_error(validation_error::invalid_option_value,
+                                   "blockSize", to_string(blockSize)));
 
   const string screenType = get("screenType").as<string>();
   if (!(screenType == "png" || screenType == "jpg" || screenType == "bmp"))
-    throw validation_error(validation_error::invalid_option_value, "screenType",
-                           screenType);
+    throwDetailed(validation_error(validation_error::invalid_option_value,
+                                   "screenType", screenType));
 }
 
 void Options::logConfigFile() const {

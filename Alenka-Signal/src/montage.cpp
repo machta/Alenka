@@ -12,6 +12,8 @@
 #include <regex>
 #include <sstream>
 
+#include <detailedexception.h>
+
 using namespace std;
 
 namespace {
@@ -119,6 +121,7 @@ bool parseIdentityMontage(const string &source) {
     smatch matches;
     return regex_match(source, matches, re);
   } catch (regex_error) {
+    // Intentionaly left empty to silence the errors due to missing support.
   }
 
   return false;
@@ -146,6 +149,7 @@ bool parseCopyMontage(const string &source, cl_int *index = nullptr) {
 
     return res;
   } catch (regex_error) {
+    // Intentionaly left empty to silence the errors due to missing support.
   }
 
   return false;
@@ -258,6 +262,7 @@ string replaceLabels(const string &source, const vector<string> &labels,
                                      return injectIndex(m, labels, labelRegex);
                                    });
   } catch (regex_error) {
+    // Intentionaly left empty to silence the errors due to missing support.
   }
 
   cerr << "Montage compilation error: this build doesn't support std::regex"
@@ -309,6 +314,7 @@ template <class T> string Montage<T>::stripComments(const string &code) {
     const static regex re(R"((/\*([^*]|(\*+[^*/]))*\*+/)|(//.*))");
     return regex_replace(code, re, string(""));
   } catch (regex_error) {
+    // Intentionaly left empty to silence the errors due to missing support.
   }
 
   return code; // TODO: Remove consecutive empty lines that sometimes appear
@@ -366,7 +372,7 @@ template <class T> void Montage<T>::buildProgram() {
     program = make_unique<OpenCLProgram>(source, context);
     if (!program->compileSuccess()) {
       cerr << "Montage compilation error:\n" << program->getCompileLog();
-      throw runtime_error("Montage: compilation failed");
+      throwDetailed(runtime_error("Montage: compilation failed"));
     }
     break;
   default:
@@ -385,7 +391,7 @@ template <class T> void Montage<T>::buildCopyProgram() {
 
     if (!p->compileSuccess()) {
       cerr << "Copy only kernel compilation error:\n" << p->getCompileLog();
-      throw runtime_error("Montage: compilation failed");
+      throwDetailed(runtime_error("Montage: compilation failed"));
     }
 
     isDouble ? context->setCopyOnlyKernelDouble(move(p))
@@ -406,7 +412,7 @@ template <class T> void Montage<T>::buildIdentityProgram() {
 
     if (!p->compileSuccess()) {
       cerr << "Identity kernel compilation error:\n" << p->getCompileLog();
-      throw runtime_error("Montage: compilation failed");
+      throwDetailed(runtime_error("Montage: compilation failed"));
     }
 
     isDouble ? context->setIdentityKernelDouble(move(p))

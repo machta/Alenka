@@ -17,7 +17,7 @@ include_directories(${OpenCL_INCLUDE_DIR})
 
 # Alenka-File
 set(Boost_INCLUDE_DIR "")
-include_directories(../libraries/boost_1_63)
+include_directories(../libraries/boost_1_66)
 
 # First build all the library dependencies.
 set(BUILD_LOADLIBRARIES off CACHE BOOL "")
@@ -41,7 +41,9 @@ include_directories(../libraries/spikedetsrc
   ../libraries/alglib-3.10.0/src
   ../libraries/eigen
   ../libraries/libsamplerate/src
-  ../libraries/SignalResampler/src)
+  ../libraries/SignalResampler/src
+  ../include
+)
 
 file(GLOB SRC_ALG ../libraries/alglib-3.10.0/src/*.cpp)
 if(NOT APPLE)
@@ -50,7 +52,8 @@ endif()
 set(SRC_SD
   ../libraries/spikedet/src/CSpikeDetector.cpp
   ../libraries/spikedet/src/CDSP.cpp
-  ../libraries/spikedet/src/CException.cpp)
+  ../libraries/spikedet/src/CException.cpp
+)
 
 set(SRC
   include/AlenkaSignal/cluster.h
@@ -70,7 +73,8 @@ set(SRC
   src/montageprocessor.cpp
   src/openclcontext.cpp
   src/openclprogram.cpp
-  src/spikedet.cpp)
+  src/spikedet.cpp
+)
 set_source_files_properties(${SRC} PROPERTIES COMPILE_FLAGS ${WARNINGS})
 
 add_library(alenka-signal STATIC ${SRC} ${SRC_ALG} ${SRC_SR} ${SRC_SD}

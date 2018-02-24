@@ -5,6 +5,8 @@
 #include <QOpenGLContext>
 #include <QOpenGLDebugLogger>
 
+#include <detailedexception.h>
+
 using namespace std;
 
 OpenGLInterface::~OpenGLInterface() {}
@@ -67,7 +69,8 @@ bool OpenGLInterface::checkGLErrors() {
   }
 
   if (errorsDetected)
-    throw runtime_error(to_string(errorsDetected) + " OpenGL errors detected.");
+    throwDetailed(
+        runtime_error(to_string(errorsDetected) + " OpenGL errors detected."));
 
   return 0 < outOfMemoryErrorsDetected;
 }

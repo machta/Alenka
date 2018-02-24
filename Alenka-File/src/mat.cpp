@@ -8,6 +8,8 @@
 #include <iostream>
 #include <stdexcept>
 
+#include <detailedexception.h>
+
 using namespace std;
 using namespace AlenkaFile;
 
@@ -151,7 +153,7 @@ void MAT::openMatFile(const string &filePath) {
   mat_t *file = Mat_Open(filePath.c_str(), MAT_ACC_RDONLY);
 
   if (!file)
-    throw runtime_error("Error while opening " + filePath);
+    throwDetailed(runtime_error("Error while opening " + filePath));
 
   files.push_back(file);
 }
@@ -171,7 +173,7 @@ void MAT::readSamplingRate() {
 
     if (fs) {
       if (fs->dims[0] <= 0)
-        throw runtime_error("Bad MAT file format");
+        throwDetailed(runtime_error("Bad MAT file format"));
 
       readDataAll(file, fs);
       decodeArray(fs->data, &samplingFrequency, fs->data_type);
@@ -201,7 +203,8 @@ void MAT::readData() {
 
       if (dataVar) {
         if (dataVar->rank != 2)
-          throw runtime_error("Data var in MAT files must have rank 2");
+          throwDetailed(
+              runtime_error("Data var in MAT files must have rank 2"));
 
         sizes.push_back(static_cast<int>(dataVar->dims[0]));
         samplesRecorded += dataVar->dims[0];
@@ -210,14 +213,15 @@ void MAT::readData() {
           numberOfChannels = static_cast<int>(dataVar->dims[1]);
 
           if (MAX_CHANNELS <= numberOfChannels)
-            throw runtime_error("Too many channes in '" + varName +
-                                "'. You probably saved the data with channels "
-                                "in rows by mistake.");
+            throwDetailed(
+                runtime_error("Too many channes in '" + varName +
+                              "'. You probably saved the data with channels "
+                              "in rows by mistake."));
         }
 
         if (numberOfChannels != static_cast<int>(dataVar->dims[1]))
-          throw runtime_error(
-              "All data variables must have the same number of channels");
+          throwDetailed(runtime_error(
+              "All data variables must have the same number of channels"));
 
         data.push_back(dataVar);
         dataToFree.push_back(toFree);
@@ -227,7 +231,7 @@ void MAT::readData() {
   }
 
   if (data.empty())
-    throw runtime_error("No data variables in MAT-files found");
+    throwDetailed(runtime_error("No data variables in MAT-files found"));
 }
 
 void MAT::readMults() {
@@ -239,7 +243,7 @@ void MAT::readMults() {
       multipliers = readDoubleArray(file, mults);
 
       if (static_cast<int>(multipliers.size()) < numberOfChannels)
-        throw runtime_error("Bad MAT file format");
+        throwDetailed(runtime_error("Bad MAT file format"));
 
       multipliers.resize(numberOfChannels);
     }

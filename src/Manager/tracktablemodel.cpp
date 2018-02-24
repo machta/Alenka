@@ -63,10 +63,13 @@ public:
   }
 
   bool setData(int row, const QVariant &value, int role) override {
-    if (role == Qt::EditRole) {
+    const int selected = OpenDataFile::infoTable.getSelectedMontage();
+
+    // Code for montage with index 0 shouldn't be edited.
+    if (role == Qt::EditRole && 0 != selected) {
       Track t = currentTrackTable(file)->row(row);
-      QString qc = value.toString();
-      string c = qc.toStdString();
+      const QString qc = value.toString();
+      const string c = qc.toStdString();
 
       if (t.code != c &&
           validator->validate(
@@ -402,7 +405,8 @@ void TrackTableModel::removeRowsFromDataModel(int row, int count) {
 }
 
 bool TrackTableModel::areAllRowsDeletable(int /*row*/, int /*count*/) {
-  return file->infoTable.getSelectedMontage() != 0;
+  // Montage with index 0 shouldn't be edited.
+  return 0 != file->infoTable.getSelectedMontage();
 }
 
 void TrackTableModel::selectMontage(int i) {

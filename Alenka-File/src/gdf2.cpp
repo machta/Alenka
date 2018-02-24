@@ -8,6 +8,8 @@
 #include <set>
 #include <stdexcept>
 
+#include <detailedexception.h>
+
 using namespace std;
 using namespace AlenkaFile;
 using namespace boost;
@@ -131,7 +133,7 @@ GDF2::GDF2(const string &filePath, bool uncalibrated) : DataFile(filePath) {
   file.open(filePath, file.in | file.out | file.binary);
 
   if (!file.is_open())
-    throw runtime_error("GDF2 file could not be successfully opened");
+    throwDetailed(runtime_error("GDF2 file could not be successfully opened"));
 
   file.exceptions(ifstream::failbit | ifstream::badbit);
 
@@ -145,7 +147,7 @@ GDF2::GDF2(const string &filePath, bool uncalibrated) : DataFile(filePath) {
   version = minor + 100 * major;
 
   if (string(fh.versionID, 3) != "GDF" || major != 2)
-    throw runtime_error("Unrecognized file format.");
+    throwDetailed(runtime_error("Unrecognized file format."));
 
   readFile(file, fh.patientID, 66);
   fh.patientID[66] = 0;
@@ -267,7 +269,7 @@ GDF2::GDF2(const string &filePath, bool uncalibrated) : DataFile(filePath) {
     CASE(16, float);
     CASE(17, double);
   default:
-    throw runtime_error("Unsupported data type for GDF2");
+    throwDetailed(runtime_error("Unsupported data type for GDF2"));
   }
 
 #undef CASE

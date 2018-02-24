@@ -26,13 +26,13 @@ else
 	alglib=OK || alglib=fail
 fi
 
-if [ -d boost_1_63 ]
+BB=boost_1_66_0 &&
+B=boost_1_66 &&
+if [ -d $B ]
 then
 	boost=skipped
 else
-	BB=boost_1_63_0 &&
-	B=boost_1_63 &&
-	curl -L https://sourceforge.net/projects/boost/files/boost/1.63.0/$BB.zip > $BB.zip &&
+	curl -L https://sourceforge.net/projects/boost/files/boost/1.66.0/$BB.zip > $BB.zip &&
 	unzip -q $BB.zip &&
 	rm $BB.zip &&
 	mkdir -p $B/libs &&
@@ -48,7 +48,7 @@ if [ -d matio-msvc2015 ]
 then
 	matio=skipped
 else
-	curl -L 'https://sourceforge.net/projects/alenka-mirror/files/misc/matio-msvc2015.zip/download' > matio-msvc2015.zip && 
+	curl -L 'https://sourceforge.net/projects/alenka-mirror/files/misc/matio-msvc2015.zip/download' > matio-msvc2015.zip &&
 	unzip -q matio-msvc2015.zip &&
 	rm -rf matio-msvc2015.zip &&
 	matio=OK || matio=fail
@@ -70,7 +70,7 @@ echo ========== Download summary ==========
 echo "Library path            Status"
 echo ======================================
 echo "alglib-3.10.0           $alglib"
-echo "boost_1_63              $boost"
+echo "$B              $boost"
 echo "matio-msvc2015          $matio"
 echo
 echo ======= Configuration summary ========

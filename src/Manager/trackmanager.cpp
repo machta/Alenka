@@ -7,13 +7,14 @@
 using namespace AlenkaFile;
 
 bool TrackManager::insertRowBack() {
-  int selected = OpenDataFile::infoTable.getSelectedMontage();
+  const int selected = OpenDataFile::infoTable.getSelectedMontage();
 
-  if (file && selected != 0) {
+  // Montage with index 0 shouldn't be edited.
+  if (file && 0 != selected) {
     auto montageTable = file->dataModel->montageTable();
     assert(0 < montageTable->rowCount());
 
-    int rc = montageTable->trackTable(selected)->rowCount();
+    const int rc = montageTable->trackTable(selected)->rowCount();
     file->undoFactory->insertTrack(selected, rc, 1, "add Track row");
 
     return true;
