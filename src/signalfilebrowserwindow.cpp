@@ -17,6 +17,7 @@
 #include "Manager/montagetablemodel.h"
 #include "Manager/trackmanager.h"
 #include "Manager/tracktablemodel.h"
+#include "Manager/videoplayer.h"
 #include "SignalProcessor/automaticmontage.h"
 #include "SignalProcessor/bipolarmontage.h"
 #include "SignalProcessor/clusteranalysis.h"
@@ -191,11 +192,17 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   filterManager = new FilterManager(this);
   filterManagerDockWidget->setWidget(filterManager);
 
+  auto vieoPlayerDockWidget = new QDockWidget("Video Player", this);
+  vieoPlayerDockWidget->setObjectName("Video Player QDockWidget");
+  videoPlayer = new VideoPlayer(this);
+  vieoPlayerDockWidget->setWidget(videoPlayer);
+
   addDockWidget(Qt::RightDockWidgetArea, trackManagerDockWidget);
   tabifyDockWidget(trackManagerDockWidget, eventManagerDockWidget);
   tabifyDockWidget(eventManagerDockWidget, eventTypeManagerDockWidget);
   tabifyDockWidget(eventTypeManagerDockWidget, montageManagerDockWidget);
   tabifyDockWidget(montageManagerDockWidget, filterManagerDockWidget);
+  tabifyDockWidget(filterManagerDockWidget, vieoPlayerDockWidget);
 
   // Construct File actions.
   QAction *openFileAction = new QAction("&Open File...", this);
@@ -1163,6 +1170,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   eventTypeManager->changeFile(openDataFile.get());
   montageManager->changeFile(openDataFile.get());
   filterManager->changeFile(openDataFile.get());
+  videoPlayer->changeFile(openDataFile.get());
 
   syncDialog->changeFile(openDataFile.get());
   signalViewer->changeFile(openDataFile.get());

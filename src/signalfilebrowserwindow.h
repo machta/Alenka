@@ -27,6 +27,7 @@ class EventManager;
 class EventTypeManager;
 class MontageManager;
 class FilterManager;
+class VideoPlayer;
 class QComboBox;
 class QCheckBox;
 class QActionGroup;
@@ -58,6 +59,7 @@ class SignalFileBrowserWindow : public QMainWindow {
   EventTypeManager *eventTypeManager;
   MontageManager *montageManager;
   FilterManager *filterManager;
+  VideoPlayer *videoPlayer;
   QComboBox *lowpassComboBox;
   QComboBox *highpassComboBox;
   QCheckBox *notchCheckBox;
