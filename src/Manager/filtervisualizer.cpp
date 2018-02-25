@@ -106,12 +106,8 @@ void FilterVisualizer::changeFile(OpenDataFile *file) {
                      this, SLOT(updateResponse()));
     connections.push_back(c);
 
-    c = connect(&file->infoTable, SIGNAL(positionChanged(int)), this,
+    c = connect(&file->infoTable, SIGNAL(positionChanged(int, double)), this,
                 SLOT(updateSpectrum()));
-    connections.push_back(c);
-
-    c = connect(&file->infoTable, SIGNAL(positionIndicatorChanged(double)),
-                this, SLOT(updateSpectrum()));
     connections.push_back(c);
 
     c = connect(&file->infoTable, SIGNAL(pixelViewWidthChanged(int)),
@@ -149,12 +145,7 @@ void FilterVisualizer::updateSpectrum() {
 
   const int samplesToUse =
       secondToDisplay * static_cast<int>(file->file->getSamplingFrequency());
-  double ratio = static_cast<double>(file->file->getSamplesRecorded()) /
-                 OpenDataFile::infoTable.getVirtualWidth();
-  double doublePosition = OpenDataFile::infoTable.getPosition() +
-                          OpenDataFile::infoTable.getPixelViewWidth() *
-                              OpenDataFile::infoTable.getPositionIndicator();
-  const int position = static_cast<int>(doublePosition * ratio);
+  const int position = OpenDataFile::infoTable.getPosition();
 
   const int start = max(0, position - samplesToUse / 2);
   const int end = start + samplesToUse - 1;

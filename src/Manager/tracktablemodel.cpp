@@ -409,29 +409,29 @@ bool TrackTableModel::areAllRowsDeletable(int /*row*/, int /*count*/) {
   return 0 != file->infoTable.getSelectedMontage();
 }
 
-void TrackTableModel::selectMontage(int i) {
+void TrackTableModel::selectMontage(const int montageIndex) {
   beginResetModel();
 
-  for (auto e : trackTableConnections)
+  for (auto e : connections)
     disconnect(e);
-  trackTableConnections.clear();
+  connections.clear();
 
   if (0 < file->dataModel->montageTable()->rowCount()) {
     auto vitness = VitnessTrackTable::vitness(
-        file->dataModel->montageTable()->trackTable(i));
+        file->dataModel->montageTable()->trackTable(montageIndex));
 
     auto c =
         connect(vitness, &DataModelVitness::valueChanged,
                 [this](int row, int col) { emitDataChanged(row, col + 1); });
-    trackTableConnections.push_back(c);
+    connections.push_back(c);
 
     c = connect(vitness, SIGNAL(rowsInserted(int, int)), this,
                 SLOT(insertDataModelRows(int, int)));
-    trackTableConnections.push_back(c);
+    connections.push_back(c);
 
     c = connect(vitness, SIGNAL(rowsRemoved(int, int)), this,
                 SLOT(removeDataModelRows(int, int)));
-    trackTableConnections.push_back(c);
+    connections.push_back(c);
   }
 
   endResetModel();

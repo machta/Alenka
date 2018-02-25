@@ -24,6 +24,13 @@ class Canvas;
 class SignalViewer : public QWidget {
   Q_OBJECT
 
+  OpenDataFile *file = nullptr;
+  QSplitter *splitter;
+  Canvas *canvas;
+  QScrollBar *scrollBar;
+  TrackLabelBar *trackLabelBar;
+  std::vector<QMetaObject::Connection> openFileConnections;
+
 public:
   explicit SignalViewer(QWidget *parent = nullptr);
   ~SignalViewer() override;
@@ -36,10 +43,6 @@ public:
    */
   void changeFile(OpenDataFile *file);
 
-signals:
-  void virtualWidthChanged(int);
-  void positionChanged(int);
-
 public slots:
   void updateSignalViewer();
 
@@ -49,20 +52,8 @@ protected:
   void keyPressEvent(QKeyEvent *event) override;
   void keyReleaseEvent(QKeyEvent *event) override;
 
-private:
-  OpenDataFile *file = nullptr;
-  QSplitter *splitter;
-  Canvas *canvas;
-  QScrollBar *scrollBar;
-  TrackLabelBar *trackLabelBar;
-  std::vector<QMetaObject::Connection> openFileConnections;
-
-  void resize(int virtualWidth);
-  int virtualWidthFromScrollBar();
-
 private slots:
-  void setVirtualWidth(int value);
-  void setPosition(int value);
+  void resize();
 };
 
 #endif // SIGNALVIEWER_H

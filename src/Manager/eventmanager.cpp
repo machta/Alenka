@@ -51,20 +51,12 @@ void EventManager::goToEvent() {
 
   if (file && currentIndex.isValid()) {
     InfoTable &it = OpenDataFile::infoTable;
-
-    double ratio = static_cast<double>(file->file->getSamplesRecorded()) /
-                   it.getVirtualWidth();
     int col = static_cast<int>(Event::Index::position);
     auto index = tableView->model()->index(currentIndex.row(), col);
 
-    double position = tableView->model()->data(index, Qt::EditRole).toInt();
-    position /= ratio;
-    position -= canvas->width() * it.getPositionIndicator();
-
-    int intPosition = position;
-    intPosition =
-        min(max(0, intPosition), it.getVirtualWidth() - canvas->width() - 1);
-
-    it.setPosition(intPosition);
+    int position = tableView->model()->data(index, Qt::EditRole).toInt();
+    position =
+        qBound(0, position, static_cast<int>(file->file->getSamplesRecorded()));
+    it.setPosition(position);
   }
 }

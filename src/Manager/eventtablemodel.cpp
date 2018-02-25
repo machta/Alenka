@@ -314,28 +314,28 @@ void EventTableModel::removeRowsFromDataModel(int row, int count) {
   file->undoFactory->endMacro();
 }
 
-void EventTableModel::selectMontage(int i) {
+void EventTableModel::selectMontage(const int montageIndex) {
   beginResetModel();
 
-  for (auto e : montageTableConnections)
+  for (auto e : connections)
     disconnect(e);
-  montageTableConnections.clear();
+  connections.clear();
 
   if (0 < file->dataModel->montageTable()->rowCount()) {
     auto vitness = VitnessEventTable::vitness(
-        file->dataModel->montageTable()->eventTable(i));
+        file->dataModel->montageTable()->eventTable(montageIndex));
 
     auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this,
                      SLOT(emitDataChanged(int, int)));
-    montageTableConnections.push_back(c);
+    connections.push_back(c);
 
     c = connect(vitness, SIGNAL(rowsInserted(int, int)), this,
                 SLOT(insertDataModelRows(int, int)));
-    montageTableConnections.push_back(c);
+    connections.push_back(c);
 
     c = connect(vitness, SIGNAL(rowsRemoved(int, int)), this,
                 SLOT(removeDataModelRows(int, int)));
-    montageTableConnections.push_back(c);
+    connections.push_back(c);
   }
 
   endResetModel();

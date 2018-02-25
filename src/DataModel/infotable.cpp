@@ -11,6 +11,7 @@ using namespace pugi;
 void InfoTable::setDefaultValues() {
   virtualWidth = 100000;
   position = 0;
+  positionIndicator = 0.5;
   lowpassFrequency = 1000000;
   lowpassOn = false;
   highpassFrequency = -1000000;
@@ -21,7 +22,6 @@ void InfoTable::setDefaultValues() {
   timeMode = InfoTable::TimeMode::offset;
   selectedType = 0;
   timeLineInterval = 1;
-  positionIndicator = 0.5;
   frequencyMultipliers.clear();
   frequencyMultipliersOn = true;
   sampleScale = 1;
@@ -31,6 +31,32 @@ void InfoTable::setDefaultValues() {
   pixelViewWidth = 0;
   filterCoefficients.clear();
   globalMontageHeader.clear();
+}
+
+void InfoTable::emitAllSignals() {
+  emit virtualWidthChanged(virtualWidth);
+  emit positionChanged(position, positionIndicator);
+  if (lowpassOn)
+    emit lowpassFrequencyChanged(lowpassFrequency);
+  emit lowpassOnChanged(lowpassOn);
+  if (highpassOn)
+    emit highpassFrequencyChanged(highpassFrequency);
+  emit highpassOnChanged(highpassOn);
+  emit notchOnChanged(notchOn);
+  emit filterWindowChanged(filterWindow);
+  emit selectedMontageChanged(selectedMontage);
+  emit timeModeChanged(timeMode);
+  emit selectedTypeChanged(selectedType);
+  emit timeLineIntervalChanged(timeLineInterval);
+  emit frequencyMultipliersChanged();
+  emit frequencyMultipliersOnChanged(frequencyMultipliersOn);
+  emit sampleScaleChanged(sampleScale);
+  emit sampleUnitsChanged(sampleUnits);
+  emit elkoSessionChanged(elkoSession);
+
+  emit pixelViewWidthChanged(pixelViewWidth);
+  emit frequencyMultipliersOnChanged(frequencyMultipliersOn);
+  emit globalMontageHeaderChanged(globalMontageHeader);
 }
 
 void InfoTable::writeXML(const string &filePath,
@@ -195,30 +221,4 @@ void InfoTable::readXML(const string &filePath,
   xml_node elko = document.child("elko");
   elkoSession =
       QString(elko.text().as_string(elkoSession.toStdString().c_str()));
-}
-
-void InfoTable::emitAllSignals() {
-  emit virtualWidthChanged(virtualWidth);
-  emit positionChanged(position);
-  if (lowpassOn)
-    emit lowpassFrequencyChanged(lowpassFrequency);
-  emit lowpassOnChanged(lowpassOn);
-  if (highpassOn)
-    emit highpassFrequencyChanged(highpassFrequency);
-  emit highpassOnChanged(highpassOn);
-  emit notchOnChanged(notchOn);
-  emit filterWindowChanged(filterWindow);
-  emit selectedMontageChanged(selectedMontage);
-  emit timeModeChanged(timeMode);
-  emit selectedTypeChanged(selectedType);
-  emit timeLineIntervalChanged(timeLineInterval);
-  emit positionIndicatorChanged(positionIndicator);
-  emit frequencyMultipliersChanged();
-  emit frequencyMultipliersOnChanged(frequencyMultipliersOn);
-  emit sampleScaleChanged(sampleScale);
-  emit sampleUnitsChanged(sampleUnits);
-  emit elkoSessionChanged(elkoSession);
-
-  emit pixelViewWidthChanged(pixelViewWidth);
-  emit frequencyMultipliersOnChanged(frequencyMultipliersOn);
 }

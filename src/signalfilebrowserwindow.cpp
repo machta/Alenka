@@ -24,9 +24,7 @@
 #include "SignalProcessor/modifiedspikedetanalysis.h"
 #include "SignalProcessor/signalprocessor.h"
 #include "SignalProcessor/spikedetanalysis.h"
-#include "Sync/syncclient.h"
 #include "Sync/syncdialog.h"
-#include "Sync/syncserver.h"
 #include "canvas.h"
 #include "error.h"
 #include "montagetemplatedialog.h"
@@ -85,19 +83,6 @@ void saveMontageHeader() {
   } else {
     cerr << "Error writing file " << headerFilePath().toStdString() << endl;
   }
-}
-
-double byteArray2Double(const char *data) {
-  return *reinterpret_cast<const double *>(data);
-}
-
-void unpackMessage(const QByteArray &message, double *timePossition) {
-  assert(message.size() == (int)sizeof(double));
-  *timePossition = byteArray2Double(message.data());
-}
-
-QByteArray packMessage(double timePossition) {
-  return QByteArray(reinterpret_cast<char *>(&timePossition), sizeof(double));
 }
 
 void executeWithCLocale(function<void()> code) {
@@ -180,31 +165,28 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   // Construct dock widgets.
   setDockNestingEnabled(true);
 
-  QDockWidget *trackManagerDockWidget = new QDockWidget("Track Manager", this);
+  auto trackManagerDockWidget = new QDockWidget("Track Manager", this);
   trackManagerDockWidget->setObjectName("Track Manager QDockWidget");
   trackManager = new TrackManager(this);
   trackManagerDockWidget->setWidget(trackManager);
 
-  QDockWidget *eventManagerDockWidget = new QDockWidget("Event Manager", this);
+  auto eventManagerDockWidget = new QDockWidget("Event Manager", this);
   eventManagerDockWidget->setObjectName("Event Manager QDockWidget");
   eventManager = new EventManager(this);
   eventManager->setReferences(signalViewer->getCanvas());
   eventManagerDockWidget->setWidget(eventManager);
 
-  QDockWidget *eventTypeManagerDockWidget =
-      new QDockWidget("EventType Manager", this);
+  auto eventTypeManagerDockWidget = new QDockWidget("EventType Manager", this);
   eventTypeManagerDockWidget->setObjectName("EventType Manager QDockWidget");
   eventTypeManager = new EventTypeManager(this);
   eventTypeManagerDockWidget->setWidget(eventTypeManager);
 
-  QDockWidget *montageManagerDockWidget =
-      new QDockWidget("Montage Manager", this);
+  auto montageManagerDockWidget = new QDockWidget("Montage Manager", this);
   montageManagerDockWidget->setObjectName("Montage Manager QDockWidget");
   montageManager = new MontageManager(this);
   montageManagerDockWidget->setWidget(montageManager);
 
-  QDockWidget *filterManagerDockWidget =
-      new QDockWidget("Filter Manager", this);
+  auto filterManagerDockWidget = new QDockWidget("Filter Manager", this);
   filterManagerDockWidget->setObjectName("Filter Manager QDockWidget");
   filterManager = new FilterManager(this);
   filterManagerDockWidget->setWidget(filterManager);
@@ -404,9 +386,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   });
 
   // Construct SyncDialog.
-  syncServer = make_unique<SyncServer>();
-  syncClient = make_unique<SyncClient>();
-  syncDialog = new SyncDialog(syncServer.get(), syncClient.get(), this);
+  syncDialog = new SyncDialog(this);
 
   QAction *showSyncDialog = new QAction("Show Sync Dialog...", this);
   connect(showSyncDialog, SIGNAL(triggered(bool)), syncDialog, SLOT(show()));
@@ -414,11 +394,8 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   synchronize = new QAction("Synchronize", this);
   synchronize->setCheckable(true);
   synchronize->setChecked(true);
-
-  connect(syncServer.get(), SIGNAL(messageReceived(QByteArray)), this,
-          SLOT(receiveSyncMessage(QByteArray)));
-  connect(syncClient.get(), SIGNAL(messageReceived(QByteArray)), this,
-          SLOT(receiveSyncMessage(QByteArray)));
+  connect(synchronize, SIGNAL(triggered(bool)), syncDialog,
+          SLOT(setShouldSynchronize(bool)));
 
   // Tool bars.
   const int spacing = 3;
@@ -884,10 +861,6 @@ void SignalFileBrowserWindow::mode(int m) {
   }
 }
 
-bool SignalFileBrowserWindow::shouldSynchronizeView() {
-  return synchronize->isChecked();
-}
-
 void SignalFileBrowserWindow::deleteAutoSave() {
   if (autoSaveName != "") {
     QFile(QString::fromStdString(autoSaveName)).remove();
@@ -1191,6 +1164,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   montageManager->changeFile(openDataFile.get());
   filterManager->changeFile(openDataFile.get());
 
+  syncDialog->changeFile(openDataFile.get());
   signalViewer->changeFile(openDataFile.get());
 
   // Update Filter tool bar.
@@ -1342,12 +1316,8 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
                                 InfoTable::TimeMode::offset);
   timeStatusLabel->setText(str);
 
-  c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int)), this,
-              SLOT(updatePositionStatusLabel()));
-  openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable,
-              SIGNAL(positionIndicatorChanged(double)), this,
-              SLOT(updatePositionStatusLabel()));
+  c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int, double)),
+              this, SLOT(updatePositionStatusLabel()));
   openFileConnections.push_back(c);
   c = connect(signalViewer->getCanvas(),
               SIGNAL(cursorPositionSampleChanged(int)), this,
@@ -1360,7 +1330,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   c = connect(&OpenDataFile::infoTable, SIGNAL(virtualWidthChanged(int)),
               signalViewer, SLOT(updateSignalViewer()));
   openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int)),
+  c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int, double)),
               signalViewer, SLOT(updateSignalViewer()));
   openFileConnections.push_back(c);
   c = connect(&OpenDataFile::infoTable, SIGNAL(lowpassFrequencyChanged(double)),
@@ -1388,10 +1358,6 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   openFileConnections.push_back(c);
   c = connect(&OpenDataFile::infoTable, SIGNAL(timeLineIntervalChanged(double)),
               signalViewer, SLOT(updateSignalViewer()));
-  openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable,
-              SIGNAL(positionIndicatorChanged(double)), signalViewer,
-              SLOT(updateSignalViewer()));
   openFileConnections.push_back(c);
   c = connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersChanged()),
               signalViewer, SLOT(updateSignalViewer()));
@@ -1436,15 +1402,6 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
                 setTimeLineIntervalAction->setStatusTip(
                     setTimeLineIntervalAction->toolTip());
               });
-  openFileConnections.push_back(c);
-
-  // Connect Sync.
-  c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int)), this,
-              SLOT(sendSyncMessage()));
-  openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable,
-              SIGNAL(positionIndicatorChanged(double)), this,
-              SLOT(sendSyncMessage()));
   openFileConnections.push_back(c);
 
   // Load Elko session.
@@ -1693,15 +1650,8 @@ void SignalFileBrowserWindow::updateTimeMode(InfoTable::TimeMode mode) {
 }
 
 void SignalFileBrowserWindow::updatePositionStatusLabel() {
-  double ratio =
-      static_cast<double>(fileResources->file->getSamplesRecorded()) /
-      OpenDataFile::infoTable.getVirtualWidth();
-  double position = OpenDataFile::infoTable.getPosition() +
-                    OpenDataFile::infoTable.getPixelViewWidth() *
-                        OpenDataFile::infoTable.getPositionIndicator();
-
-  auto str = sampleToDateTimeString(fileResources->file.get(),
-                                    round(position * ratio));
+  const int position = OpenDataFile::infoTable.getPosition();
+  const auto str = sampleToDateTimeString(fileResources->file.get(), position);
   positionStatusLabel->setText("Position: " + str);
 }
 
@@ -1789,89 +1739,6 @@ void SignalFileBrowserWindow::runSignalAnalysis(int i) {
   if (discharges) {
     clusterAnalysis->setDischarges(discharges);
     centeringClusterAnalysis->setDischarges(discharges);
-  }
-}
-
-/**
- * @brief Interprets and acts on the received sync message.
- *
- * Also saves the last received position so that we can use it in
- * sendSyncMessage() to break the deadlock.
- */
-void SignalFileBrowserWindow::receiveSyncMessage(const QByteArray &message) {
-  if (fileResources->file && shouldSynchronizeView()) {
-    double timePosition;
-    unpackMessage(message, &timePosition);
-
-    const double ratio =
-        static_cast<double>(fileResources->file->getSamplesRecorded()) /
-        OpenDataFile::infoTable.getVirtualWidth();
-    int position =
-        timePosition * fileResources->file->getSamplingFrequency() / ratio;
-
-#ifndef NDEBUG
-    cerr << "Received position: " << position << " " << timePosition << endl;
-#endif
-
-    lastPositionReceived = position;
-    position -= OpenDataFile::infoTable.getPixelViewWidth() *
-                OpenDataFile::infoTable.getPositionIndicator();
-    OpenDataFile::infoTable.setPosition(position);
-  }
-}
-
-/**
- * @brief Creates the sync message and sends it to both the server and the
- * client.
- *
- * It's OK to send the message to both, because they should never be active
- * simultaneously. So one of them will always ignore it.
- *
- * There is a special case in which the message shouldn't be sent ot prevent
- * message deadlock.This comes about because the source of the signal that
- * trigers this method cannot be distinguished between user input and a received
- * sync message.
- *
- * So when the current position is very close (within a small fraction of a
- * second) to the last received position, you are most likely just repeating
- * what the server already has. So there is no need to send this information
- * back again.
- */
-void SignalFileBrowserWindow::sendSyncMessage() {
-  if (fileResources->file && shouldSynchronizeView()) {
-    const int position = OpenDataFile::infoTable.getPosition() +
-                         OpenDataFile::infoTable.getPixelViewWidth() *
-                             OpenDataFile::infoTable.getPositionIndicator();
-
-    const double ratio =
-        static_cast<double>(fileResources->file->getSamplesRecorded()) /
-        OpenDataFile::infoTable.getVirtualWidth();
-    const int epsilon =
-        max<int>(3, fileResources->file->getSamplingFrequency() / 50 / ratio);
-
-    // This condition is to break the message deadlock.
-    bool shouldNotSkip = position < (lastPositionReceived - epsilon) ||
-                         position > (lastPositionReceived + epsilon);
-    if (shouldNotSkip) {
-      const double timePosition =
-          position * ratio / fileResources->file->getSamplingFrequency();
-#ifndef NDEBUG
-      if (syncServer->connectionCount() > 0 || syncClient->isValid())
-        cerr << "Sending position: " << position << " " << timePosition << endl;
-#endif
-      QByteArray message = packMessage(timePosition);
-
-      syncServer->sendMessage(message);
-      syncClient->sendMessage(message);
-    }
-#ifndef NDEBUG
-    else {
-      cerr << "Message skipped: " << position << endl;
-    }
-#endif
-
-    // Reset to the default value, so that the message is skipped at most once.
-    lastPositionReceived = lastPositionReceivedDefault;
   }
 }
 
