@@ -16,7 +16,6 @@
 
 #include <cmath>
 #include <complex>
-#include <iostream>
 #include <type_traits>
 
 #include <detailedexception.h>
@@ -109,9 +108,8 @@ FilterProcessor<T>::FilterProcessor(unsigned int blockLength,
   kernelsSource += KERNELS_SOURCE;
   OpenCLProgram program(kernelsSource, context);
 
-  if (!program.compileSuccess()) {
-    cerr << "Compilation failed:\n" << program.getCompileLog() << endl;
-    throwDetailed(runtime_error("FilterProcessor: compilation failed"));
+  if (CL_SUCCESS != program.compileStatus()) {
+    throwDetailed(runtime_error(program.makeErrorMessage()));
   }
 
   filterKernel = program.createKernel("filter");

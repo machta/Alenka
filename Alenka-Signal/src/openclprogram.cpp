@@ -11,7 +11,7 @@ using namespace std;
 namespace AlenkaSignal {
 
 OpenCLProgram::OpenCLProgram(const string &source, OpenCLContext *context)
-    : context(context) {
+    : context(context), source(source) {
   cl_int err;
 
   const char *sourcePointer = source.c_str();
@@ -35,7 +35,6 @@ OpenCLProgram::OpenCLProgram(const vector<unsigned char> *binary,
                                       &size, &binaryPtr, &status, &err);
   checkClErrorCode(err, "clCreateProgramWithBinary()");
 
-  // TODO: check status
   build();
 }
 
@@ -45,7 +44,7 @@ OpenCLProgram::~OpenCLProgram() {
 }
 
 cl_kernel OpenCLProgram::createKernel(const string &kernelName) const {
-  if (compileSuccess()) {
+  if (CL_SUCCESS == compileStatus()) {
     cl_int err;
     cl_kernel kernel = clCreateKernel(program, kernelName.c_str(), &err);
     checkClErrorCode(err, "clCreateKernel()");
@@ -75,9 +74,19 @@ string OpenCLProgram::getCompileLog() const {
   return string(tmp.get());
 }
 
+string OpenCLProgram::makeErrorMessage() const {
+  string str = "Kernel compilation failed with " +
+               OpenCLContext::clErrorCodeToString(buildError) + ":\n" +
+               getCompileLog();
+
+  if (!source.empty())
+    str += "Source:\n" + source;
+
+  return str;
+}
+
 vector<unsigned char> *OpenCLProgram::getBinary() {
   size_t size = sizeof(size_t);
-
   cl_int err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES,
                                 sizeof(size_t), &size, nullptr);
   checkClErrorCode(err, "clGetProgramInfo()");
@@ -97,16 +106,15 @@ vector<unsigned char> *OpenCLProgram::getBinary() {
 }
 
 void OpenCLProgram::build() {
-  cl_int err = clBuildProgram(program, 0, nullptr, nullptr, nullptr, nullptr);
-  invalid = err != CL_SUCCESS;
+  buildError = clBuildProgram(program, 0, nullptr, nullptr, nullptr, nullptr);
 
-  if (err != CL_SUCCESS) {
+  if (CL_SUCCESS != buildError) {
     cl_build_status status;
 
-    cl_int err2 = clGetProgramBuildInfo(
+    cl_int err = clGetProgramBuildInfo(
         program, context->getCLDevice(), CL_PROGRAM_BUILD_STATUS,
         sizeof(cl_build_status), &status, nullptr);
-    checkClErrorCode(err2, "clGetProgramBuildInfo()");
+    checkClErrorCode(err, "clGetProgramBuildInfo()");
 
     assert(status != CL_BUILD_IN_PROGRESS);
   }
