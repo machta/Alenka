@@ -20,9 +20,10 @@ class OpenCLContext;
  * @brief A wrapper for cl_program.
  */
 class OpenCLProgram {
-  cl_program program;
-  bool invalid;
+  cl_program program = nullptr;
+  cl_int buildError = CL_SUCCESS;
   OpenCLContext *context;
+  std::string source;
 
 public:
   /**
@@ -46,14 +47,15 @@ public:
 
   /**
    * @brief Returns cl_program compilation status.
-   * @return True if there was no error during compilation.
+   * @retval CL_SUCCESS means OK.
    */
-  bool compileSuccess() const { return !invalid; }
+  bool compileStatus() const { return buildError; }
 
   /**
    * @brief Returns a string with the compilation output (errors and warnings).
    */
   std::string getCompileLog() const;
+  std::string makeErrorMessage() const;
 
   std::vector<unsigned char> *getBinary();
 

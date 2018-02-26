@@ -1138,6 +1138,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
       const bool autosaveFileExists =
           fileResources->file->loadSecondaryFile(autoSaveName);
       assert(autosaveFileExists);
+      (void)autosaveFileExists;
 
       fileResources->file->setDataModel(oldDataModel);
       openDataFile->undoFactory->overwriteDataModel(std::move(newDataModel),

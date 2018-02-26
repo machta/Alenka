@@ -328,7 +328,7 @@ bool Montage<T>::testHeader(const string &source, OpenCLContext *context,
   // Use the OpenCL compiler to test the source.
   OpenCLProgram program(buildSource<T>(source, headerSource), context);
 
-  if (program.compileSuccess()) {
+  if (CL_SUCCESS == program.compileStatus()) {
     cl_kernel kernel = program.createKernel("montage");
 
     cl_int err = clReleaseKernel(kernel);
@@ -370,9 +370,9 @@ template <class T> void Montage<T>::buildProgram() {
     break;
   case NormalMontage:
     program = make_unique<OpenCLProgram>(source, context);
-    if (!program->compileSuccess()) {
+    if (CL_SUCCESS != program->compileStatus()) {
       cerr << "Montage compilation error:\n" << program->getCompileLog();
-      throwDetailed(runtime_error("Montage: compilation failed"));
+      throwDetailed(runtime_error(program->makeErrorMessage()));
     }
     break;
   default:
@@ -389,9 +389,9 @@ template <class T> void Montage<T>::buildCopyProgram() {
         buildSource<T>("out = in(_copyIndex_);", "", ", int _copyIndex_"),
         context);
 
-    if (!p->compileSuccess()) {
+    if (CL_SUCCESS != p->compileStatus()) {
       cerr << "Copy only kernel compilation error:\n" << p->getCompileLog();
-      throwDetailed(runtime_error("Montage: compilation failed"));
+      throwDetailed(runtime_error(program->makeErrorMessage()));
     }
 
     isDouble ? context->setCopyOnlyKernelDouble(move(p))
@@ -410,9 +410,9 @@ template <class T> void Montage<T>::buildIdentityProgram() {
     auto p =
         make_unique<OpenCLProgram>(buildSource<T>("out = in(INDEX);"), context);
 
-    if (!p->compileSuccess()) {
+    if (CL_SUCCESS != p->compileStatus()) {
       cerr << "Identity kernel compilation error:\n" << p->getCompileLog();
-      throwDetailed(runtime_error("Montage: compilation failed"));
+      throwDetailed(runtime_error(program->makeErrorMessage()));
     }
 
     isDouble ? context->setIdentityKernelDouble(move(p))
