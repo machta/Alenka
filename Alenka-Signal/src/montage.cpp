@@ -18,6 +18,19 @@ using namespace std;
 
 namespace {
 
+template <class T> string typeStr() {
+  string res;
+
+  if (is_same<T, float>::value)
+    res = "(float)";
+  else if (is_same<T, double>::value)
+    res = "(double)";
+  else
+    assert(false);
+
+  return res;
+}
+
 string indentLines(const string &text, int indentLevel) {
   string line, output, indent(2 * indentLevel, ' ');
   stringstream ss(text);
@@ -337,9 +350,8 @@ bool Montage<T>::testHeader(const string &source, OpenCLContext *context,
     return true;
   }
 
-  if (errorMessage) {
+  if (errorMessage)
     *errorMessage = "Compilation failed:\n" + program.getCompileLog();
-  }
 
   return false;
 }
@@ -370,13 +382,15 @@ template <class T> void Montage<T>::buildProgram() {
     break;
   case NormalMontage:
     program = make_unique<OpenCLProgram>(source, context);
+
     if (CL_SUCCESS != program->compileStatus()) {
-      cerr << "Montage compilation error:\n" << program->getCompileLog();
-      throwDetailed(runtime_error(program->makeErrorMessage()));
+      const string msg = "Kernel " + typeStr<T>();
+      throwDetailed(runtime_error(program->makeErrorMessage(msg)));
     }
     break;
   default:
     assert(false && "Unexpected montage type");
+    break;
   }
 }
 
@@ -390,8 +404,8 @@ template <class T> void Montage<T>::buildCopyProgram() {
         context);
 
     if (CL_SUCCESS != p->compileStatus()) {
-      cerr << "Copy only kernel compilation error:\n" << p->getCompileLog();
-      throwDetailed(runtime_error(program->makeErrorMessage()));
+      const string msg = "Copy kernel " + typeStr<T>();
+      throwDetailed(runtime_error(program->makeErrorMessage(msg)));
     }
 
     isDouble ? context->setCopyOnlyKernelDouble(move(p))
@@ -411,8 +425,8 @@ template <class T> void Montage<T>::buildIdentityProgram() {
         make_unique<OpenCLProgram>(buildSource<T>("out = in(INDEX);"), context);
 
     if (CL_SUCCESS != p->compileStatus()) {
-      cerr << "Identity kernel compilation error:\n" << p->getCompileLog();
-      throwDetailed(runtime_error(program->makeErrorMessage()));
+      const string msg = "Identity kernel " + typeStr<T>();
+      throwDetailed(runtime_error(program->makeErrorMessage(msg)));
     }
 
     isDouble ? context->setIdentityKernelDouble(move(p))

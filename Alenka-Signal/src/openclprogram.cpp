@@ -74,8 +74,8 @@ string OpenCLProgram::getCompileLog() const {
   return string(tmp.get());
 }
 
-string OpenCLProgram::makeErrorMessage() const {
-  string str = "Kernel compilation failed with " +
+string OpenCLProgram::makeErrorMessage(const string &msg) const {
+  string str = msg + " compilation failed with " +
                OpenCLContext::clErrorCodeToString(buildError) + ":\n" +
                getCompileLog();
 
