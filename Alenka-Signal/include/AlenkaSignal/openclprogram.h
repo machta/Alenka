@@ -49,7 +49,7 @@ public:
    * @brief Returns cl_program compilation status.
    * @retval CL_SUCCESS means OK.
    */
-  bool compileStatus() const { return buildError; }
+  cl_int compileStatus() const { return buildError; }
 
   /**
    * @brief Returns a string with the compilation output (errors and warnings).
