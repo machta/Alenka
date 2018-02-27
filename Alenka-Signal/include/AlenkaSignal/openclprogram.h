@@ -55,7 +55,7 @@ public:
    * @brief Returns a string with the compilation output (errors and warnings).
    */
   std::string getCompileLog() const;
-  std::string makeErrorMessage() const;
+  std::string makeErrorMessage(const std::string &msg = "Kernel") const;
 
   std::vector<unsigned char> *getBinary();
 

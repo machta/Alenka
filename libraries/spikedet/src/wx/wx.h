@@ -22,7 +22,6 @@ public:
 	wxString() : std::string() {}
 	wxString(const char* str) : std::string(str) {}
 
-	// LCOV_EXCL_START
 	template<class... T>
 	int Printf(const wxString& format, T... args)
 	{
@@ -43,7 +42,6 @@ public:
 		str.Printf(format, args...);
 		return str;
 	}
-	// LCOV_EXCL_STOP
 };
 
 class wxThreadEvent

@@ -13,32 +13,42 @@ void MontageProcessor<T>::checkBufferSizes(cl_mem inBuffer, cl_mem outBuffer,
                                            cl_mem xyzBuffer,
                                            cl_int outputRowLength,
                                            size_t montageSize) {
-  cl_int err;
-  size_t inSize, outSize, xyzSize;
-
-  err = clGetMemObjectInfo(inBuffer, CL_MEM_SIZE, sizeof(size_t), &inSize,
-                           nullptr);
+  size_t inSize;
+  cl_int err = clGetMemObjectInfo(inBuffer, CL_MEM_SIZE, sizeof(size_t),
+                                  &inSize, nullptr);
   checkClErrorCode(err, "clGetMemObjectInfo");
 
-  if (inSize < inputRowLength * inputRowCount * sizeof(T))
-    throwDetailed(
-        runtime_error("MontageProcessor: the inBuffer is too small."));
+  const size_t minInSize = inputRowLength * inputRowCount * sizeof(T);
+  if (inSize < minInSize) {
+    const string msg = "The input buffer is too small: expected at least " +
+                       to_string(minInSize) + ", got " + to_string(inSize);
+    throwDetailed(runtime_error(msg));
+  }
 
+  size_t outSize;
   err = clGetMemObjectInfo(outBuffer, CL_MEM_SIZE, sizeof(size_t), &outSize,
                            nullptr);
   checkClErrorCode(err, "clGetMemObjectInfo");
 
-  if (outSize < outputRowLength * montageSize * outputCopyCount * sizeof(T))
-    throwDetailed(
-        runtime_error("MontageProcessor: the outBuffer is too small."));
+  const size_t minOutSize =
+      outputRowLength * montageSize * outputCopyCount * sizeof(T);
+  if (outSize < minOutSize) {
+    const string msg = "The output buffer is too small: expected at least " +
+                       to_string(minOutSize) + ", got " + to_string(outSize);
+    throwDetailed(runtime_error(msg));
+  }
 
+  size_t xyzSize;
   err = clGetMemObjectInfo(xyzBuffer, CL_MEM_SIZE, sizeof(size_t), &xyzSize,
                            nullptr);
   checkClErrorCode(err, "clGetMemObjectInfo");
 
-  if (xyzSize < inputRowCount * 3 * sizeof(T))
-    throwDetailed(
-        runtime_error("MontageProcessor: the xyzBuffer is too small."));
+  const size_t minXyzSize = inputRowCount * 3 * sizeof(T);
+  if (xyzSize < minXyzSize) {
+    const string msg = "The xyz buffer is too small: expected at least " +
+                       to_string(minXyzSize) + ", got " + to_string(xyzSize);
+    throwDetailed(runtime_error(msg));
+  }
 }
 
 template <class T>
