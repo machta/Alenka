@@ -3,13 +3,16 @@
 
 #include <QWidget>
 
+#include <QMediaPlayer>
 #include <QUrl>
 
 #include <vector>
 
 class OpenDataFile;
-class QMediaPlayer;
+class QPushButton;
 class QVideoWidget;
+class QLabel;
+class ElidedLabel;
 namespace AlenkaFile {
 struct Event;
 }
@@ -28,11 +31,15 @@ class VideoPlayer : public QWidget {
 
   OpenDataFile *file = nullptr;
   std::vector<VideoFile> fileList;
+  VideoFile currentVideoFile;
   bool playing = false;
-  QUrl currentVideoUrl;
+  bool muted = true;
 
   QVideoWidget *videoWidget;
   QMediaPlayer *player;
+  QPushButton *playPauseButton, *muteButton;
+  QLabel *timeLabel;
+  ElidedLabel *errorLabel;
   std::vector<QMetaObject::Connection> connections;
 
 public:
@@ -46,11 +53,20 @@ public slots:
 private slots:
   void selectMontage(int montageIndex);
   void updateFileList();
+  void toggleMute();
+  void updatePlayPauseButton(QMediaPlayer::State state);
+  void updateTimeLabel();
+  void updateErrorLabel(QMediaPlayer::Error err = QMediaPlayer::NoError);
+  void updatePlayPosition(qint64 videoPosition);
   void seek(int position);
 
 private:
+  void stopAndSetPlayer(const VideoFile &newVideoFile = VideoFile());
+  void seekPlayer(int position, const VideoFile &videoFile);
+  void startPlayerPaused();
   void addVideoFile(const AlenkaFile::Event &event);
   std::pair<bool, VideoFile> selectFile(int position);
+  void buildUI();
 };
 
 #endif // VIDEOPLAYER_H

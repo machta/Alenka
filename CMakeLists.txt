@@ -95,6 +95,7 @@ set(RESOURCES
 
 set(SRC
   include/detailedexception.h
+  include/elidedlabel.h
   src/DataModel/infotable.cpp
   src/DataModel/infotable.h
   src/DataModel/kernelcache.cpp

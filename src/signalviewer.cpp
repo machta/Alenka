@@ -6,6 +6,7 @@
 #include "options.h"
 #include "tracklabelbar.h"
 
+#include <QKeyEvent>
 #include <QScrollBar>
 #include <QSplitter>
 #include <QVBoxLayout>
@@ -99,8 +100,13 @@ void SignalViewer::wheelEvent(QWheelEvent *event) {
   scrollBar->event(reinterpret_cast<QEvent *>(event));
 }
 
+// Perhaps move catching of these events to the parent window, so that the user
+// doesn't have to always have focus on the canvas.
 void SignalViewer::keyPressEvent(QKeyEvent *event) {
-  scrollBar->event(reinterpret_cast<QEvent *>(event));
+  if (Qt::Key_Space == event->key())
+    event->ignore(); // Propagate the event up so that we can play/pause video.
+  else
+    scrollBar->event(reinterpret_cast<QEvent *>(event));
 }
 
 void SignalViewer::keyReleaseEvent(QKeyEvent *event) {

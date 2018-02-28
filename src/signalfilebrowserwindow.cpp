@@ -647,6 +647,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   windowMenu->addAction(eventTypeManagerDockWidget->toggleViewAction());
   windowMenu->addAction(montageManagerDockWidget->toggleViewAction());
   windowMenu->addAction(filterManagerDockWidget->toggleViewAction());
+  windowMenu->addAction(vieoPlayerDockWidget->toggleViewAction());
 
   windowMenu->addSeparator();
   windowMenu->addAction(fileToolBar->toggleViewAction());
@@ -826,7 +827,7 @@ void SignalFileBrowserWindow::openCommandLineFile() {
   }
 }
 
-void SignalFileBrowserWindow::closeEvent(QCloseEvent *event) {
+void SignalFileBrowserWindow::closeEvent(QCloseEvent *const event) {
   if (closeFile()) {
     if (windowState.isEmpty())
       windowState = saveState();
@@ -837,15 +838,22 @@ void SignalFileBrowserWindow::closeEvent(QCloseEvent *event) {
     PROGRAM_OPTIONS->settings("SignalFileBrowserWindow state", windowState);
     PROGRAM_OPTIONS->settings("SignalFileBrowserWindow geometry",
                               windowGeometry);
-
     event->accept();
   } else {
     event->ignore();
   }
 }
 
+void SignalFileBrowserWindow::keyPressEvent(QKeyEvent *const event) {
+  if (Qt::Key_Space == event->key()) {
+    videoPlayer->togglePlay();
+    event->accept();
+  } else
+    event->ignore();
+}
+
 vector<QMetaObject::Connection>
-SignalFileBrowserWindow::connectVitness(const DataModelVitness *vitness,
+SignalFileBrowserWindow::connectVitness(const DataModelVitness *const vitness,
                                         std::function<void()> f) {
   vector<QMetaObject::Connection> connections;
 
