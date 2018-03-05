@@ -1772,12 +1772,15 @@ void SignalFileBrowserWindow::closeFilePropagate() {
   eventTypeComboBox->clear();
   switchButton->setEnabled(false);
 
-  signalViewer->changeFile(nullptr);
   trackManager->changeFile(nullptr);
   eventManager->changeFile(nullptr);
   eventTypeManager->changeFile(nullptr);
   montageManager->changeFile(nullptr);
   filterManager->changeFile(nullptr);
+  videoPlayer->changeFile(nullptr);
+
+  syncDialog->changeFile(nullptr);
+  signalViewer->changeFile(nullptr);
 }
 
 void SignalFileBrowserWindow::setEnableFileActions(bool enable) {

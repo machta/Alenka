@@ -156,10 +156,8 @@ void VideoPlayer::updatePlayPosition(const qint64 videoPosition) {
 }
 
 void VideoPlayer::seek(const int position) {
-  if (playing)
+  if (nullptr == file || playing)
     return; // If the player is playing, we don't need to seek.
-
-  assert(nullptr != file);
 
   bool found;
   VideoFile videoFile;
