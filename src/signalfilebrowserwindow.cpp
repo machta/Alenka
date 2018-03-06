@@ -34,31 +34,10 @@
 #include "signalviewer.h"
 #include "spikedetsettingsdialog.h"
 
-#include <QAction>
-#include <QCheckBox>
-#include <QCloseEvent>
-#include <QComboBox>
-#include <QDateTime>
-#include <QDockWidget>
-#include <QFileDialog>
-#include <QFileInfo>
-#include <QInputDialog>
-#include <QLabel>
-#include <QLayout>
-#include <QLocale>
-#include <QMenu>
-#include <QMenuBar>
-#include <QMessageBox>
-#include <QPushButton>
 #include <QQmlContext>
 #include <QQuickItem>
 #include <QQuickWidget>
-#include <QStackedWidget>
-#include <QStandardPaths>
-#include <QStatusBar>
-#include <QTimer>
-#include <QToolBar>
-#include <QUndoStack>
+#include <QtWidgets>
 
 #include <algorithm>
 #include <locale>
@@ -695,6 +674,16 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
 
     addMontageMenu->addAction(autoMontageAction);
   }
+
+  // Construct Help menu.
+  QMenu *helpMenu = menuBar()->addMenu("&Help");
+
+  auto userManualAction = new QAction("User Manual", this);
+  connect(userManualAction, &QAction::triggered, []() {
+    QDesktopServices::openUrl(
+        QString("https://github.com/machta/Alenka/wiki/User-Manual"));
+  });
+  helpMenu->addAction(userManualAction);
 
   // Construct status bar.
   timeModeStatusLabel = new QLabel(this);

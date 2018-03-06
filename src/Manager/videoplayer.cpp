@@ -3,6 +3,7 @@
 #include "../DataModel/opendatafile.h"
 #include "../DataModel/vitnessdatamodel.h"
 #include <elidedlabel.h>
+#include <helplink.h>
 
 #include <sstream>
 
@@ -286,6 +287,12 @@ void VideoPlayer::buildUI() {
   connect(player, SIGNAL(error(QMediaPlayer::Error)), this,
           SLOT(updateErrorLabel(QMediaPlayer::Error)));
   updateErrorLabel(QMediaPlayer::NoError);
+
+  auto helpLink =
+      new HelpLink("https://github.com/machta/Alenka/wiki/"
+                   "User-Manual#video-player----video-file-synchronization",
+                   "User Manual: Video Player");
+  controlBbox->addWidget(helpLink);
 
   controlBbox->addStretch(1);
   box->addLayout(controlBbox);
