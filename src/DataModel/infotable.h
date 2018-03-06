@@ -6,11 +6,14 @@
 #include "../../Alenka-Signal/include/AlenkaSignal/filterprocessor.h"
 
 #include <string>
+#include <utility>
+#include <vector>
 
-typedef struct detectorSettings DETECTOR_SETTINGS;
+using DETECTOR_SETTINGS = struct detectorSettings;
+using dpair = std::pair<double, double>;
 
 /**
- * @brief A class for handling program-wide (i.e. global) used information.
+ * @brief A class for handling program-wide (i.e. global) information.
  *
  * Most of this info is stored in .info files.
  */
@@ -25,7 +28,8 @@ public:
 
 private:
   int virtualWidth;
-  int position;
+  int position; // TODO: Start using int64_t for tracking the position.
+  double positionIndicator; // TODO: Change all these doubles to floats.
   double lowpassFrequency;
   bool lowpassOn;
   double highpassFrequency;
@@ -36,8 +40,7 @@ private:
   InfoTable::TimeMode timeMode;
   int selectedType;
   double timeLineInterval;
-  double positionIndicator;
-  std::vector<std::pair<double, double>> frequencyMultipliers;
+  std::vector<dpair> frequencyMultipliers;
   bool frequencyMultipliersOn;
   float sampleScale;
   int sampleUnits;
@@ -52,20 +55,6 @@ public:
   InfoTable(QObject *parent = nullptr) : QObject(parent) { setDefaultValues(); }
 
   void setDefaultValues();
-
-  /**
-   * @brief Writes info file.
-   */
-  void writeXML(const std::string &filePath,
-                const DETECTOR_SETTINGS &spikedetSettings,
-                double spikeDuration) const;
-
-  /**
-   * @brief Reads info file.
-   */
-  void readXML(const std::string &filePath, DETECTOR_SETTINGS *spikedetSettings,
-               double *spikeDuration);
-
   /**
    * @brief Emit all signals defined by this class.
    *
@@ -74,8 +63,21 @@ public:
    */
   void emitAllSignals();
 
+  /**
+   * @brief Writes info file.
+   */
+  void writeXML(const std::string &filePath,
+                const DETECTOR_SETTINGS &spikedetSettings,
+                double spikeDuration) const;
+  /**
+   * @brief Reads info file.
+   */
+  void readXML(const std::string &filePath, DETECTOR_SETTINGS *spikedetSettings,
+               double *spikeDuration);
+
   int getVirtualWidth() const { return virtualWidth; }
   int getPosition() const { return position; }
+  double getPositionIndicator() const { return positionIndicator; }
   double getLowpassFrequency() const { return lowpassFrequency; }
   bool getLowpassOn() const { return lowpassOn; }
   double getHighpassFrequency() const { return highpassFrequency; }
@@ -86,9 +88,7 @@ public:
   InfoTable::TimeMode getTimeMode() const { return timeMode; }
   int getSelectedType() const { return selectedType; }
   double getTimeLineInterval() const { return timeLineInterval; }
-  double getPositionIndicator() const { return positionIndicator; }
-  const std::vector<std::pair<double, double>> &
-  getFrequencyMultipliers() const {
+  const std::vector<dpair> &getFrequencyMultipliers() const {
     return frequencyMultipliers;
   }
   bool getFrequencyMultipliersOn() const { return frequencyMultipliersOn; }
@@ -104,7 +104,8 @@ public:
 
 signals:
   void virtualWidthChanged(int);
-  void positionChanged(int);
+  //! Gets triggered when position and/or positionIndicator change
+  void positionChanged(int, double);
   void lowpassFrequencyChanged(double);
   void lowpassOnChanged(bool);
   void highpassFrequencyChanged(double);
@@ -115,7 +116,6 @@ signals:
   void timeModeChanged(InfoTable::TimeMode);
   void selectedTypeChanged(int);
   void timeLineIntervalChanged(double);
-  void positionIndicatorChanged(double);
   void frequencyMultipliersChanged();
   void frequencyMultipliersOnChanged(bool);
   void sampleScaleChanged(float);
@@ -127,16 +127,26 @@ signals:
   void globalMontageHeaderChanged(QString);
 
 public slots:
+  // TODO: Perhaps use macros to lessen the code duplicity for the properties.
   void setVirtualWidth(int value) {
     if (value != virtualWidth) {
       virtualWidth = value;
       emit virtualWidthChanged(value);
     }
   }
-  void setPosition(int value) {
-    if (value != position) {
-      position = value;
-      emit positionChanged(value);
+  /**
+   * @brief Position and indicator are coupled (i.e. changing one effects the
+   * other) so they must be set at the same time. They also share the signal.
+   */
+  void setPosition(int position, double positionIndicator = -1) {
+    if (positionIndicator < 0) // This allows omitting the second parameter.
+      positionIndicator = this->positionIndicator;
+
+    if (position != this->position ||
+        positionIndicator != this->positionIndicator) {
+      this->position = position;
+      this->positionIndicator = positionIndicator;
+      emit positionChanged(position, positionIndicator);
     }
   }
   void setLowpassFrequency(double value) {
@@ -199,14 +209,7 @@ public slots:
       emit timeLineIntervalChanged(value);
     }
   }
-  void setPositionIndicator(double value) {
-    if (value != positionIndicator) {
-      positionIndicator = value;
-      emit positionIndicatorChanged(value);
-    }
-  }
-  void
-  setFrequencyMultipliers(const std::vector<std::pair<double, double>> &value) {
+  void setFrequencyMultipliers(const std::vector<dpair> &value) {
     if (value != frequencyMultipliers) {
       frequencyMultipliers = value;
       emit frequencyMultipliersChanged();

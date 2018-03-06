@@ -381,12 +381,9 @@ void Canvas::changeFile(OpenDataFile *file) {
                 this, SLOT(selectMontage()));
     openFileConnections.push_back(c);
 
-    c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int)), this,
-                SLOT(updateCursor()));
+    c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int, double)),
+                this, SLOT(updateCursor()));
     openFileConnections.push_back(c);
-
-    samplesRecorded = file->file->getSamplesRecorded();
-    samplingFrequency = file->file->getSamplingFrequency();
 
     function<void()> sharingFunction = nullptr;
     if (glSharing)
@@ -447,15 +444,12 @@ void Canvas::ctrlButtonCheckEvent(bool checked) { isCtrlChecked = checked; }
 
 void Canvas::updateCursor() {
   if (ready()) {
-    QPoint pos = mapFromGlobal(QCursor::pos());
+    const QPoint pos = mapFromGlobal(QCursor::pos());
+    const int sample = round(pos.x() * virtualRatio() + leftEdgePosition());
 
-    double ratio = samplesRecorded / OpenDataFile::infoTable.getVirtualWidth();
-    int sample =
-        round((pos.x() + OpenDataFile::infoTable.getPosition()) * ratio);
-
-    double trackHeigth =
+    const double trackHeigth =
         static_cast<double>(height()) / signalProcessor->getTrackCount();
-    int track = static_cast<int>(pos.y() / trackHeigth);
+    const int track = static_cast<int>(pos.y() / trackHeigth);
 
     setCursorPositionSample(sample);
     setCursorPositionTrack(track);
@@ -569,11 +563,11 @@ void Canvas::paintGL() {
     }
 
     // Calculate the transformMatrix.
-    double ratio = samplesRecorded / OpenDataFile::infoTable.getVirtualWidth();
+    const double ratio = virtualRatio();
+    const float position = leftEdgePosition();
 
     QMatrix4x4 matrix;
-    matrix.ortho(QRectF(OpenDataFile::infoTable.getPosition() * ratio, 0,
-                        width() * ratio, height()));
+    matrix.ortho(QRectF(position, 0, width() * ratio, height()));
     // TODO: Shift the view so that the left edge is sways at (or near) 0.
     // Then there can be no problems with limited float range.
 
@@ -595,12 +589,11 @@ void Canvas::paintGL() {
     setUniformTransformMatrix(rectangleLineProgram.get(), matrix.data());
 
     // Create the data block range needed.
-    int firstSample =
-        static_cast<int>(floor(OpenDataFile::infoTable.getPosition() * ratio));
-    int lastSample = static_cast<int>(
-        ceil((OpenDataFile::infoTable.getPosition() + width()) * ratio));
+    const int firstSample = static_cast<int>(floor(position));
+    const int lastSample = static_cast<int>(ceil(position + width() * ratio));
 
-    auto fromTo = sampleRangeToBlockRange(firstSample, lastSample, nSamples);
+    const auto fromTo =
+        sampleRangeToBlockRange(firstSample, lastSample, nSamples);
 
     auto tr = SignalProcessor::blockIndexToSampleRange(fromTo.first, nSamples);
     assert(true || tr.first <= firstSample);
@@ -728,7 +721,9 @@ void Canvas::wheelEvent(QWheelEvent *event) {
     horizontalZoom(isDown);
 
     updateCursor();
-    emit OpenDataFile::infoTable.positionIndicatorChanged(
+    // TODO: Is this needed.
+    emit OpenDataFile::infoTable.positionChanged(
+        OpenDataFile::infoTable.getPosition(),
         OpenDataFile::infoTable.getPositionIndicator());
 
     update();
@@ -759,13 +754,7 @@ void Canvas::keyPressEvent(QKeyEvent *event) {
         !isDrawingCross; // TODO: Perhaps promote this to an action?
     update();
   } else if (ready() && event->key() == Qt::Key_T) {
-    QPoint pos = mapFromGlobal(QCursor::pos());
-    double indicator = static_cast<double>(pos.x()) / width();
-
-    if (0 <= indicator && indicator <= 1) {
-      OpenDataFile::infoTable.setPositionIndicator(indicator);
-      update();
-    }
+    updatePositionIndicator();
   } else {
     event->ignore();
   }
@@ -796,10 +785,8 @@ void Canvas::mousePressEvent(QMouseEvent *event) {
           cursorTrack < signalProcessor->getTrackCount()) {
         isDrawingEvent = true;
 
-        double ratio =
-            samplesRecorded / OpenDataFile::infoTable.getVirtualWidth();
         eventStart = eventEnd =
-            (event->pos().x() + OpenDataFile::infoTable.getPosition()) * ratio;
+            leftEdgePosition() + event->pos().x() * virtualRatio();
 
         if (event->modifiers() == Qt::ShiftModifier || isShiftChecked)
           eventTrack = -1;
@@ -837,6 +824,17 @@ void Canvas::focusOutEvent(QFocusEvent * /*event*/) {
 }
 
 void Canvas::focusInEvent(QFocusEvent * /*event*/) {}
+
+double Canvas::virtualRatio() {
+  return static_cast<double>(file->file->getSamplesRecorded()) /
+         OpenDataFile::infoTable.getVirtualWidth();
+}
+
+float Canvas::leftEdgePosition() {
+  return OpenDataFile::infoTable.getPosition() -
+         OpenDataFile::infoTable.getPositionIndicator() * width() *
+             virtualRatio();
+}
 
 void Canvas::updateProcessor() {
   cl_int err;
@@ -983,23 +981,21 @@ void Canvas::drawAllChannelEvent(int from, int to) {
 }
 
 void Canvas::drawTimeLines() {
-  double interval = OpenDataFile::infoTable.getTimeLineInterval();
-
-  gl()->glUseProgram(rectangleLineProgram->getGLProgram());
-  bindArray(rectangleLineArray, rectangleLineBuffer, 2, 0);
-  gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleLineBuffer);
-
-  setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::green), 1);
-
-  double ratio = samplesRecorded / OpenDataFile::infoTable.getVirtualWidth();
-  interval *= samplingFrequency;
-
-  double position = OpenDataFile::infoTable.getPosition() * ratio;
-  double end = position + width() * ratio;
-
-  int nextPosition = ceil(position / interval) * interval;
+  const double interval = OpenDataFile::infoTable.getTimeLineInterval() *
+                          file->file->getSamplingFrequency();
 
   if (interval > 0) {
+    gl()->glUseProgram(rectangleLineProgram->getGLProgram());
+    bindArray(rectangleLineArray, rectangleLineBuffer, 2, 0);
+    gl()->glBindBuffer(GL_ARRAY_BUFFER, rectangleLineBuffer);
+
+    setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::green), 1);
+
+    const double position = leftEdgePosition();
+    const double end = position + width() * virtualRatio();
+
+    double nextPosition = ceil(position / interval) * interval;
+
     while (nextPosition <= end) {
       drawTimeLine(nextPosition);
 
@@ -1015,16 +1011,12 @@ void Canvas::drawPositionIndicator() {
 
   setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::blue), 1);
 
-  double ratio = samplesRecorded / OpenDataFile::infoTable.getVirtualWidth();
-  double position = (OpenDataFile::infoTable.getPosition() +
-                     width() * OpenDataFile::infoTable.getPositionIndicator()) *
-                    ratio;
-
+  const double position = OpenDataFile::infoTable.getPosition();
   drawTimeLine(position);
 }
 
 void Canvas::drawCross() {
-  QPoint pos = mapFromGlobal(QCursor::pos());
+  const QPoint pos = mapFromGlobal(QCursor::pos());
 
   if (isDrawingCross == false || hasFocus() == false || pos.x() < 0 ||
       pos.x() >= width() || pos.y() < 0 || pos.y() >= height()) {
@@ -1037,19 +1029,17 @@ void Canvas::drawCross() {
 
   setUniformColor(rectangleLineProgram->getGLProgram(), QColor(Qt::black), 1);
 
-  double ratio = samplesRecorded / OpenDataFile::infoTable.getVirtualWidth();
+  const float position = leftEdgePosition() + pos.x() * virtualRatio();
+  const auto samplesRecorded = file->file->getSamplesRecorded();
 
-  float position = static_cast<float>(
-      (OpenDataFile::infoTable.getPosition() + pos.x()) * ratio);
-
-  float data[8] = {position,
-                   0,
-                   position,
-                   static_cast<float>(height()),
-                   0,
-                   static_cast<float>(pos.y()),
-                   static_cast<float>(samplesRecorded),
-                   static_cast<float>(pos.y())};
+  const float data[8] = {position,
+                         0,
+                         position,
+                         static_cast<float>(height()),
+                         0,
+                         static_cast<float>(pos.y()),
+                         static_cast<float>(samplesRecorded),
+                         static_cast<float>(pos.y())};
 
   gl()->glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
 
@@ -1057,9 +1047,9 @@ void Canvas::drawCross() {
   gl()->glDrawArrays(GL_LINE_STRIP, 2, 2);
 }
 
-void Canvas::drawTimeLine(double at) {
-  float data[4] = {static_cast<float>(at), 0, static_cast<float>(at),
-                   static_cast<float>(height())};
+void Canvas::drawTimeLine(const double position) {
+  float data[4] = {static_cast<float>(position), 0,
+                   static_cast<float>(position), static_cast<float>(height())};
 
   gl()->glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
 
@@ -1313,6 +1303,27 @@ void Canvas::logLastGLMessage() {
   if (lastGLMessageCount > 1) {
     logToFile("OpenGL message (" << lastGLMessageCount - 1
                                  << "x): " << lastGLMessage);
+  }
+}
+
+void Canvas::updatePositionIndicator() {
+  const QPoint pos = mapFromGlobal(QCursor::pos());
+  const double indicator = static_cast<double>(pos.x()) / width();
+
+  const double oldIndicator = OpenDataFile::infoTable.getPositionIndicator();
+  const double oldPosition = OpenDataFile::infoTable.getPosition();
+
+  // We must correct the position so that the window doesn't move when the
+  // indicator changes.
+  const double newPosition =
+      oldPosition + (indicator - oldIndicator) * width() * virtualRatio();
+
+  // For extremely small canvases (e.g. with width 0) it doesn't make sense to
+  // set the indicator.
+  if (0 <= indicator && indicator <= 1) {
+    OpenDataFile::infoTable.setPosition(static_cast<int>(round(newPosition)),
+                                        indicator);
+    update();
   }
 }
 

@@ -65,6 +65,7 @@ cp -v "`dirname $0`/readme-linux.txt" $folder/$name/README
 cp -v "`dirname $0`/options.ini" $folder/$name
 cp -v "`dirname $0`/montageHeader.cl" $folder/$name
 cp -v "`dirname $0`/montageTemplates"/* $folder/$name/montageTemplates
+cp -v "`dirname $0`/../../LICENSE.txt" $folder/$name
 
 cd $folder &&
 zip -r $name.zip $name &&

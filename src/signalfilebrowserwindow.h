@@ -27,13 +27,12 @@ class EventManager;
 class EventTypeManager;
 class MontageManager;
 class FilterManager;
+class VideoPlayer;
 class QComboBox;
 class QCheckBox;
 class QActionGroup;
 class QLabel;
 class QAction;
-class SyncServer;
-class SyncClient;
 class SyncDialog;
 class TableModel;
 class DataModelVitness;
@@ -60,6 +59,7 @@ class SignalFileBrowserWindow : public QMainWindow {
   EventTypeManager *eventTypeManager;
   MontageManager *montageManager;
   FilterManager *filterManager;
+  VideoPlayer *videoPlayer;
   QComboBox *lowpassComboBox;
   QComboBox *highpassComboBox;
   QCheckBox *notchCheckBox;
@@ -81,11 +81,7 @@ class SignalFileBrowserWindow : public QMainWindow {
   ClusterAnalysis *clusterAnalysis;
   CenteringClusterAnalysis *centeringClusterAnalysis;
   std::vector<QAction *> analysisActions;
-  std::unique_ptr<SyncServer> syncServer;
-  std::unique_ptr<SyncClient> syncClient;
   SyncDialog *syncDialog;
-  const int lastPositionReceivedDefault = -1000'000'000;
-  int lastPositionReceived = lastPositionReceivedDefault;
   QAction *synchronize;
   std::vector<QMetaObject::Connection> openFileConnections;
   std::vector<QMetaObject::Connection> managersConnections;
@@ -135,12 +131,12 @@ public:
 
 protected:
   void closeEvent(QCloseEvent *event) override;
+  void keyPressEvent(QKeyEvent *event) override;
 
 private:
   std::vector<QMetaObject::Connection>
   connectVitness(const DataModelVitness *vitness, std::function<void()> f);
   void mode(int m);
-  bool shouldSynchronizeView();
   void deleteAutoSave();
   void setCurrentInNumericCombo(QComboBox *combo, double value);
   void sortInLastItem(QComboBox *combo);
@@ -174,8 +170,6 @@ private slots:
   void updateMontageComboBox();
   void updateEventTypeComboBox();
   void runSignalAnalysis(int i);
-  void receiveSyncMessage(const QByteArray &message);
-  void sendSyncMessage();
   void cleanChanged(bool clean);
   void closeFilePropagate();
   void setEnableFileActions(bool enable);

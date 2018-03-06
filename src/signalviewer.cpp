@@ -6,6 +6,7 @@
 #include "options.h"
 #include "tracklabelbar.h"
 
+#include <QKeyEvent>
 #include <QScrollBar>
 #include <QSplitter>
 #include <QVBoxLayout>
@@ -14,6 +15,13 @@
 #include <cmath>
 
 using namespace std;
+
+namespace {
+
+//! How many mouse wheel changes does it take to move one screen to the right.
+const int SCROLLBAR_STEP = 20;
+
+} // namespace
 
 SignalViewer::SignalViewer(QWidget *parent) : QWidget(parent) {
   auto box = new QVBoxLayout;
@@ -48,31 +56,35 @@ SignalViewer::~SignalViewer() {
                             splitter->saveState());
 }
 
-void SignalViewer::changeFile(OpenDataFile *file) {
+void SignalViewer::changeFile(OpenDataFile *const file) {
   canvas->changeFile(file);
   trackLabelBar->changeFile(file);
 
   this->file = file;
 
+  for (auto e : openFileConnections)
+    disconnect(e);
+  openFileConnections.clear();
+
   if (file) {
     auto c = connect(scrollBar, SIGNAL(valueChanged(int)),
                      &OpenDataFile::infoTable, SLOT(setPosition(int)));
     openFileConnections.push_back(c);
-    c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int)), this,
-                SLOT(setPosition(int)));
+
+    c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int, double)),
+                scrollBar, SLOT(setValue(int)));
     openFileConnections.push_back(c);
 
     c = connect(&OpenDataFile::infoTable, SIGNAL(virtualWidthChanged(int)),
-                this, SLOT(setVirtualWidth(int)));
+                this, SLOT(resize()));
     openFileConnections.push_back(c);
 
     c = connect(canvas, SIGNAL(cursorPositionTrackChanged(int)), trackLabelBar,
                 SLOT(setSelectedTrack(int)));
     openFileConnections.push_back(c);
-  } else {
-    for (auto e : openFileConnections)
-      disconnect(e);
-    openFileConnections.clear();
+
+    scrollBar->setRange(0, file->file->getSamplesRecorded());
+    resize();
   }
 }
 
@@ -82,53 +94,37 @@ void SignalViewer::updateSignalViewer() {
   update();
 }
 
-void SignalViewer::resizeEvent(QResizeEvent * /*event*/) {
-  resize(OpenDataFile::infoTable.getVirtualWidth());
-}
+void SignalViewer::resizeEvent(QResizeEvent * /*event*/) { resize(); }
 
 void SignalViewer::wheelEvent(QWheelEvent *event) {
   scrollBar->event(reinterpret_cast<QEvent *>(event));
 }
 
+// Perhaps move catching of these events to the parent window, so that the user
+// doesn't have to always have focus on the canvas.
 void SignalViewer::keyPressEvent(QKeyEvent *event) {
-  scrollBar->event(reinterpret_cast<QEvent *>(event));
+  if (Qt::Key_Space == event->key())
+    event->ignore(); // Propagate the event up so that we can play/pause video.
+  else
+    scrollBar->event(reinterpret_cast<QEvent *>(event));
 }
 
 void SignalViewer::keyReleaseEvent(QKeyEvent *event) {
   scrollBar->event(reinterpret_cast<QEvent *>(event));
 }
 
-void SignalViewer::resize(int virtualWidth) {
-  const int pageWidth = canvas->width();
+void SignalViewer::resize() {
+  if (file) {
+    const int pageWidth = canvas->width();
+    const double ratio = static_cast<double>(file->file->getSamplesRecorded()) /
+                         OpenDataFile::infoTable.getVirtualWidth();
+    const int samplesPerPage = static_cast<int>(pageWidth * ratio);
 
-  scrollBar->setRange(0, virtualWidth - pageWidth - 1);
-  scrollBar->setPageStep(pageWidth);
-  scrollBar->setSingleStep(max(1, pageWidth / 20));
+    scrollBar->setPageStep(samplesPerPage);
+    scrollBar->setSingleStep(max(1, samplesPerPage / SCROLLBAR_STEP));
 
-  OpenDataFile::infoTable.setPixelViewWidth(pageWidth);
-}
+    OpenDataFile::infoTable.setPixelViewWidth(pageWidth); // TODO: check this
 
-int SignalViewer::virtualWidthFromScrollBar() {
-  return scrollBar->maximum() + scrollBar->pageStep() + 1 -
-         scrollBar->minimum();
-}
-
-void SignalViewer::setVirtualWidth(int value) {
-  // This version makes sure that the position indicator stays at the same time.
-  const double oldPosition =
-      scrollBar->value() +
-      OpenDataFile::infoTable.getPositionIndicator() * canvas->width();
-  const double ratio = static_cast<double>(value) / virtualWidthFromScrollBar();
-
-  resize(value);
-  setPosition(
-      round(oldPosition * ratio -
-            OpenDataFile::infoTable.getPositionIndicator() * canvas->width()));
-
-  canvas->update();
-}
-
-void SignalViewer::setPosition(int value) {
-  scrollBar->setValue(value);
-  canvas->update();
+    canvas->update(); // TODO: Figure out whether this is necessary.
+  }
 }

@@ -16,7 +16,6 @@
 
 #include <cmath>
 #include <complex>
-#include <iostream>
 #include <type_traits>
 
 #include <detailedexception.h>
@@ -62,7 +61,7 @@ string clfftErrorCodeToString(clfftStatus code) {
 #undef CASE
 }
 
-void CFCEC(clfftStatus val, string message, const char *file, int line) {
+void CFCEC(clfftStatus val, const string &message, const char *file, int line) {
   std::stringstream ss;
 
   ss << "Unexpected error code: " << clfftErrorCodeToString(val);
@@ -109,9 +108,9 @@ FilterProcessor<T>::FilterProcessor(unsigned int blockLength,
   kernelsSource += KERNELS_SOURCE;
   OpenCLProgram program(kernelsSource, context);
 
-  if (!program.compileSuccess()) {
-    cerr << "Compilation failed:\n" << program.getCompileLog() << endl;
-    throwDetailed(runtime_error("FilterProcessor: compilation failed"));
+  if (CL_SUCCESS != program.compileStatus()) {
+    const string msg = "Filter processor kernels";
+    throwDetailed(runtime_error(program.makeErrorMessage(msg)));
   }
 
   filterKernel = program.createKernel("filter");
@@ -203,27 +202,34 @@ template <class T> FilterProcessor<T>::~FilterProcessor() {
 template <class T>
 void FilterProcessor<T>::process(cl_mem inBuffer, cl_mem outBuffer,
                                  cl_command_queue queue) {
-  assert(inBuffer != outBuffer);
+  assert(inBuffer != outBuffer &&
+         "Input and output bufferes cannot be the same");
 
   cl_int err;
   clfftStatus errFFT;
-  size_t inSize, outSize,
-      minSize = (blockLength + 2) * blockChannels * sizeof(T);
+  const size_t minSize = (blockLength + 2) * blockChannels * sizeof(T);
 
+  size_t inSize;
   err = clGetMemObjectInfo(inBuffer, CL_MEM_SIZE, sizeof(size_t), &inSize,
                            nullptr);
   checkClErrorCode(err, "clGetMemObjectInfo");
 
-  if (inSize < minSize)
-    throwDetailed(runtime_error("FilterProcessor: the inBuffer is too small."));
+  if (inSize < minSize) {
+    const string msg = "The input buffer is too small: expected at least " +
+                       to_string(minSize) + ", got " + to_string(inSize);
+    throwDetailed(runtime_error(msg));
+  }
 
+  size_t outSize;
   err = clGetMemObjectInfo(outBuffer, CL_MEM_SIZE, sizeof(size_t), &outSize,
                            nullptr);
   checkClErrorCode(err, "clGetMemObjectInfo");
 
-  if (outSize < minSize)
-    throwDetailed(
-        runtime_error("FilterProcessor: the outBuffer is too small."));
+  if (outSize < minSize) {
+    const string msg = "The output buffer is too small: expected at least " +
+                       to_string(minSize) + ", got " + to_string(outSize);
+    throwDetailed(runtime_error(msg));
+  }
 
   if (coefficientsChanged) {
     err = clEnqueueWriteBuffer(queue, filterBuffer, CL_TRUE, 0, M * sizeof(T),

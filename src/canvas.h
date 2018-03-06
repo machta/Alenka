@@ -47,8 +47,6 @@ class Canvas : public QOpenGLWidget {
   std::unique_ptr<OpenGLProgram> signalProgram;
   std::unique_ptr<OpenGLProgram> eventProgram;
   std::unique_ptr<OpenGLProgram> rectangleLineProgram;
-  double samplesRecorded = 1;
-  double samplingFrequency = 1;
   GLuint rectangleLineArray, rectangleLineBuffer;
   GLuint signalArray, signalBuffer;
   GLuint eventArray;
@@ -140,6 +138,10 @@ protected:
   void focusInEvent(QFocusEvent *event) override;
 
 private:
+  //! Multiply by this to convert virtual position to sample position.
+  double virtualRatio();
+  //! Returns the sample position of the left screen edge.
+  float leftEdgePosition();
   void updateProcessor();
   void drawBlock(
       int index, GPUCacheItem *cacheItem,
@@ -150,7 +152,8 @@ private:
   void drawTimeLines();
   void drawPositionIndicator();
   void drawCross();
-  void drawTimeLine(double at);
+  // TODO: Stop using doubles for anythig connected to rendering.
+  void drawTimeLine(double position);
   void drawSingleChannelEvents(
       int index, const std::vector<std::tuple<int, int, int, int>> &events);
   void drawSingleChannelEvent(int index, int track, int from, int to);
@@ -176,6 +179,7 @@ private:
   void setUniformTransformMatrix(OpenGLProgram *program, float *data);
   void setUniformEventWidth(OpenGLProgram *program, float value);
   void logLastGLMessage();
+  void updatePositionIndicator();
 
 private slots:
   void updateFilter();

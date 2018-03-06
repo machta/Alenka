@@ -8,9 +8,8 @@
  * @include kernels.cl
  */
 
-const char* KERNELS_SOURCE = R"(
-
-// Multiplies two complex numbers.
+const char* KERNELS_SOURCE =
+R"(// Multiplies two complex numbers.
 inline float2 complexMultiply(float2 a, float2 b)
 {
   return (float2)(a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x);
@@ -35,5 +34,4 @@ __kernel void zero(__global float* a)
   int id0 = get_global_id(0);
   a[id0] = 0;
 }
-
 )";

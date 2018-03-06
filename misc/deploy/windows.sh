@@ -74,6 +74,9 @@ cp -v $QT_DIR/bin/Qt5Widgets.dll $folder/$name &&
 cp -v $QT_DIR/bin/Qt5Network.dll $folder/$name &&
 cp -v $QT_DIR/bin/Qt5WebSockets.dll $folder/$name &&
 cp -v $QT_DIR/bin/Qt5Charts.dll $folder/$name &&
+cp -v $QT_DIR/bin/Qt5Multimedia.dll $folder/$name &&
+cp -v $QT_DIR/bin/Qt5MultimediaWidgets.dll $folder/$name &&
+cp -v $QT_DIR/bin/Qt5OpenGL.dll $folder/$name &&
 cp -v $QT_DIR/plugins/platforms/qwindows.dll $folder/$name/platforms &&
 cp -v $QT_DIR/bin/Qt5Qml.dll $folder/$name &&
 cp -v $QT_DIR/bin/Qt5Quick.dll $folder/$name &&
@@ -128,6 +131,9 @@ cp -v $QT_DIR/bin/Qt5Widgets.dll $folder32/$name-32 &&
 cp -v $QT_DIR/bin/Qt5Network.dll $folder32/$name-32 &&
 cp -v $QT_DIR/bin/Qt5WebSockets.dll $folder32/$name-32 &&
 cp -v $QT_DIR/bin/Qt5Charts.dll $folder32/$name-32 &&
+cp -v $QT_DIR/bin/Qt5Multimedia.dll $folder32/$name-32 &&
+cp -v $QT_DIR/bin/Qt5MultimediaWidgets.dll $folder32/$name-32 &&
+cp -v $QT_DIR/bin/Qt5OpenGL.dll $folder32/$name-32 &&
 cp -v $QT_DIR/plugins/platforms/qwindows.dll $folder32/$name-32/platforms &&
 cp -v $QT_DIR/bin/Qt5Qml.dll $folder32/$name-32 &&
 cp -v $QT_DIR/bin/Qt5QuickWidgets.dll $folder32/$name-32 &&
@@ -187,6 +193,10 @@ cp -v "$HEADER" $folder32/$name-32
 TEMPLATES="`dirname $0`/montageTemplates"
 cp -v "$TEMPLATES"/* $folder/$name/montageTemplates
 cp -v "$TEMPLATES"/* $folder32/$name-32/montageTemplates
+
+LIC="`dirname $0`/../../LICENSE.txt"
+cp -v "$LIC" $folder/$name
+cp -v "$LIC" $folder32/$name-32
 
 # Make zip using .Net.
 rm -f "$name.zip" "$name-32.zip" &&

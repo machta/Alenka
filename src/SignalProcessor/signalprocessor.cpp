@@ -38,7 +38,7 @@ void multiplySamples(vector<float> *samples) {
 
   for (auto e : input) {
     const int f = max<int>(0, round(e.first));
-    const double multi = e.second;
+    const float multi = static_cast<float>(e.second);
 
     fill(multipliers.begin() + f, multipliers.end(), multi);
   }

@@ -1,5 +1,8 @@
 #include "syncdialog.h"
 
+#include <iostream>
+
+#include "../DataModel/opendatafile.h"
 #include "syncclient.h"
 #include "syncserver.h"
 
@@ -17,8 +20,40 @@
 #include <QUrl>
 #include <QVBoxLayout>
 
-SyncDialog::SyncDialog(SyncServer *server, SyncClient *client, QWidget *parent)
-    : QDialog(parent), server(server), client(client) {
+using namespace std;
+
+namespace {
+
+int64_t unpackMessage(const QByteArray &message) {
+  int64_t result;
+  assert(message.size() == (int)sizeof(result));
+
+  char *rawResult = reinterpret_cast<char *>(&result);
+  copy(message.data(), message.data() + sizeof(result), rawResult);
+
+  return result;
+}
+
+QByteArray packMessage(const int64_t val) {
+  return QByteArray(reinterpret_cast<const char *>(&val), sizeof(val));
+}
+
+} // namespace
+
+SyncDialog::SyncDialog(QWidget *parent) : QDialog(parent) {
+  server = make_unique<SyncServer>();
+  client = make_unique<SyncClient>();
+
+  connect(server.get(), SIGNAL(messageReceived(QByteArray)), this,
+          SLOT(receiveSyncMessage(QByteArray)));
+  connect(client.get(), SIGNAL(messageReceived(QByteArray)), this,
+          SLOT(receiveSyncMessage(QByteArray)));
+
+  auto c =
+      connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int, double)),
+              this, SLOT(sendSyncMessage()));
+  //  openFileConnections.push_back(c);
+
   setWindowTitle("Synchronization Manager");
   auto box = new QVBoxLayout();
 
@@ -129,7 +164,7 @@ void SyncDialog::buildClientControls() {
   auto button = new QPushButton("Disconnect");
   buttonBox->addButton(button, QDialogButtonBox::ActionRole);
   connect(button, SIGNAL(clicked(bool)), this, SLOT(disconnectClient()));
-  connect(client, &SyncClient::serverDisconnected, [this]() {
+  connect(client.get(), &SyncClient::serverDisconnected, [this]() {
     changeEnableControls(true);
 
     clientStatus->setText("Client Disconnected");
@@ -226,4 +261,69 @@ void SyncDialog::changeEnableControls(bool enable) {
   clientIpEdit->setEnabled(enable);
   clientPortEdit->setEnabled(enable);
   connectButton->setEnabled(enable);
+}
+
+/**
+ * @brief Interprets and acts on the received sync message.
+ *
+ * Also saves the last received position so that we can use it in
+ * sendSyncMessage() to break the deadlock.
+ */
+void SyncDialog::receiveSyncMessage(const QByteArray &message) {
+  if (!file || !shouldSynchronize)
+    return;
+
+  const int position = static_cast<int>(unpackMessage(message));
+#ifndef NDEBUG
+  cerr << "Received position: " << position << endl;
+#endif
+  lastPositionReceived = position;
+  OpenDataFile::infoTable.setPosition(position);
+}
+
+/**
+ * @brief Creates the sync message and sends it to both the server and the
+ * client.
+ *
+ * It's OK to send the message to both, because they should never be active
+ * simultaneously. So one of them will always ignore it.
+ *
+ * There is a special case in which the message shouldn't be sent ot prevent
+ * message deadlock.This comes about because the source of the signal that
+ * trigers this method cannot be distinguished between user input and a received
+ * sync message.
+ *
+ * So when the current position is very close (within a small fraction of a
+ * second) to the last received position, you are most likely just repeating
+ * what the server already has. So there is no need to send this information
+ * back again.
+ */
+void SyncDialog::sendSyncMessage() {
+  if (!file || !shouldSynchronize)
+    return;
+
+  const int position = OpenDataFile::infoTable.getPosition();
+  const int epsilon = max<int>(2, file->file->getSamplingFrequency() / 100);
+
+  // This condition is to break the message deadlock.
+  // TODO: Check whether this is still needed after the switch to new position.
+  const bool shouldNotSkip = position < (lastPositionReceived - epsilon) ||
+                             position > (lastPositionReceived + epsilon);
+  if (shouldNotSkip) {
+#ifndef NDEBUG
+    if (server->connectionCount() > 0 || client->isValid())
+      cerr << "Sending position: " << position << " " << position << endl;
+#endif
+    const QByteArray message = packMessage(position);
+    server->sendMessage(message);
+    client->sendMessage(message);
+  }
+#ifndef NDEBUG
+  else {
+    cerr << "Message skipped: " << position << endl;
+  }
+#endif
+
+  // Reset to the default value, so that the message is skipped at most once.
+  lastPositionReceived = lastPositionReceivedDefault;
 }

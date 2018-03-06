@@ -221,7 +221,6 @@ string OpenCLContext::getDeviceInfo(const unsigned int platformIndex,
   return str;
 }
 
-// LCOV_EXCL_START
 // TODO: Test this with a unit test.
 void OpenCLContext::CCEC(cl_int val, string message, const char *file,
                          int line) {
@@ -311,7 +310,6 @@ string OpenCLContext::clErrorCodeToString(cl_int code) {
 
   return "unknown code " + errorCodeToString(code);
 }
-// LCOV_EXCL_STOP
 
 void OpenCLContext::clfftInit() {
   clfftStatus errFFT;

@@ -60,11 +60,13 @@ find_package(Threads)
 find_package(OpenCL)
 
 find_package(Qt5Widgets)
-find_package(Qt5WebSockets)
-find_package(Qt5Charts)
-find_package(Qt5Qml)
+find_package(Qt5WebSockets) # This is for Syncronization
+find_package(Qt5Charts) # This is needed for FilterVisualizer
+find_package(Qt5Qml) # These three are for Elko
 find_package(Qt5Quick)
 find_package(Qt5QuickWidgets)
+find_package(Qt5Multimedia) # These two are needed by VideoPlayer
+find_package(Qt5MultimediaWidgets)
 
 # Dependencies.
 add_subdirectory(Alenka-File)
@@ -93,6 +95,8 @@ set(RESOURCES
 
 set(SRC
   include/detailedexception.h
+  include/elidedlabel.h
+  include/helplink.h
   src/DataModel/infotable.cpp
   src/DataModel/infotable.h
   src/DataModel/kernelcache.cpp
@@ -134,6 +138,8 @@ set(SRC
   src/Manager/trackmanager.h
   src/Manager/tracktablemodel.cpp
   src/Manager/tracktablemodel.h
+  src/Manager/videoplayer.cpp
+  src/Manager/videoplayer.h
   src/SignalProcessor/analysis.h
   src/SignalProcessor/automaticmontage.h
   src/SignalProcessor/bipolarmontage.cpp
@@ -194,7 +200,10 @@ target_link_libraries(Alenka
   Qt5::Charts
   Qt5::Qml
   Qt5::Quick
-  Qt5::QuickWidgets)
+  Qt5::QuickWidgets
+  Qt5::Multimedia
+  Qt5::MultimediaWidgets
+)
 
 if(UNIX AND NOT APPLE)
   target_link_libraries(Alenka dl GL)

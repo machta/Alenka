@@ -8,6 +8,8 @@
 class TrackTableModel : public TableModel {
   Q_OBJECT
 
+  std::vector<QMetaObject::Connection> connections;
+
 public:
   explicit TrackTableModel(OpenDataFile *file, QObject *parent = nullptr);
 
@@ -18,10 +20,7 @@ protected:
   bool areAllRowsDeletable(int row, int count) override;
 
 private slots:
-  void selectMontage(int i);
-
-private:
-  std::vector<QMetaObject::Connection> trackTableConnections;
+  void selectMontage(int montageIndex);
 };
 
 #endif // TRACKTABLEMODEL_H
