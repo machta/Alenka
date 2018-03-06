@@ -41,6 +41,8 @@ void VideoPlayer::changeFile(OpenDataFile *file) {
   if (file) {
     selectMontage(OpenDataFile::infoTable.getSelectedMontage());
     seek(OpenDataFile::infoTable.getPosition());
+  } else {
+    stopAndSetPlayer();
   }
 }
 
@@ -52,7 +54,7 @@ void VideoPlayer::togglePlay() {
 }
 
 void VideoPlayer::selectMontage(const int montageIndex) {
-  if (nullptr == file)
+  if (!file)
     return;
 
   for (auto e : connections)
@@ -136,7 +138,7 @@ void VideoPlayer::updateErrorLabel(const QMediaPlayer::Error err) {
 }
 
 void VideoPlayer::updatePlayPosition(const qint64 videoPosition) {
-  if (playing) {
+  if (file && playing) {
     double position = videoPosition / 1000 - currentVideoFile.offset;
     position *= file->file->getSamplingFrequency();
     position += currentVideoFile.position;
@@ -156,7 +158,7 @@ void VideoPlayer::updatePlayPosition(const qint64 videoPosition) {
 }
 
 void VideoPlayer::seek(const int position) {
-  if (nullptr == file || playing)
+  if (!file || playing)
     return; // If the player is playing, we don't need to seek.
 
   bool found;
@@ -248,23 +250,27 @@ void VideoPlayer::buildUI() {
   auto controlBbox = new QHBoxLayout();
 
   playPauseButton = new QPushButton();
+  playPauseButton->setToolTip("play/pause");
   controlBbox->addWidget(playPauseButton);
   connect(playPauseButton, SIGNAL(clicked(bool)), this, SLOT(togglePlay()));
   connect(player, SIGNAL(stateChanged(QMediaPlayer::State)), this,
           SLOT(updatePlayPauseButton(QMediaPlayer::State)));
 
   timeLabel = new QLabel();
+  timeLabel->setToolTip("position in video/video duration");
   controlBbox->addWidget(timeLabel);
   connect(player, SIGNAL(positionChanged(qint64)), this,
           SLOT(updateTimeLabel()));
   updateTimeLabel();
 
   muteButton = new QPushButton();
+  muteButton->setToolTip("mute");
   controlBbox->addWidget(muteButton);
   connect(muteButton, SIGNAL(clicked(bool)), this, SLOT(toggleMute()));
   toggleMute();
 
   auto volume = new QSlider(Qt::Horizontal);
+  volume->setToolTip("volume");
   controlBbox->addWidget(volume);
   const int volumeWidth = 40;
   volume->setMinimumWidth(volumeWidth);

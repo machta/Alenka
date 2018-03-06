@@ -270,7 +270,7 @@ void SyncDialog::changeEnableControls(bool enable) {
  * sendSyncMessage() to break the deadlock.
  */
 void SyncDialog::receiveSyncMessage(const QByteArray &message) {
-  if (nullptr == file || !shouldSynchronize)
+  if (!file || !shouldSynchronize)
     return;
 
   const int position = static_cast<int>(unpackMessage(message));
@@ -299,7 +299,7 @@ void SyncDialog::receiveSyncMessage(const QByteArray &message) {
  * back again.
  */
 void SyncDialog::sendSyncMessage() {
-  if (nullptr == file || !shouldSynchronize)
+  if (!file || !shouldSynchronize)
     return;
 
   const int position = OpenDataFile::infoTable.getPosition();
