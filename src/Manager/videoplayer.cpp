@@ -130,7 +130,10 @@ void VideoPlayer::updateErrorLabel(const QMediaPlayer::Error err) {
   QString msg, color = "black";
 
   if (err != QMediaPlayer::NoError) {
-    msg = " (" + player->errorString() + ")";
+    msg = player->errorString();
+    if (msg.isEmpty())
+        msg = "Unknown error";
+    msg = " (" + msg + ")";
     color = "red";
   }
 
