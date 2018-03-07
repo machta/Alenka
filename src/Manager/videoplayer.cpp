@@ -288,13 +288,15 @@ void VideoPlayer::buildUI() {
           SLOT(updateErrorLabel(QMediaPlayer::Error)));
   updateErrorLabel(QMediaPlayer::NoError);
 
+  // This must be here so that the help is pinned to the right.
+  controlBbox->addStretch(1);
+
   auto helpLink =
       new HelpLink("https://github.com/machta/Alenka/wiki/"
                    "User-Manual#video-player----video-file-synchronization",
                    "User Manual: Video Player");
   controlBbox->addWidget(helpLink);
 
-  controlBbox->addStretch(1);
   box->addLayout(controlBbox);
   setLayout(box);
 }
