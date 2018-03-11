@@ -7,7 +7,7 @@
 
 #include <sstream>
 
-#include <QVideoWidget>
+#include <QtMultimediaWidgets/QVideoWidget>
 #include <QtWidgets>
 
 using namespace AlenkaFile;
@@ -132,7 +132,7 @@ void VideoPlayer::updateErrorLabel(const QMediaPlayer::Error err) {
   if (err != QMediaPlayer::NoError) {
     msg = player->errorString();
     if (msg.isEmpty())
-        msg = "Unknown error";
+      msg = "Unknown error";
     msg = " (" + msg + ")";
     color = "red";
   }

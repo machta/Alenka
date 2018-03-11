@@ -41,7 +41,9 @@ template <typename T> inline std::string errorCodeToString(T val) {
 namespace {
 
 template <typename T>
-void CEC(T val, T expected, std::string message, const char *file, int line) {
+void checkErrorCodeImpl(const T val, const T expected,
+                        const std::string &message, const char *const file,
+                        const int line) {
   std::stringstream ss;
 
   ss << "Unexpected error code: ";
@@ -56,7 +58,8 @@ void CEC(T val, T expected, std::string message, const char *file, int line) {
 }
 
 template <typename T>
-void CNEC(T val, std::string message, const char *file, int line) {
+void checkNotErrorCodeImpl(const T val, const std::string &message,
+                           const char *const file, const int line) {
   std::stringstream ss;
 
   ss << "Error code returned ";
@@ -79,7 +82,7 @@ void CNEC(T val, std::string message, const char *file, int line) {
   if ((val_) != (expected_)) {                                                 \
     std::stringstream ss;                                                      \
     ss << message_;                                                            \
-    CEC(val_, expected_, ss.str(), __FILE__, __LINE__);                        \
+    checkErrorCodeImpl(val_, expected_, ss.str(), __FILE__, __LINE__);         \
   }
 
 /**
@@ -91,7 +94,7 @@ void CNEC(T val, std::string message, const char *file, int line) {
   if ((val_) == (notExpected_)) {                                              \
     std::stringstream ss;                                                      \
     ss << message_;                                                            \
-    CNEC(val_, ss.str(), __FILE__, __LINE__);                                  \
+    checkNotErrorCodeImpl(val_, ss.str(), __FILE__, __LINE__);                 \
   }
 
 #ifndef NDEBUG

@@ -34,9 +34,9 @@
 #include "signalviewer.h"
 #include "spikedetsettingsdialog.h"
 
-#include <QQmlContext>
-#include <QQuickItem>
-#include <QQuickWidget>
+#include <QtQml/QQmlContext>
+#include <QtQuick/QQuickItem>
+#include <QtQuickWidgets/QQuickWidget>
 #include <QtWidgets>
 
 #include <algorithm>
@@ -171,17 +171,17 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   filterManager = new FilterManager(this);
   filterManagerDockWidget->setWidget(filterManager);
 
-  auto vieoPlayerDockWidget = new QDockWidget("Video Player", this);
-  vieoPlayerDockWidget->setObjectName("Video Player QDockWidget");
+  auto videoPlayerDockWidget = new QDockWidget("Video Player", this);
+  videoPlayerDockWidget->setObjectName("Video Player QDockWidget");
   videoPlayer = new VideoPlayer(this);
-  vieoPlayerDockWidget->setWidget(videoPlayer);
+  videoPlayerDockWidget->setWidget(videoPlayer);
 
   addDockWidget(Qt::RightDockWidgetArea, trackManagerDockWidget);
   tabifyDockWidget(trackManagerDockWidget, eventManagerDockWidget);
   tabifyDockWidget(eventManagerDockWidget, eventTypeManagerDockWidget);
   tabifyDockWidget(eventTypeManagerDockWidget, montageManagerDockWidget);
   tabifyDockWidget(montageManagerDockWidget, filterManagerDockWidget);
-  tabifyDockWidget(filterManagerDockWidget, vieoPlayerDockWidget);
+  tabifyDockWidget(filterManagerDockWidget, videoPlayerDockWidget);
 
   // Construct File actions.
   QAction *openFileAction = new QAction("&Open File...", this);
@@ -626,7 +626,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   windowMenu->addAction(eventTypeManagerDockWidget->toggleViewAction());
   windowMenu->addAction(montageManagerDockWidget->toggleViewAction());
   windowMenu->addAction(filterManagerDockWidget->toggleViewAction());
-  windowMenu->addAction(vieoPlayerDockWidget->toggleViewAction());
+  windowMenu->addAction(videoPlayerDockWidget->toggleViewAction());
 
   windowMenu->addSeparator();
   windowMenu->addAction(fileToolBar->toggleViewAction());

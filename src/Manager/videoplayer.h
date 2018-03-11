@@ -3,8 +3,8 @@
 
 #include <QWidget>
 
-#include <QMediaPlayer>
 #include <QUrl>
+#include <QtMultimedia/QMediaPlayer>
 
 #include <vector>
 

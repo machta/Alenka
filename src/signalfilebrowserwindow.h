@@ -3,7 +3,7 @@
 
 #include "DataModel/infotable.h"
 
-#include <QMainWindow>
+#include <QtWidgets/QMainWindow>
 
 #include <functional>
 #include <memory>
