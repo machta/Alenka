@@ -3,13 +3,29 @@ int label(int i) {
   return i;
 }
 
+bool contains(int e, int* arr, int n) {
+  for (int i = 0; i < n; ++i) {
+    if (e == arr[i])
+      return true;
+  }
+  return false;
+}
+
+// Sum channels in range of indexes [from, to] but skip all indexes contained in
+// an array.
+float sumSkip(int from, int to, int* skipIndexes, int skipIndexesN, PARA) {
+  float sum = 0;
+  for (int i = from; i <= to; ++i) {
+    if (!contains(i, skipIndexes, skipIndexesN))
+      sum += in(i);
+  }
+  return sum;
+}
+#define sumSkip(a_, b_, c_, d_) sumSkip(a_, b_, c_, d_, PASS)
+
 // Sum channels in range of indexes [from, to].
 float sum(int from, int to, PARA) {
-  float tmp = 0;
-  for (int i = from; i <= to; ++i) {
-    tmp += in(i);
-  }
-  return tmp;
+  return sumSkip(from, to, NULL, 0);
 }
 #define sum(a_, b_) sum(a_, b_, PASS)
 
