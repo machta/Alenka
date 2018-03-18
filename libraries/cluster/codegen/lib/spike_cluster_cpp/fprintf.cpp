@@ -24,7 +24,7 @@ int cfprintf() {
   nbytesint = 0;
   fileManager(&filestar, &autoflush);
   if (!(filestar == b_NULL)) {
-    nbytesint = fprintf(filestar, cfmt);
+    nbytesint = fprintf(filestar, "%s", cfmt);
     fflush(filestar);
   }
 

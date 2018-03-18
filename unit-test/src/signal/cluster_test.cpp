@@ -2,6 +2,7 @@
 
 #include "../../Alenka-Signal/include/AlenkaSignal/cluster.h"
 
+#include <cmath>
 #include <memory>
 
 using namespace std;

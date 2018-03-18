@@ -47,6 +47,8 @@ endif()
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   set(WARNINGS "-Wall -pedantic -Wextra")# -Wconversion")
+  # Supress some gcc warnings.
+  set(NO_WARNINGS "-Wno-ignored-attributes")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR
   "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
   set(WARNINGS "-Wall -pedantic -Wextra")# -Wconversion")
@@ -184,7 +186,8 @@ set(SRC
   src/tracklabelbar.cpp
   src/tracklabelbar.h
 )
-set_source_files_properties(${SRC} PROPERTIES COMPILE_FLAGS ${WARNINGS})
+set_source_files_properties(${SRC} PROPERTIES COMPILE_FLAGS
+  "${WARNINGS} ${NO_WARNINGS}")
 
 add_executable(Alenka ${SRC} ${RESOURCES} ${SRC_BOOST_PO}
   libraries/spikedet/src/CResultsModel.cpp)
