@@ -54,12 +54,27 @@ else
 	matio=OK || matio=fail
 fi
 
+if [ -d biosig4c++-1.9.0a ]
+then
+	biosig=skipped
+else
+	curl -L 'https://sourceforge.net/projects/biosig/files/BioSig%20for%20C_C%2B%2B/src/biosig4c%2B%2B-1.9.0a.src.tar.gz/download' > biosig.tar.gz &&
+	tar xvf biosig.tar.gz &&
+	rm -rf biosig.tar.gz &&
+	biosig=OK || biosig=fail
+fi
+
 # Configuration.
 
-cd libsamplerate && # TODO: Perhaps it doesn't need to be run again, once the header is created.
+cd libsamplerate # TODO: Perhaps it doesn't need to be run again, once the header is created.
 ./autogen.sh || cp -v Win32/config.h src &&
-cd - &&
 libsamplerate=OK || libsamplerate=fail
+cd -
+
+cd biosig4c++-1.9.0a
+./configure && make libbiosig.a &&
+biosigConfig=OK || biosigConfig=fail
+cd -
 
 echo
 echo =========== Git submodules ===========
@@ -72,9 +87,11 @@ echo ======================================
 echo "alglib-3.10.0           $alglib"
 echo "$B              $boost"
 echo "matio-msvc2015          $matio"
+echo "biosig4c++-1.9.0a       $biosig"
 echo
 echo ======= Configuration summary ========
 echo "Library path            Status"
 echo ======================================
 echo "libsamplerate           $libsamplerate"
+echo "biosig4c++-1.9.0a       $biosigConfig"
 
