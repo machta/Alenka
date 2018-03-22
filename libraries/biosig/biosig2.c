@@ -1152,20 +1152,6 @@ int biosig_set_startdatetime(int handle, const struct tm *T) {
 }
 */
 
-int edf_set_startdatetime(int handle, int startdate_year, int startdate_month, int startdate_day, int starttime_hour, int starttime_minute, int starttime_second) {
-	if (handle<0 || handle >= hdrlistlen || hdrlist[handle].hdr==NULL) return(-1);
-	HDRTYPE *hdr = hdrlist[handle].hdr;
-	struct tm T;
-	T.tm_year = startdate_year;
-	T.tm_mon  = startdate_month;
-	T.tm_mday = startdate_day;
-	T.tm_hour = starttime_hour;
-	T.tm_min  = starttime_minute;
-	T.tm_sec  = starttime_second;
-	hdr->T0   = tm_time2gdf_time(&T);
-	return (0);
-}
-
 const char *biosig_get_patientname(int handle)  {
 	if (handle<0 || handle >= hdrlistlen || hdrlist[handle].hdr==NULL) return(NULL);
 	return(hdrlist[handle].hdr->Patient.Name);
@@ -1208,36 +1194,6 @@ int biosig_set_gender(int handle, int gender) {
 	default:
 		return(0); 
 	}
-}
-
-/*
-int biosig_get_birthdate(int handle, struct tm *T) {
-	if (handle<0 || handle >= hdrlistlen || hdrlist[handle].hdr==NULL) return(-1);
-	HDRTYPE *hdr = hdrlist[handle].hdr;
-	gdf_time2tm_time_r(hdr->Patient.Birthday, T);
-	return (0);
-}
-
-int biosig_set_birthdate(int handle, const struct tm *T) {
-	if (handle<0 || handle >= hdrlistlen || hdrlist[handle].hdr==NULL) return(-1);
-	HDRTYPE *hdr = hdrlist[handle].hdr;
-	hdr->Patient.Birthday = tm_time2gdf_time(T);
-	return (0);
-}
-*/
-
-int edf_set_birthdate(int handle, int birthdate_year, int birthdate_month, int birthdate_day) {
-	if (handle<0 || handle >= hdrlistlen || hdrlist[handle].hdr==NULL) return(-1);
-	HDRTYPE *hdr = hdrlist[handle].hdr;
-	struct tm T;
-	T.tm_year = birthdate_year;
-	T.tm_mon  = birthdate_month;
-	T.tm_mday = birthdate_day;
-	T.tm_hour = 12;
-	T.tm_min  = 0;
-	T.tm_sec  = 0;
-	hdr->Patient.Birthday = tm_time2gdf_time(&T);
-	return (0);
 }
 
 int biosig_set_patient_additional(int handle, const char *patient_additional) {
@@ -1523,8 +1479,52 @@ int edfwrite_annotation(int handle, size_t onset, size_t duration, const char *d
 	return (biosig_write_annotation(handle, onset*1e-4*hdr->EVENT.SampleRate, duration*1e-4*hdr->EVENT.SampleRate, description));
 }
 
+int edf_set_startdatetime(int handle, int startdate_year, int startdate_month, int startdate_day, int starttime_hour, int starttime_minute, int starttime_second) {
+	if (handle<0 || handle >= hdrlistlen || hdrlist[handle].hdr==NULL) return(-1);
+	HDRTYPE *hdr = hdrlist[handle].hdr;
+	struct tm T;
+	T.tm_year = startdate_year;
+	T.tm_mon  = startdate_month;
+	T.tm_mday = startdate_day;
+	T.tm_hour = starttime_hour;
+	T.tm_min  = starttime_minute;
+	T.tm_sec  = starttime_second;
+	hdr->T0   = tm_time2gdf_time(&T);
+	return (0);
+}
+
 /*
-   TODO: the following functions neeed to be implemented 	
+int biosig_get_birthdate(int handle, struct tm *T) {
+	if (handle<0 || handle >= hdrlistlen || hdrlist[handle].hdr==NULL) return(-1);
+	HDRTYPE *hdr = hdrlist[handle].hdr;
+	gdf_time2tm_time_r(hdr->Patient.Birthday, T);
+	return (0);
+}
+
+int biosig_set_birthdate(int handle, const struct tm *T) {
+	if (handle<0 || handle >= hdrlistlen || hdrlist[handle].hdr==NULL) return(-1);
+	HDRTYPE *hdr = hdrlist[handle].hdr;
+	hdr->Patient.Birthday = tm_time2gdf_time(T);
+	return (0);
+}
+*/
+
+int edf_set_birthdate(int handle, int birthdate_year, int birthdate_month, int birthdate_day) {
+	if (handle<0 || handle >= hdrlistlen || hdrlist[handle].hdr==NULL) return(-1);
+	HDRTYPE *hdr = hdrlist[handle].hdr;
+	struct tm T;
+	T.tm_year = birthdate_year;
+	T.tm_mon  = birthdate_month;
+	T.tm_mday = birthdate_day;
+	T.tm_hour = 12;
+	T.tm_min  = 0;
+	T.tm_sec  = 0;
+	hdr->Patient.Birthday = tm_time2gdf_time(&T);
+	return (0);
+}
+
+/*
+   TODO: the following functions need to be implemented
 */
 int edf_set_recording_additional(int handle, const char *recording_additional) {
 	return fprintf(stderr,"this function is not implemented, yet.\n");
