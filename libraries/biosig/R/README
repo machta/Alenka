@@ -1,0 +1,26 @@
+
+= Introduction =
+ 
+This provides an interface of libbiosig to R. 
+Currently, only the data samples are loaded. 
+
+
+= Installation =
+# 1) Make sure libbiosig and libbiosig2 are installed 
+     
+ 	make -C .. && sudo make -C .. install      
+  
+# 2) Compile R binding
+
+	make
+#    or 
+	R CMD SHLIB sload.c -lbiosig -lbiosig2
+
+# 3) Use of sload in R 
+       
+	dyn.load("sload.so")
+	sload <- function(filename,channels=0) {
+	  result <- .Call("sload", filename, channels=0)
+	  return(result)
+	}
+

@@ -1,0 +1,77 @@
+
+== Compiling on Debian and derivatives ===============
+
+== 1. REQUIREMENTS ==
+
+   sudo apt-get install libsuitesparse-dev libz-dev
+
+
+== 2. DOWNLOAD ==
+   and extract biosig4c++ and change into directory
+   cd biosig4c++/
+
+or checkout the latest version from the git repository
+
+   git clone git://git.code.sf.net/p/biosig/code biosig-code
+   cd biosig-code/biosig4c++/
+
+== 3. COMPILATION ==
+
+   make libbiosig && make install
+   make mma
+
+If it fails (file mma/sload not available), you might need to edit
+mma/Makefile (line 18)
+
+  MLINKDIR=
+
+set it to the directory of the developerkit of your mathematica
+installation.
+
+Try again
+  make mma
+
+
+== 4. INSTALL ==
+copy the files
+
+  mma/$SystemID/sload.exe mma/*.nb
+
+into your working directory.
+
+== 5. USAGE ==
+Start mathematica
+
+   link=Install["sload.exe"]
+   ?sload
+
+mySLOAD.nb demonstrates how to use sload in mathematica.
+
+
+=== OTHER PLATFORMS === 
+   are currently not maintained. The information below might be outdated.
+
+
+   = Cross-Compiling on Linux for Windows =
+   Prerequisites:
+	Cross-compiler (e.g. mxe)
+        wine 
+	Mathlink developer files from Windows 
+		e.g. C:\Program Files\Wolfram Research\Mathematica\7.0\SystemFiles\Links\MathLink\DeveloperKit\Windows*
+	to the linux computer (copyied them into the corresponding Mathematica directory on linux)
+		e.g. /usr/local/Wolfram/gridMathematicaServer/7.0/SystemFiles/Links/MathLink/DeveloperKit/
+	Adapt the user-defined variables in Makefile.win32
+	and run 
+
+    make sload.exe
+
+
+===== TESTING =========================================
+The installation can be tested by starting Mathematica, loading and running test.nb. 
+
+
+Copyright (C) 2011,2013,2015 Alois Schloegl
+[1] http://pub.ist.ac.at/~schloegl/biosig/TESTED
+
+
+

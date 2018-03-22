@@ -1,0 +1,23 @@
+This is Biosig's interface to Mathematica through the MathLink interface.
+
+The function sload.exe provides interface for Mathematica through MathLink to 
+the biosig4c+/libbiosig library. The supported data formats according to the column C/C++ in [1] 
+
+Usage:
+  Start mathematica and type
+
+   link=Install["sload.exe"]
+   ?sload
+
+
+Compilation:
+   see INSTALL file
+
+
+Copyright (C) 2011,2015 Alois Schloegl
+[1] http://pub.ist.ac.at/~schloegl/biosig/TESTED
+
+
+
+
+ 

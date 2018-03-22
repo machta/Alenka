@@ -1,0 +1,13 @@
+Name: mexbiosig
+Version: 1.7.2
+Date: 2015-08-31
+Author: Alois Schloegl <alois.schloegl@ist.ac.at>
+Maintainer: Alois Schloegl
+Title: The mexBiosig toolbox
+Description: Accessing Biosig files through libbiosig's mex-files
+Depends: octave (> 3.2.0)
+SystemRequirements: libbiosig (> 1.3.0)
+License: GPLv3+
+Url: http://pub.ist.ac.at/~schloegl/matlab/biosig
+Autoload: yes
+

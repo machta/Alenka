@@ -1,0 +1,55 @@
+.TH pu 1
+.SH NAME
+pu/phyisicalunits - encodes and de-codes physical units a according to ISO/IEEE 11073-10101:2004 Tables A6.1 and A6.3
+
+.SH SYNOPSIS
+  pu [units_or_codes]
+
+.SH DESCRIPTION
+The output returns the <physical unit>:<TAB><decimal code><TAB><hexadecimal code><TAB><scaling><TAB><physical unit w/o prefix>, where <TAB> represents the character ascii(9)
+
+.SH Examples:
+  Encoding of "microVolts", using text representation, decimal encoding and hexadecimal encoding:
+  pu mV
+        uV	4275	0x10b3	1e-06	V
+
+  pu 4275
+        uV	4275	0x10b3	1e-06	V
+
+  pu 0x10b3
+        uV	4275	0x10b3	1e-06	V
+
+  Text representation containing spaces need to be quoted
+  pu "kg l-1"
+        kg l-1	2051	0x0803	1000	g l-1
+
+  A list of units can be converted using multiple input arguments
+  pu mV nA 4180 kg dag degree rpm "mol mol-1" "kg l-1"
+        mV	4274	0x10b2	0.001	V
+        nA	4180	0x1054	1e-09	A
+        nA	4180	0x1054	1e-09	A
+        kg	1731	0x06c3	1000	g
+        dag	1729	0x06c1	10	g
+        degree	736	0x02e0	1	degree
+        rpm	6816	0x1aa0	1	rpm
+        mol mol-1	864	0x0360	1	mol mol-1
+        kg l-1	2051	0x0803	1000	g l-1
+
+   pu `seq 0 65535` |grep -v nan |grep -v null
+        shows s complete table of defined units
+
+.SH AUTHOR
+Alois Schloegl
+
+.SH REPORTING BUGS 
+Report bugs to <biosig-general@lists.sourceforge.net>
+
+.SH COPYRIGHT
+Copyright (C) 2008-2015 Alois Schloegl   
+License GPLv3+:  GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This  is  free  software:  you  are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+.SH RESOURCES
+http://biosig.sf.net
+

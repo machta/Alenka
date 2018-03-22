@@ -1,0 +1,236 @@
+
+INSTALLATION
+============
+
+Quick start for Debian/Linux installing libbiosig:
+
+# Requirements:
+        apt-get install libb64-dev libsuitesparse-dev zlib1g-dev
+
+# compiling libbiosig
+   ./configure && make   # compile libbiosig
+
+# installing libbiosig in local directory
+   make install 	# install libbiosig in <DIR>/lib and <DIR>/include
+
+# installing in /usr/local (default prefix is "/usr/local/")
+   sudo make install
+
+# compiling of mexbiosig for Matlab and Octave
+   MATLABDIR=/usr/local/MATLAB/R20##x/bin make mex4m
+   make mex4o
+
+# Compiling for python
+   make python
+
+# Compiling save2gdf and biosig_fhir
+   make tools
+   sudo make install_tools
+
+
+
+General remarks:
+----------------
+
+The following DEFINES in 'Makefile" are recommended and required:
+ -D=HAVE_CHOLMOD        used for re-referencing of data, REQUIREMENT: cholmod from libsuitesparse
+ -D=HAVE_ZLIB	        used to handle gzip-ped files,  REQUIREMENT: zlib (http://zlib.net/)
+ -D=WITH_GSL	        provides interface to GSL, REQUIREMENT: GNU Scientific Library (GSL), 
+ -D=WITH_FAMOS	        includes (partial) support for FAMOS format 
+ -D=__4HAERTEL__	support for special flavor of FAMOS format (experimental) 
+
+ Other flags are used for experimental development 
+ -D=WITH_DICOM, -D=WITH_GDCM 	experimental DICOM support 
+
+If some libraries are not available on your system, remove the corresponding DEFINES in Makefile. 
+
+
+
+Prerequisites: 
+--------------
+P0) gnu c compiler (gcc, g++, gnu make, gawk). It will work on unix like systems (Linux, BSD, etc)
+    mingw, cygwin. 
+    and NO, MSVC is not suitable for compiling libbiosig !!!
+
+P1) for building libbiosig, save2gdf, mma (mathematica) and mex (matlab)  
+	sudo apt-get install subversion libz-dev libsuitesparse-dev libcurl-dev gawk g++ gcc 
+	svn co https://biosig.svn.sourceforge.net/svnroot/biosig/trunk/biosig4c++ 
+
+        For ttl2trig, also the package 
+           libasound-dev 
+        is required. 
+
+P2) for building SigViewer  
+	sudo apt-get install qt4-dev-tools  libqt4-dev  libqt4-qt3support 
+	svn co https://sigviewer.svn.sourceforge.net/svnroot/sigviewer/trunk sigviewer
+
+
+P3) Cross-compilation on Linux for Win32/Win64-target:
+	aptitude install -R autoconf automake bash bison bzip2 \
+                    cmake flex g++ intltool make sed \
+                    libtool openssl libssl-dev \
+                    libxml-parser-perl patch perl \
+                    pkg-config scons unzip wget \
+                    xz-utils yasm mercurial 
+	git clone https://github.com/schloegl/mxe.git
+	cd mxe
+	make biosig stimfit
+
+
+
+Platform specific information
+-----------------------------
+# Linux
+You need GNU gcc, g++ (ver>4.0), make, zlib (if you do not have zlib, do not define WITH_ZLIB), 
+libsuitesparse (if you do not have libsuitesparse, do not define WITH_CHOLMOD).
+
+Running make compiles the converter.
+  make 		 	# makes the file format converter
+  make save2gdf 	# makes the file format converter
+  make win32		# makes the file format converter for Win32
+  make win64		# makes the file format converter for Win64
+  make physicalunits 	# makes the en/decoder for physical units
+  make lib            	# makes library
+  make mex4o 		# makes mexSLOAD for Octave (requires Octave-headers2.9 or higher)
+  make mex4m 		# makes mexSLOAD for Matlab (path_to_mex need to be defined in Makefile)
+  make biosig4python 	# compiles the BioSig interface for Python (requires SWIG and Python)
+  make all  		# all of the above
+  make sigviewer 	# recompiles SigViewer (requires qmake and Qt, the sources of sigviewer must be in ../sigviewer)
+  make testscp 
+  make testhl7	
+  make test		# tests HL7<->SCP, SCP<->GDF, GDF<->HL7 converters
+  make test6		# tests bidirectional conversion between 6 differerent data formats	
+
+# Mac OS X (tested under 10.7 Lion)
+ 1. First, get Xcode from the App Store. You need to create an Apple Developer Account (which is free) to install the command line tools (see next step).
+ 2. In Xcode, go to Preferences - Downloads - Components - Install Command Line Tools.
+ 3. Install MacPorts from http://www.macports.org/.
+ 4. In a terminal, type "sudo port install gawk".
+ 5. In a terminal, type "sudo port install SuiteSparse".
+
+Optional (if you want a good IDE, this is recommended):
+ 6. Install Eclipse from http://www.eclipse.org/.
+ 7. Install CDT (in Eclipse, go to Help - Install New Software...).
+    Activate the CDT repository by clicking on "Available Software Sites" and activate "CDT Juno".
+    After clicking OK, select "-- All Available Sites --" and install "CDT Main Features".
+ 8. In Eclipse, go to Preferences - C/C++ - Build - Environment - Add...
+    Enter PATH in the Name text box and /opt/local/bin:/opt/local/sbin in the Value text box.
+ 9. To load the project, go to File - New - Makefile Project with Existing Code.
+    Fill in the name of the project (for example, biosig4c++) and enter the root folder containing the source code of biosig4c++.
+10. In the Project Explorer, you can now right-click on the project and choose Clean or Build to start compiling the project.
+
+
+# MinGW Crosscompiler on Debian/Ubuntu for Windows  
+- aptitude install mingw32 mingw32-binutils mingw32-runtime
+
+# mxe/mce-w64 on GNU/Linux for Windows  
+Prerequisites P3) and/or P4) (see above)
+- modify Makefile and set variable CROSS for Win32 (and CROSS64 for Win64) to the proper value e.g.  
+   CROSS   = $(HOME)/src/mxe/usr/bin/i686-pc-mingw32
+   CROSS64 = $(HOME)/src/mce-w64/usr/bin/x86_64-w64-mingw32
+
+- run the command  
+   make win32/save2gdf.exe      # converter between data formats
+   make win32/libbiosig.dll     # dynamic library 
+   make win32/libbiosig.a       # static library    
+   make win32mma		# Win32/Mathematica interface
+   make mexw32			# Win32/Matlab mex interface 
+   make win32                   # all of the above
+   make win64/save2gdf.exe      # converter between data formats 64bit Windows
+   make mexw64			# Win64/Matlab mex interface 
+
+# Windows + MinGW
+Prerequisites P5) (see above)
+Support for FEF, ZLIB, CHOLMOD is turned off, because of lack of support in MinGW. 
+In general, Makefile.win32 should be used. 
+- Run the make command 
+   make -f Makefile.win32 libbiosig.a
+   make -f Makefile.win32 save2gdf.exe
+   make -f Makefile.win32 sigviewer
+   make -C mma -f Makefile.win32 sload.exe	# mathematica interface
+
+You can also start compilation of sigviewer. 
+   First, you need to have the sigviewer sources in ..\sigviewer and 
+   Then, you need to run once qmake in ..\sigviewer\src\ 
+   make -f Makefile.win32 sigviewer 
+
+# Matlab/Win32 using MinGW on Windows
+do the steps in "Windows+MinGW"
+install and configure gnumex (from http://gnumex.sf.net)  
+  make libbiosig.a
+  start matlab
+  >> gnumex 	% configure mingw for mex
+  >> mex mexSLOAD.cpp libbiosig \mingw\lib\libws2_32.a
+	
+# Mathematica/Win32 using MinGW on Windows
+Adapt user-specified variables (directory names) in Makefile.win32 and mma/Makefile.win32	
+  cd biosig4c++/mma
+  make -f Makefile.win32 sload.exe
+	
+# Windows + Cygwin
+Currently, only the file converter save2gdf is supported.
+- install Cygwin
+- within Cygwin install gcc4 g++4, zlib, suitesparse/cholmod and make 
+- run the make command 
+   make save2gdf 
+
+# MSVC - Microsoft Visual C++
+  MSVC is currently not supported. You are on your own.
+
+# Other platforms (Windows+MSVC, MacOSX, Solaris, etc. )
+  some tests on other Unix-like systems have been successful. 
+
+	
+Installation: 
+-------------
+run as root 
+  make 
+  make install 		# installs save2gdf, save2scp, save2aecg, 
+  make install_octave	# installs mexSLOAD.mex in /usr/local/share/octave/site-m/
+  make install_sigviewer	# installs sigviewer
+ 
+
+Execution:
+----------
+# if test.gdf exists, some header information is displayed
+save2gdf test.gdf     		
+
+# help and usage information 
+save2gdf -h
+
+# converts a data file into a GDF format (destination
+save2gdf PFE103.scp t5.gdf     		
+
+# converts a data file into a SCP format (destination
+save2scp t5.gdf t5.scp      		
+save2gdf -f=SCP t5.gdf t5.scp      		
+
+# converts a data file into a HL7aECG format (destination
+save2aecg t5.gdf t5.hl7      		
+save2gdf -f=HL7aECG t5.gdf t5.hl7
+
+# load matlab into octave or matlab
+start octave or matlab
+addpath path_to_mexSLOAD.mex
+[data,HDR] = mexSLOAD(filename); % loads data and header information 
+
+
+Development & Testing:
+----------------------
+There are several testing functions included. 
+The following commands test the converter and should finish without errors.  
+	make test 
+	make testhl7
+	make testscp
+	make test6
+
+The Octave/Matlab script 
+	test0/test01.m 
+tests whether the various data formats give the same results 
+or whether some conversion error has been included.  
+
+
+    Copyright (C) 2005-2013, Alois Schloegl <alois.schloegl@gmail.com>
+    This function is part of the "BioSig for C/C++" repository 
+    (BioSig4C++) at http://biosig.sf.net/ 
+

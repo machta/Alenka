@@ -1,0 +1,39 @@
+.TH BIOSIG_FHIR 1
+.SH NAME
+biosig_fhir - provides fhir binary template for biosignal data
+
+.SH SYNOPSIS
+.B biosig_fhir\ [-json|-xml|-base64]\ <filename>
+
+.SH DESCRIPTION
+
+   reads filename and converts it fhir-(json|xml)-binary-template
+   or a media-type X-biosig/gdf (i.e. base64-encoded GDF stream).
+
+ <filename> is the name of biomedical signal file 
+ Supported OPTIONS are:
+ \-json
+ 	prints metainformation (header, annotations, etc.) in
+        JSON format to standard output
+ \-xml
+ 	prints metainformation (header, annotations, etc.) in
+        XML-based format to standard output
+ \-base64
+ 	encapsulates biosignal data in base64-encoded GDF format. 
+        Supported data formats
+
+.SH AUTHOR
+Alois Schloegl
+
+.SH REPORTING BUGS 
+Report bugs to <biosig-general@lists.sourceforge.net>
+
+.SH COPYRIGHT
+Copyright (C) 2016,2017 Alois Schloegl   
+License GPLv3+:  GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This  is  free  software:  you  are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+.SH RESOURCES
+http://biosig.sf.net
+

@@ -1,0 +1,160 @@
+Introduction:
+---------------
+
+The aim of this repository is providing a C/C++ software library for biomedical signal processing. 
+
+BioSig4C++ provides several tools:  
+
+(1) = LIBRARIES = 
+(1a) "libbiosig" provides a library for accessing different dataformats.
+The supported data formats are listed here:
+   http://pub.ist.ac.at/~schloegl/biosig/TESTED
+A disadvantages is the direct access to internal data structure, which makes it
+difficult to maintain ABI combatibility. External applications should use libbiosig2 instead.
+(1b) "libgdf" is a lightweight version of libbiosig, supporting only the GDF format.
+it requires only GCC not G++ for linking, has potentially much less security loopholes (XML) and bugs, 
+and a much smaller memory footprint, which might be especially useful for embedded devices. 
+It's interface is the same than for libbiosig, namely biosig.h
+(1c) "libbiosig2" is a level 2 interface for managing multiple files,
+It's interface is defined in biosig.h. It can be used to link libbiosig2 compiled with GCC to software compiled with
+MSVisualC++. ABI compatibility is easier to maintain because access to internal data
+structures can be applied only through functions calls and not through pointers.
+(1d) "libphysicalunits" provides conversion tools for physical units from
+ascii text to 16bit integers according to ISO/IEEE 11073-10101:2004 Table A.6.3: Vital signs units of measurements
+text strings are cached for performance reasons, and can be used in a multi-threaded application.
+
+Static and dynamic libraries are build. The Application Programming Interface (API)
+is reasonable stable, changes are managed through marking the modified "deprecated".
+The appliction binary interface (ABI) depends also on external tools and libraries, especially
+access to interal data structures like structs can break ABI compatibility, even when the API is stable.
+Recompiling the application is on solution, but not always feasible. In order to avoid that need,
+it is strongly recommended to use only the level 2 interface, which provides access to the internal
+header data through functions. If only level 2 interface functions are used, it is reasonable
+save to dynamically link libbiosig2.
+
+The build rules are
+	make libbiosig
+which can be installed with
+	sudo make install_libbiosig
+
+The following DEFINES are recommended and require:
+ -D=WITH_CHOLMOD        used for re-referencing of data, REQUIREMENT: cholmod from libsuitesparse
+ -D=WITH_ZLIB	        used to handle gzip-ped files,  REQUIREMENT: zlib (http://zlib.net/)
+There are some more defines to tweak your version.
+ -D=NDEBUG		removes and debugging information 
+ -D=WITH_PTHREAD 	recommended for multi-threaded appliations
+ -D=WITH_GSL	        provides interface to GSL, REQUIREMENT: GNU Scientific Library (GSL), 
+ -D=WITH_FEF	        includes support for FEF-format from CNSystems
+ -D=WITH_FAMOS	        includes (partial) support for FAMOS format 
+ -D=__4HAERTEL__	support for special flavor of FAMOS format (experimental) 
+ Other flags are used for experimental development 
+ -D=WITH_DICOM, -D=WITH_GDCM 	experimental DICOM support 
+ -D=WITH_SCP3		experimental: testing next SCP version as discussed in PT-SCPECG
+ -D=WITH_TIMESTAMPCHANNEL add an extra channel in HEKA format containing TIMESTAMPS
+ -D=WITH_TIMESTAMPEVENT timestamps of sweep onset in HEKA format stored in EVENT.DUR with EVENT.TYP==0x7ffe 
+ 
+If some libraries are not available on your system, remove the corresponding DEFINES in Makefile. 
+
+
+(2) = converter and tools =
+contains several tools for data conversion,
+	save2gdf: is a converter between different file formats, including but not limited to
+		SCP-ECG(EN1064), HL7aECG (FDA-XML), GDF, EDF, BDF, CWFB and others
+		save2gdf can be also used to upload or retrieve data
+		from a bscs server, and to display the header information
+		in ascii and in JSON format.
+	biosig2fhir: is a tool than converts biosig data into a hl7/fhir binary template,
+		the header information is encoded in JSON format, the data is converted
+		into a base64-encoded GDF (OeNorm K2202:2015) formatted file.
+	pu	is a tool to show the encoding of physical units according to ISO/IEEE 11073
+
+These are statically linked and can be build with:
+   make tools
+
+
+(3) language bindings and foreign function interfaces:
+(3a) "mexSLOAD" is a MEX-interface for Octave and Matlab
+and is linked statically to libbiosig. It can be build with
+    make mex4o   # octave
+    make mex4m   # matlab
+for details see mex/README.
+
+(3b) "python" is an interface to python and dynamically linked to libbiosig.
+Requirement: python, python-dev, python-numpy
+for Debian/Ubuntu:
+	sudo apt-get install python python-dev python-numpy
+It can be build with any of the following commands:
+	make python
+	make -C python build
+Use of the interface is shown in ./python/demo2.py
+
+(3c) mathematica
+is linked dynamically to libbiosig and can be build with:
+	make mma
+see also mma/README, and mma/sload, mma/hdrinfo.nb, mma/mySLOAD.nb for more details.
+
+(3z) other language interfaces
+Interfaces to other languages (including Java, PHP, Perl and TCL) are considered,
+but these still need to be implemented and tested.
+
+
+(5) = SigViewer =
+Requirement: qmake, Qt4
+   an important patch to overcome several limitations (event handling beyond 16.7 Mio samples)
+   is applied. 
+
+
+(6) Precompiled binaries for Win32
+   win32/save2gdf.exe  binary converter
+   win32/libbiosig.{lib,dll}  static and dynamic library (requires zlib and libws2_32)
+   mma/sload.exe     Mathematica binding through Mathlink interface
+   mex/mexSLOAD.mexw32   Mex-file for Win32/Matlab
+
+
+The internal data structure resemble the header structure similar to
+  http://biosig.svn.sourceforge.net/viewvc/biosig/trunk/biosig/doc/header.txt
+and is defined in
+  http://biosig.svn.sourceforge.net/viewvc/biosig/trunk/biosig4c%2B%2B/biosig.h
+(see HDRTYPE and CHANNEL_TYPE)
+
+Encoding of Event/Markers/Annotations is available here: 
+  http://pub.ist.ac.at/~schloegl/matlab/eeg/EventCodes.html
+
+The latest list of supported data formats is available here: 
+  http://pub.ist.ac.at/~schloegl/biosig/TESTED
+
+
+File(s): 
+-------------
+    README 	this file
+    biosig.h	definition of external biosig interface	
+    biosig-dev.h definition of internal functions	
+    biosig.c	SOPEN, SREAD, SWRITE, SEOF, SCLOSE functions 
+    save2gdf.c	converter between various file formats.
+    physicalunit.c         en-/decodes physical units according to ISO/DIS 11073-10101:2003
+    mexSLOAD.cpp is a MEX-File for loading data in Octave and Matab. 
+    t210/*	reading SCP,FAMOS file format 
+    t220/*      writing SCP file format 
+    t230/*      support of HL7aECG file format 
+    t240/*	Support for CNSystems' File Exchange Format (CNS-FEF), note this is different to CENTS14271 in t241/ 
+    t241/*.asn1	ASN.1 specification of ISO11073-xxxxx and CENTS-14271 (FEF), 
+    test0/*	scripts and functions for testing
+    Makefile	script for compiling and testing under GNU/Linux
+    Makefile.win32	script for compiling and testing on win32 using mingw
+    mex/*       Octave/Matlab binding through MEX-interface
+    mma/*	MathLink interface to mathematica
+    win32/*	library and executables for Windows
+    python/*.py show example and demo
+    src/*.c	applications: flowmon reads data from serial port, ttl2trig reads data from audio card	
+
+
+More information is available at http://biosig.sf.net/
+
+If you have any questions you can also contact the mailinglist  
+https://lists.sourceforge.net/lists/listinfo/biosig-general
+
+
+    Copyright (C) 2005-2017 Alois Schloegl <alois.schloegl@gmail.com>
+    This function is part of the "BioSig for C/C++" repository 
+    (BioSig4C++) at http://biosig.sf.net/ 
+
