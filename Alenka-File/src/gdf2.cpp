@@ -408,7 +408,6 @@ void GDF2::readChannelsFloatDouble(vector<T *> dataChannels,
 
   if (getSamplesRecorded() <= lastSample)
     invalid_argument("GDF2: reading out of bounds");
-
   if (dataChannels.size() < getChannelCount())
     invalid_argument("GDF2: too few dataChannels");
 

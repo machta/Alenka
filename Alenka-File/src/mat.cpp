@@ -361,7 +361,6 @@ void MAT::readChannelsFloatDouble(vector<T *> dataChannels,
 
   if (getSamplesRecorded() <= lastSample)
     invalid_argument("MAT: reading out of bounds");
-
   if (dataChannels.size() < getChannelCount())
     invalid_argument("MAT: too few dataChannels");
 

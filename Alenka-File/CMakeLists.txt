@@ -6,6 +6,11 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 set(BUILD_SHARED_LIBS off CACHE BOOL "")
 
+# Platform specific confuguration.
+if(UNIX)
+  set(ALENKA_USE_BIOSIG ON)
+endif()
+
 # First build all the library dependencies.
 include_directories(../libraries/boost_1_66)
 
@@ -32,6 +37,12 @@ include_directories(../libraries/pugixml/src ../include)
 
 # If you want to use this library, you need to link to these libraries.
 set(LIBS_TO_LINK_ALENKA_FILE alenka-file pugixml matio)
+if(UNIX)
+  set(LIBS_TO_LINK_ALENKA_FILE ${LIBS_TO_LINK_ALENKA_FILE}
+    biosig cholmod)
+    #/usr/lib/libbiosig.a)
+    #${Alenka_SOURCE_DIR}/libraries/biosig/libbiosig.a)
+endif()
 set(LIBS_TO_LINK_ALENKA_FILE ${LIBS_TO_LINK_ALENKA_FILE} PARENT_SCOPE)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${DEBUG_FLAGS}")
@@ -43,6 +54,7 @@ file(GLOB SRC_BOOST_FS ../libraries/boost_1_66/libs/filesystem/src/*.cpp)
 
 set(SRC
   include/AlenkaFile/abstractdatamodel.h
+  include/AlenkaFile/biosigfile.h
   include/AlenkaFile/datafile.h
   include/AlenkaFile/datamodel.h
   include/AlenkaFile/edf.h
@@ -58,4 +70,9 @@ set(SRC
 )
 set_source_files_properties(${SRC} PROPERTIES COMPILE_FLAGS ${WARNINGS})
 
-add_library(alenka-file STATIC ${SRC} ${SRC_BOOST_S} ${SRC_BOOST_FS})
+if(ALENKA_USE_BIOSIG)
+  set(SRC_BIOSIG src/biosigfile.cpp)
+else()
+endif()
+
+add_library(alenka-file STATIC ${SRC} ${SRC_BIOSIG} ${SRC_BOOST_S} ${SRC_BOOST_FS})

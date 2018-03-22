@@ -308,6 +308,50 @@ void EDF::saveAs(const string &filePath, DataFile *sourceFile) {
   saveAsWithType(filePath, sourceFile, nullptr);
 }
 
+template <typename T>
+void EDF::readChannelsFloatDouble(vector<T *> dataChannels,
+                                  uint64_t firstSample, uint64_t lastSample) {
+  assert(firstSample <= lastSample && "Bad parameter order.");
+  assert(readChunk > 0);
+
+  if (getSamplesRecorded() <= lastSample)
+    invalid_argument("EDF: reading out of bounds");
+  if (dataChannels.size() < getChannelCount())
+    invalid_argument("EDF: too few dataChannels");
+
+  int handle = edfhdr->handle;
+  long long err;
+
+  for (unsigned int i = 0; i < getChannelCount(); ++i) {
+    err = edfseek(handle, i, firstSample, EDFSEEK_SET);
+
+    if (err != static_cast<long long>(firstSample))
+      throwDetailed(runtime_error("edfseek failed"));
+  }
+
+  uint64_t nextBoundary = (firstSample + readChunk - 1 / readChunk);
+
+  while (firstSample <= lastSample) {
+    uint64_t last = min(nextBoundary, lastSample + 1);
+    int n = static_cast<int>(last - firstSample);
+
+    for (unsigned int i = 0; i < getChannelCount(); ++i) {
+      err = edfread_physical_samples(handle, i, n, readChunkBuffer.data());
+
+      if (err != n)
+        throwDetailed(runtime_error("edfread_physical_samples failed"));
+
+      for (int j = 0; j < n; ++j)
+        dataChannels[i][j] = static_cast<T>(readChunkBuffer[j]);
+
+      dataChannels[i] += n;
+    }
+
+    firstSample += n;
+    nextBoundary += readChunk;
+  }
+}
+
 void EDF::openFile() {
   int err = edfopen_file_readonly(getFilePath().c_str(), edfhdr.get(),
                                   EDFLIB_READ_ALL_ANNOTATIONS);
@@ -334,52 +378,6 @@ void EDF::openFile() {
   else if (readChunk < OPT_READ_CHUNK)
     readChunk = OPT_READ_CHUNK - OPT_READ_CHUNK % readChunk;
   readChunkBuffer.resize(readChunk);
-}
-
-template <typename T>
-void EDF::readChannelsFloatDouble(vector<T *> dataChannels,
-                                  uint64_t firstSample, uint64_t lastSample) {
-  assert(firstSample <= lastSample && "Bad parameter order.");
-
-  if (getSamplesRecorded() <= lastSample)
-    invalid_argument("EDF: reading out of bounds");
-
-  if (dataChannels.size() < getChannelCount())
-    invalid_argument("EDF: too few dataChannels");
-
-  int handle = edfhdr->handle;
-  long long err;
-
-  for (unsigned int i = 0; i < getChannelCount(); ++i) {
-    err = edfseek(handle, i, firstSample, EDFSEEK_SET);
-
-    if (err != static_cast<long long>(firstSample))
-      throwDetailed(runtime_error("edfseek failed"));
-  }
-
-  assert(readChunk > 0);
-
-  uint64_t nextBoundary = (firstSample + readChunk - 1 / readChunk);
-
-  while (firstSample <= lastSample) {
-    uint64_t last = min(nextBoundary, lastSample + 1);
-    int n = static_cast<int>(last - firstSample);
-
-    for (unsigned int i = 0; i < getChannelCount(); ++i) {
-      err = edfread_physical_samples(handle, i, n, readChunkBuffer.data());
-
-      if (err != n)
-        throwDetailed(runtime_error("edfread_physical_samples failed"));
-
-      for (int j = 0; j < n; ++j)
-        dataChannels[i][j] = static_cast<T>(readChunkBuffer[j]);
-
-      dataChannels[i] += n;
-    }
-
-    firstSample += n;
-    nextBoundary += readChunk;
-  }
 }
 
 void EDF::loadEvents() {
