@@ -1,3 +1,8 @@
 alglib-3.10.0
 boost_1_66
 matio-msvc2015
+
+biosig/config.h
+biosig/config.log
+biosig/config.status
+biosig/libbiosig.pc

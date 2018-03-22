@@ -54,16 +54,6 @@ else
 	matio=OK || matio=fail
 fi
 
-if [ -d biosig4c++-1.9.0a ]
-then
-	biosig=skipped
-else
-	curl -L 'https://sourceforge.net/projects/biosig/files/BioSig%20for%20C_C%2B%2B/src/biosig4c%2B%2B-1.9.0a.src.tar.gz/download' > biosig.tar.gz &&
-	tar xvf biosig.tar.gz &&
-	rm -rf biosig.tar.gz &&
-	biosig=OK || biosig=fail
-fi
-
 # Configuration.
 
 cd libsamplerate # TODO: Perhaps it doesn't need to be run again, once the header is created.
@@ -71,9 +61,13 @@ cd libsamplerate # TODO: Perhaps it doesn't need to be run again, once the heade
 libsamplerate=OK || libsamplerate=fail
 cd -
 
-cd biosig4c++-1.9.0a
-./configure && make libbiosig.a &&
-biosigConfig=OK || biosigConfig=fail
+# Turn off EDF Lib by disabling the macro.
+cd biosig
+./configure &&
+# Pehaps we don't need to use sed here -- maybe it can be set via ./configure.
+sed -i 's/DEFINES      += -D=MAKE_EDFLIB/#DEFINES      += -D=MAKE_EDFLIB/' Makefile &&
+make libbiosig.a &&
+biosig=OK || biosig=fail
 cd -
 
 echo
@@ -87,11 +81,10 @@ echo ======================================
 echo "alglib-3.10.0           $alglib"
 echo "$B              $boost"
 echo "matio-msvc2015          $matio"
-echo "biosig4c++-1.9.0a       $biosig"
 echo
 echo ======= Configuration summary ========
 echo "Library path            Status"
 echo ======================================
 echo "libsamplerate           $libsamplerate"
-echo "biosig4c++-1.9.0a       $biosigConfig"
+echo "biosig                  $biosig"
 
