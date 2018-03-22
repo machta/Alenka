@@ -268,16 +268,15 @@ void SpikedetAnalysis::analyseCommandLineFile() {
   unique_ptr<AlenkaFile::DataFile> file;
 
   try {
-    vector<string> fn;
-    programOption("filename", fn);
+    vector<string> fileNames;
+    programOption("filename", fileNames);
 
-    if (fn.size() != 1)
+    if (1 != fileNames.size())
       runtime_error("You must specify at least 1 input file");
 
-    QFileInfo fileInfo(QString::fromStdString(fn[0]));
-    vector<string> rest(fn.begin() + 1, fn.end());
-
-    file = SignalFileBrowserWindow::dataFileBySuffix(fileInfo, rest);
+    const QString fileName = QString::fromStdString(fileNames[0]);
+    const vector<string> rest(fileNames.begin() + 1, fileNames.end());
+    file = SignalFileBrowserWindow::dataFileBySuffix(fileName, rest);
   } catch (const runtime_error &e) {
     cerr << "Error while opening file: " << catchDetailed(e) << endl;
     MyApplication::mainExit(EXIT_FAILURE);

@@ -166,6 +166,8 @@ set(SRC
   src/canvas.h
   src/error.cpp
   src/error.h
+  src/filetype.cpp
+  src/filetype.h
   src/main.cpp
   src/montagetemplatedialog.cpp
   src/montagetemplatedialog.h
@@ -209,7 +211,7 @@ target_link_libraries(Alenka
 )
 
 if(UNIX AND NOT APPLE)
-  target_link_libraries(Alenka dl GL)
+  target_link_libraries(Alenka dl GL biosig cholmod)
 
   if(ALENKA_STATIC_LINK)
     target_link_libraries(Alenka

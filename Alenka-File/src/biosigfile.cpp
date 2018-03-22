@@ -109,7 +109,6 @@ void BioSigFile::readChannelsFloatDouble(vector<T *> dataChannels,
         sread(readChunkBuffer.data(), blockIndex, 1, fileHeader->hdr);
     assert(1 == blocksRead); // Add error handling
 
-    assert(nextSample <= blockIndex * readChunk);
     const uint64_t lastSampleInBlock = (blockIndex + 1) * readChunk;
     const int n =
         min(lastSampleInBlock - nextSample, lastSample + 1 - nextSample);
@@ -117,7 +116,7 @@ void BioSigFile::readChannelsFloatDouble(vector<T *> dataChannels,
 
     for (unsigned int i = 0; i < getChannelCount(); ++i) {
       const int chunkRowStart = i * readChunk + startOffset;
-      assert(readChunk <= startOffset + n);
+      assert(readChunk >= startOffset + n);
       for (int j = 0; j < n; ++j)
         dataChannels[i][j] = readChunkBuffer[chunkRowStart + j];
       dataChannels[i] += n;

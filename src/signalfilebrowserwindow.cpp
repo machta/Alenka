@@ -1,8 +1,6 @@
 #include "signalfilebrowserwindow.h"
 
 #include "../Alenka-File/include/AlenkaFile/edf.h"
-#include "../Alenka-File/include/AlenkaFile/gdf2.h"
-#include "../Alenka-File/include/AlenkaFile/mat.h"
 #include "../Alenka-Signal/include/AlenkaSignal/montage.h"
 #include "../Alenka-Signal/include/AlenkaSignal/openclcontext.h"
 #include "DataModel/opendatafile.h"
@@ -28,6 +26,7 @@
 #include "Sync/syncdialog.h"
 #include "canvas.h"
 #include "error.h"
+#include "filetype.h"
 #include "montagetemplatedialog.h"
 #include "myapplication.h"
 #include "options.h"
@@ -772,38 +771,37 @@ SignalFileBrowserWindow::sampleToDateTimeString(DataFile *file, int sample,
   return QString();
 }
 
-unique_ptr<DataFile> SignalFileBrowserWindow::dataFileBySuffix(
-    const QFileInfo &fileInfo, const vector<string> &additionalFiles) {
-  string stdFileName = fileInfo.filePath().toStdString();
-  QString suffix = fileInfo.suffix().toLower();
+unique_ptr<DataFile>
+SignalFileBrowserWindow::dataFileBySuffix(const QString &fileName,
+                                          const vector<string> &additionalFiles,
+                                          QWidget *parent) {
 
-  if (suffix == "gdf") {
-    return make_unique<GDF2>(stdFileName,
-                             programOption<bool>("uncalibratedGDF"));
-  } else if (suffix == "edf") {
-    return make_unique<EDF>(stdFileName);
-    // TODO: Add BDF support through Edflib.
-  } else if (suffix == "mat") {
-    MATvars vars;
+  auto fileTypes = FileType::fromSuffix(fileName, additionalFiles);
 
-    if (isProgramOptionSet("matData"))
-      programOption("matData", vars.data);
-
-    programOption("matFs", vars.frequency);
-    programOption("matMults", vars.multipliers);
-    programOption("matDate", vars.date);
-    programOption("matLabel", vars.label);
-    programOption("matEvtPos", vars.eventPosition);
-    programOption("matEvtDur", vars.eventDuration);
-    programOption("matEvtChan", vars.eventChannel);
-
-    vector<string> files{stdFileName};
-    files.insert(files.end(), additionalFiles.begin(), additionalFiles.end());
-
-    return make_unique<MAT>(files, vars);
-  } else {
+  if (fileTypes.empty())
     throwDetailed(runtime_error("Unknown file extension."));
+
+  int fileTypeIndex = 0;
+
+  if (parent && fileTypes.size() > 1) {
+    QStringList items;
+    for (auto &e : fileTypes)
+      items.push_back(e->name());
+    fileTypeIndex = askForDataFileBackend(items, parent);
   }
+
+  return fileTypes[fileTypeIndex]->makeInstance();
+}
+
+int SignalFileBrowserWindow::askForDataFileBackend(const QStringList &items,
+                                                   QWidget *parent) {
+  bool ok;
+  const QString item = QInputDialog::getItem(parent, "Choose DataFile Backend",
+                                             "Library:", items, 0, false, &ok);
+  if (ok && !item.isEmpty())
+    return items.indexOf(item);
+  else
+    return 0;
 }
 
 void SignalFileBrowserWindow::openCommandLineFile() {
@@ -1053,12 +1051,11 @@ void SignalFileBrowserWindow::addAutoMontage(AutomaticMontage *autoMontage) {
 
 void SignalFileBrowserWindow::openFile() {
   if (!closeFile())
-    return; // User chose to keep open the current file.
+    return; // Close canceled -- the user chose to keep the current file open.
 
   QString fileName = QFileDialog::getOpenFileName(
       this, "Open File", "",
-      "Signal files (*.edf *.gdf *.mat);;EDF files "
-      "(*.edf);;GDF files (*.gdf);;MAT files (*.mat)");
+      "All files (*);;EDF files (*.edf);;GDF files (*.gdf);;MAT files (*.mat)");
 
   if (fileName.isNull())
     return; // No file was selected.
@@ -1086,7 +1083,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   assert(!fileResources->file && "Make sure there is no already opened file.");
 
   try {
-    fileResources->file = dataFileBySuffix(fileInfo, additionalFiles);
+    fileResources->file = dataFileBySuffix(fileName, additionalFiles, this);
   } catch (const runtime_error &e) {
     errorMessage(this, catchDetailed(e), "Error while opening file");
     return; // Ignore opening of the file as there was an error.
