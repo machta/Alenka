@@ -394,7 +394,7 @@ void Canvas::changeFile(OpenDataFile *file) {
 
     signalProcessor = make_unique<SignalProcessor>(
         nBlock, parallelQueues, duplicateSignal ? 2 : 1, sharingFunction, file,
-        context.get(), extraSamplesFront, extraSamplesBack);
+        globalContext.get(), extraSamplesFront, extraSamplesBack);
   } else {
     for (auto e : openFileConnections)
       disconnect(e);
@@ -535,8 +535,8 @@ void Canvas::initializeGL() {
 
   if (!glSharing) {
     cl_int err;
-    commandQueue = clCreateCommandQueue(context->getCLContext(),
-                                        context->getCLDevice(), 0, &err);
+    commandQueue = clCreateCommandQueue(globalContext->getCLContext(),
+                                        globalContext->getCLDevice(), 0, &err);
     checkClErrorCode(err, "clCreateCommandQueue()");
   }
 
@@ -870,7 +870,7 @@ void Canvas::updateProcessor() {
   if (gpuMemorySize <= 0) {
     cl_ulong gpuSize;
     cl_int err =
-        clGetDeviceInfo(context->getCLDevice(), CL_DEVICE_GLOBAL_MEM_SIZE,
+        clGetDeviceInfo(globalContext->getCLDevice(), CL_DEVICE_GLOBAL_MEM_SIZE,
                         sizeof(cl_ulong), &gpuSize, nullptr);
     checkClErrorCode(err, "clGetDeviceInfo()");
 
@@ -896,8 +896,9 @@ void Canvas::updateProcessor() {
             << cacheCapacity << " capacity and blocks of size " << size << ".");
 
   cache = make_unique<LRUCache<int, GPUCacheItem>>(
-      cacheCapacity, make_unique<GPUCacheAllocator>(size, duplicateSignal,
-                                                    glSharing, context.get()));
+      cacheCapacity,
+      make_unique<GPUCacheAllocator>(size, duplicateSignal, glSharing,
+                                     globalContext.get()));
 
   if (!glSharing) {
     processorSyncBuffer.resize(size / sizeof(float));
@@ -905,8 +906,8 @@ void Canvas::updateProcessor() {
     for (int i = 0; i < parallelQueues; ++i) {
       cl_mem_flags flags = CL_MEM_READ_WRITE;
 
-      processorOutputBuffers.push_back(
-          clCreateBuffer(context->getCLContext(), flags, size, nullptr, &err));
+      processorOutputBuffers.push_back(clCreateBuffer(
+          globalContext->getCLContext(), flags, size, nullptr, &err));
       checkClErrorCode(err, "clCreateBuffer()");
     }
   }
@@ -1257,6 +1258,7 @@ int Canvas::countHiddenTracks(int track) {
 }
 
 void Canvas::createContext() {
+  // TODO: Make sure this function is executed only once.
   vector<cl_context_properties> properties;
 
   if (glSharing) {
@@ -1281,12 +1283,12 @@ void Canvas::createContext() {
 #endif
   }
 
-  context = make_unique<AlenkaSignal::OpenCLContext>(
+  globalContext = make_unique<AlenkaSignal::OpenCLContext>(
       programOption<int>("clPlatform"), programOption<int>("clDevice"),
       properties);
 
   if (programOption<bool>("kernelCachePersist"))
-    OpenDataFile::kernelCache->loadFromFile(context.get());
+    OpenDataFile::kernelCache->loadFromFile(globalContext.get());
 }
 
 void Canvas::setUniformTransformMatrix(OpenGLProgram *program, float *data) {

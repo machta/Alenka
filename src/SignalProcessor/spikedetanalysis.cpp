@@ -229,6 +229,8 @@ void SpikedetAnalysis::runAnalysis(OpenDataFile *file, QWidget *parent) {
   progress.setMinimumDuration(0); // This is to show the dialog immediately.
   progress.setValue(1);
 
+  OpenCLContext *const context = globalContext.get();
+
   vector<unique_ptr<Montage<SIGNALTYPE>>> montage =
       makeMontage<SIGNALTYPE>(file, context);
 
@@ -283,7 +285,7 @@ void SpikedetAnalysis::analyseCommandLineFile() {
   }
 
   int Fs = static_cast<int>(round(file->getSamplingFrequency()));
-  auto settings = AlenkaSignal::Spikedet::defaultSettings();
+  auto settings = Spikedet::defaultSettings();
   SpikedetSettingsDialog::resetSettings(&settings, nullptr);
 
   bool useOriginalDecimation;

@@ -61,7 +61,6 @@ class Canvas : public QOpenGLWidget {
   std::vector<QMetaObject::Connection> openFileConnections;
   std::vector<QMetaObject::Connection> montageConnections;
   std::unique_ptr<LRUCache<int, GPUCacheItem>> cache;
-  std::unique_ptr<AlenkaSignal::OpenCLContext> context;
   int nBlock, nSamples;
   int extraSamplesFront, extraSamplesBack;
   bool duplicateSignal, glSharing;

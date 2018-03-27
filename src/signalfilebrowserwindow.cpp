@@ -122,10 +122,10 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   openDataFile = make_unique<OpenDataFile>();
 
   // Set up Signal analysis.
-  spikedetAnalysis = new SpikedetAnalysis(globalContext.get());
+  spikedetAnalysis = new SpikedetAnalysis();
   signalAnalysis.push_back(unique_ptr<Analysis>(spikedetAnalysis));
 
-  modifiedSpikedetAnalysis = new ModifiedSpikedetAnalysis(globalContext.get());
+  modifiedSpikedetAnalysis = new ModifiedSpikedetAnalysis();
   signalAnalysis.push_back(unique_ptr<Analysis>(modifiedSpikedetAnalysis));
 
   auto settings = spikedetAnalysis->getSettings();

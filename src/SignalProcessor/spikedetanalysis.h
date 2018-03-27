@@ -6,21 +6,15 @@
 
 #include <memory>
 
-namespace AlenkaSignal {
-class OpenCLContext;
-}
 class OpenDataFile;
 
 class SpikedetAnalysis : public Analysis {
   double spikeDuration;
-  AlenkaSignal::OpenCLContext *context;
   DETECTOR_SETTINGS settings = AlenkaSignal::Spikedet::defaultSettings();
   std::unique_ptr<CDetectorOutput> output;
   std::unique_ptr<CDischarges> discharges;
 
 public:
-  SpikedetAnalysis(AlenkaSignal::OpenCLContext *context) : context(context) {}
-
   void runAnalysis(OpenDataFile *file, QWidget *parent) override;
   std::string name() override { return "Spikedet Analysis"; }
 
