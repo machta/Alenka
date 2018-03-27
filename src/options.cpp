@@ -100,7 +100,8 @@ Options::Options(int argc, char **argv)
   ("osd", value<bool>()->default_value(true)->value_name("bool"), "use orginal Spikedet implementation")
   ;
   // clang-format on
-  // TODO: Find out why there isn't the -ft option like in Matlab.
+  // TODO: Find out why there isn't the -ft option like in Matlab version of
+  // spikedet.
 
   configuration.add(spikedet);
 
