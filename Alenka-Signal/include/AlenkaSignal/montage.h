@@ -28,6 +28,9 @@ enum MontageType { NormalMontage, IdentityMontage, CopyMontage };
  * this object can be safely destroyed.
  *
  * @todo Prohibit copying of this object.
+ * @todo Rename to montage track.
+ * @todo Split this class to a container for the track kernel, and to source
+ * code builder.
  */
 template <class T> class Montage {
   OpenCLContext *context = nullptr;
@@ -45,8 +48,6 @@ public:
   Montage(const std::string &source, OpenCLContext *context,
           const std::string &headerSource = "",
           const std::vector<std::string> &labels = std::vector<std::string>());
-  Montage(const std::vector<unsigned char> *binary, OpenCLContext *context)
-      : program(new OpenCLProgram(binary, context)) {}
   ~Montage();
 
   /**
@@ -59,18 +60,25 @@ public:
     return kernel;
   }
 
-  std::vector<unsigned char> *getBinary() {
+  OpenCLProgram *releaseProgram() {
     buildProgram();
-    if (program)
-      return program->getBinary();
-    else
-      return nullptr;
+    return program.release();
   }
 
   MontageType getMontageType() const { return montageType; }
   cl_int copyMontageIndex() const { return copyIndex; }
-
   std::string getSource() const { return source; }
+
+  /**
+   * @brief Creates a montege directly from a kernel.
+   * @param program Is not owned by the new object. Must be kept alive for the
+   * lifetime of the montage.
+   */
+  static Montage *fromProgram(OpenCLProgram *program) {
+    Montage *montage = new Montage();
+    montage->kernel = program->createKernel("montage");
+    return montage;
+  }
 
   /**
    * @brief Tests the source code of the montage.
@@ -91,6 +99,8 @@ public:
   static std::string stripComments(const std::string &code);
 
 private:
+  Montage() = default;
+
   std::string preprocessSource(const std::string &source,
                                const std::vector<std::string> &labels);
   void buildProgram();

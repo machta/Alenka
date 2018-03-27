@@ -5,7 +5,6 @@
 #include "../../Alenka-Signal/include/AlenkaSignal/filterprocessor.h"
 #include "../../Alenka-Signal/include/AlenkaSignal/montageprocessor.h"
 #include "../../Alenka-Signal/include/AlenkaSignal/openclcontext.h"
-#include "../DataModel/opendatafile.h"
 #include "../DataModel/vitnessdatamodel.h"
 #include "../myapplication.h"
 #include "../options.h"
@@ -77,6 +76,8 @@ SignalProcessor::SignalProcessor(unsigned int nBlock,
       montageCopyCount(montageCopyCount), glSharing(std::move(glSharing)),
       file(file), context(context), extraSamplesFront(extraSamplesFront),
       extraSamplesBack(extraSamplesBack) {
+  maxMontageTracks = programOption<int>("kernelCacheSize");
+
   fileChannels = file->file->getChannelCount();
   cl_int err;
   size_t size = (nBlock + 2) * fileChannels * sizeof(float);
@@ -351,15 +352,19 @@ void SignalProcessor::updateMontage() {
       montageCode.push_back(t.code);
   }
 
+  if (maxMontageTracks < static_cast<int>(montageCode.size()))
+    throwDetailed(runtime_error("Maximum montage size of " +
+                                to_string(maxMontageTracks) + " exceeded"));
+
   auto montageTable = file->file->getDataModel()->montageTable();
   assert(0 < montageTable->rowCount());
   auto defaultTrackTable = montageTable->trackTable(0);
 
   updateXyzBuffer(commandQueues[0], xyzBuffer, defaultTrackTable);
 
-  string header =
+  const string header =
       OpenDataFile::infoTable.getGlobalMontageHeader().toStdString();
-  montage = makeMontage<float>(montageCode, context, file->kernelCache, header,
+  montage = makeMontage<float>(montageCode, context, header,
                                collectLabels(defaultTrackTable));
 }
 

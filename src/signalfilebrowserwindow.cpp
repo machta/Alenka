@@ -90,10 +90,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
     : QMainWindow(parent), fileResources(new OpenFileResources) {
   setWindowTitle(TITLE);
 
-  if (0 < programOption<int>("kernelCacheSize"))
-    kernelCache = make_unique<KernelCache>();
-  else
-    KernelCache::deleteCacheFile();
+  OpenDataFile::kernelCache = make_unique<KernelCache>();
 
   autoSaveTimer = new QTimer(this);
 
@@ -1108,7 +1105,6 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   openDataFile->file = fileResources->file.get();
   openDataFile->dataModel = oldDataModel;
   openDataFile->undoFactory = fileResources->undoFactory.get();
-  openDataFile->kernelCache = kernelCache.get();
 
   setSecondsPerPage(10); // The default vertical zoom setting for new files.
 

@@ -3,6 +3,7 @@
 
 #include "../../Alenka-Signal/include/AlenkaSignal/montage.h"
 #include "../DataModel/kernelcache.h"
+#include "../DataModel/opendatafile.h"
 #include "../error.h"
 #include "lrucache.h"
 
@@ -33,8 +34,6 @@ template <class T> class MontageProcessor;
 template <class T> class Filter;
 } // namespace AlenkaSignal
 
-class OpenDataFile;
-
 /**
  * @brief A class used for retrieving the processed signal blocks.
  *
@@ -51,6 +50,7 @@ doneCurrent();
 class SignalProcessor {
   int trackCount = 0;
   bool updateMontageFlag = false;
+  int maxMontageTracks = 0;
 
   int nBlock, nMontage, nSamples, M, nDelay, nDiscard;
   unsigned int parallelQueues, montageCopyCount, fileChannels;
@@ -134,7 +134,7 @@ public:
   template <class T>
   static auto makeMontage(const std::vector<std::string> &montageCode,
                           AlenkaSignal::OpenCLContext *context,
-                          KernelCache *kernelCache, const std::string &header,
+                          const std::string &header,
                           const std::vector<std::string> &labels) {
     using namespace std;
 #ifndef NDEBUG
@@ -146,27 +146,27 @@ public:
 #endif
     std::vector<std::unique_ptr<AlenkaSignal::Montage<T>>> montage;
 
-    for (const auto &c : montageCode) {
+    for (const auto &formulaCode : montageCode) {
       auto sourceMontage = make_unique<AlenkaSignal::Montage<T>>(
-          simplifyMontage<T>(c), context, header, labels);
-      QString code = QString::fromStdString(sourceMontage->getSource());
-      auto ptr = kernelCache ? kernelCache->find(code) : nullptr;
+          simplifyMontage<T>(formulaCode), context, header, labels);
 
-      if (ptr) {
-        assert(0 < ptr->size());
-        montage.push_back(make_unique<AlenkaSignal::Montage<T>>(ptr, context));
+      if (AlenkaSignal::NormalMontage != sourceMontage->getMontageType()) {
+        montage.push_back(std::move(sourceMontage));
       } else {
+        const QString code = QString::fromStdString(sourceMontage->getSource());
+        auto programPointer = OpenDataFile::kernelCache->find(code);
+
+        if (!programPointer) {
+          programPointer = sourceMontage->releaseProgram();
+          assert(programPointer);
+          OpenDataFile::kernelCache->insert(code, programPointer);
 #ifndef NDEBUG
-        if (AlenkaSignal::NormalMontage == sourceMontage->getMontageType())
           ++needToCompile;
 #endif
-        if (kernelCache) {
-          auto binary = sourceMontage->getBinary();
-          if (binary && binary->size() > 0)
-            kernelCache->insert(code, binary);
         }
 
-        montage.push_back(std::move(sourceMontage));
+        auto m = AlenkaSignal::Montage<T>::fromProgram(programPointer);
+        montage.emplace_back(m);
       }
     }
 

@@ -314,6 +314,9 @@ Canvas::Canvas(QWidget *parent) : QOpenGLWidget(parent) {
 }
 
 Canvas::~Canvas() {
+  if (programOption<bool>("kernelCachePersist"))
+    OpenDataFile::kernelCache->saveToFile();
+
   makeCurrent();
 
   if (!programOption<bool>("gl20"))
@@ -1281,6 +1284,9 @@ void Canvas::createContext() {
   context = make_unique<AlenkaSignal::OpenCLContext>(
       programOption<int>("clPlatform"), programOption<int>("clDevice"),
       properties);
+
+  if (programOption<bool>("kernelCachePersist"))
+    OpenDataFile::kernelCache->loadFromFile(context.get());
 }
 
 void Canvas::setUniformTransformMatrix(OpenGLProgram *program, float *data) {

@@ -151,8 +151,7 @@ auto makeMontage(OpenDataFile *file, OpenCLContext *context) {
       file->file->getDataModel()->montageTable()->trackTable(0));
   string header =
       OpenDataFile::infoTable.getGlobalMontageHeader().toStdString();
-  return SignalProcessor::makeMontage<T>(montageCode, context,
-                                         file->kernelCache, header, labels);
+  return SignalProcessor::makeMontage<T>(montageCode, context, header, labels);
 }
 
 void processOutput(OpenDataFile *file, SpikedetAnalysis *spikedetAnalysis,

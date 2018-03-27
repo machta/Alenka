@@ -39,7 +39,6 @@ class DataModelVitness;
 class QTimer;
 class QUndoStack;
 class UndoCommandFactory;
-class KernelCache;
 class QPushButton;
 class QQuickWidget;
 class QStackedWidget;
@@ -88,7 +87,6 @@ class SignalFileBrowserWindow : public QMainWindow {
   QTimer *autoSaveTimer;
   std::string autoSaveName;
   QUndoStack *undoStack;
-  std::unique_ptr<KernelCache> kernelCache;
   QAction *saveFileAction;
   QAction *closeFileAction;
   QAction *exportToEdfAction;

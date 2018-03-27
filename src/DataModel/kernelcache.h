@@ -5,19 +5,23 @@
 
 #include <vector>
 
+#include "../Alenka-Signal/include/AlenkaSignal/openclprogram.h"
+
 class KernelCache {
-  QCache<QString, std::vector<unsigned char>> cache;
+  QCache<QString, AlenkaSignal::OpenCLProgram> cache;
 
 public:
   KernelCache();
-  ~KernelCache();
 
-  void insert(const QString &code, std::vector<unsigned char> *binary) {
-    cache.insert(code, binary);
+  void insert(const QString &code, AlenkaSignal::OpenCLProgram *program) {
+    cache.insert(code, program);
   }
-  const std::vector<unsigned char> *find(const QString &code) const {
+  AlenkaSignal::OpenCLProgram *find(const QString &code) const {
     return cache[code];
   }
+
+  void loadFromFile(AlenkaSignal::OpenCLContext *context);
+  void saveToFile();
 
   static void deleteCacheFile();
 };

@@ -5,20 +5,21 @@
 
 #include "../../Alenka-File/include/AlenkaFile/datafile.h"
 #include "infotable.h"
+#include "kernelcache.h"
 
+#include <memory>
 #include <vector>
 
 class UndoCommandFactory;
-class KernelCache;
 
 class OpenDataFile {
 public:
   AlenkaFile::DataFile *file = nullptr;
   const AlenkaFile::DataModel *dataModel = nullptr;
   UndoCommandFactory *undoFactory = nullptr;
-  KernelCache *kernelCache = nullptr;
 
   static InfoTable infoTable;
+  static std::unique_ptr<KernelCache> kernelCache;
 };
 
 #endif // OPENDATAFILE_H
