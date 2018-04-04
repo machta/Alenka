@@ -64,6 +64,8 @@ private:
 
   void addSeparator();
   std::vector<int> reverseSortedSelectedRows();
+  void pasteSingleCell(const std::string &cell);
+  void pasteBlock(const std::vector<std::vector<std::string>> &cells);
 
 private slots:
   /**

@@ -34,20 +34,31 @@ QString replaceTabsAndNewLines(const QString &string) {
   return newString;
 }
 
-vector<string> splitStringToLines(const string &str) {
-  stringstream textStream(str);
-  vector<string> lines;
+vector<string> splitString(const string &str, char separator = '\n') {
+  vector<string> result;
+  stringstream stream(str);
 
-  while (textStream.good()) {
-    lines.emplace_back("");
-    getline(textStream, lines.back());
+  while (stream.good()) {
+    string part;
+    getline(stream, part, separator);
+    result.push_back(part);
   }
 
-  // Ignore last empty row.
-  if (lines.size() >= 1 && lines.back() == "")
-    lines.pop_back();
+  // Ignore last empty row/cell.
+  if (result.size() >= 1 && "" == result.back())
+    result.pop_back();
 
-  return lines;
+  return result;
+}
+
+vector<vector<string>> splitLinesToCells(const vector<string> &lines) {
+  vector<vector<string>> result;
+  result.reserve(lines.size());
+
+  for (const string &e : lines)
+    result.push_back(splitString(e, '\t'));
+
+  return result;
 }
 
 } // namespace
@@ -172,6 +183,45 @@ vector<int> Manager::reverseSortedSelectedRows() {
   return rows;
 }
 
+void Manager::pasteSingleCell(const string &cell) {
+  const auto val = QVariant(QString::fromStdString(cell));
+
+  for (auto &i : tableView->selectionModel()->selection().indexes())
+    tableView->model()->setData(i, val);
+}
+
+void Manager::pasteBlock(const vector<vector<string>> &cells) {
+  int startRow, startColumn;
+  auto index = tableView->selectionModel()->currentIndex();
+
+  if (index.isValid()) {
+    startRow = index.row();
+    startColumn = index.column();
+  } else {
+    startRow = startColumn = 0;
+  }
+
+  QAbstractItemModel *model = tableView->model();
+  int rowsToInsert =
+      startRow + static_cast<int>(cells.size()) - model->rowCount();
+
+  bool insertOK = true;
+  for (int i = 0; i < rowsToInsert; ++i)
+    insertOK &= insertRowBack();
+
+  if (!insertOK)
+    return;
+
+  for (int row = 0; row < static_cast<int>(cells.size()); ++row) {
+    for (int col = 0; col < static_cast<int>(cells[row].size()); ++col) {
+      if (startColumn + col < model->columnCount()) {
+        auto val = QVariant(QString::fromStdString(cells[row][col]));
+        model->setData(model->index(startRow + row, startColumn + col), val);
+      }
+    }
+  }
+}
+
 void Manager::removeRows() {
   if (!file)
     return;
@@ -264,49 +314,19 @@ void Manager::paste() {
   if (!file)
     return;
 
-  int startRow, startColumn;
-  auto index = tableView->selectionModel()->currentIndex();
+  const string clipboard = MyApplication::clipboard()->text().toStdString();
+  const auto cells = splitLinesToCells(splitString(clipboard));
 
-  if (index.isValid()) {
-    startRow = index.row();
-    startColumn = index.column();
-  } else {
-    startRow = startColumn = 0;
+  if (cells.size() > 0) {
+    file->undoFactory->beginMacro("paste");
+
+    if (1 == cells.size() && 1 == cells[0].size())
+      pasteSingleCell(cells[0][0]);
+    else
+      pasteBlock(cells);
+
+    file->undoFactory->endMacro();
   }
-
-  QAbstractItemModel *model = tableView->model();
-  vector<string> lines =
-      splitStringToLines(MyApplication::clipboard()->text().toStdString());
-  int rowsToInsert =
-      startRow + static_cast<int>(lines.size()) - model->rowCount();
-
-  file->undoFactory->beginMacro("paste");
-
-  bool insertOK = true;
-  for (int i = 0; i < rowsToInsert; ++i)
-    insertOK &= insertRowBack();
-
-  if (insertOK) {
-    for (unsigned int row = 0; row < lines.size(); ++row) {
-      stringstream lineStream(lines[row]);
-      int column = 0;
-
-      while (lineStream.good()) {
-        string cell;
-        getline(lineStream, cell, '\t');
-
-        if (startColumn + column < model->columnCount()) {
-          auto val = QVariant(QString::fromStdString(cell));
-          model->setData(model->index(startRow + row, startColumn + column),
-                         val);
-        }
-
-        ++column;
-      }
-    }
-  }
-
-  file->undoFactory->endMacro();
 }
 
 void Manager::setColumn() {
