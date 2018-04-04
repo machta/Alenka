@@ -87,7 +87,5 @@ int MontageTableModel::rowCount(const QModelIndex & /*parent*/) const {
 }
 
 void MontageTableModel::removeRowsFromDataModel(int row, int count) {
-  file->undoFactory->beginMacro("remove Montage rows");
   file->undoFactory->removeMontage(row, count);
-  file->undoFactory->endMacro();
 }

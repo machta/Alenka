@@ -57,7 +57,7 @@ Manager::Manager(QWidget *parent) : QWidget(parent, Qt::Window) {
   tableView = new QTableView(this);
   tableView->setSortingEnabled(true);
   tableView->sortByColumn(0, Qt::AscendingOrder);
-  tableView->setSelectionMode(QAbstractItemView::ContiguousSelection);
+  tableView->setSelectionMode(QAbstractItemView::ExtendedSelection);
   tableView->setContextMenuPolicy(Qt::ActionsContextMenu);
 
   // Add some actions to the tableView.
@@ -161,24 +161,31 @@ void Manager::addSeparator() {
   tableView->addAction(separator);
 }
 
+vector<int> Manager::reverseSortedSelectedRows() {
+  const auto indexes = tableView->selectionModel()->selection().indexes();
+  vector<int> rows;
+
+  for (const auto &e : indexes)
+    rows.push_back(e.row());
+
+  sort(rows.begin(), rows.end(), greater<int>());
+  return rows;
+}
+
 void Manager::removeRows() {
   if (!file)
     return;
 
-  auto indexes = tableView->selectionModel()->selection().indexes();
+  const auto rows = reverseSortedSelectedRows();
 
-  if (indexes.empty() == false) {
-    int m = tableView->model()->rowCount();
-    int M = 0;
+  if (!rows.empty()) {
+    const QString name = metaObject()->className();
+    file->undoFactory->beginMacro("remove " + name + " rows");
 
-    for (const auto &e : indexes) {
-      if (e.isValid()) {
-        m = min(m, e.row());
-        M = max(M, e.row());
-      }
-    }
+    for (int rowIndex : rows)
+      tableView->model()->removeRows(rowIndex, 1);
 
-    tableView->model()->removeRows(m, M - m + 1);
+    file->undoFactory->endMacro();
   }
 }
 

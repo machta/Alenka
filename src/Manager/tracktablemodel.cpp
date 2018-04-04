@@ -380,7 +380,6 @@ int TrackTableModel::rowCount(const QModelIndex & /*parent*/) const {
 }
 
 void TrackTableModel::removeRowsFromDataModel(int row, int count) {
-  file->undoFactory->beginMacro("remove EventTable rows");
   for (int i = 0; i < file->dataModel->montageTable()->rowCount(); ++i) {
     // Update the channels of events to point to correct tracks after the rows
     // are removed.
@@ -401,7 +400,6 @@ void TrackTableModel::removeRowsFromDataModel(int row, int count) {
 
   file->undoFactory->removeTrack(OpenDataFile::infoTable.getSelectedMontage(),
                                  row, count);
-  file->undoFactory->endMacro();
 }
 
 bool TrackTableModel::areAllRowsDeletable(int /*row*/, int /*count*/) {

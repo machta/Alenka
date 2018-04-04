@@ -178,8 +178,6 @@ int EventTypeTableModel::rowCount(const QModelIndex & /*parent*/) const {
 }
 
 void EventTypeTableModel::removeRowsFromDataModel(int row, int count) {
-  file->undoFactory->beginMacro("remove EventTypeTable rows");
-
   for (int i = 0; i < file->dataModel->montageTable()->rowCount(); ++i) {
     // Update the types of events to point to correct values after the rows are
     // removed.
@@ -199,5 +197,4 @@ void EventTypeTableModel::removeRowsFromDataModel(int row, int count) {
   }
 
   file->undoFactory->removeEventType(row, count);
-  file->undoFactory->endMacro();
 }

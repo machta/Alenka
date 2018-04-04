@@ -63,6 +63,7 @@ private:
   std::map<std::pair<int, int>, QString> textOfSelection();
 
   void addSeparator();
+  std::vector<int> reverseSortedSelectedRows();
 
 private slots:
   /**

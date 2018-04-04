@@ -308,10 +308,8 @@ int EventTableModel::rowCount(const QModelIndex & /*parent*/) const {
 }
 
 void EventTableModel::removeRowsFromDataModel(int row, int count) {
-  file->undoFactory->beginMacro("remove EventTable rows");
   file->undoFactory->removeEvent(OpenDataFile::infoTable.getSelectedMontage(),
                                  row, count);
-  file->undoFactory->endMacro();
 }
 
 void EventTableModel::selectMontage(const int montageIndex) {
