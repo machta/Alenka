@@ -36,20 +36,21 @@ string cacheFilePath() {
 
 } // namespace
 
+// TODO: Perhaps use boost/compute/detail/lru_cache.hpp instead.
 // TODO: Reject caches from old Alenka versions and from changed devices.
 KernelCache::KernelCache() {
-  // TODO: Perhaps switch to byte-size based capacity system.
   cache.setMaxCost(programOption<int>("kernelCacheSize"));
+}
 
-  // Load.
-  string filePath = cacheFilePath();
+void KernelCache::loadFromFile(AlenkaSignal::OpenCLContext *const context) {
+  const string filePath = cacheFilePath();
   ifstream file(filePath, ios::binary);
+  file.exceptions(ifstream::failbit | ifstream::badbit);
 
   if (file.is_open()) {
-    file.exceptions(ifstream::failbit | ifstream::badbit);
-
     int size;
     file >> size;
+    logToFileAndConsole("Loading " + to_string(size) + " KernelCache entries");
 
     for (int i = 0; i < size; ++i) {
       size_t codeSize;
@@ -66,25 +67,26 @@ KernelCache::KernelCache() {
       auto binary = make_unique<vector<unsigned char>>(binarySize);
       file.read(reinterpret_cast<char *>(binary->data()), binarySize);
 
-      cache.insert(QString(code.get()), binary.release());
+      auto program =
+          AlenkaSignal::OpenCLProgram::fromBinary(binary.get(), context);
+      cache.insert(QString(code.get()), program);
     }
   } else {
     logToFileAndConsole("Failed to open kernel cache at " << filePath << ".");
   }
 }
 
-KernelCache::~KernelCache() {
-  // Save.
-  int size = cache.size();
+void KernelCache::saveToFile() {
+  const int size = cache.size();
   if (size <= 0)
     return;
 
-  string filePath = cacheFilePath();
+  const string filePath = cacheFilePath();
   ofstream file(filePath, ios::binary);
+  file.exceptions(ifstream::failbit | ifstream::badbit);
 
   if (file.is_open()) {
-    file.exceptions(ifstream::failbit | ifstream::badbit);
-
+    logToFileAndConsole("Saving " + to_string(size) + " KernelCache entries");
     file << size << endl;
     const auto &keys = cache.keys();
 
@@ -95,7 +97,8 @@ KernelCache::~KernelCache() {
       file << codeSize << endl;
       file.write(code.data(), codeSize) << endl;
 
-      auto binary = find(qCode);
+      auto program = find(qCode);
+      auto binary = program->getBinary();
       size_t binarySize = binary->size();
 
       file << binarySize << endl;
@@ -108,5 +111,8 @@ KernelCache::~KernelCache() {
 }
 
 void KernelCache::deleteCacheFile() {
+  // Right now the file is not deleted when persistent storage is disabled. So
+  // this function is never used.
+  assert(false);
   QFile::remove(QString::fromStdString(cacheFilePath()));
 }

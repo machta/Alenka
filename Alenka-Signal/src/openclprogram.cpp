@@ -24,20 +24,6 @@ OpenCLProgram::OpenCLProgram(const string &source, OpenCLContext *context)
   build();
 }
 
-OpenCLProgram::OpenCLProgram(const vector<unsigned char> *binary,
-                             OpenCLContext *context) {
-  cl_int err, status;
-  auto device = context->getCLDevice();
-  size_t size = binary->size();
-  const unsigned char *binaryPtr = binary->data();
-
-  program = clCreateProgramWithBinary(context->getCLContext(), 1, &device,
-                                      &size, &binaryPtr, &status, &err);
-  checkClErrorCode(err, "clCreateProgramWithBinary()");
-
-  build();
-}
-
 OpenCLProgram::~OpenCLProgram() {
   cl_int err = clReleaseProgram(program);
   checkClErrorCode(err, "clReleaseProgram()");
@@ -85,7 +71,7 @@ string OpenCLProgram::makeErrorMessage(const string &msg) const {
   return str;
 }
 
-vector<unsigned char> *OpenCLProgram::getBinary() {
+vector<unsigned char> *OpenCLProgram::getBinary() const {
   size_t size = sizeof(size_t);
   cl_int err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES,
                                 sizeof(size_t), &size, nullptr);
@@ -103,6 +89,21 @@ vector<unsigned char> *OpenCLProgram::getBinary() {
   }
 
   return binary;
+}
+
+OpenCLProgram::OpenCLProgram(const vector<unsigned char> *binary,
+                             OpenCLContext *context)
+    : context(context) {
+  cl_int err, status;
+  auto device = context->getCLDevice();
+  size_t size = binary->size();
+  const unsigned char *binaryPtr = binary->data();
+
+  program = clCreateProgramWithBinary(context->getCLContext(), 1, &device,
+                                      &size, &binaryPtr, &status, &err);
+  checkClErrorCode(err, "clCreateProgramWithBinary()");
+
+  build();
 }
 
 void OpenCLProgram::build() {

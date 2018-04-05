@@ -55,7 +55,8 @@ Options::Options(int argc, char **argv)
   ("locale", value<string>()->default_value("en_us")->value_name("lang"), "mostly controls decimal number format")
   ("uncalibratedGDF", value<bool>()->default_value(false)->value_name("bool"), "assume uncalibrated data in GDF")
   ("autosave", value<int>()->default_value(2*60)->value_name("seconds"), "interval between saves; 0 to disable")
-  ("kernelCacheSize", value<int>()->default_value(0)->value_name("count"), "if 0, the existing file is removed")
+  ("kernelCacheSize", value<int>()->default_value(10000)->value_name("c"), "how many montage kernels are stored in memory")
+  ("kernelCachePersist", value<bool>()->default_value(false)->value_name("bool"), "whether to store kernels persistently")
   ("kernelCacheDir", value<string>()->value_name("path"), "default is install dir")
   ("gl20", value<bool>()->default_value(false)->value_name("bool"), "use OpenGL 2.0 instead of 3.0")
   ("gl43", value<bool>()->default_value(false)->value_name("bool"), "use OpenGL 4.3 instead of 3.0; disabled")
@@ -99,7 +100,8 @@ Options::Options(int argc, char **argv)
   ("osd", value<bool>()->default_value(true)->value_name("bool"), "use orginal Spikedet implementation")
   ;
   // clang-format on
-  // TODO: Find out why there isn't the -ft option like in Matlab.
+  // TODO: Find out why there isn't the -ft option like in Matlab version of
+  // spikedet.
 
   configuration.add(spikedet);
 

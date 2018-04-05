@@ -92,7 +92,10 @@ MyApplication::MyApplication(int &argc, char **argv)
   Alenka --spikedet OUTPUT_FILE [SPIKEDET_SETTINGS]... FILE [FILE]...
   Alenka --help|--clInfo|--glInfo|--version
 )";
-    cout << PROGRAM_OPTIONS->getDescription() << endl;
+    cout << PROGRAM_OPTIONS->getDescription();
+    cout << "\nYou can find more details about these options in 'options.ini' "
+            "or the manual."
+         << endl;
     mainExit();
   } else if (isProgramOptionSet("version")) {
     cout << "Alenka " << versionString() << endl;

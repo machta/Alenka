@@ -22,8 +22,8 @@ class OpenCLContext;
 class OpenCLProgram {
   cl_program program = nullptr;
   cl_int buildError = CL_SUCCESS;
-  OpenCLContext *context;
-  std::string source;
+  OpenCLContext *const context;
+  const std::string source;
 
 public:
   /**
@@ -31,8 +31,6 @@ public:
    * @param source The source string.
    */
   OpenCLProgram(const std::string &source, OpenCLContext *context);
-  OpenCLProgram(const std::vector<unsigned char> *binary,
-                OpenCLContext *context);
   ~OpenCLProgram();
 
   /**
@@ -57,9 +55,18 @@ public:
   std::string getCompileLog() const;
   std::string makeErrorMessage(const std::string &msg = "Kernel") const;
 
-  std::vector<unsigned char> *getBinary();
+  std::vector<unsigned char> *getBinary() const;
+  std::string sourceCode() const { return source; }
+
+  static OpenCLProgram *fromBinary(const std::vector<unsigned char> *binary,
+                                   OpenCLContext *context) {
+    return new OpenCLProgram(binary, context);
+  }
 
 private:
+  OpenCLProgram(const std::vector<unsigned char> *binary,
+                OpenCLContext *context);
+
   void build();
 };
 

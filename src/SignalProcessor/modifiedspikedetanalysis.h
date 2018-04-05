@@ -9,9 +9,6 @@ class OpenCLContext;
 
 class ModifiedSpikedetAnalysis : public SpikedetAnalysis {
 public:
-  ModifiedSpikedetAnalysis(AlenkaSignal::OpenCLContext *context)
-      : SpikedetAnalysis(context) {}
-
   std::string name() override { return "Optimized Spikedet Analysis"; }
 
 protected:
