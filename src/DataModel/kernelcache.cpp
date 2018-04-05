@@ -45,9 +45,11 @@ KernelCache::KernelCache() {
 void KernelCache::loadFromFile(AlenkaSignal::OpenCLContext *const context) {
   const string filePath = cacheFilePath();
   ifstream file(filePath, ios::binary);
-  file.exceptions(ifstream::failbit | ifstream::badbit);
 
   if (file.is_open()) {
+    // This cannot be done earlier, because we don't want is_open() to throw.
+    file.exceptions(ifstream::failbit | ifstream::badbit);
+
     int size;
     file >> size;
     logToFileAndConsole("Loading " + to_string(size) + " KernelCache entries");
@@ -83,9 +85,11 @@ void KernelCache::saveToFile() {
 
   const string filePath = cacheFilePath();
   ofstream file(filePath, ios::binary);
-  file.exceptions(ifstream::failbit | ifstream::badbit);
 
   if (file.is_open()) {
+    // This cannot be done earlier, because we don't want is_open() to throw.
+    file.exceptions(ifstream::failbit | ifstream::badbit);
+
     logToFileAndConsole("Saving " + to_string(size) + " KernelCache entries");
     file << size << endl;
     const auto &keys = cache.keys();
