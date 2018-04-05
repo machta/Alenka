@@ -25,7 +25,7 @@ float sumSkip(int from, int to, int* skipIndexes, int skipIndexesN, PARA) {
 
 // Sum channels in range of indexes [from, to].
 float sum(int from, int to, PARA) {
-  return sumSkip(from, to, NULL, 0);
+  return sumSkip(from, to, 0, 0);
 }
 #define sum(a_, b_) sum(a_, b_, PASS)
 
