@@ -1027,6 +1027,9 @@ void SignalFileBrowserWindow::updateRecentFiles(const QFileInfo &fileInfo) {
 }
 
 void SignalFileBrowserWindow::addAutoMontage(AutomaticMontage *autoMontage) {
+  if (!fileResources->file)
+    return;
+
   UndoCommandFactory *undoFactory = openDataFile->undoFactory;
   undoFactory->beginMacro("Add " +
                           QString::fromStdString(autoMontage->getName()));
