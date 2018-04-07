@@ -776,7 +776,7 @@ SignalFileBrowserWindow::dataFileBySuffix(const QString &fileName,
                                           const vector<string> &additionalFiles,
                                           QWidget *parent) {
 
-  auto fileTypes = FileType::fromSuffix(fileName, additionalFiles);
+  const auto fileTypes = FileType::fromSuffix(fileName, additionalFiles);
 
   if (fileTypes.empty())
     throwDetailed(runtime_error("Unknown file extension."));
@@ -790,7 +790,10 @@ SignalFileBrowserWindow::dataFileBySuffix(const QString &fileName,
     fileTypeIndex = askForDataFileBackend(items, parent);
   }
 
-  return fileTypes[fileTypeIndex]->makeInstance();
+  if (0 <= fileTypeIndex)
+    return fileTypes[fileTypeIndex]->makeInstance();
+  else
+    return nullptr;
 }
 
 int SignalFileBrowserWindow::askForDataFileBackend(const QStringList &items,
@@ -801,7 +804,7 @@ int SignalFileBrowserWindow::askForDataFileBackend(const QStringList &items,
   if (ok && !item.isEmpty())
     return items.indexOf(item);
   else
-    return 0;
+    return -1;
 }
 
 void SignalFileBrowserWindow::openCommandLineFile() {
@@ -1083,7 +1086,10 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   assert(!fileResources->file && "Make sure there is no already opened file.");
 
   try {
-    fileResources->file = dataFileBySuffix(fileName, additionalFiles, this);
+    auto filePtr = dataFileBySuffix(fileName, additionalFiles, this);
+    if (!filePtr)
+      return;
+    fileResources->file = std::move(filePtr);
   } catch (const runtime_error &e) {
     errorMessage(this, catchDetailed(e), "Error while opening file");
     return; // Ignore opening of the file as there was an error.
