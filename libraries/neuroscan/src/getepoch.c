@@ -1,6 +1,4 @@
 #include <stdio.h>
-#include <conio.h>
-#include <io.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>

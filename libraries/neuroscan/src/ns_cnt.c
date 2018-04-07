@@ -7,8 +7,6 @@ Stand-alone functions to read a Neuro Scan continuous (.CNT) format file.
 #define FIX_TEEG_TYPE		// fixes bug in Neuroscan sethead.h header
 
 #include <stdio.h>
-#include <conio.h>
-#include <io.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>

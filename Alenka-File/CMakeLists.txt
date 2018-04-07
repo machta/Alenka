@@ -35,8 +35,11 @@ set(BUILD_SHARED_LIBS false) # TODO: Check if this is needed.
 add_subdirectory(../libraries/pugixml ${CMAKE_CURRENT_BINARY_DIR}/pugixml)
 include_directories(../libraries/pugixml/src ../include)
 
+include_directories(../libraries/neuroscan/include)
+add_subdirectory(../libraries/neuroscan ${CMAKE_CURRENT_BINARY_DIR}/neuroscan)
+
 # If you want to use this library, you need to link to these libraries.
-set(LIBS_TO_LINK_ALENKA_FILE alenka-file pugixml matio)
+set(LIBS_TO_LINK_ALENKA_FILE alenka-file pugixml matio neuroscan)
 if(UNIX)
   set(LIBS_TO_LINK_ALENKA_FILE ${LIBS_TO_LINK_ALENKA_FILE}
     biosig cholmod)

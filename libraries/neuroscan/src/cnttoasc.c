@@ -74,7 +74,6 @@ the end of the epoch.
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <conio.h>
 
 #pragma pack(1)
 #include "ns_cnt.h"

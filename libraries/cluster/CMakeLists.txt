@@ -38,6 +38,7 @@ set(SRC
   codegen/lib/spike_cluster_cpp/xrot.cpp
   codegen/lib/spike_cluster_cpp/xrotg.cpp
   codegen/lib/spike_cluster_cpp/xscal.cpp
-  codegen/lib/spike_cluster_cpp/xswap.cpp)
+  codegen/lib/spike_cluster_cpp/xswap.cpp
+)
 
 add_library(cluster STATIC ${SRC})
