@@ -6,9 +6,11 @@
 
 #include "matrix2m.h"           // matrix memory allocation
 
-#pragma pack(1)
+//#pragma pack(1)
 #define  N_ELECT  64            // maximum number of electrodes
+#include <pack.h>
 #include "sethead.h"            // Neuro Scan header structure
+#include <unpack.h>
 
 // structure for epoch-specific header
 typedef struct

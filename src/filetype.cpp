@@ -6,6 +6,7 @@
 #include "../Alenka-File/include/AlenkaFile/biosigfile.h"
 #endif // USE_BIOSIG
 
+#include "../Alenka-File/include/AlenkaFile/cnt.h"
 #include "../Alenka-File/include/AlenkaFile/edf.h"
 #include "../Alenka-File/include/AlenkaFile/gdf2.h"
 #include "../Alenka-File/include/AlenkaFile/mat.h"
@@ -16,6 +17,32 @@ using namespace std;
 using namespace AlenkaFile;
 
 namespace {
+
+class CntFileType : public FileType {
+  QString fileName;
+
+public:
+  CntFileType(const QString &fileName) : fileName(fileName) {}
+
+  unique_ptr<DataFile> makeInstance() override {
+    return make_unique<CNT>(fileName.toStdString());
+  }
+
+  QString name() override { return "Alenka's internal implementation of CNT"; }
+};
+
+class EdfFileType : public FileType {
+  QString fileName;
+
+public:
+  EdfFileType(const QString &fileName) : fileName(fileName) {}
+
+  unique_ptr<DataFile> makeInstance() override {
+    return make_unique<EDF>(fileName.toStdString());
+  }
+
+  QString name() override { return "Alenka's internal implementation of EDF+"; }
+};
 
 class GdfFileType : public FileType {
   QString fileName;
@@ -31,19 +58,6 @@ public:
   QString name() override {
     return "Alenka's internal implementation of GDFv2";
   }
-};
-
-class EdfFileType : public FileType {
-  QString fileName;
-
-public:
-  EdfFileType(const QString &fileName) : fileName(fileName) {}
-
-  unique_ptr<DataFile> makeInstance() override {
-    return make_unique<EDF>(fileName.toStdString());
-  }
-
-  QString name() override { return "Alenka's internal implementation of EDF+"; }
 };
 
 class MatFileType : public FileType {
@@ -106,13 +120,15 @@ FileType::fromSuffix(const QString &fileName,
 
   vector<unique_ptr<FileType>> result;
 
-  if (suffix == "gdf") {
+  if (suffix == "cnt") {
+    result.emplace_back(make_unique<CntFileType>(fileName));
+  } else if (suffix == "edf") {
+    result.emplace_back(make_unique<EdfFileType>(fileName));
+  } else if (suffix == "gdf") {
     result.emplace_back(make_unique<GdfFileType>(fileName));
 #ifdef USE_BIOSIG
     result.emplace_back(make_unique<BioSigFileType>(fileName));
 #endif // USE_BIOSIG
-  } else if (suffix == "edf") {
-    result.emplace_back(make_unique<EdfFileType>(fileName));
   } else if (suffix == "mat") {
     result.emplace_back(make_unique<MatFileType>(fileName, additionalFiles));
   } else {

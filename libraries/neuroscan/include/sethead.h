@@ -34,84 +34,6 @@ typedef struct {
         float beta_wt;
 }OLDELECTLOC;
 
-/*** OLD STRUCTURE FOR ERP HEADER ***/ 
-typedef struct{ 
-        char   type;
-        char   id[20];
-        char   oper[20];
-        char   doctor[20];
-        char   referral[20];
-        char   hospital[20]; 
-        char   patient[20]; 
-        short int    age;
-        char   sex;
-        char   hand;
-        char   med[20];
-        char   class[20];
-        char   state[20]; 
-        char   label[20];
-        char   date[10];
-        char   time[12];
-        char   avgmode;
-        char   review; 
-        short unsigned    nsweeps;
-        short unsigned    compsweeps;
-        short unsigned    pnts;
-        short int    nchannels;
-        short int    update;
-        char   domain;
-        unsigned short int    rate;
-        double scale;
-        char   veegcorrect;
-        float  veogtrig;
-        short int    veogchnl;
-        float  heogtrig; 
-        short int    heogchnl; 
-        char   baseline;
-        float  offstart;
-        float  offstop;
-        char   reject;
-        char   rejchnl1;
-        char   rejchnl2;
-        char   rejchnl3;
-        char   rejchnl4;
-        float  rejstart;
-        float  rejstop;
-        float  rejmin;
-        float  rejmax;
-        char   trigtype;
-        float  trigval;
-        char   trigchnl;
-        float  trigisi;
-        float  trigmin;
-        float  trigmax;
-        float  trigdur;
-        char   dir;
-        float  dispmin;
-        float  dispmax;
-        float  xmin;
-        float  xmax;
-        float  ymin;
-        float  ymax;
-        float  zmin;
-        float  zmax;
-        float  lowcut;
-        float  highcut;
-        char   common;
-        char   savemode;
-        char   manmode;
-        char   ref[20];
-        char   screen[80];
-        char   seqfile[80];
-        char   montage[80];
-        char   heegcorrect;
-        char   variance;
-        short int    acceptcnt;
-        short int    rejectcnt;
-        char   reserved[74];
-        OLDELECTLOC elect_tab[64]; 
-}OLDSETUP;
-
 /*** CURRENT VERSION 3.0 STRUCTURE FOR ELECTRODE TABLE ***/ 
 
 typedef struct {                /* Electrode structure  ------------------- */
@@ -162,7 +84,7 @@ typedef struct{
         char   sex;             /* Patient Sex Male='M', Female='F'        */
         char   hand;            /* Handedness Mixed='M',Rt='R', lft='L'    */
         char   med[20];         /* Medications                             */
-        char   class[20];       /* Classification                          */
+        char   classifi[20];    /* Classification                          */
         char   state[20];       /* Patient wakefulness                     */
         char   label[20];       /* Session label                           */
         char   date[10];        /* Session date string                     */
@@ -315,7 +237,7 @@ typedef struct{
         float  ScaleToolX2;     /* Scale tool- lower right hand screen pos */
         float  ScaleToolY2;     /* Scale tool- lower right hand screen pos */
         short int port;         /* Port address for external triggering    */
-        long  NumSamples;       /* Number of samples in continous file     */
+        unsigned int NumSamples;       /* Number of samples in continous file     */
         char  FilterFlag;       /* Indicates that file has been filtered   */
         float LowCutoff;        /* Low frequency cutoff                    */
         short int LowPoles;     /* Number of poles                         */
@@ -326,9 +248,9 @@ typedef struct{
         char  SnrFlag;          /* SNR computation flag                    */
         char  CoherenceFlag;    /* Coherence has been  computed            */
         char  ContinousType;    /* Method used to capture events in *.cnt  */ 
-        long  EventTablePos;    /* Position of event table                 */ 
+        unsigned int EventTablePos;    /* Position of event table                 */ 
         float ContinousSeconds; // Number of seconds to displayed per page
-        long  ChannelOffset;    // Block size of one channel in SYNAMPS 
+        int   ChannelOffset;    // Block size of one channel in SYNAMPS 
         char  AutoCorrectFlag;  // Autocorrect of DC values
         unsigned char DCThreshold; // Auto correct of DC level 
         ELECTLOC elect_tab[N_ELECT];

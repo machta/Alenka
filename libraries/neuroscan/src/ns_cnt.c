@@ -11,6 +11,7 @@ Stand-alone functions to read a Neuro Scan continuous (.CNT) format file.
 #include <stdlib.h>
 #include <math.h>
 #include <malloc.h>
+#include <assert.h>
 
 #include "matrix2m.h"           // matrix memory allocation
 #include "ns_cnt.h"
@@ -53,10 +54,10 @@ Opens a .CNT file and returns a pointer to the header structure.
 
 SETUP* ns_cnt_open
 (
-    char *fn            // name of continuous file (assumes .CNT extension)
+    const char *fn            // name of continuous file (assumes .CNT extension)
 )
 {
-    char fn_cnt[200];   // complete file name
+    char fn_cnt[1000];   // complete file name
     char mes[400];      // error message
     TEEG teeg;          // event table identifier
     long i;
@@ -66,7 +67,7 @@ SETUP* ns_cnt_open
 
     // open the file <=======================================================
     strcpy(fn_cnt,fn);
-    strcat(fn_cnt,".cnt");
+//    strcat(fn_cnt,".cnt");
     ns_cnt_fp=fopen(fn_cnt,"rb");
     if (ns_cnt_fp==NULL)
     {
@@ -99,6 +100,7 @@ SETUP* ns_cnt_open
 
     // allocate memory for entire erp header <===============================
     ns_cnt_erp=(SETUP *)malloc(ns_cnt_header_offset);
+//    assert(sizeof(SETUP) == ns_cnt_header_offset);
     if (ns_cnt_erp==NULL)
     {
         errmes("Out of memory");

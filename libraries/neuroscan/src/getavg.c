@@ -11,10 +11,12 @@
  ***************************************************************************/
 
 #define N_ELECT 64		// predefined maximum number of EEG channels in file
-#pragma pack(1)			// this is neccesary for the structures in sethead.h
+//#pragma pack(1)			// this is neccesary for the structures in sethead.h
 #include <stdio.h>
 #include <stdlib.h>
+#include <pack.h>
 #include "sethead.h"
+#include <unpack.h>
 #include "matrix2m.h"
 
 short

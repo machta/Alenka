@@ -196,7 +196,7 @@ add_executable(Alenka ${SRC} ${RESOURCES} ${SRC_BOOST_PO}
 
 target_link_libraries(Alenka
   alenka-signal clFFT cluster
-  alenka-file pugixml
+  alenka-file pugixml neuroscan
   # matio is excluded here on purpose, because I want to link it differently on
   # different platforms.
   ${CMAKE_THREAD_LIBS_INIT} ${OpenCL_LIBRARIES}

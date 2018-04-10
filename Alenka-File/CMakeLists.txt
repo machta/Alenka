@@ -58,11 +58,13 @@ file(GLOB SRC_BOOST_FS ../libraries/boost_1_66/libs/filesystem/src/*.cpp)
 set(SRC
   include/AlenkaFile/abstractdatamodel.h
   include/AlenkaFile/biosigfile.h
+  include/AlenkaFile/cnt.h
   include/AlenkaFile/datafile.h
   include/AlenkaFile/datamodel.h
   include/AlenkaFile/edf.h
   include/AlenkaFile/gdf2.h
   include/AlenkaFile/mat.h
+  src/cnt.cpp
   src/datafile.cpp
   src/datamodel.cpp
   src/edf.cpp
