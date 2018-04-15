@@ -145,14 +145,14 @@ const int MAT_SAMPLES = 400;
 class primary_file_test : public ::testing::Test {
 protected:
   primary_file_test()
-      : gdf00(TEST_DATA_PATH + "gdf/gdf00", 200, 19, 364000),
-        gdf01(TEST_DATA_PATH + "gdf/gdf01", 50, 1, 2050),
-        edf00(TEST_DATA_PATH + "edf/edf00", 200, 37, 363620),
-        mat4(TEST_DATA_PATH + "mat/4", MAT_FS, MAT_CHANNELS, MAT_SAMPLES),
-        mat6(TEST_DATA_PATH + "mat/6", MAT_FS, MAT_CHANNELS, MAT_SAMPLES),
-        mat7(TEST_DATA_PATH + "mat/7", MAT_FS, MAT_CHANNELS, MAT_SAMPLES),
-        mat73(TEST_DATA_PATH + "mat/73", MAT_FS, MAT_CHANNELS, MAT_SAMPLES),
-        matDefault(TEST_DATA_PATH + "mat/default", MAT_FS, MAT_CHANNELS,
+      : gdf00(TEST_DATA_PATH + "gdf/gdf00.gdf", 200, 19, 364000),
+        gdf01(TEST_DATA_PATH + "gdf/gdf01.gdf", 50, 1, 2050),
+        edf00(TEST_DATA_PATH + "edf/edf00.edf", 200, 37, 363620),
+        mat4(TEST_DATA_PATH + "mat/4.mat", MAT_FS, MAT_CHANNELS, MAT_SAMPLES),
+        mat6(TEST_DATA_PATH + "mat/6.mat", MAT_FS, MAT_CHANNELS, MAT_SAMPLES),
+        mat7(TEST_DATA_PATH + "mat/7.mat", MAT_FS, MAT_CHANNELS, MAT_SAMPLES),
+        mat73(TEST_DATA_PATH + "mat/73.mat", MAT_FS, MAT_CHANNELS, MAT_SAMPLES),
+        matDefault(TEST_DATA_PATH + "mat/default.mat", MAT_FS, MAT_CHANNELS,
                    MAT_SAMPLES) {}
 
   TestFile gdf00, gdf01;
@@ -167,8 +167,11 @@ TEST_F(primary_file_test, outOfBounds) {
 
   outOfBoundsTest(unique_ptr<DataFile>(edf00.makeEDF()).get());
 
-  // mat4.outOfBoundsTest(unique_ptr<DataFile>(mat4.makeMAT()).get()); // TODO:
-  // Fix this
+  // TODO: Fix this test. Perhaps lover the precision as in EDF_data_00.
+  //  MATvars matVars;
+  //  matVars.data = {"data0", "data1"};
+  //  matVars.frequency = "Fs";
+  //  outOfBoundsTest(unique_ptr<DataFile>(mat4.makeMAT(matVars)).get());
 }
 
 // TODO: Add all kinds of crazy tests that read samples and compare them to data
@@ -208,9 +211,8 @@ TEST_F(primary_file_test, GDF2_meta_info) {
   metaInfoTest(unique_ptr<DataFile>(gdf01.makeGDF2()).get(), &gdf01);
 }
 
-TEST_F(primary_file_test,
-       GDF2_data_00) // TODO: generate new values files with higher precision
-{
+TEST_F(primary_file_test, GDF2_data_00) {
+  // TODO: generate new values files with higher precision
   dataTest(unique_ptr<DataFile>(gdf00.makeGDF2()).get(), &gdf00);
 }
 
@@ -301,3 +303,31 @@ TEST_F(primary_file_test, MAT_data_compression) {
   dataTest(unique_ptr<DataFile>(mat73.makeMAT(vars)).get(), &mat73);
   dataTest(unique_ptr<DataFile>(matDefault.makeMAT(vars)).get(), &matDefault);
 }
+
+// BioSig tests.
+#ifdef USE_BIOSIG
+
+TEST_F(primary_file_test, BioSig_meta_info_GDF) {
+  metaInfoTest(unique_ptr<DataFile>(gdf00.makeBioSigFile()).get(), &gdf00);
+  metaInfoTest(unique_ptr<DataFile>(gdf01.makeBioSigFile()).get(), &gdf01);
+}
+
+TEST_F(primary_file_test, BioSig_GDF2_data_00) {
+  dataTest(unique_ptr<DataFile>(gdf00.makeBioSigFile()).get(), &gdf00);
+}
+
+TEST_F(primary_file_test, BioSig_GDF2_data_01) {
+  dataTest(unique_ptr<DataFile>(gdf01.makeBioSigFile()).get(), &gdf01);
+}
+
+// TEST_F(primary_file_test, BioSig_meta_info_EDF) {
+//  metaInfoTest(unique_ptr<DataFile>(edf00.makeBioSigFile()).get(), &edf00);
+//}
+
+// TEST_F(primary_file_test, BioSig_EDF_data_00) {
+//  dataTest(unique_ptr<DataFile>(edf00.makeBioSigFile()).get(), &edf00,
+//           MAX_REL_ERR_DOUBLE / 500, MAX_REL_ERR_FLOAT / 100,
+//           MAX_ABS_ERR_DOUBLE / 10000, MAX_ABS_ERR_FLOAT / 100);
+//}
+
+#endif // USE_BIOSIG

@@ -390,4 +390,6 @@ void DataFile::computePhysicalMinMax() {
   }
 }
 
+double DataFile::INVALID_DATE = -1000'1000'1000;
+
 } // namespace AlenkaFile

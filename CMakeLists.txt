@@ -9,13 +9,18 @@ option(ALENKA_STATIC_LINK
 "Link some libraries statically to make a portable binary.
 Use this to make a package that works for both Ubuntu 14 and 15." OFF)
 option(ALENKA_BUILD_TESTS "Whether to build unit-tests for Alenka." OFF)
-
 option(ALENKA_COVERAGE "Turns on lcov." OFF)
+option(ALENKA_USE_BIOSIG "Include biosig DataFile (experimental, Linux only)." OFF)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(DEBUG true)
 endif()
 
+if (ALENKA_USE_BIOSIG)
+  add_definitions(-DUNIX_BUILD -DUSE_BIOSIG)
+endif()
+
+# Platform specific confuguration.
 if(UNIX)
   add_definitions(-DUNIX_BUILD)
 
@@ -99,6 +104,7 @@ set(SRC
   include/detailedexception.h
   include/elidedlabel.h
   include/helplink.h
+  include/localeoverride.h
   src/DataModel/infotable.cpp
   src/DataModel/infotable.h
   src/DataModel/kernelcache.cpp
@@ -166,6 +172,8 @@ set(SRC
   src/canvas.h
   src/error.cpp
   src/error.h
+  src/filetype.cpp
+  src/filetype.h
   src/main.cpp
   src/montagetemplatedialog.cpp
   src/montagetemplatedialog.h
@@ -210,6 +218,10 @@ target_link_libraries(Alenka
 
 if(UNIX AND NOT APPLE)
   target_link_libraries(Alenka dl GL)
+
+  if (ALENKA_USE_BIOSIG)
+    target_link_libraries(Alenka biosig cholmod)
+  endif()
 
   if(ALENKA_STATIC_LINK)
     target_link_libraries(Alenka

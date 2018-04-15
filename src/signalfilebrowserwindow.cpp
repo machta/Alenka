@@ -1,8 +1,6 @@
 #include "signalfilebrowserwindow.h"
 
 #include "../Alenka-File/include/AlenkaFile/edf.h"
-#include "../Alenka-File/include/AlenkaFile/gdf2.h"
-#include "../Alenka-File/include/AlenkaFile/mat.h"
 #include "../Alenka-Signal/include/AlenkaSignal/montage.h"
 #include "../Alenka-Signal/include/AlenkaSignal/openclcontext.h"
 #include "DataModel/opendatafile.h"
@@ -28,11 +26,13 @@
 #include "Sync/syncdialog.h"
 #include "canvas.h"
 #include "error.h"
+#include "filetype.h"
 #include "montagetemplatedialog.h"
 #include "myapplication.h"
 #include "options.h"
 #include "signalviewer.h"
 #include "spikedetsettingsdialog.h"
+#include <localeoverride.h>
 
 #include <QQmlContext>
 #include <QQuickItem>
@@ -40,7 +40,6 @@
 #include <QtWidgets>
 
 #include <algorithm>
-#include <locale>
 
 using namespace std;
 using namespace AlenkaFile;
@@ -63,15 +62,6 @@ void saveMontageHeader() {
   } else {
     cerr << "Error writing file " << headerFilePath().toStdString() << endl;
   }
-}
-
-void executeWithCLocale(function<void()> code) {
-  std::locale localeCopy;
-  std::locale::global(std::locale("C"));
-
-  code();
-
-  std::locale::global(localeCopy);
 }
 
 void errorMessage(QWidget *parent, const string &text,
@@ -722,16 +712,24 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
 
 SignalFileBrowserWindow::~SignalFileBrowserWindow() { closeFilePropagate(); }
 
-QDateTime SignalFileBrowserWindow::sampleToDate(DataFile *file, int sample) {
-  int timeOffset = round(sample / file->getSamplingFrequency() * 1000);
+QDateTime SignalFileBrowserWindow::sampleToDate(DataFile *const file,
+                                                const int sample) {
+  QDateTime date;
+  const double daysSinceJesus = file->getStartDate();
 
-  double msec = file->getStartDate() - DataFile::daysUpTo1970;
-  msec *= 24 * 60 * 60 * 1000;
+  if (DataFile::INVALID_DATE == daysSinceJesus)
+    date = QDateTime::fromSecsSinceEpoch(file->getStandardStartDate());
+  else {
+    double msec = daysSinceJesus - DataFile::daysUpTo1970;
+    msec *= 24 * 60 * 60 * 1000;
 
-  QDateTime date(QDate(1970, 1, 1));
-  date.setTimeSpec(Qt::UTC); // To prevent the local time-zone settings from
-                             // screwing up the time.
-  date = date.addMSecs(static_cast<qint64>(round(msec)));
+    date = QDateTime(QDate(1970, 1, 1));
+    date.setTimeSpec(Qt::UTC); // To prevent the local time-zone settings from
+                               // screwing up the time.
+    date = date.addMSecs(static_cast<qint64>(round(msec)));
+  }
+
+  const int timeOffset = round(sample / file->getSamplingFrequency() * 1000);
   date = date.addMSecs(timeOffset);
 
   return date;
@@ -769,38 +767,40 @@ SignalFileBrowserWindow::sampleToDateTimeString(DataFile *file, int sample,
   return QString();
 }
 
-unique_ptr<DataFile> SignalFileBrowserWindow::dataFileBySuffix(
-    const QFileInfo &fileInfo, const vector<string> &additionalFiles) {
-  string stdFileName = fileInfo.filePath().toStdString();
-  QString suffix = fileInfo.suffix().toLower();
+unique_ptr<DataFile>
+SignalFileBrowserWindow::dataFileBySuffix(const QString &fileName,
+                                          const vector<string> &additionalFiles,
+                                          QWidget *parent) {
 
-  if (suffix == "gdf") {
-    return make_unique<GDF2>(stdFileName,
-                             programOption<bool>("uncalibratedGDF"));
-  } else if (suffix == "edf") {
-    return make_unique<EDF>(stdFileName);
-    // TODO: Add BDF support through Edflib.
-  } else if (suffix == "mat") {
-    MATvars vars;
+  const auto fileTypes = FileType::fromSuffix(fileName, additionalFiles);
 
-    if (isProgramOptionSet("matData"))
-      programOption("matData", vars.data);
-
-    programOption("matFs", vars.frequency);
-    programOption("matMults", vars.multipliers);
-    programOption("matDate", vars.date);
-    programOption("matLabel", vars.label);
-    programOption("matEvtPos", vars.eventPosition);
-    programOption("matEvtDur", vars.eventDuration);
-    programOption("matEvtChan", vars.eventChannel);
-
-    vector<string> files{stdFileName};
-    files.insert(files.end(), additionalFiles.begin(), additionalFiles.end());
-
-    return make_unique<MAT>(files, vars);
-  } else {
+  if (fileTypes.empty())
     throwDetailed(runtime_error("Unknown file extension."));
+
+  int fileTypeIndex = 0;
+
+  if (parent && fileTypes.size() > 1) {
+    QStringList items;
+    for (auto &e : fileTypes)
+      items.push_back(e->name());
+    fileTypeIndex = askForDataFileBackend(items, parent);
   }
+
+  if (0 <= fileTypeIndex)
+    return fileTypes[fileTypeIndex]->makeInstance();
+  else
+    return nullptr;
+}
+
+int SignalFileBrowserWindow::askForDataFileBackend(const QStringList &items,
+                                                   QWidget *parent) {
+  bool ok;
+  const QString item = QInputDialog::getItem(parent, "Choose DataFile Backend",
+                                             "Library:", items, 0, false, &ok);
+  if (ok && !item.isEmpty())
+    return items.indexOf(item);
+  else
+    return -1;
 }
 
 void SignalFileBrowserWindow::openCommandLineFile() {
@@ -1053,12 +1053,11 @@ void SignalFileBrowserWindow::addAutoMontage(AutomaticMontage *autoMontage) {
 
 void SignalFileBrowserWindow::openFile() {
   if (!closeFile())
-    return; // User chose to keep open the current file.
+    return; // Close canceled -- the user chose to keep the current file open.
 
   QString fileName = QFileDialog::getOpenFileName(
       this, "Open File", "",
-      "Signal files (*.edf *.gdf *.mat);;EDF files "
-      "(*.edf);;GDF files (*.gdf);;MAT files (*.mat)");
+      "All files (*);;EDF files (*.edf);;GDF files (*.gdf);;MAT files (*.mat)");
 
   if (fileName.isNull())
     return; // No file was selected.
@@ -1086,7 +1085,10 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   assert(!fileResources->file && "Make sure there is no already opened file.");
 
   try {
-    fileResources->file = dataFileBySuffix(fileInfo, additionalFiles);
+    auto filePtr = dataFileBySuffix(fileName, additionalFiles, this);
+    if (!filePtr)
+      return;
+    fileResources->file = std::move(filePtr);
   } catch (const runtime_error &e) {
     errorMessage(this, catchDetailed(e), "Error while opening file");
     return; // Ignore opening of the file as there was an error.
@@ -1123,7 +1125,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
     useAutoSave = res == QMessageBox::Yes;
   }
 
-  executeWithCLocale([this, useAutoSave, oldDataModel]() {
+  LocaleOverride::executeWithCLocale([this, useAutoSave, oldDataModel]() {
     const bool secondaryFileExists = fileResources->file->load();
     if (!secondaryFileExists)
       createDefaultMontage();
@@ -1431,7 +1433,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
         if (undoStack->isClean())
           return;
 
-        executeWithCLocale([this]() {
+        LocaleOverride::executeWithCLocale([this]() {
           fileResources->file->saveSecondaryFile(autoSaveName);
           logToFileAndConsole("Autosaving to " << autoSaveName);
         });
@@ -1470,7 +1472,7 @@ bool SignalFileBrowserWindow::closeFile() {
     saveMontageHeader();
 
     try {
-      executeWithCLocale([this]() {
+      LocaleOverride::executeWithCLocale([this]() {
         OpenDataFile::infoTable.writeXML(
             fileResources->file->getFilePath() + ".info",
             spikedetAnalysis->getSettings(), spikeDuration);
@@ -1498,7 +1500,8 @@ void SignalFileBrowserWindow::saveFile() {
 
   if (fileResources->file) {
     try {
-      executeWithCLocale([this]() { fileResources->file->save(); });
+      LocaleOverride::executeWithCLocale(
+          [this]() { fileResources->file->save(); });
     } catch (const runtime_error &e) {
       errorMessage(this, catchDetailed(e), "Error while saving file");
     }
@@ -1782,7 +1785,7 @@ void SignalFileBrowserWindow::setEnableFileActions(bool enable) {
 void SignalFileBrowserWindow::setFilePathInQML() {
   if (fileResources->file) {
     string fileName = autoSaveName + to_string(nameIndex++ % 2);
-    executeWithCLocale([this, fileName]() {
+    LocaleOverride::executeWithCLocale([this, fileName]() {
       fileResources->file->saveSecondaryFile(fileName);
       logToFileAndConsole("Autosaving to " << fileName);
     });

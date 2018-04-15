@@ -5,6 +5,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <ctime>
 #include <string>
 #include <vector>
 
@@ -62,10 +63,22 @@ public:
   /**
    * @brief Returns days since year 0.
    *
-   * Works the same as datenum() in Matlab.
+   * @note Works the same as datenum() in Matlab.
+   *
+   * @return Invalid time means you should use getStandardStartDate() instead.
    */
-  virtual double getStartDate() const = 0;
+  virtual double getStartDate() const { return INVALID_DATE; }
   // TODO: Add more date unit-tests.
+
+  /**
+   * @brief An alternative date implementation. Use this only if getStartDate()
+   * doesn't work.
+   *
+   * @return The default is meaningless -- return the current time.
+   */
+  virtual std::time_t getStandardStartDate() const {
+    return std::time(nullptr);
+  }
 
   /**
    * @brief Saves the .info file.
@@ -152,6 +165,7 @@ public:
   virtual void fillDefaultMontage(int index);
 
   static const int daysUpTo1970 = 719529; // datenum('01-Jan-1970')
+  static double INVALID_DATE;
 
   /**
    * @brief Tests endianness.

@@ -8,7 +8,7 @@ using namespace boost::filesystem;
 // TODO: Add save_MAT_as_EDF test.
 
 TEST(save_as_test, save_GDF_as_EDF) {
-  TestFile gdf00(TEST_DATA_PATH + "gdf/gdf00", 200, 19, 364000);
+  TestFile gdf00(TEST_DATA_PATH + "gdf/gdf00.gdf", 200, 19, 364000);
   unique_ptr<DataFile> gdf_file(gdf00.makeGDF2());
 
   DataModel dataModel(make_unique<EventTypeTable>(),

@@ -1,3 +1,4 @@
+#include "../../Alenka-File/include/AlenkaFile/biosigfile.h"
 #include "../../Alenka-File/include/AlenkaFile/datafile.h"
 #include "../../Alenka-File/include/AlenkaFile/datamodel.h"
 #include "../../Alenka-File/include/AlenkaFile/edf.h"
@@ -37,18 +38,19 @@ public:
         channelCount(channelCount), samplesRecorded(samplesRecorded) {}
   ~TestFile() = default;
 
-  DataFile *makeGDF2() { return new GDF2(path + ".gdf"); }
-  DataFile *makeEDF() { return new EDF(path + ".edf"); }
+  DataFile *makeGDF2() { return new GDF2(path); }
+  DataFile *makeEDF() { return new EDF(path); }
   template <class... T> DataFile *makeMAT(T... p) {
-    return new MAT(path + ".mat", p...);
+    return new MAT(path, p...);
   }
+  DataFile *makeBioSigFile() { return new BioSigFile(path); }
 
   const vector<double> &getValues() {
     if (hasValues == false) {
       hasValues = true;
 
       fstream valuesFile;
-      valuesFile.open(path + "_values.dat");
+      valuesFile.open(stripExtension(path) + "_values.dat");
 
       while (valuesFile) {
         double sample;
@@ -58,6 +60,11 @@ public:
     }
 
     return values;
+  }
+
+private:
+  string stripExtension(const string &path) {
+    return path.substr(0, path.find_last_of('.'));
   }
 };
 

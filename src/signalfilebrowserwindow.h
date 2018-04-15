@@ -124,8 +124,11 @@ public:
   sampleToDateTimeString(AlenkaFile::DataFile *file, int sample,
                          InfoTable::TimeMode mode = InfoTable::TimeMode::size);
   static std::unique_ptr<AlenkaFile::DataFile>
-  dataFileBySuffix(const QFileInfo &fileInfo,
-                   const std::vector<std::string> &additionalFiles);
+  dataFileBySuffix(const QString &fileName,
+                   const std::vector<std::string> &additionalFiles,
+                   QWidget *parent = nullptr);
+  static int askForDataFileBackend(const QStringList &items,
+                                   QWidget *parent = nullptr);
 
 protected:
   void closeEvent(QCloseEvent *event) override;
