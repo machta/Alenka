@@ -7,6 +7,7 @@
 #endif // USE_BIOSIG
 
 #include "../Alenka-File/include/AlenkaFile/edf.h"
+#include "../Alenka-File/include/AlenkaFile/eep.h"
 #include "../Alenka-File/include/AlenkaFile/gdf2.h"
 #include "../Alenka-File/include/AlenkaFile/mat.h"
 
@@ -43,7 +44,7 @@ public:
     return make_unique<EDF>(fileName.toStdString());
   }
 
-  QString name() override { return "Alenka's internal implementation of EDF+"; }
+  QString name() override { return "EDFLib"; }
 };
 
 class MatFileType : public FileType {
@@ -77,6 +78,19 @@ public:
   QString name() override { return "Alenka's internal implementation of MAT"; }
 };
 
+class EepFileType : public FileType {
+  QString fileName;
+
+public:
+  EepFileType(const QString &fileName) : fileName(fileName) {}
+
+  unique_ptr<DataFile> makeInstance() override {
+    return make_unique<EEP>(fileName.toStdString());
+  }
+
+  QString name() override { return "LibEEP for CNT (ANT) and AVR"; }
+};
+
 #ifdef USE_BIOSIG
 
 class BioSigFileType : public FileType {
@@ -89,7 +103,7 @@ public:
     return make_unique<BioSigFile>(fileName.toStdString());
   }
 
-  QString name() override { return "BioSig implementation"; }
+  QString name() override { return "BioSig"; }
 };
 
 #endif // USE_BIOSIG
@@ -115,6 +129,8 @@ FileType::fromSuffix(const QString &fileName,
     result.emplace_back(make_unique<EdfFileType>(fileName));
   } else if (suffix == "mat") {
     result.emplace_back(make_unique<MatFileType>(fileName, additionalFiles));
+  } else if (suffix == "cnt") {
+    result.emplace_back(make_unique<EepFileType>(fileName));
   } else {
 #ifdef USE_BIOSIG
     result.emplace_back(make_unique<BioSigFileType>(fileName));
