@@ -6,10 +6,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 set(BUILD_SHARED_LIBS off CACHE BOOL "")
 
-# Platform specific confuguration.
-if(UNIX)
-  set(ALENKA_USE_BIOSIG ON)
-endif()
+# Platform specific configuration.
 
 # First build all the library dependencies.
 include_directories(../libraries/boost_1_66)
@@ -72,10 +69,10 @@ add_library(eep STATIC ${LIBEEP_SRC})
 # If you want to use this library, you need to link to these libraries.
 set(LIBS_TO_LINK_ALENKA_FILE alenka-file pugixml matio)
 if(UNIX)
-  set(LIBS_TO_LINK_ALENKA_FILE ${LIBS_TO_LINK_ALENKA_FILE}
-    biosig cholmod)
-    #/usr/lib/libbiosig.a)
-    #${Alenka_SOURCE_DIR}/libraries/biosig/libbiosig.a)
+    if (ALENKA_USE_BIOSIG)
+      set(LIBS_TO_LINK_ALENKA_FILE ${LIBS_TO_LINK_ALENKA_FILE}
+        biosig cholmod)
+    endif()
 endif()
 set(LIBS_TO_LINK_ALENKA_FILE ${LIBS_TO_LINK_ALENKA_FILE} PARENT_SCOPE)
 

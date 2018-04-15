@@ -305,6 +305,7 @@ TEST_F(primary_file_test, MAT_data_compression) {
 }
 
 // BioSig tests.
+#ifdef USE_BIOSIG
 
 TEST_F(primary_file_test, BioSig_meta_info_GDF) {
   metaInfoTest(unique_ptr<DataFile>(gdf00.makeBioSigFile()).get(), &gdf00);
@@ -328,3 +329,5 @@ TEST_F(primary_file_test, BioSig_GDF2_data_01) {
 //           MAX_REL_ERR_DOUBLE / 500, MAX_REL_ERR_FLOAT / 100,
 //           MAX_ABS_ERR_DOUBLE / 10000, MAX_ABS_ERR_FLOAT / 100);
 //}
+
+#endif // USE_BIOSIG

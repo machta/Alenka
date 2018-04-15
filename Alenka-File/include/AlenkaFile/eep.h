@@ -10,7 +10,7 @@ typedef int cntfile_t;
 namespace AlenkaFile {
 
 /**
- * @brief This is an adapter class for BioSig library.
+ * @brief Uses libEEP to implement ANT CNT file format.
  */
 class EEP : public DataFile {
   double samplingFrequency;
