@@ -16,7 +16,7 @@ class EEP : public DataFile {
   double samplingFrequency;
   int numberOfChannels;
   uint64_t samplesRecorded;
-  cntfile_t fileHandle = 100;
+  cntfile_t fileHandle = -1;
 
 public:
   EEP(const std::string &filePath);

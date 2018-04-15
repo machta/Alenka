@@ -6,9 +6,11 @@ extern "C" { // This must be here because it's a C header.
 
 #include <algorithm>
 #include <cassert>
+#include <iostream>
 #include <memory>
 
 #include <detailedexception.h>
+#include <localeoverride.h>
 
 using namespace std;
 using namespace AlenkaFile;
@@ -120,7 +122,8 @@ void EEP::readChannelsFloatDouble(vector<T *> dataChannels,
 }
 
 void EEP::openFile() {
-  fileHandle = libeep_read(getFilePath().c_str());
+  LocaleOverride::executeWithCLocale(
+      [this]() { fileHandle = libeep_read(getFilePath().c_str()); });
   if (-1 == fileHandle)
     throwDetailed(std::runtime_error("libeep_read() failed"));
 

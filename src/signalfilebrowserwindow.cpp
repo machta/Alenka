@@ -32,6 +32,7 @@
 #include "options.h"
 #include "signalviewer.h"
 #include "spikedetsettingsdialog.h"
+#include <localeoverride.h>
 
 #include <QQmlContext>
 #include <QQuickItem>
@@ -39,7 +40,6 @@
 #include <QtWidgets>
 
 #include <algorithm>
-#include <locale>
 
 using namespace std;
 using namespace AlenkaFile;
@@ -62,15 +62,6 @@ void saveMontageHeader() {
   } else {
     cerr << "Error writing file " << headerFilePath().toStdString() << endl;
   }
-}
-
-void executeWithCLocale(function<void()> code) {
-  std::locale localeCopy;
-  std::locale::global(std::locale("C"));
-
-  code();
-
-  std::locale::global(localeCopy);
 }
 
 void errorMessage(QWidget *parent, const string &text,
@@ -1127,7 +1118,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
     useAutoSave = res == QMessageBox::Yes;
   }
 
-  executeWithCLocale([this, useAutoSave, oldDataModel]() {
+  LocaleOverride::executeWithCLocale([this, useAutoSave, oldDataModel]() {
     const bool secondaryFileExists = fileResources->file->load();
     if (!secondaryFileExists)
       createDefaultMontage();
@@ -1435,7 +1426,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
         if (undoStack->isClean())
           return;
 
-        executeWithCLocale([this]() {
+        LocaleOverride::executeWithCLocale([this]() {
           fileResources->file->saveSecondaryFile(autoSaveName);
           logToFileAndConsole("Autosaving to " << autoSaveName);
         });
@@ -1474,7 +1465,7 @@ bool SignalFileBrowserWindow::closeFile() {
     saveMontageHeader();
 
     try {
-      executeWithCLocale([this]() {
+      LocaleOverride::executeWithCLocale([this]() {
         OpenDataFile::infoTable.writeXML(
             fileResources->file->getFilePath() + ".info",
             spikedetAnalysis->getSettings(), spikeDuration);
@@ -1502,7 +1493,8 @@ void SignalFileBrowserWindow::saveFile() {
 
   if (fileResources->file) {
     try {
-      executeWithCLocale([this]() { fileResources->file->save(); });
+      LocaleOverride::executeWithCLocale(
+          [this]() { fileResources->file->save(); });
     } catch (const runtime_error &e) {
       errorMessage(this, catchDetailed(e), "Error while saving file");
     }
@@ -1786,7 +1778,7 @@ void SignalFileBrowserWindow::setEnableFileActions(bool enable) {
 void SignalFileBrowserWindow::setFilePathInQML() {
   if (fileResources->file) {
     string fileName = autoSaveName + to_string(nameIndex++ % 2);
-    executeWithCLocale([this, fileName]() {
+    LocaleOverride::executeWithCLocale([this, fileName]() {
       fileResources->file->saveSecondaryFile(fileName);
       logToFileAndConsole("Autosaving to " << fileName);
     });
