@@ -715,16 +715,24 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
 
 SignalFileBrowserWindow::~SignalFileBrowserWindow() { closeFilePropagate(); }
 
-QDateTime SignalFileBrowserWindow::sampleToDate(DataFile *file, int sample) {
-  int timeOffset = round(sample / file->getSamplingFrequency() * 1000);
+QDateTime SignalFileBrowserWindow::sampleToDate(DataFile *const file,
+                                                const int sample) {
+  QDateTime date;
+  const double daysSinceJesus = file->getStartDate();
 
-  double msec = file->getStartDate() - DataFile::daysUpTo1970;
-  msec *= 24 * 60 * 60 * 1000;
+  if (DataFile::INVALID_DATE == daysSinceJesus)
+    date = QDateTime::fromSecsSinceEpoch(file->getStandardStartDate());
+  else {
+    double msec = daysSinceJesus - DataFile::daysUpTo1970;
+    msec *= 24 * 60 * 60 * 1000;
 
-  QDateTime date(QDate(1970, 1, 1));
-  date.setTimeSpec(Qt::UTC); // To prevent the local time-zone settings from
-                             // screwing up the time.
-  date = date.addMSecs(static_cast<qint64>(round(msec)));
+    date = QDateTime(QDate(1970, 1, 1));
+    date.setTimeSpec(Qt::UTC); // To prevent the local time-zone settings from
+                               // screwing up the time.
+    date = date.addMSecs(static_cast<qint64>(round(msec)));
+  }
+
+  const int timeOffset = round(sample / file->getSamplingFrequency() * 1000);
   date = date.addMSecs(timeOffset);
 
   return date;

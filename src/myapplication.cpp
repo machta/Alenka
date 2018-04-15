@@ -27,9 +27,9 @@ MyApplication::MyApplication(int &argc, char **argv)
     // rely on a max length.
     const int maxLogFileNameLength = 1000;
     char logFileName[maxLogFileNameLength + 1];
-    time_t now = time(nullptr);
-    size_t len = strftime(logFileName, maxLogFileNameLength,
-                          "%Y-%m-%d--%H-%M-%S.log", localtime(&now));
+    const time_t now = time(nullptr);
+    const size_t len = strftime(logFileName, maxLogFileNameLength,
+                                "%Y-%m-%d--%H-%M-%S.log", localtime(&now));
     logFileName[len] = 0;
 
     string logFilePath =

@@ -33,10 +33,6 @@ BioSigFile::~BioSigFile() {
     destructHDR(fileHeader->hdr);
 }
 
-double BioSigFile::getStartDate() const {
-  // TODO
-}
-
 void BioSigFile::save() {
   saveSecondaryFile();
 

@@ -28,8 +28,9 @@ public:
   unsigned int getChannelCount() const override { return fh.numberOfChannels; }
   uint64_t getSamplesRecorded() const override { return samplesRecorded; }
   double getStartDate() const override {
-    double fractionOfDay = ldexp(static_cast<double>(fh.startDate[0]), -32);
-    double days = fh.startDate[1];
+    const double fractionOfDay =
+        ldexp(static_cast<double>(fh.startDate[0]), -32);
+    const double days = fh.startDate[1];
     return days + fractionOfDay;
   }
   void save() override;

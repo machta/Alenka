@@ -25,7 +25,7 @@ public:
   double getSamplingFrequency() const override { return samplingFrequency; }
   unsigned int getChannelCount() const override { return numberOfChannels; }
   uint64_t getSamplesRecorded() const override { return samplesRecorded; }
-  double getStartDate() const override;
+  std::time_t getStandardStartDate() const override;
   void save() override;
   bool load() override;
   void readChannels(std::vector<float *> dataChannels, uint64_t firstSample,

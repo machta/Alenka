@@ -4,9 +4,7 @@ extern "C" { // This must be here because it's a C header.
 #include <v4/eep.h>
 }
 
-#include <algorithm>
 #include <cassert>
-#include <iostream>
 #include <memory>
 
 #include <detailedexception.h>
@@ -37,9 +35,8 @@ EEP::EEP(const string &filePath) : DataFile(filePath) {
 
 EEP::~EEP() { libeep_close(fileHandle); }
 
-double EEP::getStartDate() const {
-  // TODO
-  return 0;
+std::time_t EEP::getStandardStartDate() const {
+  return libeep_get_start_time(fileHandle);
 }
 
 void EEP::save() {
