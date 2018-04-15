@@ -12,17 +12,23 @@
 
 git submodule update --init && submodule=OK || submodule=fail
 
+downloadZip()
+{
+	curl -L $1 > zip.zip &&
+	unzip -q zip.zip &&
+	rm -f zip.zip
+}
+
 # Download.
 
 if [ -d alglib-3.10.0 ]
 then
 	alglib=skipped
 else
-	curl http://www.alglib.net/translator/re/alglib-3.10.0.cpp.gpl.zip > alglib.zip &&
-	unzip -q alglib.zip -dalglib-3.10.0 &&
-	rm alglib.zip &&
-	mv alglib-3.10.0/cpp/* alglib-3.10.0 &&
-	rm -r alglib-3.10.0/cpp &&
+	downloadZip http://www.alglib.net/translator/re/alglib-3.10.0.cpp.gpl.zip &&
+	mkdir alglib-3.10.0 &&
+	mv cpp/* alglib-3.10.0 &&
+	rmdir cpp &&
 	alglib=OK || alglib=fail
 fi
 
@@ -32,9 +38,7 @@ if [ -d $B ]
 then
 	boost=skipped
 else
-	curl -L https://sourceforge.net/projects/boost/files/boost/1.66.0/$BB.zip > $BB.zip &&
-	unzip -q $BB.zip &&
-	rm $BB.zip &&
+	downloadZip https://sourceforge.net/projects/boost/files/boost/1.66.0/$BB.zip &&
 	mkdir -p $B/libs &&
 	mv $BB/boost $B &&
 	mv $BB/libs/program_options $B/libs &&
@@ -48,10 +52,16 @@ if [ -d matio-msvc2015 ]
 then
 	matio=skipped
 else
-	curl -L 'https://sourceforge.net/projects/alenka-mirror/files/misc/matio-msvc2015.zip/download' > matio-msvc2015.zip &&
-	unzip -q matio-msvc2015.zip &&
-	rm -rf matio-msvc2015.zip &&
+	downloadZip https://sourceforge.net/projects/alenka-mirror/files/misc/matio-msvc2015.zip/download &&
 	matio=OK || matio=fail
+fi
+
+if [ -d libeep-3.3.177 ]
+then
+	libeep=skipped
+else
+	downloadZip https://sourceforge.net/projects/libeep/files/libeep-3.3.177.zip/download &&
+	libeep=OK || libeep=fail
 fi
 
 # Configuration.
@@ -72,6 +82,7 @@ echo ======================================
 echo "alglib-3.10.0           $alglib"
 echo "$B              $boost"
 echo "matio-msvc2015          $matio"
+echo "libeep                  $libeep"
 echo
 echo ======= Configuration summary ========
 echo "Library path            Status"
