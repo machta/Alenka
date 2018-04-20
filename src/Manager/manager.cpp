@@ -6,14 +6,7 @@
 #include "sortproxymodel.h"
 #include "tablemodel.h"
 
-#include <QAction>
-#include <QClipboard>
-#include <QGridLayout>
-#include <QHeaderView>
-#include <QPushButton>
-#include <QTableView>
-#include <QTextDocumentFragment>
-#include <QVBoxLayout>
+#include <QtWidgets>
 
 #include <algorithm>
 #include <cassert>
@@ -183,6 +176,18 @@ vector<int> Manager::reverseSortedSelectedRows() {
   return rows;
 }
 
+bool Manager::askToDeleteRows(const int rowCount) {
+  const QString text =
+      QString("You are about to delete %1 row%2. Do you want to continue?")
+          .arg(rowCount)
+          .arg(rowCount == 1 ? "" : "s");
+  const auto buttons =
+      QMessageBox::StandardButtons(QMessageBox::Yes | QMessageBox::No);
+
+  return QMessageBox::Yes == QMessageBox::question(this, "Deleting rows", text,
+                                                   buttons, QMessageBox::Yes);
+}
+
 void Manager::pasteSingleCell(const string &cell) {
   const auto val = QVariant(QString::fromStdString(cell));
 
@@ -228,7 +233,7 @@ void Manager::removeRows() {
 
   const auto rows = reverseSortedSelectedRows();
 
-  if (!rows.empty()) {
+  if (!rows.empty() && askToDeleteRows(rows.size())) {
     const QString name = metaObject()->className();
     file->undoFactory->beginMacro("remove " + name + " rows");
 

@@ -64,6 +64,7 @@ private:
 
   void addSeparator();
   std::vector<int> reverseSortedSelectedRows();
+  bool askToDeleteRows(int rowCount);
   void pasteSingleCell(const std::string &cell);
   void pasteBlock(const std::vector<std::vector<std::string>> &cells);
 
