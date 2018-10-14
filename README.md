@@ -10,7 +10,7 @@ Other resources, like sample input files and a Linux VB image with everything pr
 * git
 * cmake 3.1 (for Ubuntu 14 download the latest version)
 * C++14 compiler: gcc, clang, or Microsoft Visual C++ 2015
-* Qt 5.8 (gcc/MSVC and QtCharts module)
+* Qt 5.9.5 (gcc/MSVC and QtCharts module)
 * OpenCL 1.2
 * OpenGL 2.0
 * Matio library
