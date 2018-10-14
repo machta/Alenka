@@ -6,11 +6,12 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 set(BUILD_SHARED_LIBS off CACHE BOOL "")
 
-# Platform specific configuration.
-
 # First build all the library dependencies.
+include_directories(../Alenka-File/include/)
+include_directories(../Alenka-Signal/include/)
 include_directories(../libraries/boost_1_66)
 
+# Platform specific configuration.
 if(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS
     # This stops Microsoft's linker from needing the static library.

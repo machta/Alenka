@@ -79,6 +79,9 @@ find_package(Qt5MultimediaWidgets)
 add_subdirectory(Alenka-File)
 add_subdirectory(Alenka-Signal)
 
+include_directories(Alenka-File/include/)
+include_directories(Alenka-Signal/include/)
+
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 

@@ -16,6 +16,8 @@ find_package(OpenCL)
 include_directories(${OpenCL_INCLUDE_DIR})
 
 # Alenka-File
+include_directories(../Alenka-File/include/)
+include_directories(../Alenka-Signal/include/)
 set(Boost_INCLUDE_DIR "")
 include_directories(../libraries/boost_1_66)
 

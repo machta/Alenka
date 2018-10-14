@@ -1,15 +1,15 @@
 #ifndef ALENKASIGNAL_SPIKEDET_H
 #define ALENKASIGNAL_SPIKEDET_H
 
-#include "../../Alenka-File/include/AlenkaFile/datafile.h"
+#include <atomic>
+#include <memory>
+#include <vector>
+
+#include <AlenkaFile/datafile.h>
 #include "../../spikedet/src/CResultsModel.h"
 #include "../../spikedet/src/CSettingsModel.h"
 #include "../../spikedet/src/Definitions.h"
 #include "../../spikedet/src/spikedetoutput.h"
-
-#include <atomic>
-#include <memory>
-#include <vector>
 
 class CSpikeDetector;
 
