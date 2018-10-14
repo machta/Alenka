@@ -16,7 +16,7 @@
 	url = https://github.com/terrygta/SignalResampler.git
 [submodule "libraries/EDFlib"]
 	path = libraries/EDFlib
-	url = https://github.com/Teuniz/EDFlib.git
+	url = https://github.com/machta/edflib.git
 [submodule "libraries/pugixml"]
 	path = libraries/pugixml
 	url = https://github.com/zeux/pugixml.git
