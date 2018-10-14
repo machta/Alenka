@@ -7,7 +7,7 @@
 	url = https://github.com/google/googletest.git
 [submodule "libraries/eigen"]
 	path = libraries/eigen
-	url = https://github.com/RLovelett/eigen.git
+	url = https://github.com/eigenteam/eigen-git-mirror.git
 [submodule "libraries/libsamplerate"]
 	path = libraries/libsamplerate
 	url = https://github.com/erikd/libsamplerate.git
