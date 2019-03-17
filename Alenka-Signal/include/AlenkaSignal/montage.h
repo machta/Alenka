@@ -39,6 +39,7 @@ template <class T> class Montage {
   std::unique_ptr<OpenCLProgram> program;
   cl_kernel kernel = nullptr;
   cl_int copyIndex = -1;
+  cl_int montageIndex = -1;
 
 public:
   /**
@@ -68,6 +69,9 @@ public:
   MontageType getMontageType() const { return montageType; }
   cl_int copyMontageIndex() const { return copyIndex; }
   std::string getSource() const { return source; }
+
+  cl_int getMontageIndex() const { return montageIndex; }
+  void setMontageIndex(cl_int v) { montageIndex = v; }
 
   /**
    * @brief Creates a montege directly from a kernel.

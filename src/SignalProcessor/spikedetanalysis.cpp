@@ -142,10 +142,10 @@ auto makeMontage(OpenDataFile *file, OpenCLContext *context) {
   const AlenkaFile::AbstractTrackTable *trackTable =
       file->dataModel->montageTable()->trackTable(
           OpenDataFile::infoTable.getSelectedMontage());
-  vector<string> montageCode;
 
+  vector<pair<string, cl_int>> montageCode;
   for (int i = 0; i < trackTable->rowCount(); ++i)
-    montageCode.push_back(trackTable->row(i).code);
+    montageCode.emplace_back(trackTable->row(i).code, i);
 
   auto labels = SignalProcessor::collectLabels(
       file->file->getDataModel()->montageTable()->trackTable(0));

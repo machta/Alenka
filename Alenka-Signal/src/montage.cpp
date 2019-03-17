@@ -55,8 +55,9 @@ string buildSource(const string &source, const string &headerSource = "",
   src += R"(
 #define PARA                                                                   \
   __global float *_input_, int _inputRowLength_, int _inputRowOffset_,         \
-     int IN_COUNT, __global float *_xyz_, int INDEX
-#define PASS _input_, _inputRowLength_, _inputRowOffset_, IN_COUNT, _xyz_, INDEX
+     int IN_COUNT, __global float *_xyz_, int drawIndex, int INDEX
+#define PASS _input_, _inputRowLength_, _inputRowOffset_, IN_COUNT, _xyz_,     \
+  drawIndex, INDEX
 
 // Input: value of a sample for channel i.
 float in(int i, PARA) {
@@ -96,7 +97,7 @@ float z(int i, PARA) {
 
 __kernel void montage(__global float *_input_, __global float *_output_,
                       int _inputRowLength_, int _inputRowOffset_,
-                      int IN_COUNT, int _outputRowLength_,
+                      int IN_COUNT, int _outputRowLength_, int drawIndex,
                       int INDEX, int _outputCopyCount_,
                       __global float *_xyz_)";
   src += additionalParameters + R"() {
@@ -108,7 +109,7 @@ __kernel void montage(__global float *_input_, __global float *_output_,
   src += R"(  }
 
   int outputIndex = _outputCopyCount_ *
-                    (_outputRowLength_ * INDEX + get_global_id(0));
+                    (_outputRowLength_ * drawIndex + get_global_id(0));
   for (int i = 0; i < _outputCopyCount_; ++i) {
     _output_[outputIndex + i] = out;
   }
@@ -134,7 +135,7 @@ bool parseIdentityMontage(const string &source) {
     smatch matches;
     return regex_match(source, matches, re);
   } catch (regex_error) {
-    // Intentionaly left empty to silence the errors due to missing support.
+    // Intentionally left empty to silence the errors due to missing support.
   }
 
   return false;
@@ -162,7 +163,7 @@ bool parseCopyMontage(const string &source, cl_int *index = nullptr) {
 
     return res;
   } catch (regex_error) {
-    // Intentionaly left empty to silence the errors due to missing support.
+    // Intentionally left empty to silence the errors due to missing support.
   }
 
   return false;
@@ -275,7 +276,7 @@ string replaceLabels(const string &source, const vector<string> &labels,
                                      return injectIndex(m, labels, labelRegex);
                                    });
   } catch (regex_error) {
-    // Intentionaly left empty to silence the errors due to missing support.
+    // Intentionally left empty to silence the errors due to missing support.
   }
 
   cerr << "Montage compilation error: this build doesn't support std::regex"
@@ -327,7 +328,7 @@ template <class T> string Montage<T>::stripComments(const string &code) {
     const static regex re(R"((/\*([^*]|(\*+[^*/]))*\*+/)|(//.*))");
     return regex_replace(code, re, string(""));
   } catch (regex_error) {
-    // Intentionaly left empty to silence the errors due to missing support.
+    // Intentionally left empty to silence the errors due to missing support.
   }
 
   return code; // TODO: Remove consecutive empty lines that sometimes appear

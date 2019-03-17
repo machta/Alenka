@@ -188,7 +188,8 @@ void SignalProcessor::setUpdateMontageFlag() {
 
     if (0 < file->dataModel->montageTable()->rowCount()) {
       for (int i = 0; i < getTrackTable(file)->rowCount(); ++i) {
-        if (getTrackTable(file)->row(i).hidden == false)
+        const Track t = getTrackTable(file)->row(i);
+        if (!t.hidden)
           ++trackCount;
       }
     }
@@ -344,12 +345,12 @@ void SignalProcessor::updateMontage() {
       nBlock + 2, fileChannels, montageCopyCount);
 
   clearMontage();
-  vector<string> montageCode;
 
+  vector<pair<string, cl_int>> montageCode;
   for (int i = 0; i < getTrackTable(file)->rowCount(); ++i) {
-    Track t = getTrackTable(file)->row(i);
+    const Track t = getTrackTable(file)->row(i);
     if (!t.hidden)
-      montageCode.push_back(t.code);
+      montageCode.emplace_back(t.code, i);
   }
 
   if (maxMontageTracks < static_cast<int>(montageCode.size()))

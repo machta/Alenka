@@ -50,11 +50,12 @@ public:
 
     int i = 0;
     for (Iter it = montageBegin; it != montageEnd; ++it) {
-      auto &mont = *it;
+      const auto &mont = *it;
       int copyIndex =
           CopyMontage == mont->getMontageType() ? mont->copyMontageIndex() : -1;
       processOneMontage(inBuffer, outBuffer, xyzBuffer, queue, outputRowLength,
-                        inputRowOffset, i++, mont->getKernel(), copyIndex);
+                        inputRowOffset, i++, mont->getMontageIndex(),
+                        mont->getKernel(), copyIndex);
     }
   }
 
@@ -63,8 +64,8 @@ private:
                         cl_int outputRowLength, size_t montageSize);
   void processOneMontage(cl_mem inBuffer, cl_mem outBuffer, cl_mem xyzBuffer,
                          cl_command_queue queue, cl_int outputRowLength,
-                         cl_int inputRowOffset, cl_int index, cl_kernel kernel,
-                         int copyIndex);
+                         cl_int inputRowOffset, cl_int index,
+                         cl_int montageIndex, cl_kernel kernel, int copyIndex);
 };
 
 } // namespace AlenkaSignal

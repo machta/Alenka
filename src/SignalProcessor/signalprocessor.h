@@ -132,10 +132,10 @@ public:
 
   // TODO: Make sure you don't cache copy-montages.
   template <class T>
-  static auto makeMontage(const std::vector<std::string> &montageCode,
-                          AlenkaSignal::OpenCLContext *context,
-                          const std::string &header,
-                          const std::vector<std::string> &labels) {
+  static auto
+  makeMontage(const std::vector<std::pair<std::string, cl_int>> &montageCode,
+              AlenkaSignal::OpenCLContext *context, const std::string &header,
+              const std::vector<std::string> &labels) {
     using namespace std;
 #ifndef NDEBUG
     // TODO: Remove this after the compilation time issue is solved, or perhaps
@@ -146,9 +146,10 @@ public:
 #endif
     std::vector<std::unique_ptr<AlenkaSignal::Montage<T>>> montage;
 
-    for (const auto &formulaCode : montageCode) {
+    for (const auto &e : montageCode) {
       auto sourceMontage = make_unique<AlenkaSignal::Montage<T>>(
-          simplifyMontage<T>(formulaCode), context, header, labels);
+          simplifyMontage<T>(e.first), context, header, labels);
+      sourceMontage->setMontageIndex(e.second);
 
       if (AlenkaSignal::NormalMontage != sourceMontage->getMontageType()) {
         montage.push_back(std::move(sourceMontage));
@@ -179,8 +180,7 @@ public:
     if (needToCompile > 0) {
       logToFileAndConsole(str);
     } else {
-      logToFileAndConsole(str);
-      // logToFile(str);
+      logToFile(str);
     }
 #endif
     return montage;

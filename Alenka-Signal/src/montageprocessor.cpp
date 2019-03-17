@@ -52,12 +52,10 @@ void MontageProcessor<T>::checkBufferSizes(cl_mem inBuffer, cl_mem outBuffer,
 }
 
 template <class T>
-void MontageProcessor<T>::processOneMontage(cl_mem inBuffer, cl_mem outBuffer,
-                                            cl_mem xyzBuffer,
-                                            cl_command_queue queue,
-                                            cl_int outputRowLength,
-                                            cl_int inputRowOffset, cl_int index,
-                                            cl_kernel kernel, int copyIndex) {
+void MontageProcessor<T>::processOneMontage(
+    cl_mem inBuffer, cl_mem outBuffer, cl_mem xyzBuffer, cl_command_queue queue,
+    cl_int outputRowLength, cl_int inputRowOffset, cl_int index,
+    cl_int montageIndex, cl_kernel kernel, int copyIndex) {
   cl_int err;
   int pi = 0;
 
@@ -80,6 +78,9 @@ void MontageProcessor<T>::processOneMontage(cl_mem inBuffer, cl_mem outBuffer,
   checkClErrorCode(err, "clSetKernelArg(" << pi << ")");
 
   err = clSetKernelArg(kernel, pi++, sizeof(cl_int), &index);
+  checkClErrorCode(err, "clSetKernelArg(" << pi << ")");
+
+  err = clSetKernelArg(kernel, pi++, sizeof(cl_int), &montageIndex);
   checkClErrorCode(err, "clSetKernelArg(" << pi << ")");
 
   err = clSetKernelArg(kernel, pi++, sizeof(cl_int), &outputCopyCount);
