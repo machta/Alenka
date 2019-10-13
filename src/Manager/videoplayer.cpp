@@ -225,10 +225,11 @@ void VideoPlayer::addVideoFile(const Event &event) {
     offset = max<double>(0, offset);
 
     if (ss.good()) {
-      string rest;
-      ss >> rest;
-      QUrl url(QString::fromStdString(rest));
+      const auto urlLimit = 4096;
+      char rest[urlLimit];
+      ss.getline(rest, urlLimit);
 
+      QUrl url(QString{rest}.trimmed());
       if (url.isValid())
         fileList.push_back({event.position, event.duration, offset, url});
     }
