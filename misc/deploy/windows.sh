@@ -33,7 +33,8 @@ make_dirs() {
   mkdir -p "$_folder/$_name"/log &&
     mkdir -p "$_folder/$_name"/montageTemplates &&
     mkdir -p "$_folder/$_name"/platforms &&
-    mkdir -p "$_folder/$_name"/imageformats
+    mkdir -p "$_folder/$_name"/imageformats &&
+    mkdir -p "$_folder/$_name"/mediaservice
 }
 
 make_dirs "$folder" "$name" &&
@@ -68,7 +69,6 @@ copy_libraries() {
     cp -v "$QT_DIR/bin/Qt5Multimedia.dll" "$_folder/$_name" &&
     cp -v "$QT_DIR/bin/Qt5MultimediaWidgets.dll" "$_folder/$_name" &&
     cp -v "$QT_DIR/bin/Qt5OpenGL.dll" "$_folder/$_name" &&
-    cp -v "$QT_DIR/plugins/platforms/qwindows.dll" "$_folder/$_name/platforms" &&
     cp -v "$QT_DIR/bin/Qt5Qml.dll" "$_folder/$_name" &&
     cp -v "$QT_DIR/bin/Qt5Quick.dll" "$_folder/$_name" &&
     cp -v "$QT_DIR/bin/Qt5QuickWidgets.dll" "$_folder/$_name" &&
@@ -76,7 +76,9 @@ copy_libraries() {
     cp -v "$QT_DIR/bin/Qt5QuickTemplates2.dll" "$_folder/$_name" &&
     cp -v "$QT_DIR/bin/Qt5Svg.dll" "$_folder/$_name" &&
     cp -v "$QT_DIR/bin/Qt5XmlPatterns.dll" "$_folder/$_name" &&
+    cp -v "$QT_DIR/plugins/platforms/qwindows.dll" "$_folder/$_name/platforms" &&
     cp -v "$QT_DIR/plugins/imageformats/qjpeg.dll" "$_folder/$_name/imageformats" &&
+    cp -v "$QT_DIR/plugins/mediaservice/"*.dll "$_folder/$_name/mediaservice" &&
     cp -vr "$QT_DIR"/qml/{Qt,QtQuick,QtQuick.2} "$_folder/$_name"
 }
 
